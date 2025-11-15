@@ -555,11 +555,11 @@ export default function BusinessAdminDashboard() {
         <div className="flex justify-between items-center px-6 py-4">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-black rounded-xl">
-              <Building className="h-8 w-8 text-white" />
+              {/* <Building className="h-8 w-8 text-white" /> */}
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
-              <p className="text-sm text-gray-500">Business Admin Panel</p>
+              <p className="text-sm text-gray-500">DigiSence Logo.</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">

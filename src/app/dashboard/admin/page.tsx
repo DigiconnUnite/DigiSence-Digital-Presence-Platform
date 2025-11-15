@@ -609,7 +609,7 @@ export default function SuperAdminDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Quick Actions */}
-              <Card className="bg-white border border-gray-200 shadow-sm">
+              {/* <Card className="bg-white border border-gray-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-gray-900">Quick Actions</CardTitle>
                   <CardDescription className="text-gray-600">Common administrative tasks</CardDescription>
@@ -628,10 +628,10 @@ export default function SuperAdminDashboard() {
                     Configure Categories
                   </Button>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Platform Analytics */}
-              <Card className="bg-white border border-gray-200 shadow-sm">
+              {/* <Card className="bg-white border border-gray-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-gray-900">Platform Analytics</CardTitle>
                   <CardDescription className="text-gray-600">Key performance indicators</CardDescription>
@@ -644,23 +644,23 @@ export default function SuperAdminDashboard() {
                       <p className="text-sm text-gray-600">Growth Rate</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-blue-600">{stats.totalUsers}</div>
+                      <Users className="h-8 w-8 text-gray-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-gray-600">{stats.totalUsers}</div>
                       <p className="text-sm text-gray-600">Active Admins</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Mail className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-orange-600">{stats.totalInquiries}</div>
+                      <Mail className="h-8 w-8 text-gray-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-gray-600">{stats.totalInquiries}</div>
                       <p className="text-sm text-gray-600">Total Inquiries</p>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Activity className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-purple-600">{stats.totalProducts}</div>
+                      <Activity className="h-8 w-8 text-gray-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-gray-600">{stats.totalProducts}</div>
                       <p className="text-sm text-gray-600">Total Products</p>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
         )
@@ -1130,21 +1130,18 @@ export default function SuperAdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Header Bar */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex justify-between items-center px-6 py-4">
+      <div className="bg-white  border-b border-gray-200">
+        <div className="flex justify-between items-center px-6 py-3">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-black rounded-xl">
-              <Crown className="h-8 w-8 text-white" />
+              {/* <Crown className="h-8 w-8 text-white" /> */}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Super Admin Panel</h1>
+              <h1 className="text-3xl font-bold text-gray-900">DigiSence Logo.</h1>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={() => { setRightPanelContent('add-business'); setShowRightPanel(true); }} className="bg-black hover:bg-gray-800 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Business
-            </Button>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input

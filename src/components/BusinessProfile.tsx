@@ -38,7 +38,8 @@ import {
   Globe,
   ChevronRight,
   Send,
-  X
+  X,
+  MessageCircle
 } from 'lucide-react'
 
 interface BusinessProfileProps {
@@ -73,8 +74,12 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [mounted, setMounted] = useState(false)
+  const [viewAllBrands, setViewAllBrands] = useState(false)
+  const [viewAllCategories, setViewAllCategories] = useState(false)
+  const [viewAllProducts, setViewAllProducts] = useState(false)
 
   console.log('BusinessProfile render, mounted:', mounted)
+  console.log('viewAllBrands:', viewAllBrands, 'viewAllCategories:', viewAllCategories, 'viewAllProducts:', viewAllProducts)
 
   useEffect(() => {
     console.log('setting mounted to true')
@@ -158,7 +163,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white" suppressHydrationWarning>
+    <div className="min-h-screen bg-transparent" suppressHydrationWarning>
   {/* Navigation */ }
   <nav className="sticky top-0 z-40 bg-white border-b">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -189,7 +194,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         <CarouselContent>
           {heroContent.slides?.map((slide: any, index: number) => (
             <CarouselItem key={index}>
-              <div className="relative h-96 w-full md:h-[500px] bg-gray-200 rounded-2xl overflow-hidden">
+              <div className="relative h-96 w-full md:h-[500px] bg-transparent rounded-2xl overflow-hidden">
                 <img
                   src={slide.image && slide.image.trim() !== '' ? slide.image : '/api/placeholder/1200/600'}
                   alt={slide.headline}
@@ -229,7 +234,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Card - About */}
-        <Card>
+        <Card className="bg-transparent">
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
                   {business.logo && business.logo.trim() !== '' && (
@@ -254,7 +259,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         </Card>
 
         {/* Right Card - Contact */}
-        <Card>
+        <Card className="bg-transparent">
           <CardHeader>
             <CardTitle>Get in Touch</CardTitle>
           </CardHeader>
@@ -320,34 +325,55 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   {/* Brand Slider */ }
   {
     brandContent.brands?.length > 0 && (
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Trusted By</h2>
-            <Button variant="outline">View All</Button>
+            <Button variant="outline" onClick={() => { console.log('View All Brands clicked'); setViewAllBrands(!viewAllBrands); }}>
+              {viewAllBrands ? 'Show Less' : 'View All'}
+            </Button>
           </div>
-              <Carousel className="w-full" suppressHydrationWarning>
-            <CarouselContent>
+          {viewAllBrands ? (
+            <div className="flex flex-wrap gap-4">
               {brandContent.brands.map((brand: any, index: number) => (
-                <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                  <Card className="overflow-hidden">
-                    <div className="h-32 bg-white flex items-center justify-center p-4">
-                      <img
-                        src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
-                        alt={brand.name}
-                        className="max-w-full max-h-full object-contain"
-                      />
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-center">{brand.name}</CardTitle>
-                    </CardHeader>
-                  </Card>
-                </CarouselItem>
+                <Card key={index} className="overflow-hidden flex-shrink-0 w-48 bg-transparent">
+                  <div className="h-32 bg-transparent flex items-center justify-center p-4">
+                    <img
+                      src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
+                      alt={brand.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-center">{brand.name}</CardTitle>
+                  </CardHeader>
+                </Card>
               ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+            </div>
+          ) : (
+            <Carousel className="w-full" suppressHydrationWarning>
+              <CarouselContent>
+                {brandContent.brands.map((brand: any, index: number) => (
+                  <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
+                    <Card className="overflow-hidden bg-transparent">
+                      <div className="h-32 bg-white flex items-center justify-center p-4">
+                        <img
+                          src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
+                          alt={brand.name}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-center">{brand.name}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
         </div>
       </section>
     )
@@ -360,23 +386,37 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Categories</h2>
-            <Button variant="outline">View All</Button>
+            <Button variant="outline" onClick={() => { console.log('View All Categories clicked'); setViewAllCategories(!viewAllCategories); }}>
+              {viewAllCategories ? 'Show Less' : 'View All'}
+            </Button>
           </div>
-          <Carousel className="w-full">
-            <CarouselContent>
+          {viewAllCategories ? (
+            <div className="flex flex-wrap gap-4">
               {categoryContent.categories.map((category: any, index: number) => (
-                <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                  <Card className="overflow-hidden">
-                    <CardHeader>
-                      <CardTitle className="text-center">{category.name}</CardTitle>
-                    </CardHeader>
-                  </Card>
-                </CarouselItem>
+                <Card key={index} className="overflow-hidden flex-shrink-0 w-48 bg-transparent">
+                  <CardHeader>
+                    <CardTitle className="text-center">{category.name}</CardTitle>
+                  </CardHeader>
+                </Card>
               ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+            </div>
+          ) : (
+            <Carousel className="w-full">
+              <CarouselContent>
+                {categoryContent.categories.map((category: any, index: number) => (
+                  <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
+                    <Card className="overflow-hidden bg-transparent">
+                      <CardHeader>
+                        <CardTitle className="text-center">{category.name}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
         </div>
       </section>
     )
@@ -385,10 +425,15 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   {/* Products/Services Section */ }
   {
     business.products.length > 0 && (
-      <section id="products" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section id="products" className="py-16 px-4 sm:px-6 lg:px-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
 
-              <h2 className="text-2xl font-bold mb-8">Our Products & Services</h2>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-bold">Our Products & Services</h2>
+                <Button variant="outline" onClick={() => { console.log('View All Products clicked'); setViewAllProducts(!viewAllProducts); }}>
+                  {viewAllProducts ? 'Show Less' : 'View All'}
+                </Button>
+              </div>
               {mounted && (
                 <div className="flex flex-col sm:flex-row gap-4 mb-4" suppressHydrationWarning>
                   <Input
@@ -410,60 +455,133 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                   </Select>
                 </div>
               )}
-          <Carousel className="w-full">
-            <CarouselContent>
-                  {filteredProducts.map((product) => (
-                <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                        <div className="relative">
-                      <div className="h-48 bg-gray-200">
-                        <img
-                              src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                          <Badge
-                            className="absolute top-2 right-2"
-                            variant={product.inStock ? "default" : "destructive"}
-                          >
-                            {product.inStock ? "In Stock" : "Out of Stock"}
-                          </Badge>
-                        </div>
-                    <CardHeader>
-                          <CardTitle className="text-lg">{product.name}</CardTitle>
-                    </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {product.brand && (
-                              <Badge variant="outline" className="text-xs">
-                                {product.brand.name}
-                              </Badge>
-                            )}
-                            {product.category && (
-                              <Badge variant="outline" className="text-xs">
-                                {product.category.name}
-                              </Badge>
-                            )}
-                          </div>
-                          <CardDescription className="mb-4 text-sm leading-relaxed">
-                            {product.description || "No description available"}
-                      </CardDescription>
-                      <Button
-                        className="w-full"
-                        onClick={() => openInquiryModal(product)}
-                      >
-                        Inquire Now
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
+          {viewAllProducts ? (
+            <div className="flex flex-wrap gap-4">
+              {filteredProducts.map((product) => (
+                <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex-shrink-0 w-80 bg-transparent">
+                  <div className="relative">
+                    <div className="h-48 bg-transparent">
+                      <img
+                        src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <Badge
+                      className="absolute top-2 right-2"
+                      variant={product.inStock ? "default" : "destructive"}
+                    >
+                      {product.inStock ? "In Stock" : "Out of Stock"}
+                    </Badge>
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{product.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {product.brand && (
+                        <Badge variant="outline" className="text-xs">
+                          {product.brand.name}
+                        </Badge>
+                      )}
+                      {product.category && (
+                        <Badge variant="outline" className="text-xs">
+                          {product.category.name}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription className="mb-4 text-sm leading-relaxed">
+                      {product.description || "No description available"}
+                    </CardDescription>
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        if (business.phone) {
+                          const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
+                          const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
+                          const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
+                          window.open(whatsappUrl, '_blank');
+                        } else {
+                          alert('Phone number not available');
+                        }
+                      }}
+                    >
+                      Enquire
+                      <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                      </svg>
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+            </div>
+          ) : (
+            <Carousel className="w-full">
+              <CarouselContent>
+                {filteredProducts.map((product) => (
+                  <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <Card id={`product-${product.id}`} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-transparent">
+                      <div className="relative">
+                        <div className="h-48 bg-gray-200">
+                          <img
+                            src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <Badge
+                          className="absolute top-2 right-2"
+                          variant={product.inStock ? "default" : "destructive"}
+                        >
+                          {product.inStock ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {product.brand && (
+                            <Badge variant="outline" className="text-xs">
+                              {product.brand.name}
+                            </Badge>
+                          )}
+                          {product.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {product.category.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <CardDescription className="mb-4 text-sm leading-relaxed">
+                          {product.description || "No description available"}
+                        </CardDescription>
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            if (business.phone) {
+                              const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
+                              const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
+                              const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
+                              window.open(whatsappUrl, '_blank');
+                            } else {
+                              alert('Phone number not available');
+                            }
+                          }}
+                        >
+                          Enquire
+                          <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                          </svg>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
         </div>
       </section>
     )
@@ -472,7 +590,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   {/* Additional Content Section */ }
   {
     business.additionalContent && (
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-transparent">
         <div className="max-w-4xl mx-auto prose prose-lg">
           <div dangerouslySetInnerHTML={{ __html: business.additionalContent as string }} />
         </div>

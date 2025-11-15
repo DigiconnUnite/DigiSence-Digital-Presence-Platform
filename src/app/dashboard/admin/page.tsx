@@ -53,6 +53,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  EyeOff,
   Users,
   Building,
   MessageSquare,
@@ -128,6 +129,7 @@ export default function SuperAdminDashboard() {
   const router = useRouter()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [inquiries, setInquiries] = useState<any[]>([])
   const [stats, setStats] = useState<AdminStats>({
     totalBusinesses: 0,
     totalInquiries: 0,
@@ -140,8 +142,9 @@ export default function SuperAdminDashboard() {
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
   const [showEditBusiness, setShowEditBusiness] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [showRightPanel, setShowRightPanel] = useState(false)
-  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-category' | null>(null)
+  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-category' | 'edit-category' | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -196,6 +199,13 @@ export default function SuperAdminDashboard() {
         const data = await categoriesRes.json()
         setCategories(data.categories)
       }
+
+      // Fetch inquiries
+      const inquiriesRes = await fetch('/api/inquiries')
+      if (inquiriesRes.ok) {
+        const data = await inquiriesRes.json()
+        setInquiries(data.inquiries)
+      }
     } catch (error) {
       console.error('Failed to fetch admin data:', error)
     } finally {
@@ -203,14 +213,38 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    let password = 'Adm@'
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return password
+  }
+
+  const [generatedPassword, setGeneratedPassword] = useState('')
+  const [generatedUsername, setGeneratedUsername] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleGenerateCredentials = (businessName: string, adminName: string) => {
+    const baseUsername = adminName.toLowerCase().replace(/[^a-z0-9]/g, '') || businessName.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const username = `${baseUsername}_${Date.now().toString().slice(-4)}`
+    const password = generatePassword()
+    setGeneratedPassword(password)
+    setGeneratedUsername(username)
+  }
+
   const handleAddBusiness = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
 
+    const manualUsername = formData.get('username') as string
+    const manualPassword = formData.get('password') as string
+
     const businessData = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
-      password: formData.get('password') as string,
+      password: manualPassword || generatedPassword || generatePassword(),
       adminName: formData.get('adminName') as string,
       categoryId: formData.get('categoryId') as string,
       description: formData.get('description') as string,
@@ -218,6 +252,8 @@ export default function SuperAdminDashboard() {
       phone: formData.get('phone') as string,
       website: formData.get('website') as string,
     }
+
+    console.log('Creating business:', businessData)
 
     try {
       const response = await fetch('/api/admin/businesses', {
@@ -230,16 +266,21 @@ export default function SuperAdminDashboard() {
 
       if (response.ok) {
         const result = await response.json()
+        console.log('Business creation successful')
         alert(`Business created successfully!\n\nLogin credentials:\nEmail: ${businessData.email}\nPassword: ${businessData.password}`)
         setShowRightPanel(false)
         setRightPanelContent(null)
+        setGeneratedPassword('')
+        setGeneratedUsername('')
         fetchData()
         e.currentTarget.reset()
       } else {
         const error = await response.json()
+        console.error('Business creation failed:', error)
         alert(`Failed to create business: ${error.error}`)
       }
     } catch (error) {
+      console.error('Business creation error:', error)
       alert('Failed to create business. Please try again.')
     }
   }
@@ -268,9 +309,11 @@ export default function SuperAdminDashboard() {
       categoryId: formData.get('categoryId') as string,
     }
 
+    console.log('Updating business:', editingBusiness.id, updateData)
+
     try {
       const response = await fetch(`/api/admin/businesses/${editingBusiness.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -278,15 +321,18 @@ export default function SuperAdminDashboard() {
       })
 
       if (response.ok) {
+        console.log('Update successful')
         await fetchData()
         setShowRightPanel(false)
         setRightPanelContent(null)
         alert('Business updated successfully!')
       } else {
         const error = await response.json()
+        console.error('Update failed:', error)
         alert(`Failed to update business: ${error.error}`)
       }
     } catch (error) {
+      console.error('Update error:', error)
       alert('Failed to update business. Please try again.')
     } finally {
       setIsLoading(false)
@@ -316,8 +362,9 @@ export default function SuperAdminDashboard() {
   }
 
   const handleToggleBusinessStatus = async (business: Business) => {
+    console.log('Toggling business status for:', business.id, 'current isActive:', business.isActive)
     try {
-      const response = await fetch(`/api/admin/businesses/${business.id}/toggle`, {
+      const response = await fetch(`/api/admin/businesses/${business.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -326,12 +373,15 @@ export default function SuperAdminDashboard() {
       })
 
       if (response.ok) {
+        console.log('Toggle successful')
         await fetchData()
       } else {
         const error = await response.json()
+        console.error('Toggle failed:', error)
         alert(`Failed to update business status: ${error.error}`)
       }
     } catch (error) {
+      console.error('Toggle error:', error)
       alert('Failed to toggle business status. Please try again.')
     }
   }
@@ -368,6 +418,79 @@ export default function SuperAdminDashboard() {
       }
     } catch (error) {
       alert('Failed to create category. Please try again.')
+    }
+  }
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category)
+    setRightPanelContent('edit-category')
+    setShowRightPanel(true)
+  }
+
+  const handleUpdateCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingCategory) return
+
+    const formData = new FormData(e.currentTarget)
+
+    const updateData = {
+      name: formData.get('name') as string,
+      description: formData.get('description') as string,
+      parentId: formData.get('parentId') as string || null,
+    }
+
+    console.log('Updating category:', editingCategory.id, updateData)
+
+    try {
+      const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      })
+
+      if (response.ok) {
+        console.log('Category update successful')
+        fetchData()
+        setShowRightPanel(false)
+        setRightPanelContent(null)
+        alert('Category updated successfully!')
+      } else {
+        const error = await response.json()
+        console.error('Category update failed:', error)
+        alert(`Failed to update category: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Category update error:', error)
+      alert('Failed to update category. Please try again.')
+    }
+  }
+
+  const handleDeleteCategory = async (category: Category) => {
+    if (!confirm(`Are you sure you want to delete "${category.name}"? This action cannot be undone.`)) {
+      return
+    }
+
+    console.log('Deleting category:', category.id)
+
+    try {
+      const response = await fetch(`/api/admin/categories/${category.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        console.log('Category delete successful')
+        fetchData()
+        alert('Category deleted successfully')
+      } else {
+        const error = await response.json()
+        console.error('Category delete failed:', error)
+        alert(`Failed to delete category: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Category delete error:', error)
+      alert('Failed to delete category. Please try again.')
     }
   }
 
@@ -601,6 +724,9 @@ export default function SuperAdminDashboard() {
                             <Button size="sm" variant="outline" onClick={() => handleEditBusiness(business)}>
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteBusiness(business)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -632,10 +758,10 @@ export default function SuperAdminDashboard() {
                         <span className="text-lg">📁</span>
                         <span className="font-medium">{parentCategory.name}</span>
                         <div className="ml-auto flex space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleEditCategory(parentCategory)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="destructive">
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteCategory(parentCategory)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -645,10 +771,10 @@ export default function SuperAdminDashboard() {
                           <span className="text-sm">📄</span>
                           <span className="text-sm">{childCategory.name}</span>
                           <div className="ml-auto flex space-x-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleEditCategory(childCategory)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="destructive">
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteCategory(childCategory)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -656,6 +782,111 @@ export default function SuperAdminDashboard() {
                       ))}
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'inquiries':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">INQUIRIES MANAGEMENT</h2>
+                <p className="text-gray-600">View and manage customer inquiries</p>
+              </div>
+              <div className="p-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-gray-900">Customer</TableHead>
+                      <TableHead className="text-gray-900">Business</TableHead>
+                      <TableHead className="text-gray-900">Message</TableHead>
+                      <TableHead className="text-gray-900">Status</TableHead>
+                      <TableHead className="text-gray-900">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inquiries.map((inquiry) => (
+                      <TableRow key={inquiry.id}>
+                        <TableCell className="text-gray-900">
+                          <div>
+                            <div className="font-medium">{inquiry.name}</div>
+                            <div className="text-sm text-gray-500">{inquiry.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-900">{inquiry.business?.name}</TableCell>
+                        <TableCell className="text-gray-900 max-w-xs truncate">{inquiry.message}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{inquiry.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        )
+      case 'analytics':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">PLATFORM ANALYTICS</h2>
+                <p className="text-gray-600">Detailed analytics and insights</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Inquiries</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{inquiries.length}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Active Businesses</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.activeBusinesses}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Products</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.totalProducts}</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">SYSTEM SETTINGS</h2>
+                <p className="text-gray-600">Configure system preferences</p>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label>Platform Name</Label>
+                    <Input defaultValue="DigiSence" />
+                  </div>
+                  <div>
+                    <Label>Admin Email</Label>
+                    <Input defaultValue="admin@digisence.com" />
+                  </div>
+                  <Button>Save Settings</Button>
                 </div>
               </div>
             </div>
@@ -673,15 +904,15 @@ export default function SuperAdminDashboard() {
       return (
         <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">ADD/EDIT BUSINESS</h3>
+            <h3 className="text-lg font-semibold">ADD BUSINESS</h3>
             <form onSubmit={handleAddBusiness} className="space-y-4">
               <div className="space-y-2">
                 <Label>Business Name</Label>
                 <Input name="name" required />
               </div>
               <div className="space-y-2">
-                <Label>Business URL</Label>
-                <Input name="slug" placeholder="bdpp.com/..." />
+                <Label>Description</Label>
+                <Textarea name="description" />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -699,6 +930,18 @@ export default function SuperAdminDashboard() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Address</Label>
+                <Input name="address" />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input name="phone" />
+              </div>
+              <div className="space-y-2">
+                <Label>Website</Label>
+                <Input name="website" />
+              </div>
+              <div className="space-y-2">
                 <Label>--- Admin Account ---</Label>
               </div>
               <div className="space-y-2">
@@ -709,30 +952,35 @@ export default function SuperAdminDashboard() {
                 <Label>Admin Email</Label>
                 <Input name="email" type="email" required />
               </div>
-              <Button type="button" onClick={() => {}}>Generate Credentials</Button>
+              <Button type="button" onClick={(e) => {
+                e.preventDefault()
+                const form = e.currentTarget.closest('form') as HTMLFormElement
+                const businessName = (form.querySelector('input[name="name"]') as HTMLInputElement)?.value || ''
+                const adminName = (form.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || ''
+                handleGenerateCredentials(businessName, adminName)
+              }}>Generate Credentials</Button>
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input value="generated-username" readOnly />
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
-                <Input value="generated-password" readOnly />
-                <p className="text-xs text-gray-500">(Click to copy)</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select name="status" defaultValue="active">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">(Leave empty to use generated or enter manually)</p>
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); setGeneratedPassword(''); setGeneratedUsername(''); }}>Cancel</Button>
                 <Button type="submit">Create Business</Button>
               </div>
             </form>
@@ -754,6 +1002,22 @@ export default function SuperAdminDashboard() {
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea name="description" defaultValue={editingBusiness.description} />
+              </div>
+              <div className="space-y-2">
+                <Label>Logo URL</Label>
+                <Input name="logo" defaultValue={editingBusiness.logo} />
+              </div>
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <Input name="address" defaultValue={editingBusiness.address} />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input name="phone" defaultValue={editingBusiness.phone} />
+              </div>
+              <div className="space-y-2">
+                <Label>Website</Label>
+                <Input name="website" defaultValue={editingBusiness.website} />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -815,6 +1079,44 @@ export default function SuperAdminDashboard() {
               <div className="flex space-x-2">
                 <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
                 <Button type="submit">Create Category</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
+    if (rightPanelContent === 'edit-category' && editingCategory) {
+      return (
+        <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">EDIT CATEGORY</h3>
+            <form onSubmit={handleUpdateCategory} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Category Name</Label>
+                <Input name="name" defaultValue={editingCategory.name} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea name="description" defaultValue={editingCategory.description} />
+              </div>
+              <div className="space-y-2">
+                <Label>Parent Category</Label>
+                <Select name="parentId" defaultValue={editingCategory.parentId || ''}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent category (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No parent</SelectItem>
+                    {categories.filter(c => !c.parentId && c.id !== editingCategory.id).map((category) => (
+                      <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex space-x-2">
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
+                <Button type="submit">Update Category</Button>
               </div>
             </form>
           </div>

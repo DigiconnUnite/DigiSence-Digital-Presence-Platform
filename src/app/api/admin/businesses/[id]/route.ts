@@ -6,11 +6,11 @@ import { z } from 'zod'
 const updateBusinessSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
-  logo: z.string().url().optional(),
+  logo: z.string().url().optional().or(z.literal('')),
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional(),
-  website: z.string().url().optional(),
+  website: z.string().url().optional().or(z.literal('')),
   categoryId: z.string().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
@@ -82,7 +82,14 @@ export async function POST(
 
     const business = await db.business.update({
       where: { id: existingBusiness.id },
-      data: updateFields,
+      data: {
+        ...updateFields,
+        description: updateFields.description && updateFields.description !== '' ? updateFields.description : undefined,
+        address: updateFields.address && updateFields.address !== '' ? updateFields.address : undefined,
+        phone: updateFields.phone && updateFields.phone !== '' ? updateFields.phone : undefined,
+        website: updateFields.website && updateFields.website !== '' ? updateFields.website : undefined,
+        categoryId: updateFields.categoryId && updateFields.categoryId !== '' ? updateFields.categoryId : undefined,
+      },
       include: {
         admin: {
           select: {

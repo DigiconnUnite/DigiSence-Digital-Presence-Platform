@@ -12,17 +12,29 @@ const createBusinessSchema = z.object({
   description: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional().transform((val) => {
+    if (!val || val === '') return '';
+    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+      return 'https://' + val;
+    }
+    return val;
+  }).pipe(z.union([z.string().url(), z.literal('')])),
 })
 
 const updateBusinessSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
-  logo: z.string().url().optional(),
+  logo: z.union([z.string().url(), z.literal('')]).optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional().transform((val) => {
+    if (!val || val === '') return '';
+    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+      return 'https://' + val;
+    }
+    return val;
+  }).pipe(z.union([z.string().url(), z.literal('')])),
   categoryId: z.string().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
@@ -143,12 +155,12 @@ export async function POST(request: NextRequest) {
         data: {
           name: createData.name,
           slug,
-          description: createData.description,
-          address: createData.address,
-          phone: createData.phone,
+          description: createData.description && createData.description !== '' ? createData.description : undefined,
+          address: createData.address && createData.address !== '' ? createData.address : undefined,
+          phone: createData.phone && createData.phone !== '' ? createData.phone : undefined,
           email: createData.email,
-          website: createData.website,
-          categoryId: createData.categoryId,
+          website: createData.website && createData.website !== '' ? createData.website : undefined,
+          categoryId: createData.categoryId && createData.categoryId !== '' ? createData.categoryId : undefined,
           adminId: user.id,
         },
         include: {
@@ -181,6 +193,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Business creation error:', error)
+    console.error('Error stack:', (error as any).stack)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

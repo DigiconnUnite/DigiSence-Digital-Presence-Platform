@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 
 const inquirySchema = z.object({
@@ -10,6 +11,55 @@ const inquirySchema = z.object({
   businessId: z.string(),
   productId: z.string().optional(),
 })
+
+async function getSuperAdmin(request: NextRequest) {
+  const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+
+  if (!token) {
+    return null
+  }
+
+  const payload = verifyToken(token)
+  if (!payload || payload.role !== 'SUPER_ADMIN') {
+    return null
+  }
+
+  return payload
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const inquiries = await db.inquiry.findMany({
+      include: {
+        business: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        product: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return NextResponse.json({ inquiries })
+  } catch (error) {
+    console.error('Inquiries fetch error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

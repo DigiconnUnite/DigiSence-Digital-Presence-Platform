@@ -629,56 +629,9 @@ export default function BusinessAdminDashboard() {
                     <Palette className="h-5 w-5" />
                     <span>Profile</span>
                   </div>
-                  {expandedSections.includes('profile') ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
+
                 </button>
-                {expandedSections.includes('profile') && (
-                  <ul className="ml-8 mt-1 space-y-1">
-                    <li>
-                      <button
-                        onClick={() => handleSectionEdit('hero')}
-                        className="flex items-center w-full px-3 py-1 text-sm text-left hover:bg-gray-100 rounded"
-                      >
-                        Hero
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => handleSectionEdit('info')}
-                        className="flex items-center w-full px-3 py-1 text-sm text-left hover:bg-gray-100 rounded"
-                      >
-                        Info
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => handleSectionEdit('brands')}
-                        className="flex items-center w-full px-3 py-1 text-sm text-left hover:bg-gray-100 rounded"
-                      >
-                        Brands
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => handleSectionEdit('content')}
-                        className="flex items-center w-full px-3 py-1 text-sm text-left hover:bg-gray-100 rounded"
-                      >
-                        Content
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => handleSectionEdit('footer')}
-                        className="flex items-center w-full px-3 py-1 text-sm text-left hover:bg-gray-100 rounded"
-                      >
-                        Footer
-                      </button>
-                    </li>
-                  </ul>
-                )}
+
               </li>
 
               <li>

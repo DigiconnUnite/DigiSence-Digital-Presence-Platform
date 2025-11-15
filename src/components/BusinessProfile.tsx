@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Business, Product } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +9,13 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -63,6 +70,16 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
     message: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [mounted, setMounted] = useState(false)
+
+  console.log('BusinessProfile render, mounted:', mounted)
+
+  useEffect(() => {
+    console.log('setting mounted to true')
+    setMounted(true)
+  }, [])
 
   // Default hero content if not set
   const heroContent = business.heroContent as any || {
@@ -87,6 +104,17 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   } : {
     categories: []
   }
+
+  // Categories and filtered products for search/filter
+  const categoryMap = new Map<string, { id: string; name: string }>()
+  business.products.forEach(p => {
+    if (p.category) categoryMap.set(p.category.id, p.category)
+  })
+  const categories = Array.from(categoryMap.values())
+  const filteredProducts = business.products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === 'all' || product.category?.id === selectedCategory)
+  )
 
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,13 +158,13 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   }
 
   return (
-<div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" suppressHydrationWarning>
   {/* Navigation */ }
   <nav className="sticky top-0 z-40 bg-white border-b">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-16">
         <div className="flex items-center space-x-4">
-          {business.logo && (
+              {business.logo && business.logo.trim() !== '' && (
             <img
               src={business.logo}
               alt={business.name}
@@ -163,7 +191,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <CarouselItem key={index}>
               <div className="relative h-96 w-full md:h-[500px] bg-gray-200 rounded-2xl overflow-hidden">
                 <img
-                  src={slide.image || '/api/placeholder/1200/600'}
+                  src={slide.image && slide.image.trim() !== '' ? slide.image : '/api/placeholder/1200/600'}
                   alt={slide.headline}
                   className="w-full h-full object-cover rounded-2xl"
                 />
@@ -204,7 +232,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
-              {business.logo && (
+                  {business.logo && business.logo.trim() !== '' && (
                 <img
                   src={business.logo}
                   alt={business.name}
@@ -298,14 +326,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <h2 className="text-2xl font-bold">Trusted By</h2>
             <Button variant="outline">View All</Button>
           </div>
-          <Carousel className="w-full">
+              <Carousel className="w-full" suppressHydrationWarning>
             <CarouselContent>
               {brandContent.brands.map((brand: any, index: number) => (
                 <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
                   <Card className="overflow-hidden">
                     <div className="h-32 bg-white flex items-center justify-center p-4">
                       <img
-                        src={brand.logo}
+                        src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
                         alt={brand.name}
                         className="max-w-full max-h-full object-contain"
                       />
@@ -359,30 +387,67 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
     business.products.length > 0 && (
       <section id="products" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Our Products & Services</h2>
-            <Button variant="outline">View All</Button>
-          </div>
+
+              <h2 className="text-2xl font-bold mb-8">Our Products & Services</h2>
+              {mounted && (
+                <div className="flex flex-col sm:flex-row gap-4 mb-4" suppressHydrationWarning>
+                  <Input
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
           <Carousel className="w-full">
             <CarouselContent>
-              {business.products.map((product) => (
+                  {filteredProducts.map((product) => (
                 <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                  <Card className="overflow-hidden">
-                    {product.image && (
+                      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        <div className="relative">
                       <div className="h-48 bg-gray-200">
                         <img
-                          src={product.image}
+                              src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                    )}
+                          <Badge
+                            className="absolute top-2 right-2"
+                            variant={product.inStock ? "default" : "destructive"}
+                          >
+                            {product.inStock ? "In Stock" : "Out of Stock"}
+                          </Badge>
+                        </div>
                     <CardHeader>
-                      <CardTitle>{product.name}</CardTitle>
+                          <CardTitle className="text-lg">{product.name}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <CardDescription className="mb-4">
-                        {product.description}
+                        <CardContent className="pt-0">
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {product.brand && (
+                              <Badge variant="outline" className="text-xs">
+                                {product.brand.name}
+                              </Badge>
+                            )}
+                            {product.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {product.category.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardDescription className="mb-4 text-sm leading-relaxed">
+                            {product.description || "No description available"}
                       </CardDescription>
                       <Button
                         className="w-full"
@@ -419,7 +484,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
     <div className="max-w-7xl mx-auto text-center">
       <div className="flex items-center justify-center space-x-2 mb-4">
-        {business.logo && (
+            {business.logo && business.logo.trim() !== '' && (
           <img
             src={business.logo}
             alt={business.name}

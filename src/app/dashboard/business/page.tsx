@@ -826,7 +826,20 @@ export default function BusinessAdminDashboard() {
                         <CardDescription>Common tasks to get you started</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <Button onClick={() => setShowProductDialog(true)} className="w-full justify-start">
+                        <Button onClick={() => {
+                          setEditingProduct(null);
+                          setProductFormData({
+                            name: '',
+                            description: '',
+                            price: '',
+                            image: '',
+                            categoryId: '',
+                            brandId: '',
+                            inStock: true,
+                            isActive: true,
+                          });
+                          setShowProductDialog(true);
+                        }} className="w-full justify-start">
                           <Plus className="h-4 w-4 mr-2" />
                           Add New Product
                         </Button>
@@ -946,7 +959,20 @@ export default function BusinessAdminDashboard() {
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Products & Services</h2>
                     <p className="text-gray-600">Manage your product offerings</p>
                   </div>
-                  <Button onClick={() => setShowProductDialog(true)}>
+                  <Button onClick={() => {
+                    setEditingProduct(null);
+                    setProductFormData({
+                      name: '',
+                      description: '',
+                      price: '',
+                      image: '',
+                      categoryId: '',
+                      brandId: '',
+                      inStock: true,
+                      isActive: true,
+                    });
+                    setShowProductDialog(true);
+                  }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Product
                   </Button>
@@ -961,12 +987,12 @@ export default function BusinessAdminDashboard() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}>
                     <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="Filter by category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -1061,83 +1087,92 @@ export default function BusinessAdminDashboard() {
                         </Button>
                       </div>
                     )}
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {mounted && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={selectedProducts.length === products.filter(p =>
+                                p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                                (selectedCategory === '' || p.categoryId === selectedCategory)
+                              ).length && selectedProducts.length > 0}
+                              onCheckedChange={(checked) => {
+                                const filteredProducts = products.filter(p =>
+                                  p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                                  (selectedCategory === '' || p.categoryId === selectedCategory)
+                                )
+                                if (checked) {
+                                  setSelectedProducts(filteredProducts.map(p => p.id))
+                                } else {
+                                  setSelectedProducts([])
+                                }
+                              }}
+                            />
+                          </TableHead>
+                          <TableHead>Image</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Brand</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-32">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {products
+                          .filter((product) =>
+                            product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                            (selectedCategory === '' || product.categoryId === selectedCategory)
+                          )
+                          .map((product) => (
+                            <TableRow key={product.id}>
+                              <TableCell>
                                 <Checkbox
-                                  checked={selectedProducts.length === products.filter(p =>
-                                    p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                                    (selectedCategory === '' || p.categoryId === selectedCategory)
-                                  ).length && selectedProducts.length > 0}
+                                  checked={selectedProducts.includes(product.id)}
                                   onCheckedChange={(checked) => {
-                                    const filteredProducts = products.filter(p =>
-                                      p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                                      (selectedCategory === '' || p.categoryId === selectedCategory)
-                                    )
                                     if (checked) {
-                                      setSelectedProducts(filteredProducts.map(p => p.id))
+                                      setSelectedProducts(prev => [...prev, product.id])
                                     } else {
-                                      setSelectedProducts([])
+                                      setSelectedProducts(prev => prev.filter(id => id !== product.id))
                                     }
                                   }}
                                 />
-                              )}
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {mounted ? products
-                            .filter((product) =>
-                              product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                              (selectedCategory === '' || product.categoryId === selectedCategory)
-                            )
-                            .map((product) => (
-                            <tr key={product.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {mounted && (
-                                  <Checkbox
-                                    checked={selectedProducts.includes(product.id)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setSelectedProducts(prev => [...prev, product.id])
-                                      } else {
-                                        setSelectedProducts(prev => prev.filter(id => id !== product.id))
-                                      }
-                                    }}
+                              </TableCell>
+                              <TableCell>
+                                {product.image ? (
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-12 h-12 object-cover rounded"
                                   />
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  {product.image && (
-                                    <img className="h-10 w-10 rounded-full object-cover mr-3" src={product.image} alt={product.name} />
-                                  )}
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                    <div className="text-sm text-gray-500 truncate max-w-xs">{product.description}</div>
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                                    <ImageIcon className="h-6 w-6 text-gray-400" />
                                   </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.category?.name || 'Uncategorized'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.price || 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge variant={product.isActive ? "default" : "secondary"}>
-                                  {product.isActive ? 'Active' : 'Draft'}
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">{product.name}</TableCell>
+                              <TableCell>
+                                {product.category ? (
+                                  <Badge variant="secondary">{product.category.name}</Badge>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {product.brand ? (
+                                  <Badge variant="outline">{product.brand.name}</Badge>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{product.price || '—'}</TableCell>
+                              <TableCell>
+                                <Badge variant={product.inStock ? "default" : "destructive"}>
+                                  {product.inStock ? 'In Stock' : 'Out of Stock'}
                                 </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex space-x-2">
                                   <Button size="sm" variant="outline" onClick={() => handleProductEdit(product)}>
                                     <Edit className="h-4 w-4" />
@@ -1146,55 +1181,30 @@ export default function BusinessAdminDashboard() {
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              </td>
-                            </tr>
-                            )) : products.map((product) => (
-                              <tr key={product.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    {product.image && (
-                                      <img className="h-10 w-10 rounded-full object-cover mr-3" src={product.image} alt={product.name} />
-                                    )}
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                      <div className="text-sm text-gray-500 truncate max-w-xs">{product.description}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {product.category?.name || 'Uncategorized'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {product.price || 'N/A'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <Badge variant={product.isActive ? "default" : "secondary"}>
-                                    {product.isActive ? 'Active' : 'Draft'}
-                                  </Badge>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <div className="flex space-x-2">
-                                    <Button size="sm" variant="outline" onClick={() => handleProductEdit(product)}>
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button size="sm" variant="outline" onClick={() => handleProductDelete(product)}>
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                      </table>
-                    </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
                     {products.length === 0 && (
                       <div className="text-center py-12">
                         <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
                         <p className="text-gray-600 mb-4">Add your first product or service to get started</p>
-                        <Button onClick={() => setShowProductDialog(true)}>
+                        <Button onClick={() => {
+                          setEditingProduct(null);
+                          setProductFormData({
+                            name: '',
+                            description: '',
+                            price: '',
+                            image: '',
+                            categoryId: '',
+                            brandId: '',
+                            inStock: true,
+                            isActive: true,
+                          });
+                          setShowProductDialog(true);
+                        }}>
                           <Plus className="h-4 w-4 mr-2" />
                           Add Product
                         </Button>
@@ -2426,14 +2436,14 @@ export default function BusinessAdminDashboard() {
               <Label>Select Existing Image</Label>
               <Select
                 key={images.length}
-                value={productFormData.image}
-                onValueChange={(value) => setProductFormData(prev => ({ ...prev, image: value }))}
+                value={productFormData.image || "no-image"}
+                onValueChange={(value) => setProductFormData(prev => ({ ...prev, image: value === "no-image" ? "" : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose an existing image" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No image</SelectItem>
+                  <SelectItem value="no-image">No image</SelectItem>
                   {images.map((image) => (
                     <SelectItem key={image} value={image}>
                       {image}

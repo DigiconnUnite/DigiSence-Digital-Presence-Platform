@@ -515,14 +515,14 @@ export default function ProductsManagementPage() {
               <div className="space-y-2">
                 <Label>Select Existing Image</Label>
                 <Select
-                  value={formData.image}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, image: value }))}
+                  value={formData.image || "no-image"}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, image: value === "no-image" ? "" : value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose an existing image" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No image</SelectItem>
+                    <SelectItem value="no-image">No image</SelectItem>
                     {images.map((image) => (
                       <SelectItem key={image} value={image}>
                         {image}

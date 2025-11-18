@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { getOptimizedImageUrl } from '@/lib/cloudinary'
+import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +30,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Select,
   SelectContent,
@@ -139,7 +151,8 @@ interface Business {
   categoryId: string | null
   heroContent: any
   brandContent: any
-  additionalContent: string | null
+  portfolioContent: any
+  additionalContent: any
   admin: {
     name?: string | null
     email: string
@@ -161,6 +174,7 @@ interface Category {
 export default function BusinessAdminDashboard() {
   const { user, loading, logout } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [business, setBusiness] = useState<Business | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<{ id: string, name: string }[]>([])
@@ -178,6 +192,12 @@ export default function BusinessAdminDashboard() {
   const [showContentEditor, setShowContentEditor] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showProductRightbar, setShowProductRightbar] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [confirmDialogData, setConfirmDialogData] = useState<{
+    title: string
+    description: string
+    action: () => void
+  } | null>(null)
 
   // Form states
   const [productFormData, setProductFormData] = useState({
@@ -202,6 +222,7 @@ export default function BusinessAdminDashboard() {
   })
   const [editorContent, setEditorContent] = useState('')
   const [brandContent, setBrandContent] = useState<any>({ brands: [] })
+  const [portfolioContent, setPortfolioContent] = useState<any>({ images: [] })
   const [footerContent, setFooterContent] = useState<any>({})
   const [heroContent, setHeroContent] = useState<any>({
     slides: [],
@@ -212,8 +233,9 @@ export default function BusinessAdminDashboard() {
     hero: 'Hero',
     info: 'Business Info',
     brands: 'Brand Slider',
+    categories: 'Categories',
+    portfolio: 'Portfolio',
     products: 'Products',
-    content: 'Additional Content',
     footer: 'Footer'
   })
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
@@ -278,8 +300,8 @@ export default function BusinessAdminDashboard() {
       if (businessRes.ok) {
         const data = await businessRes.json()
         setBusiness(data.business)
-        setEditorContent(data.business.additionalContent || '')
         setBrandContent(data.business.brandContent || { brands: [] })
+        setPortfolioContent(data.business.portfolioContent || { images: [] })
         setFooterContent(data.business.footerContent || {})
         setHeroContent(data.business.heroContent || {
           slides: [],
@@ -378,25 +400,39 @@ export default function BusinessAdminDashboard() {
   }
 
   const handleProductDelete = async (product: Product) => {
-    if (!confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
-      return
-    }
+    setConfirmDialogData({
+      title: 'Delete Product',
+      description: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+      action: async () => {
+        try {
+          const response = await fetch(`/api/business/products/${product.id}`, {
+            method: 'DELETE',
+          })
 
-    try {
-      const response = await fetch(`/api/business/products/${product.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        await fetchData()
-        alert('Product deleted successfully!')
-      } else {
-        const errorResult = await response.json()
-        alert(`Failed to delete product: ${errorResult.error}`)
+          if (response.ok) {
+            await fetchData()
+            toast({
+              title: "Success",
+              description: "Product deleted successfully!",
+            })
+          } else {
+            const errorResult = await response.json()
+            toast({
+              title: "Error",
+              description: `Failed to delete product: ${errorResult.error}`,
+              variant: "destructive",
+            })
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to delete product. Please try again.",
+            variant: "destructive",
+          })
+        }
       }
-    } catch (error) {
-      alert('Failed to delete product. Please try again.')
-    }
+    })
+    setShowConfirmDialog(true)
   }
 
   const handleInquiryStatusUpdate = async (inquiryId: string, newStatus: string) => {
@@ -411,13 +447,24 @@ export default function BusinessAdminDashboard() {
 
       if (response.ok) {
         await fetchData()
-        alert('Inquiry status updated successfully!')
+        toast({
+          title: "Success",
+          description: "Inquiry status updated successfully!",
+        })
       } else {
         const errorResult = await response.json()
-        alert(`Failed to update status: ${errorResult.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to update status: ${errorResult.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert('Failed to update inquiry status. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to update inquiry status. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -435,7 +482,6 @@ export default function BusinessAdminDashboard() {
       website: formData.get('website') as string,
     }
 
-    setIsLoading(true)
     try {
       const response = await fetch('/api/business', {
         method: 'PUT',
@@ -448,46 +494,29 @@ export default function BusinessAdminDashboard() {
       if (response.ok) {
         const result = await response.json()
         setBusiness(result.business)
-        alert('Business information updated successfully!')
+        toast({
+          title: "Success",
+          description: "Business information updated successfully!",
+        })
       } else {
         const error = await response.json()
-        alert(`Failed to update: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to update: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert('Failed to update business information. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAdditionalContentSave = async () => {
-    if (!business) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/business', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ additionalContent: editorContent }),
+      toast({
+        title: "Error",
+        description: "Failed to update business information. Please try again.",
+        variant: "destructive",
       })
-
-      if (response.ok) {
-        const result = await response.json()
-        setBusiness(result.business)
-        setShowContentEditor(false)
-        alert('Additional content updated successfully!')
-      } else {
-        const error = await response.json()
-        alert(`Failed to update: ${error.error}`)
-      }
-    } catch (error) {
-      alert('Failed to update additional content. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -572,7 +601,8 @@ export default function BusinessAdminDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-100 to-white flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-4 sm:px-6 py-3">
@@ -627,7 +657,7 @@ export default function BusinessAdminDashboard() {
                     <button
                       onClick={() => setActiveSection(item.value)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${activeSection === item.value
-                        ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-white'
+                        ? 'bg-linear-to-r from-orange-400 to-amber-500 text-white'
                         : 'text-gray-700 hover:bg-orange-50'
                         }`}
                     >
@@ -706,8 +736,7 @@ export default function BusinessAdminDashboard() {
                                 business.phone ? 25 : 0,
                                 business.email != null ? 25 : 0,
                                 business.website ? 25 : 0,
-                                (heroSlides && heroSlides.length > 0) ? 25 : 0,
-                                business.additionalContent ? 25 : 0
+                                (heroSlides && heroSlides.length > 0) ? 25 : 0
                               ]
                               let percent = keys.reduce((sum, val) => sum + val, 0)
                               // prevent >100%
@@ -779,7 +808,7 @@ export default function BusinessAdminDashboard() {
                         <div className="space-y-4">
                           {inquiries.slice(0, 3).map((inquiry) => (
                             <div key={inquiry.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl">
-                              <div className="flex-shrink-0">
+                              <div className="shrink-0">
                                 <Mail className="h-5 w-5 text-blue-500" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -820,8 +849,9 @@ export default function BusinessAdminDashboard() {
                       { id: 'hero', label: sectionTitles.hero, icon: ImageIcon },
                       { id: 'info', label: sectionTitles.info, icon: Building },
                       { id: 'brands', label: sectionTitles.brands, icon: Palette },
+                      { id: 'categories', label: 'Categories', icon: Grid3X3 },
+                      { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree },
                       { id: 'products', label: sectionTitles.products, icon: Package },
-                      { id: 'content', label: sectionTitles.content, icon: FileText },
                       { id: 'footer', label: sectionTitles.footer, icon: Globe }
                     ].map((tab) => {
                       const Icon = tab.icon
@@ -851,13 +881,19 @@ export default function BusinessAdminDashboard() {
                     business={{
                       ...business,
                       email: business.email ?? null,
-                      products
+                      products,
+                      heroContent,
+                      brandContent,
+                      portfolioContent,
+                      website: business.website ?? null,
                     }}
                     selectedSection={selectedProfileSection}
                     sectionTitles={sectionTitles}
                     heroContent={heroContent}
                     brandContent={brandContent}
+                    portfolioContent={portfolioContent}
                     businessFormData={businessInfoFormData}
+                    products={products}
                     onSectionClick={(section) => {
                       setSelectedProfileSection(section)
                       setEditingSection(section)
@@ -928,23 +964,35 @@ export default function BusinessAdminDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={async () => {
-                              if (confirm(`Activate ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}?`)) {
-                                try {
-                                  await Promise.all(selectedProducts.map(id =>
-                                    fetch(`/api/business/products/${id}`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ isActive: true }),
+                            onClick={() => {
+                              setConfirmDialogData({
+                                title: 'Activate Products',
+                                description: `Are you sure you want to activate ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}?`,
+                                action: async () => {
+                                  try {
+                                    await Promise.all(selectedProducts.map(id =>
+                                      fetch(`/api/business/products/${id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ isActive: true }),
+                                      })
+                                    ))
+                                    await fetchData()
+                                    setSelectedProducts([])
+                                    toast({
+                                      title: "Success",
+                                      description: "Products activated successfully!",
                                     })
-                                  ))
-                                  await fetchData()
-                                  setSelectedProducts([])
-                                  alert('Products activated successfully!')
-                                } catch (error) {
-                                  alert('Failed to activate products')
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to activate products",
+                                      variant: "destructive",
+                                    })
+                                  }
                                 }
-                              }
+                              })
+                              setShowConfirmDialog(true)
                             }}
                             className="rounded-xl"
                           >
@@ -954,23 +1002,35 @@ export default function BusinessAdminDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={async () => {
-                              if (confirm(`Deactivate ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}?`)) {
-                                try {
-                                  await Promise.all(selectedProducts.map(id =>
-                                    fetch(`/api/business/products/${id}`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ isActive: false }),
+                            onClick={() => {
+                              setConfirmDialogData({
+                                title: 'Deactivate Products',
+                                description: `Are you sure you want to deactivate ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}?`,
+                                action: async () => {
+                                  try {
+                                    await Promise.all(selectedProducts.map(id =>
+                                      fetch(`/api/business/products/${id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ isActive: false }),
+                                      })
+                                    ))
+                                    await fetchData()
+                                    setSelectedProducts([])
+                                    toast({
+                                      title: "Success",
+                                      description: "Products deactivated successfully!",
                                     })
-                                  ))
-                                  await fetchData()
-                                  setSelectedProducts([])
-                                  alert('Products deactivated successfully!')
-                                } catch (error) {
-                                  alert('Failed to deactivate products')
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to deactivate products",
+                                      variant: "destructive",
+                                    })
+                                  }
                                 }
-                              }
+                              })
+                              setShowConfirmDialog(true)
                             }}
                             className="rounded-xl"
                           >
@@ -980,19 +1040,31 @@ export default function BusinessAdminDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={async () => {
-                              if (confirm(`Delete ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}? This action cannot be undone.`)) {
-                                try {
-                                  await Promise.all(selectedProducts.map(id =>
-                                    fetch(`/api/business/products/${id}`, { method: 'DELETE' })
-                                  ))
-                                  await fetchData()
-                                  setSelectedProducts([])
-                                  alert('Products deleted successfully!')
-                                } catch (error) {
-                                  alert('Failed to delete products')
+                            onClick={() => {
+                              setConfirmDialogData({
+                                title: 'Delete Products',
+                                description: `Are you sure you want to delete ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''}? This action cannot be undone.`,
+                                action: async () => {
+                                  try {
+                                    await Promise.all(selectedProducts.map(id =>
+                                      fetch(`/api/business/products/${id}`, { method: 'DELETE' })
+                                    ))
+                                    await fetchData()
+                                    setSelectedProducts([])
+                                    toast({
+                                      title: "Success",
+                                      description: "Products deleted successfully!",
+                                    })
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to delete products",
+                                      variant: "destructive",
+                                    })
+                                  }
                                 }
-                              }
+                              })
+                              setShowConfirmDialog(true)
                             }}
                             className="rounded-xl"
                           >
@@ -1060,9 +1132,10 @@ export default function BusinessAdminDashboard() {
                                 <TableCell>
                                   {product.image ? (
                                     <img
-                                      src={product.image}
+                                      src={getOptimizedImageUrl(product.image, { width: 50, height: 50, quality: 85, format: 'auto' })}
                                       alt={product.name}
                                       className="w-12 h-12 object-cover rounded-2xl"
+                                      loading="lazy"
                                     />
                                   ) : (
                                     <div className="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center">
@@ -1355,6 +1428,8 @@ export default function BusinessAdminDashboard() {
                         {selectedProfileSection === 'hero' && ' Hero Section Editor'}
                         {selectedProfileSection === 'info' && 'Business Info Editor'}
                         {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
+                        {selectedProfileSection === 'categories' && ' Categories Editor'}
+                        {selectedProfileSection === 'portfolio' && ' Portfolio Editor'}
                         {selectedProfileSection === 'products' && ' Products Editor'}
                         {selectedProfileSection === 'content' && ' Additional Content Editor'}
                         {selectedProfileSection === 'footer' && '🔗 Footer Editor'}
@@ -1557,10 +1632,14 @@ export default function BusinessAdminDashboard() {
                                         }}
                                         className="rounded-2xl"
                                       />
-                                      <Button variant="outline" className="w-full rounded-2xl">
-                                        <Upload className="h-4 w-4 mr-2" />
-                                        Upload Media
-                                      </Button>
+                                      <ImageUpload
+                                        allowVideo={true}
+                                        onUpload={(url) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: url }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                      />
                                     </div>
                                   </div>
 
@@ -1868,7 +1947,6 @@ export default function BusinessAdminDashboard() {
                         </Button>
                         <Button onClick={async () => {
                           if (!business) return
-                          setIsLoading(true)
                           try {
                             const response = await fetch('/api/business', {
                               method: 'PUT',
@@ -1876,12 +1954,25 @@ export default function BusinessAdminDashboard() {
                               body: JSON.stringify({ heroContent }),
                             })
                             if (response.ok) {
-                              alert('Hero content saved successfully!')
+                              const result = await response.json()
+                              setBusiness(result.business)
+                              toast({
+                                title: "Success",
+                                description: "Hero content saved successfully!",
+                              })
                             } else {
-                              alert('Failed to save hero content')
+                              toast({
+                                title: "Error",
+                                description: "Failed to save hero content",
+                                variant: "destructive",
+                              })
                             }
                           } catch (error) {
-                            alert('Failed to save hero content')
+                            toast({
+                              title: "Error",
+                              description: "Failed to save hero content",
+                              variant: "destructive",
+                            })
                           } finally {
                             setIsLoading(false)
                           }
@@ -1942,44 +2033,12 @@ export default function BusinessAdminDashboard() {
                                 placeholder="https://..."
                                 className="rounded-2xl"
                               />
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    const input = document.createElement('input')
-                                    input.type = 'file'
-                                    input.accept = 'image/*'
-                                    input.onchange = async (e) => {
-                                      const file = (e.target as HTMLInputElement).files?.[0]
-                                      if (file) {
-                                        const formData = new FormData()
-                                        formData.append('image', file)
-                                        try {
-                                          const response = await fetch('/api/business/upload', {
-                                            method: 'POST',
-                                            body: formData,
-                                          })
-                                          if (response.ok) {
-                                            const data = await response.json()
-                                            setBusinessInfoFormData(prev => ({ ...prev, logo: data.url }))
-                                          } else {
-                                            alert('Failed to upload image')
-                                          }
-                                        } catch (error) {
-                                          alert('Failed to upload image')
-                                        }
-                                      }
-                                    }
-                                    input.click()
-                                  }}
-                                  className="rounded-xl"
-                                >
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Upload Logo
-                                </Button>
+                              <div className="space-y-2">
+                                <ImageUpload
+                                  onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, logo: url }))}
+                                />
                                 {businessInfoFormData.logo && (
-                                  <img src={businessInfoFormData.logo} alt="Logo preview" className="h-8 w-8 object-cover rounded-2xl" />
+                                  <img src={getOptimizedImageUrl(businessInfoFormData.logo, { width: 64, height: 64, quality: 85, format: 'auto' })} alt="Logo preview" className="h-16 w-16 object-cover rounded-2xl border-2 border-gray-200" loading="lazy" />
                                 )}
                               </div>
                             </div>
@@ -2024,7 +2083,6 @@ export default function BusinessAdminDashboard() {
                           Cancel
                         </Button>
                         <Button onClick={async () => {
-                          setIsLoading(true)
                           try {
                             // Filter out empty strings for optional fields
                             const cleanData = Object.fromEntries(
@@ -2042,10 +2100,17 @@ export default function BusinessAdminDashboard() {
                             if (response.ok) {
                               const result = await response.json()
                               setBusiness(result.business)
-                              alert('Business information updated successfully!')
+                              toast({
+                                title: "Success",
+                                description: "Business information updated successfully!",
+                              })
                             } else {
                               const error = await response.json()
-                              alert(`Failed to update: ${error.error}`)
+                              toast({
+                                title: "Error",
+                                description: `Failed to update: ${error.error}`,
+                                variant: "destructive",
+                              })
                             }
                           } catch (error) {
                             alert('Failed to update business information. Please try again.')
@@ -2060,40 +2125,6 @@ export default function BusinessAdminDashboard() {
                     </div>
                   )}
 
-                  {selectedProfileSection === 'content' && (
-                    <div className="space-y-6">
-                      <div>
-                        <Label className="text-sm font-medium">Section Title</Label>
-                        <Input
-                          value={sectionTitles.content}
-                          onChange={(e) => setSectionTitles(prev => ({ ...prev, content: e.target.value }))}
-                          placeholder="Enter section title"
-                          className="rounded-2xl"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-medium">Additional Content</Label>
-                        <div className="mt-2">
-                          <RichTextEditor
-                            content={editorContent}
-                            onChange={setEditorContent}
-                            placeholder="Add testimonials, FAQ, or additional information..."
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end space-x-3 pt-6">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button onClick={handleAdditionalContentSave} className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Content
-                        </Button>
-                      </div>
-                    </div>
-                  )}
 
                   {selectedProfileSection === 'brands' && (
                     <div className="space-y-6">
@@ -2141,7 +2172,11 @@ export default function BusinessAdminDashboard() {
                           <Button
                             onClick={() => {
                               if (!brandContent.newBrandName?.trim()) {
-                                alert('Please enter a brand name')
+                                toast({
+                                  title: "Error",
+                                  description: "Please enter a brand name",
+                                  variant: "destructive",
+                                })
                                 return
                               }
                               const newBrand = {
@@ -2186,9 +2221,10 @@ export default function BusinessAdminDashboard() {
                                     <TableCell>
                                       {brand.logo ? (
                                         <img
-                                          src={brand.logo}
+                                          src={getOptimizedImageUrl(brand.logo, { width: 32, height: 32, quality: 85, format: 'auto' })}
                                           alt={brand.name}
                                           className="h-8 w-8 object-cover rounded-2xl"
+                                          loading="lazy"
                                         />
                                       ) : (
                                         <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
@@ -2232,7 +2268,6 @@ export default function BusinessAdminDashboard() {
                         </Button>
                         <Button onClick={async () => {
                           if (!business) return
-                          setIsLoading(true)
                           try {
                             // Clean up temporary form fields before saving
                             const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent
@@ -2242,12 +2277,177 @@ export default function BusinessAdminDashboard() {
                               body: JSON.stringify({ brandContent: cleanBrandContent }),
                             })
                             if (response.ok) {
-                              alert('Brand content saved successfully!')
+                              const result = await response.json()
+                              setBusiness(result.business)
+                              toast({
+                                title: "Success",
+                                description: "Brand content saved successfully!",
+                              })
                             } else {
-                              alert('Failed to save brand content')
+                              toast({
+                                title: "Error",
+                                description: "Failed to save brand content",
+                                variant: "destructive",
+                              })
                             }
                           } catch (error) {
-                            alert('Failed to save brand content')
+                            toast({
+                              title: "Error",
+                              description: "Failed to save brand content",
+                              variant: "destructive",
+                            })
+                          } finally {
+                            setIsLoading(false)
+                          }
+                        }} className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'portfolio' && (
+                    <div className="space-y-6">
+                      {/* Section Title */}
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.portfolio}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, portfolio: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      {/* Add New Portfolio Image Section */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Add New Portfolio Image</CardTitle>
+                          <CardDescription>Add a new image to your portfolio gallery</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Image URL</Label>
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Image URL or upload below"
+                                value={portfolioContent.newImageUrl || ''}
+                                onChange={(e) => setPortfolioContent(prev => ({ ...prev, newImageUrl: e.target.value }))}
+                                className="rounded-2xl"
+                              />
+                              <ImageUpload
+                                allowVideo={true}
+                                onUpload={(url) => setPortfolioContent(prev => ({ ...prev, newImageUrl: url }))}
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              if (!portfolioContent.newImageUrl?.trim()) {
+                                toast({
+                                  title: "Error",
+                                  description: "Please provide an image URL",
+                                  variant: "destructive",
+                                })
+                                return
+                              }
+                              const newImage = {
+                                url: portfolioContent.newImageUrl.trim(),
+                                alt: 'Portfolio image',
+                              }
+                              setPortfolioContent(prev => ({
+                                ...prev,
+                                images: [...(prev.images || []), newImage],
+                                newImageUrl: '',
+                              }))
+                            }}
+                            className="w-full rounded-2xl"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Image
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      {/* Portfolio Images Grid */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Portfolio Images</CardTitle>
+                          <CardDescription>Manage your portfolio gallery</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {portfolioContent.images?.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                              {portfolioContent.images.map((image: any, index: number) => (
+                                <div key={index} className="relative group">
+                                  <img
+                                    src={getOptimizedImageUrl(image.url, { width: 200, height: 150, quality: 85, format: 'auto' })}
+                                    alt={image.alt || 'Portfolio image'}
+                                    className="w-full h-24 object-cover rounded-2xl"
+                                    loading="lazy"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      setPortfolioContent(prev => ({
+                                        ...prev,
+                                        images: prev.images.filter((_, i) => i !== index)
+                                      }))
+                                    }}
+                                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No portfolio images added yet</h3>
+                              <p className="text-gray-600">Add your first portfolio image using form above</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-3 pt-6 border-t">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button onClick={async () => {
+                          if (!business) return
+                          try {
+                            // Clean up temporary form fields before saving
+                            const { newImageUrl, ...cleanPortfolioContent } = portfolioContent
+                            const response = await fetch('/api/business', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ portfolioContent: cleanPortfolioContent }),
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              setBusiness(result.business)
+                              toast({
+                                title: "Success",
+                                description: "Portfolio content saved successfully!",
+                              })
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: "Failed to save portfolio content",
+                                variant: "destructive",
+                              })
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to save portfolio content",
+                              variant: "destructive",
+                            })
                           } finally {
                             setIsLoading(false)
                           }
@@ -2308,6 +2508,37 @@ export default function BusinessAdminDashboard() {
                         <Button className="rounded-2xl">
                           <Save className="h-4 w-4 mr-2" />
                           Save Footer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'categories' && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.categories}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, categories: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      <div className="text-center py-12">
+                        <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Categories Manager</h3>
+                        <p className="text-gray-600 mb-6">
+                          Categories are automatically generated from your products. Add products with categories to see them here.
+                        </p>
+                        <Button onClick={() => setActiveSection('products')} className="rounded-2xl">
+                          Go to Products Section
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-6">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Close
                         </Button>
                       </div>
                     </div>
@@ -2558,13 +2789,24 @@ export default function BusinessAdminDashboard() {
                               inStock: true,
                               isActive: true,
                             })
-                            alert(editingProduct ? 'Product updated successfully!' : 'Product added successfully!')
+                            toast({
+                              title: "Success",
+                              description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
+                            })
                           } else {
                             const errorResult = await response.json()
-                            alert(`Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`)
+                            toast({
+                              title: "Error",
+                              description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
+                              variant: "destructive",
+                            })
                           }
                         } catch (error) {
-                          alert(`Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`)
+                          toast({
+                            title: "Error",
+                            description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+                            variant: "destructive",
+                          })
                         } finally {
                           setIsLoading(false)
                         }
@@ -2664,6 +2906,27 @@ export default function BusinessAdminDashboard() {
           </div>
         </>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialogData?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialogData?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              confirmDialogData?.action()
+              setShowConfirmDialog(false)
+            }}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

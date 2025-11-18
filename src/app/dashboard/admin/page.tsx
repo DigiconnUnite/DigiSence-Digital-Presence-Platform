@@ -1111,7 +1111,8 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative flex flex-col bg-gradient-to-b from-amber-100 to-white">
+    <div className="min-h-screen relative flex flex-col">
+      <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-4 sm:px-6 py-3">
@@ -1162,7 +1163,7 @@ export default function SuperAdminDashboard() {
                     <button
                       onClick={() => setCurrentView(item.value)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                        ? ' bg-gradient-to-r from-orange-400 to-amber-500 text-white'
+                        ? ' bg-linear-to-r from-orange-400 to-amber-500 text-white'
                         : 'text-gray-700 hover:bg-orange-50'
                         }`}
                     >

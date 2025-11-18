@@ -13,7 +13,6 @@ const updateBusinessSchema = z.object({
   website: z.string().url().optional().or(z.literal('')),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
-  additionalContent: z.string().optional(),
 })
 
 async function getBusinessAdmin(request: NextRequest, businessId: string) {

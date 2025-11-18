@@ -14,7 +14,7 @@ const updateBusinessSchema = z.object({
   categoryId: z.string().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
-  additionalContent: z.string().optional(),
+  portfolioContent: z.any().optional(),
   isActive: z.boolean().optional(),
   ownerName: z.string().optional(),
   slug: z.string().optional(),
@@ -70,6 +70,15 @@ export async function GET(request: NextRequest) {
         },
       },
     })
+
+    // Ensure content fields are included in response
+    if (business) {
+      const businessWithContent = business as any
+      businessWithContent.heroContent = businessWithContent.heroContent || { slides: [] }
+      businessWithContent.brandContent = businessWithContent.brandContent || { brands: [] }
+      businessWithContent.portfolioContent = businessWithContent.portfolioContent || { images: [] }
+      return NextResponse.json({ business: businessWithContent })
+    }
 
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
@@ -168,9 +177,15 @@ export async function PUT(request: NextRequest) {
       business.admin.name = ownerName.trim()
     }
 
+    // Ensure content fields are included in response
+    const businessWithContent = business as any
+    businessWithContent.heroContent = businessWithContent.heroContent || { slides: [] }
+    businessWithContent.brandContent = businessWithContent.brandContent || { brands: [] }
+    businessWithContent.portfolioContent = businessWithContent.portfolioContent || { images: [] }
+
     return NextResponse.json({
       success: true,
-      business,
+      business: businessWithContent,
     })
   } catch (error) {
     console.error('Business update error:', error)

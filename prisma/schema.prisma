@@ -54,7 +54,7 @@ model Business {
   // Content sections (stored as JSON for flexibility)
   heroContent Json?      // Hero slider data
   brandContent Json?     // Brand slider data
-  additionalContent Json? // Additional rich text content
+  portfolioContent Json? // Portfolio images data
 
   @@map("businesses")
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { getOptimizedImageUrl } from '@/lib/cloudinary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -340,10 +341,11 @@ export default function ProductsManagementPage() {
                 <Card key={product.id} className="overflow-hidden">
                   {product.image && (
                     <div className="h-48 bg-gray-200">
-                      <img 
-                        src={product.image} 
+                      <img
+                        src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
                         alt={product.name}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                   )}
@@ -541,9 +543,10 @@ export default function ProductsManagementPage() {
                     <Label className="text-sm text-gray-600">Image Preview:</Label>
                     <div className="mt-2">
                       <img
-                        src={formData.image}
+                        src={getOptimizedImageUrl(formData.image, { width: 200, height: 200, quality: 85, format: 'auto' })}
                         alt="Product preview"
                         className="w-48 h-48 object-cover rounded-lg border-2 border-gray-200"
+                        loading="lazy"
                       />
                     </div>
                   </div>

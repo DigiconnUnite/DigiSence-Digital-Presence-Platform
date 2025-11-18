@@ -14,7 +14,6 @@ const updateBusinessSchema = z.object({
   categoryId: z.string().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
-  additionalContent: z.string().optional(),
   isActive: z.boolean().optional(),
   slug: z.string().optional(),
 })

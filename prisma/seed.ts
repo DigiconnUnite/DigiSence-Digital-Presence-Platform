@@ -133,40 +133,7 @@ async function main() {
           { name: 'SolarTech', logo: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=100&h=100&fit=crop' },
           { name: 'PowerGen', logo: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=100&fit=crop' }
         ]
-      },
-      additionalContent: `
-        <h2>About Jakson Enterprises</h2>
-        <p>Jakson Enterprises is a premier wholesaler and distributor of power tools and industrial equipment, proudly serving the Agra region and beyond. With years of experience in the industry, we have established ourselves as a trusted partner for businesses seeking high-quality tools and equipment.</p>
-
-        <h2>Our Product Range</h2>
-        <ul>
-          <li><strong>Power Tools:</strong> Drills, grinders, saws, and cutting equipment</li>
-          <li><strong>Cutting Blades:</strong> Diamond blades, circular saw blades, and specialty cutting tools</li>
-          <li><strong>Accessories:</strong> Tool bits, drill bits, grinding discs, and safety equipment</li>
-          <li><strong>Industrial Equipment:</strong> Heavy machinery and specialized industrial tools</li>
-        </ul>
-
-        <h2>Associated Companies & Services</h2>
-        <p>Through our network of associated companies, we also provide comprehensive solutions in:</p>
-        <ul>
-          <li>Solar panel installation and maintenance</li>
-          <li>Generator sales and service</li>
-          <li>Industrial ball bearings and mechanical components</li>
-          <li>Energy-efficient solutions for industrial applications</li>
-        </ul>
-
-        <h2>Why Choose Jakson Enterprises?</h2>
-        <ul>
-          <li>Wholesale pricing for bulk orders</li>
-          <li>Genuine products from trusted manufacturers</li>
-          <li>Expert technical support and consultation</li>
-          <li>Reliable delivery and after-sales service</li>
-          <li>Established presence in Agra and surrounding areas</li>
-        </ul>
-
-        <h2>Quality Assurance</h2>
-        <p>We maintain strict quality control standards and work directly with leading manufacturers to ensure that our customers receive only the best products. Our team of experienced professionals is committed to providing exceptional service and support to all our business partners.</p>
-      `
+      }
     },
     create: {
       name: 'Jakson Enterprises',
@@ -203,40 +170,7 @@ async function main() {
           { name: 'SolarTech', logo: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=100&h=100&fit=crop' },
           { name: 'PowerGen', logo: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=100&fit=crop' }
         ]
-      },
-      additionalContent: `
-        <h2>About Jakson Enterprises</h2>
-        <p>Jakson Enterprises is a premier wholesaler and distributor of power tools and industrial equipment, proudly serving the Agra region and beyond. With years of experience in the industry, we have established ourselves as a trusted partner for businesses seeking high-quality tools and equipment.</p>
-
-        <h2>Our Product Range</h2>
-        <ul>
-          <li><strong>Power Tools:</strong> Drills, grinders, saws, and cutting equipment</li>
-          <li><strong>Cutting Blades:</strong> Diamond blades, circular saw blades, and specialty cutting tools</li>
-          <li><strong>Accessories:</strong> Tool bits, drill bits, grinding discs, and safety equipment</li>
-          <li><strong>Industrial Equipment:</strong> Heavy machinery and specialized industrial tools</li>
-        </ul>
-
-        <h2>Associated Companies & Services</h2>
-        <p>Through our network of associated companies, we also provide comprehensive solutions in:</p>
-        <ul>
-          <li>Solar panel installation and maintenance</li>
-          <li>Generator sales and service</li>
-          <li>Industrial ball bearings and mechanical components</li>
-          <li>Energy-efficient solutions for industrial applications</li>
-        </ul>
-
-        <h2>Why Choose Jakson Enterprises?</h2>
-        <ul>
-          <li>Wholesale pricing for bulk orders</li>
-          <li>Genuine products from trusted manufacturers</li>
-          <li>Expert technical support and consultation</li>
-          <li>Reliable delivery and after-sales service</li>
-          <li>Established presence in Agra and surrounding areas</li>
-        </ul>
-
-        <h2>Quality Assurance</h2>
-        <p>We maintain strict quality control standards and work directly with leading manufacturers to ensure that our customers receive only the best products. Our team of experienced professionals is committed to providing exceptional service and support to all our business partners.</p>
-      `
+      }
     }
   })
 

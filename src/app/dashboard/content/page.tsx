@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { getOptimizedImageUrl } from '@/lib/cloudinary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,7 +55,6 @@ interface Business {
   categoryId?: string
   heroContent: any
   brandContent: any
-  additionalContent?: string
   category?: {
     id: string
     name: string
@@ -77,8 +77,6 @@ export default function ContentManagementPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [showHeroEditor, setShowHeroEditor] = useState(false)
   const [showBrandEditor, setShowBrandEditor] = useState(false)
-  const [showContentEditor, setShowContentEditor] = useState(false)
-  const [editorContent, setEditorContent] = useState('')
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState('content')
   const [sectionTitles, setSectionTitles] = useState({ hero: 'Hero Section' })
@@ -108,7 +106,6 @@ export default function ContentManagementPage() {
       if (businessRes.ok) {
         const data = await businessRes.json()
         setBusiness(data.business)
-        setEditorContent(data.business.additionalContent || '')
         setHeroContent(data.business.heroContent || { slides: [], autoPlay: true, transitionSpeed: 5, transitionEffect: 'fade', showDots: true, showArrows: true })
       }
 
@@ -308,34 +305,6 @@ export default function ContentManagementPage() {
     }
   }
 
-  const handleAdditionalContentSave = async () => {
-    if (!business) return
-
-    setIsSaving(true)
-    try {
-      const response = await fetch('/api/business', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ additionalContent: editorContent }),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        setBusiness(result.business)
-        setShowContentEditor(false)
-        alert('Additional content updated successfully!')
-      } else {
-        const error = await response.json()
-        alert(`Failed to update: ${error.error}`)
-      }
-    } catch (error) {
-      alert('Failed to update additional content. Please try again.')
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
 
   if (loading || isLoading) {
@@ -989,12 +958,13 @@ export default function ContentManagementPage() {
           <div className="space-y-4">
             {heroContent.slides?.map((slide: any, index: number) => (
               <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0">
+                <div className="w-20 h-20 bg-gray-200 rounded-lg shrink-0">
                   {slide.media && (
                     <img
-                      src={slide.media}
+                      src={getOptimizedImageUrl(slide.media, { width: 80, height: 80, quality: 85, format: 'auto' })}
                       alt={slide.headline}
                       className="w-full h-full object-cover rounded-lg"
+                      loading="lazy"
                     />
                   )}
                 </div>
@@ -1049,12 +1019,13 @@ export default function ContentManagementPage() {
           <div className="space-y-4">
             {(business.brandContent?.brands || []).map((brand: any, index: number) => (
               <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg shrink-0">
                   {brand.logo && (
                     <img
-                      src={brand.logo}
+                      src={getOptimizedImageUrl(brand.logo, { width: 48, height: 48, quality: 85, format: 'auto' })}
                       alt={brand.name}
                       className="w-full h-full object-cover rounded-lg"
+                      loading="lazy"
                     />
                   )}
                 </div>
@@ -1072,74 +1043,6 @@ export default function ContentManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Additional Content */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Additional Content</CardTitle>
-              <CardDescription>Add testimonials, FAQ, or "How It Works" content</CardDescription>
-            </div>
-            <Dialog open={showContentEditor} onOpenChange={setShowContentEditor}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Edit Content
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Edit Additional Content</DialogTitle>
-                  <DialogDescription>
-                    Add rich text content for testimonials, FAQ, or additional information
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAdditionalContentSave} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="content">Content</Label>
-                    <RichTextEditor
-                      content={editorContent}
-                      onChange={setEditorContent}
-                      placeholder="Add your additional content here..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Upload Images</Label>
-                    <ImageUpload
-                      onUpload={(url) => {
-                        // Insert image into rich text editor
-                        setEditorContent(prev => prev + `<img src="${url}" alt="Image" />`)
-                      }}
-                      maxFiles={5}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex justify-end space-x-3">
-                    <Button type="button" variant="outline" onClick={() => setShowContentEditor(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? (
-                        <>Saving...</>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Content
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-sm max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: business.additionalContent || '' }} />
-          </div>
-        </CardContent>
-      </Card>
 
 
       {/* Quick Stats */}
@@ -1181,7 +1084,6 @@ export default function ContentManagementPage() {
                 business.website ? 25 : 0,
                 heroContent.slides?.length > 0 ? 25 : 0,
                 business.brandContent?.brands?.length > 0 ? 25 : 0,
-                business.additionalContent ? 25 : 0,
               ].reduce((sum, val) => sum + val, 0)}%
             </div>
             <p className="text-xs text-muted-foreground">Profile completion</p>

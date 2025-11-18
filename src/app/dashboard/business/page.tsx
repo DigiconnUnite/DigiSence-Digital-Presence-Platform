@@ -72,7 +72,13 @@ import {
   RotateCcw,
   CheckCircle,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Home,
+  Grid3X3,
+  FolderTree,
+  MessageCircle,
+  LineChart,
+  Cog
 } from 'lucide-react'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
@@ -153,11 +159,11 @@ interface Category {
 }
 
 export default function BusinessAdminDashboard() {
-  const { user, loading } = useAuth()
+  const { user, loading, logout } = useAuth()
   const router = useRouter()
   const [business, setBusiness] = useState<Business | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
-  const [brands, setBrands] = useState<{id: string, name: string}[]>([])
+  const [brands, setBrands] = useState<{ id: string, name: string }[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
   const [images, setImages] = useState<string[]>([])
@@ -168,40 +174,40 @@ export default function BusinessAdminDashboard() {
   const [selectedProfileSection, setSelectedProfileSection] = useState<string | null>(null)
 
   // Dialog states
-  const [showProductDialog, setShowProductDialog] = useState(false)
   // const [showHeroEditor, setShowHeroEditor] = useState(false) // never used
   const [showContentEditor, setShowContentEditor] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [showProductRightbar, setShowProductRightbar] = useState(false)
 
   // Form states
-   const [productFormData, setProductFormData] = useState({
-     name: '',
-     description: '',
-     price: '',
-     image: '',
-     categoryId: '',
-     brandId: '',
-     inStock: true,
-     isActive: true,
-   })
-   const [businessInfoFormData, setBusinessInfoFormData] = useState({
-     name: '',
-     description: '',
-     logo: '',
-     address: '',
-     phone: '',
-     email: '',
-     website: '',
-     ownerName: '',
-   })
-   const [editorContent, setEditorContent] = useState('')
-   const [brandContent, setBrandContent] = useState<any>({ brands: [] })
-   const [footerContent, setFooterContent] = useState<any>({})
-   const [heroContent, setHeroContent] = useState<any>({
-     slides: [],
-     autoPlay: true,
-     transitionSpeed: 5
-   })
+  const [productFormData, setProductFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    image: '',
+    categoryId: '',
+    brandId: '',
+    inStock: true,
+    isActive: true,
+  })
+  const [businessInfoFormData, setBusinessInfoFormData] = useState({
+    name: '',
+    description: '',
+    logo: '',
+    address: '',
+    phone: '',
+    email: '',
+    website: '',
+    ownerName: '',
+  })
+  const [editorContent, setEditorContent] = useState('')
+  const [brandContent, setBrandContent] = useState<any>({ brands: [] })
+  const [footerContent, setFooterContent] = useState<any>({})
+  const [heroContent, setHeroContent] = useState<any>({
+    slides: [],
+    autoPlay: true,
+    transitionSpeed: 5
+  })
   const [sectionTitles, setSectionTitles] = useState({
     hero: 'Hero',
     info: 'Business Info',
@@ -217,6 +223,10 @@ export default function BusinessAdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
 
+  // Mobile responsiveness states
+  const [isMobile, setIsMobile] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+
   // Stats
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -226,6 +236,18 @@ export default function BusinessAdminDashboard() {
     readInquiries: 0,
     repliedInquiries: 0,
   })
+
+  useEffect(() => {
+    // Check if mobile on initial load and on resize
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'BUSINESS_ADMIN')) {
@@ -252,29 +274,29 @@ export default function BusinessAdminDashboard() {
       let tempInquiries: Inquiry[] = []
 
       // Fetch business data
-       const businessRes = await fetch('/api/business')
-       if (businessRes.ok) {
-         const data = await businessRes.json()
-         setBusiness(data.business)
-         setEditorContent(data.business.additionalContent || '')
-         setBrandContent(data.business.brandContent || { brands: [] })
-         setFooterContent(data.business.footerContent || {})
-         setHeroContent(data.business.heroContent || {
-           slides: [],
-           autoPlay: true,
-           transitionSpeed: 5
-         })
-         setBusinessInfoFormData({
-           name: data.business.name || '',
-           description: data.business.description || '',
-           logo: data.business.logo || '',
-           address: data.business.address || '',
-           phone: data.business.phone || '',
-           email: data.business.email || '',
-           website: data.business.website || '',
-           ownerName: data.business.admin?.name || '',
-         })
-       }
+      const businessRes = await fetch('/api/business')
+      if (businessRes.ok) {
+        const data = await businessRes.json()
+        setBusiness(data.business)
+        setEditorContent(data.business.additionalContent || '')
+        setBrandContent(data.business.brandContent || { brands: [] })
+        setFooterContent(data.business.footerContent || {})
+        setHeroContent(data.business.heroContent || {
+          slides: [],
+          autoPlay: true,
+          transitionSpeed: 5
+        })
+        setBusinessInfoFormData({
+          name: data.business.name || '',
+          description: data.business.description || '',
+          logo: data.business.logo || '',
+          address: data.business.address || '',
+          phone: data.business.phone || '',
+          email: data.business.email || '',
+          website: data.business.website || '',
+          ownerName: data.business.admin?.name || '',
+        })
+      }
 
       // Fetch categories
       const categoriesRes = await fetch('/api/categories')
@@ -340,50 +362,6 @@ export default function BusinessAdminDashboard() {
     }
   }
 
-  const handleProductSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const url = editingProduct
-        ? `/api/business/products/${editingProduct.id}`
-        : '/api/business/products'
-
-      const method = editingProduct ? 'PUT' : 'POST'
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productFormData),
-      })
-
-      if (response.ok) {
-        await fetchData()
-        setShowProductDialog(false)
-        setEditingProduct(null)
-        setProductFormData({
-          name: '',
-          description: '',
-          price: '',
-          image: '',
-          categoryId: '',
-          brandId: '',
-          inStock: true,
-          isActive: true,
-        })
-        alert(editingProduct ? 'Product updated successfully!' : 'Product added successfully!')
-      } else {
-        const errorResult = await response.json()
-        alert(`Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`)
-      }
-    } catch (error) {
-      alert(`Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleProductEdit = (product: Product) => {
     setEditingProduct(product)
@@ -397,7 +375,6 @@ export default function BusinessAdminDashboard() {
       inStock: product.inStock,
       isActive: product.isActive,
     })
-    setShowProductDialog(true)
   }
 
   const handleProductDelete = async (product: Product) => {
@@ -548,39 +525,85 @@ export default function BusinessAdminDashboard() {
 
   const heroSlides = business.heroContent?.slides || []
 
+  // Menu items for navigation
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: BarChart3,
+      mobileIcon: Home,
+      value: 'dashboard',
+      mobileTitle: 'Home'
+    },
+    {
+      title: 'Profile',
+      icon: Palette,
+      mobileIcon: Palette,
+      value: 'profile',
+      mobileTitle: 'Profile'
+    },
+    {
+      title: 'Products',
+      icon: Package,
+      mobileIcon: Grid3X3,
+      value: 'products',
+      mobileTitle: 'Products'
+    },
+    {
+      title: 'Inquiries',
+      icon: Mail,
+      mobileIcon: MessageCircle,
+      value: 'inquiries',
+      mobileTitle: 'Inquiries'
+    },
+    {
+      title: 'Analytics',
+      icon: TrendingUp,
+      mobileIcon: LineChart,
+      value: 'analytics',
+      mobileTitle: 'Analytics'
+    },
+    {
+      title: 'Settings',
+      icon: Settings,
+      mobileIcon: Cog,
+      value: 'settings',
+      mobileTitle: 'Settings'
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-amber-100 to-white flex flex-col">
       {/* Top Header Bar */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex justify-between items-center px-6 py-4">
+      <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-3">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-black rounded-xl">
+            <div className="p-3 bg-black rounded-2xl">
               {/* <Building className="h-8 w-8 text-white" /> */}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">{business.name}</h1>
               <p className="text-sm text-gray-500">DigiSence Logo.</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
-            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex">
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
-            <Button size="sm" className="bg-black hover:bg-gray-800 text-white">
+            <Button size="sm" className="bg-black hover:bg-gray-800 text-white rounded-2xl hidden sm:flex">
               <Globe className="h-4 w-4 mr-2" />
               Publish
             </Button>
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-gray-900">{user?.name || user.email}</p>
               <p className="text-sm text-gray-500">{user.email}</p>
             </div>
-            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-              <User className="h-6 w-6 text-white" />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center">
+              <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
         </div>
@@ -588,126 +611,65 @@ export default function BusinessAdminDashboard() {
 
       {/* Main Layout: Three Column Grid */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center space-x-2">
-              <Building className="h-6 w-6" />
-              <span className="font-semibold">Business Admin</span>
+        {/* Left Sidebar - Desktop Only */}
+        {!isMobile && (
+          <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+              <div className="flex items-center space-x-2">
+                <Building className="h-6 w-6" />
+                <span className="font-semibold">Business Admin</span>
+              </div>
+            </div>
+            <nav className="flex-1 p-4 overflow-auto hide-scrollbar">
+              <ul className="space-y-2">
+                {menuItems.map((item) => (
+                  <li key={item.value}>
+                    <button
+                      onClick={() => setActiveSection(item.value)}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${activeSection === item.value
+                        ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-white'
+                        : 'text-gray-700 hover:bg-orange-50'
+                        }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            {/* Logout Section */}
+            <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+              <button
+                onClick={async () => {
+                  await logout()
+                  router.push('/login')
+                }}
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
-          <nav className="flex-1 p-4">
-            <ul className="space-y-2">
-              <li>
-                <button
-                  onClick={() => setActiveSection('dashboard')}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'dashboard'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <BarChart3 className="h-5 w-5" />
-                  <span>Dashboard</span>
-                </button>
-              </li>
-
-              {/* Profile Section with Submenu */}
-              <li>
-                <button
-                  onClick={() => {
-                    setActiveSection('profile')
-                    toggleSectionExpansion('profile')
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'profile'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Palette className="h-5 w-5" />
-                    <span>Profile</span>
-                  </div>
-
-                </button>
-
-              </li>
-
-              <li>
-                <button
-                  onClick={() => setActiveSection('products')}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'products'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Package className="h-5 w-5" />
-                  <span>Products</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  onClick={() => setActiveSection('inquiries')}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'inquiries'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Mail className="h-5 w-5" />
-                  <span>Inquiries</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  onClick={() => setActiveSection('analytics')}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'analytics'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Analytics</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  onClick={() => setActiveSection('settings')}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === 'settings'
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Settings className="h-5 w-5" />
-                  <span>Settings</span>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+        )}
 
         {/* Middle Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 p-6 overflow-auto">
+        <div className={`flex-1 m-4 rounded-3xl bg-white border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+          <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
             {/* Main Content based on activeSection */}
             {activeSection === 'dashboard' && (
               <>
-                <div className="max-w-7xl mx-auto">
+                <div className=" mx-auto">
                   <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
                     <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
                   </div>
 
                   {/* Stats Overview */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <Card className="bg-white border border-gray-200 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-900">Total Products</CardTitle>
                         <Package className="h-4 w-4 text-gray-400" />
@@ -717,7 +679,7 @@ export default function BusinessAdminDashboard() {
                         <p className="text-xs text-gray-500">{stats.activeProducts} active</p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-white border border-gray-200 shadow-sm">
+                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-900">Total Inquiries</CardTitle>
                         <Mail className="h-4 w-4 text-gray-400" />
@@ -727,7 +689,7 @@ export default function BusinessAdminDashboard() {
                         <p className="text-xs text-gray-500">{stats.newInquiries} new</p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-white border border-gray-200 shadow-sm">
+                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-900">Profile Completion</CardTitle>
                         <BarChart3 className="h-4 w-4 text-gray-400" />
@@ -757,7 +719,7 @@ export default function BusinessAdminDashboard() {
                         <p className="text-xs text-gray-500">Profile completion</p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-white border border-gray-200 shadow-sm">
+                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-900">Business Health</CardTitle>
                         <Building className="h-4 w-4 text-gray-400" />
@@ -773,13 +735,14 @@ export default function BusinessAdminDashboard() {
 
                   {/* Quick Actions and Recent Activity */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card>
+                    <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader>
                         <CardTitle>Quick Actions</CardTitle>
                         <CardDescription>Common tasks to get you started</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <Button onClick={() => {
+                          setActiveSection('products');
                           setEditingProduct(null);
                           setProductFormData({
                             name: '',
@@ -791,23 +754,23 @@ export default function BusinessAdminDashboard() {
                             inStock: true,
                             isActive: true,
                           });
-                          setShowProductDialog(true);
-                        }} className="w-full justify-start">
+                          setShowProductRightbar(true);
+                        }} className="w-full justify-start rounded-2xl">
                           <Plus className="h-4 w-4 mr-2" />
                           Add New Product
                         </Button>
-                        <Button variant="outline" onClick={() => setActiveSection('profile')} className="w-full justify-start">
+                        <Button variant="outline" onClick={() => setActiveSection('profile')} className="w-full justify-start rounded-2xl">
                           <Settings className="h-4 w-4 mr-2" />
                           Update Business Profile
                         </Button>
-                        <Button variant="outline" onClick={() => setActiveSection('inquiries')} className="w-full justify-start">
+                        <Button variant="outline" onClick={() => setActiveSection('inquiries')} className="w-full justify-start rounded-2xl">
                           <Mail className="h-4 w-4 mr-2" />
                           Check New Inquiries
                         </Button>
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                       <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
                         <CardDescription>Latest updates and interactions</CardDescription>
@@ -815,7 +778,7 @@ export default function BusinessAdminDashboard() {
                       <CardContent>
                         <div className="space-y-4">
                           {inquiries.slice(0, 3).map((inquiry) => (
-                            <div key={inquiry.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div key={inquiry.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl">
                               <div className="flex-shrink-0">
                                 <Mail className="h-5 w-5 text-blue-500" />
                               </div>
@@ -827,7 +790,7 @@ export default function BusinessAdminDashboard() {
                                   {formatDate(inquiry.createdAt)}
                                 </p>
                               </div>
-                              <Badge variant={inquiry.status === 'NEW' ? 'destructive' : 'secondary'}>
+                              <Badge variant={inquiry.status === 'NEW' ? 'destructive' : 'secondary'} className="rounded-full">
                                 {inquiry.status}
                               </Badge>
                             </div>
@@ -844,15 +807,15 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'profile' && (
-              <div className="max-w-7xl mx-auto">
+              <div className=" mx-auto">
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Profile Management</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Profile Management</h2>
                   <p className="text-gray-600">Manage your business profile sections</p>
                 </div>
 
                 {/* Section Tabs */}
                 <div className="mb-6">
-                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-2xl overflow-x-auto">
                     {[
                       { id: 'hero', label: sectionTitles.hero, icon: ImageIcon },
                       { id: 'info', label: sectionTitles.info, icon: Building },
@@ -869,11 +832,10 @@ export default function BusinessAdminDashboard() {
                             setSelectedProfileSection(tab.id)
                             setEditingSection(tab.id)
                           }}
-                          className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            selectedProfileSection === tab.id
-                              ? 'bg-white text-black shadow-sm'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                          }`}
+                          className={`flex-1 flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-w-fit ${selectedProfileSection === tab.id
+                            ? 'bg-white text-black shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                            }`}
                         >
                           <Icon className="h-4 w-4 mr-2" />
                           {tab.label}
@@ -906,10 +868,10 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'products' && (
-              <div className="max-w-7xl mx-auto">
-                <div className="mb-8 flex justify-between items-center">
+              <div className=" mx-auto">
+                <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Products & Services</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Products & Services</h2>
                     <p className="text-gray-600">Manage your product offerings</p>
                   </div>
                   <Button onClick={() => {
@@ -924,8 +886,8 @@ export default function BusinessAdminDashboard() {
                       inStock: true,
                       isActive: true,
                     });
-                    setShowProductDialog(true);
-                  }}>
+                    setShowProductRightbar(true);
+                  }} className="rounded-2xl">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Product
                   </Button>
@@ -935,13 +897,13 @@ export default function BusinessAdminDashboard() {
                   <div className="flex-1">
                     <Input
                       placeholder="Search products..."
-                      className="w-full"
+                      className="w-full rounded-2xl"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}>
-                    <SelectTrigger className="w-full sm:w-48">
+                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
                       <SelectValue placeholder="Filter by category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -955,10 +917,10 @@ export default function BusinessAdminDashboard() {
                   </Select>
                 </div>
 
-                <Card>
+                <Card className="rounded-3xl">
                   <CardContent className="p-0">
                     {mounted && selectedProducts.length > 0 && (
-                      <div className="p-4 bg-blue-50 border-b border-blue-200 flex items-center justify-between">
+                      <div className="p-4 bg-blue-50 border-b border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center space-x-3">
                           <span className="text-sm font-medium text-blue-900">
                             {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
@@ -984,6 +946,7 @@ export default function BusinessAdminDashboard() {
                                 }
                               }
                             }}
+                            className="rounded-xl"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Activate
@@ -1009,6 +972,7 @@ export default function BusinessAdminDashboard() {
                                 }
                               }
                             }}
+                            className="rounded-xl"
                           >
                             <Pause className="h-4 w-4 mr-2" />
                             Deactivate
@@ -1030,115 +994,121 @@ export default function BusinessAdminDashboard() {
                                 }
                               }
                             }}
+                            className="rounded-xl"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </Button>
                         </div>
-                        <Button size="sm" variant="ghost" onClick={() => setSelectedProducts([])}>
+                        <Button size="sm" variant="ghost" onClick={() => setSelectedProducts([])} className="rounded-xl">
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={selectedProducts.length === products.filter(p =>
-                                p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                                (selectedCategory === '' || p.categoryId === selectedCategory)
-                              ).length && selectedProducts.length > 0}
-                              onCheckedChange={(checked) => {
-                                const filteredProducts = products.filter(p =>
+                    <div className="overflow-x-auto border border-gray-200">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={selectedProducts.length === products.filter(p =>
                                   p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                                   (selectedCategory === '' || p.categoryId === selectedCategory)
-                                )
-                                if (checked) {
-                                  setSelectedProducts(filteredProducts.map(p => p.id))
-                                } else {
-                                  setSelectedProducts([])
-                                }
-                              }}
-                            />
-                          </TableHead>
-                          <TableHead>Image</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Brand</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-32">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {products
-                          .filter((product) =>
-                            product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                            (selectedCategory === '' || product.categoryId === selectedCategory)
-                          )
-                          .map((product) => (
-                            <TableRow key={product.id}>
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedProducts.includes(product.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedProducts(prev => [...prev, product.id])
-                                    } else {
-                                      setSelectedProducts(prev => prev.filter(id => id !== product.id))
-                                    }
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {product.image ? (
-                                  <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="w-12 h-12 object-cover rounded"
+                                ).length && selectedProducts.length > 0}
+                                onCheckedChange={(checked) => {
+                                  const filteredProducts = products.filter(p =>
+                                    p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                                    (selectedCategory === '' || p.categoryId === selectedCategory)
+                                  )
+                                  if (checked) {
+                                    setSelectedProducts(filteredProducts.map(p => p.id))
+                                  } else {
+                                    setSelectedProducts([])
+                                  }
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead>Image</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Brand</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="w-32">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {products
+                            .filter((product) =>
+                              product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                              (selectedCategory === '' || product.categoryId === selectedCategory)
+                            )
+                            .map((product) => (
+                              <TableRow key={product.id}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedProducts.includes(product.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedProducts(prev => [...prev, product.id])
+                                      } else {
+                                        setSelectedProducts(prev => prev.filter(id => id !== product.id))
+                                      }
+                                    }}
                                   />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                                </TableCell>
+                                <TableCell>
+                                  {product.image ? (
+                                    <img
+                                      src={product.image}
+                                      alt={product.name}
+                                      className="w-12 h-12 object-cover rounded-2xl"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center">
+                                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-medium">{product.name}</TableCell>
+                                <TableCell>
+                                  {product.category ? (
+                                    <Badge variant="secondary" className="rounded-full">{product.category.name}</Badge>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {product.brand ? (
+                                    <Badge variant="outline" className="rounded-full">{product.brand.name}</Badge>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>{product.price || '—'}</TableCell>
+                                <TableCell>
+                                  <Badge variant={product.inStock ? "default" : "destructive"} className="rounded-full">
+                                    {product.inStock ? 'In Stock' : 'Out of Stock'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button size="sm" variant="outline" onClick={() => {
+                                      handleProductEdit(product);
+                                      setShowProductRightbar(true);
+                                    }} className="rounded-xl">
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleProductDelete(product)} className="rounded-xl">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                )}
-                              </TableCell>
-                              <TableCell className="font-medium">{product.name}</TableCell>
-                              <TableCell>
-                                {product.category ? (
-                                  <Badge variant="secondary">{product.category.name}</Badge>
-                                ) : (
-                                  <span className="text-gray-400">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {product.brand ? (
-                                  <Badge variant="outline">{product.brand.name}</Badge>
-                                ) : (
-                                  <span className="text-gray-400">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>{product.price || '—'}</TableCell>
-                              <TableCell>
-                                <Badge variant={product.inStock ? "default" : "destructive"}>
-                                  {product.inStock ? 'In Stock' : 'Out of Stock'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  <Button size="sm" variant="outline" onClick={() => handleProductEdit(product)}>
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="outline" onClick={() => handleProductDelete(product)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                     {products.length === 0 && (
                       <div className="text-center py-12">
                         <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -1156,8 +1126,8 @@ export default function BusinessAdminDashboard() {
                             inStock: true,
                             isActive: true,
                           });
-                          setShowProductDialog(true);
-                        }}>
+                          setShowProductRightbar(true);
+                        }} className="rounded-2xl">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Product
                         </Button>
@@ -1169,14 +1139,14 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'inquiries' && (
-              <div className="max-w-7xl mx-auto">
+              <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Customer Inquiries</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Customer Inquiries</h2>
                   <p className="text-gray-600">View and respond to customer inquiries</p>
                 </div>
 
                 {inquiries.length === 0 ? (
-                  <Card>
+                  <Card className="rounded-3xl">
                     <CardContent className="text-center py-12">
                       <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No inquiries yet</h3>
@@ -1185,8 +1155,8 @@ export default function BusinessAdminDashboard() {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <Card className="bg-white border border-gray-200 shadow-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium text-gray-900">Total</CardTitle>
                           <Mail className="h-4 w-4 text-gray-400" />
@@ -1196,7 +1166,7 @@ export default function BusinessAdminDashboard() {
                           <p className="text-xs text-gray-500">All inquiries</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-white border border-gray-200 shadow-sm">
+                        <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium text-gray-900">New</CardTitle>
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -1206,7 +1176,7 @@ export default function BusinessAdminDashboard() {
                           <p className="text-xs text-gray-500">Awaiting review</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-white border border-gray-200 shadow-sm">
+                        <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium text-gray-900">Read</CardTitle>
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -1216,7 +1186,7 @@ export default function BusinessAdminDashboard() {
                           <p className="text-xs text-gray-500">Viewed</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-white border border-gray-200 shadow-sm">
+                        <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium text-gray-900">Replied</CardTitle>
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -1230,7 +1200,7 @@ export default function BusinessAdminDashboard() {
 
                     <div className="space-y-4">
                       {inquiries.slice(0, 10).map((inquiry) => (
-                        <Card key={inquiry.id} className="border-l-4 border-l-blue-500">
+                        <Card key={inquiry.id} className="border-l-4 border-l-blue-500 rounded-3xl transition-all duration-300 hover:shadow-lg">
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start mb-4">
                               <div className="flex-1">
@@ -1238,16 +1208,16 @@ export default function BusinessAdminDashboard() {
                                   <h4 className="font-semibold text-lg">{inquiry.name}</h4>
                                   <Badge variant={
                                     inquiry.status === 'NEW' ? 'destructive' :
-                                    inquiry.status === 'READ' ? 'default' :
-                                    inquiry.status === 'REPLIED' ? 'secondary' :
-                                    'outline'
-                                  }>
+                                      inquiry.status === 'READ' ? 'default' :
+                                        inquiry.status === 'REPLIED' ? 'secondary' :
+                                          'outline'
+                                  } className="rounded-full">
                                     {inquiry.status === 'NEW' ? 'New' :
-                                     inquiry.status === 'READ' ? 'Read' :
-                                     inquiry.status === 'REPLIED' ? 'Replied' : 'Closed'}
+                                      inquiry.status === 'READ' ? 'Read' :
+                                        inquiry.status === 'REPLIED' ? 'Replied' : 'Closed'}
                                   </Badge>
                                 </div>
-                                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm text-gray-600">
                                   <div className="flex items-center space-x-1">
                                     <Mail className="h-4 w-4" />
                                     <a href={`mailto:${inquiry.email}`} className="text-blue-600 hover:underline">
@@ -1281,12 +1251,13 @@ export default function BusinessAdminDashboard() {
                               <p className="text-gray-700 whitespace-pre-wrap">{inquiry.message}</p>
                               <Separator />
 
-                              <div className="flex space-x-2 mt-4">
+                              <div className="flex flex-col sm:flex-row gap-2 mt-4">
                                 {inquiry.status === 'NEW' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleInquiryStatusUpdate(inquiry.id, 'READ')}
+                                    className="rounded-xl"
                                   >
                                     <Eye className="h-4 w-4 mr-1" />
                                     Mark as Read
@@ -1296,6 +1267,7 @@ export default function BusinessAdminDashboard() {
                                   <Button
                                     size="sm"
                                     onClick={() => handleInquiryStatusUpdate(inquiry.id, 'REPLIED')}
+                                    className="rounded-xl"
                                   >
                                     <Mail className="h-4 w-4 mr-1" />
                                     Mark as Replied
@@ -1306,6 +1278,7 @@ export default function BusinessAdminDashboard() {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleInquiryStatusUpdate(inquiry.id, 'CLOSED')}
+                                    className="rounded-xl"
                                   >
                                     <FileText className="h-4 w-4 mr-1" />
                                     Close
@@ -1323,12 +1296,12 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'analytics' && (
-              <div className="max-w-7xl mx-auto">
+              <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Analytics</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Analytics</h2>
                   <p className="text-gray-600">Track your business performance</p>
                 </div>
-                <Card>
+                <Card className="rounded-3xl">
                   <CardContent className="text-center py-12">
                     <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Coming Soon</h3>
@@ -1339,12 +1312,12 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'settings' && (
-              <div className="max-w-7xl mx-auto">
+              <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Settings</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h2>
                   <p className="text-gray-600">Manage your account and preferences</p>
                 </div>
-                <Card>
+                <Card className="rounded-3xl">
                   <CardContent className="text-center py-12">
                     <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Settings Coming Soon</h3>
@@ -1356,1147 +1329,1341 @@ export default function BusinessAdminDashboard() {
           </div>
         </div>
 
-        {/* Right Editor Panel */}
-        {activeSection === 'profile' && (
-          <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
-            <div className="flex-1 overflow-auto p-6">
-              {selectedProfileSection ? (
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold">
-                    {selectedProfileSection === 'hero' && ' Hero Section Editor'}
-                    {selectedProfileSection === 'info' && 'Business Info Editor'}
-                    {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
-                    {selectedProfileSection === 'products' && ' Products Editor'}
-                    {selectedProfileSection === 'content' && ' Additional Content Editor'}
-                    {selectedProfileSection === 'footer' && '🔗 Footer Editor'}
-                  </h3>
-                  <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Get Started</h3>
-                  <p className="text-gray-600 mb-6">
-                    Click on any section tab above or in the preview to start editing your profile.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Tip: You can also click directly on sections in the full page preview to edit them.
-                  </p>
-                </div>
+        {/* Right Editor Panel - Fixed Width */}
+        {((activeSection === 'profile' && selectedProfileSection) || (activeSection === 'products' && showProductRightbar)) && (
+          <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50 h-96' : 'w-[480px]'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out`}>
+            {isMobile && (
+              <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+                <h3 className="font-semibold">Editor Panel</h3>
+                <button
+                  onClick={() => {
+                    if (activeSection === 'profile') setSelectedProfileSection(null);
+                    if (activeSection === 'products') setShowProductRightbar(false);
+                  }}
+                  className="p-1 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+            <div className="flex-1 overflow-auto p-4 sm:p-6 hide-scrollbar">
+              {activeSection === 'profile' && (
+                <>
+                  {selectedProfileSection ? (
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">
+                        {selectedProfileSection === 'hero' && ' Hero Section Editor'}
+                        {selectedProfileSection === 'info' && 'Business Info Editor'}
+                        {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
+                        {selectedProfileSection === 'products' && ' Products Editor'}
+                        {selectedProfileSection === 'content' && ' Additional Content Editor'}
+                        {selectedProfileSection === 'footer' && '🔗 Footer Editor'}
+                      </h3>
+                      {!isMobile && (
+                        <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Get Started</h3>
+                      <p className="text-gray-600 mb-6">
+                          Click on any section tab above or in preview to start editing your profile.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                        Tip: You can also click directly on sections in full page preview to edit them.
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'hero' && (
+                    <div className="space-y-6">
+                      {/* Section Title */}
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.hero}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, hero: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      {/* Slide Selector and Add Button */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex-1 w-full">
+                          <Label className="text-sm font-medium">Select Slide</Label>
+                          <Select
+                            value={selectedSlideIndex?.toString()}
+                            onValueChange={(value) => setSelectedSlideIndex(parseInt(value))}
+                          >
+                            <SelectTrigger className="rounded-2xl w-full">
+                              <SelectValue placeholder="Select a slide to edit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {heroContent.slides?.map((slide: any, index: number) => (
+                                <SelectItem key={index} value={index.toString()}>
+                                  {index + 1}: {slide.headline || 'Untitled'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedSlideIndex > 0) {
+                                const newSlides = [...heroContent.slides]
+                                const temp = newSlides[selectedSlideIndex]
+                                newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex - 1]
+                                newSlides[selectedSlideIndex - 1] = temp
+                                setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                setSelectedSlideIndex(selectedSlideIndex - 1)
+                              }
+                            }}
+                            disabled={selectedSlideIndex === 0}
+                            className="rounded-xl"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedSlideIndex < heroContent.slides.length - 1) {
+                                const newSlides = [...heroContent.slides]
+                                const temp = newSlides[selectedSlideIndex]
+                                newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex + 1]
+                                newSlides[selectedSlideIndex + 1] = temp
+                                setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                setSelectedSlideIndex(selectedSlideIndex + 1)
+                              }
+                            }}
+                            disabled={selectedSlideIndex === heroContent.slides.length - 1}
+                            className="rounded-xl"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newSlides = heroContent.slides.filter((_, i) => i !== selectedSlideIndex)
+                              setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                              setSelectedSlideIndex(Math.max(0, selectedSlideIndex - 1))
+                            }}
+                            className="rounded-xl"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              const newSlide = {
+                                mediaType: 'image',
+                                media: '',
+                                headline: '',
+                                headlineSize: 'text-4xl md:text-6xl',
+                                headlineColor: '#ffffff',
+                                headlineAlignment: 'center',
+                                subtext: '',
+                                subtextSize: 'text-xl md:text-2xl',
+                                subtextColor: '#ffffff',
+                                subtextAlignment: 'center',
+                                cta: 'Get in Touch',
+                                ctaLink: ''
+                              }
+                              setHeroContent(prev => ({ ...prev, slides: [...prev.slides, newSlide] }))
+                              setSelectedSlideIndex(heroContent.slides.length)
+                            }}
+                            className="rounded-2xl"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Slide
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Tabs */}
+                      <div className="border-b">
+                        <div className="flex space-x-8 overflow-x-auto">
+                          <button
+                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'content'
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                              }`}
+                            onClick={() => setActiveTab('content')}
+                          >
+                            Content
+                          </button>
+                          <button
+                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'style'
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                              }`}
+                            onClick={() => setActiveTab('style')}
+                          >
+                            Style
+                          </button>
+                          <button
+                            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'settings'
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                              }`}
+                            onClick={() => setActiveTab('settings')}
+                          >
+                            Settings
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Tab Content */}
+                      {selectedSlideIndex !== null && heroContent.slides[selectedSlideIndex] && (
+                        <div className="space-y-6">
+                          {activeTab === 'content' && (
+                            <Card className="rounded-3xl">
+                              <CardContent className="pt-6">
+                                <div className="space-y-6">
+                                  {/* Background Media */}
+                                  <div>
+                                    <Label className="text-sm font-medium">Background Media</Label>
+                                    <div className="mt-2 space-y-3">
+                                      <Select
+                                        value={heroContent.slides[selectedSlideIndex].mediaType || 'image'}
+                                        onValueChange={(value) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], mediaType: value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                      >
+                                        <SelectTrigger className="rounded-2xl">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="image">Image</SelectItem>
+                                          <SelectItem value="video">Video</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <Input
+                                        placeholder="Media URL"
+                                        value={heroContent.slides[selectedSlideIndex].media || ''}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        className="rounded-2xl"
+                                      />
+                                      <Button variant="outline" className="w-full rounded-2xl">
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        Upload Media
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Headline */}
+                                  <div>
+                                    <Label className="text-sm font-medium">Headline</Label>
+                                    <Input
+                                      placeholder="Enter headline"
+                                      value={heroContent.slides[selectedSlideIndex].headline || ''}
+                                      onChange={(e) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headline: e.target.value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                      className="mt-2 rounded-2xl"
+                                    />
+                                  </div>
+
+                                  {/* Subtext */}
+                                  <div>
+                                    <Label className="text-sm font-medium">Subtext</Label>
+                                    <Textarea
+                                      placeholder="Enter subtext"
+                                      rows={3}
+                                      value={heroContent.slides[selectedSlideIndex].subtext || ''}
+                                      onChange={(e) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtext: e.target.value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                      className="mt-2 rounded-2xl"
+                                    />
+                                  </div>
+
+                                  {/* CTA */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">CTA Text</Label>
+                                      <Input
+                                        placeholder="Call to action text"
+                                        value={heroContent.slides[selectedSlideIndex].cta || ''}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], cta: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        className="mt-2 rounded-2xl"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">CTA Link</Label>
+                                      <Input
+                                        placeholder="https://..."
+                                        value={heroContent.slides[selectedSlideIndex].ctaLink || ''}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], ctaLink: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        className="mt-2 rounded-2xl"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+
+                          {activeTab === 'style' && (
+                            <Card className="rounded-3xl">
+                              <CardContent className="pt-6">
+                                <div className="space-y-6">
+                                  {/* Headline Style */}
+                                  <div>
+                                    <h3 className="text-sm font-medium mb-4">Headline Style</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="text-sm">Size</Label>
+                                        <Select
+                                          value={heroContent.slides[selectedSlideIndex].headlineSize || 'text-4xl md:text-6xl'}
+                                          onValueChange={(value) => {
+                                            const newSlides = [...heroContent.slides]
+                                            newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineSize: value }
+                                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                          }}
+                                        >
+                                          <SelectTrigger className="mt-2 rounded-2xl">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="text-2xl md:text-4xl">Small</SelectItem>
+                                            <SelectItem value="text-3xl md:text-5xl">Medium</SelectItem>
+                                            <SelectItem value="text-4xl md:text-6xl">Large</SelectItem>
+                                            <SelectItem value="text-5xl md:text-7xl">Extra Large</SelectItem>
+                                            <SelectItem value="text-6xl md:text-8xl">Huge</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div>
+                                        <Label className="text-sm">Color</Label>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <Input
+                                            type="color"
+                                            value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
+                                            onChange={(e) => {
+                                              const newSlides = [...heroContent.slides]
+                                              newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
+                                              setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                            }}
+                                            className="w-12 h-10 p-1 rounded-2xl"
+                                          />
+                                          <Input
+                                            value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
+                                            onChange={(e) => {
+                                              const newSlides = [...heroContent.slides]
+                                              newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
+                                              setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                            }}
+                                            placeholder="#ffffff"
+                                            className="rounded-2xl"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-sm">Alignment</Label>
+                                        <Select
+                                          value={heroContent.slides[selectedSlideIndex].headlineAlignment || 'center'}
+                                          onValueChange={(value) => {
+                                            const newSlides = [...heroContent.slides]
+                                            newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineAlignment: value }
+                                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                          }}
+                                        >
+                                          <SelectTrigger className="mt-2 rounded-2xl">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="left">Left</SelectItem>
+                                            <SelectItem value="center">Center</SelectItem>
+                                            <SelectItem value="right">Right</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Subtext Style */}
+                                  <div>
+                                    <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="text-sm">Size</Label>
+                                        <Select
+                                          value={heroContent.slides[selectedSlideIndex].subtextSize || 'text-xl md:text-2xl'}
+                                          onValueChange={(value) => {
+                                            const newSlides = [...heroContent.slides]
+                                            newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextSize: value }
+                                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                          }}
+                                        >
+                                          <SelectTrigger className="mt-2 rounded-2xl">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="text-sm md:text-base">Small</SelectItem>
+                                            <SelectItem value="text-base md:text-lg">Medium</SelectItem>
+                                            <SelectItem value="text-lg md:text-xl">Large</SelectItem>
+                                            <SelectItem value="text-xl md:text-2xl">Extra Large</SelectItem>
+                                            <SelectItem value="text-2xl md:text-3xl">Huge</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div>
+                                        <Label className="text-sm">Color</Label>
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <Input
+                                            type="color"
+                                            value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
+                                            onChange={(e) => {
+                                              const newSlides = [...heroContent.slides]
+                                              newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
+                                              setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                            }}
+                                            className="w-12 h-10 p-1 rounded-2xl"
+                                          />
+                                          <Input
+                                            value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
+                                            onChange={(e) => {
+                                              const newSlides = [...heroContent.slides]
+                                              newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
+                                              setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                            }}
+                                            placeholder="#ffffff"
+                                            className="rounded-2xl"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-sm">Alignment</Label>
+                                        <Select
+                                          value={heroContent.slides[selectedSlideIndex].subtextAlignment || 'center'}
+                                          onValueChange={(value) => {
+                                            const newSlides = [...heroContent.slides]
+                                            newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextAlignment: value }
+                                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                          }}
+                                        >
+                                          <SelectTrigger className="mt-2 rounded-2xl">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="left">Left</SelectItem>
+                                            <SelectItem value="center">Center</SelectItem>
+                                            <SelectItem value="right">Right</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+
+                          {activeTab === 'settings' && (
+                            <Card className="rounded-3xl">
+                              <CardContent className="pt-6">
+                                <div className="space-y-6">
+                                  <h3 className="text-sm font-medium">Slider Settings</h3>
+
+                                  <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
+                                      <Switch
+                                        id="autoplay"
+                                        checked={heroContent.autoPlay}
+                                        onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, autoPlay: checked }))}
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <Label className="text-sm">Transition Speed (seconds)</Label>
+                                      <Select
+                                        value={heroContent.transitionSpeed?.toString()}
+                                        onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionSpeed: parseInt(value) }))}
+                                      >
+                                        <SelectTrigger className="mt-2 rounded-2xl">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="3">3 seconds</SelectItem>
+                                          <SelectItem value="5">5 seconds</SelectItem>
+                                          <SelectItem value="7">7 seconds</SelectItem>
+                                          <SelectItem value="10">10 seconds</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <div>
+                                      <Label className="text-sm">Transition Effect</Label>
+                                      <Select
+                                        value={heroContent.transitionEffect || 'fade'}
+                                        onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionEffect: value }))}
+                                      >
+                                        <SelectTrigger className="mt-2 rounded-2xl">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="fade">Fade</SelectItem>
+                                          <SelectItem value="slide">Slide</SelectItem>
+                                          <SelectItem value="zoom">Zoom</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="showDots" className="text-sm">Show Navigation Dots</Label>
+                                      <Switch
+                                        id="showDots"
+                                        checked={heroContent.showDots !== false}
+                                        onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showDots: checked }))}
+                                      />
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="showArrows" className="text-sm">Show Navigation Arrows</Label>
+                                      <Switch
+                                        id="showArrows"
+                                        checked={heroContent.showArrows !== false}
+                                        onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showArrows: checked }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-3 mt-auto pt-6 border-t">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button onClick={async () => {
+                          if (!business) return
+                          setIsLoading(true)
+                          try {
+                            const response = await fetch('/api/business', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ heroContent }),
+                            })
+                            if (response.ok) {
+                              alert('Hero content saved successfully!')
+                            } else {
+                              alert('Failed to save hero content')
+                            }
+                          } catch (error) {
+                            alert('Failed to save hero content')
+                          } finally {
+                            setIsLoading(false)
+                          }
+                        }} className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'info' && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.info}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, info: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Business Information</Label>
+                        <div className="mt-2 space-y-4">
+                          <div>
+                            <Label>Business Name</Label>
+                            <Input
+                              value={businessInfoFormData.name}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Owner Name</Label>
+                            <Input
+                              value={businessInfoFormData.ownerName}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, ownerName: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Description</Label>
+                            <Textarea
+                              value={businessInfoFormData.description}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, description: e.target.value }))}
+                              rows={3}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Logo URL</Label>
+                            <div className="space-y-2">
+                              <Input
+                                value={businessInfoFormData.logo}
+                                onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, logo: e.target.value }))}
+                                placeholder="https://..."
+                                className="rounded-2xl"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const input = document.createElement('input')
+                                    input.type = 'file'
+                                    input.accept = 'image/*'
+                                    input.onchange = async (e) => {
+                                      const file = (e.target as HTMLInputElement).files?.[0]
+                                      if (file) {
+                                        const formData = new FormData()
+                                        formData.append('image', file)
+                                        try {
+                                          const response = await fetch('/api/business/upload', {
+                                            method: 'POST',
+                                            body: formData,
+                                          })
+                                          if (response.ok) {
+                                            const data = await response.json()
+                                            setBusinessInfoFormData(prev => ({ ...prev, logo: data.url }))
+                                          } else {
+                                            alert('Failed to upload image')
+                                          }
+                                        } catch (error) {
+                                          alert('Failed to upload image')
+                                        }
+                                      }
+                                    }
+                                    input.click()
+                                  }}
+                                  className="rounded-xl"
+                                >
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Upload Logo
+                                </Button>
+                                {businessInfoFormData.logo && (
+                                  <img src={businessInfoFormData.logo} alt="Logo preview" className="h-8 w-8 object-cover rounded-2xl" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Address</Label>
+                            <Input
+                              value={businessInfoFormData.address}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, address: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Phone</Label>
+                            <Input
+                              value={businessInfoFormData.phone}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, phone: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Email</Label>
+                            <Input
+                              value={businessInfoFormData.email}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, email: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Website</Label>
+                            <Input
+                              value={businessInfoFormData.website}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, website: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-6">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button onClick={async () => {
+                          setIsLoading(true)
+                          try {
+                            // Filter out empty strings for optional fields
+                            const cleanData = Object.fromEntries(
+                              Object.entries(businessInfoFormData).map(([key, value]) => [
+                                key,
+                                value === "" ? undefined : value
+                              ])
+                            )
+
+                            const response = await fetch('/api/business', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(cleanData),
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              setBusiness(result.business)
+                              alert('Business information updated successfully!')
+                            } else {
+                              const error = await response.json()
+                              alert(`Failed to update: ${error.error}`)
+                            }
+                          } catch (error) {
+                            alert('Failed to update business information. Please try again.')
+                          } finally {
+                            setIsLoading(false)
+                          }
+                        }} className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'content' && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.content}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, content: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Additional Content</Label>
+                        <div className="mt-2">
+                          <RichTextEditor
+                            content={editorContent}
+                            onChange={setEditorContent}
+                            placeholder="Add testimonials, FAQ, or additional information..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-6">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button onClick={handleAdditionalContentSave} className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Content
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'brands' && (
+                    <div className="space-y-6">
+                      {/* Section Title */}
+                      <div>
+                        <Label className="text-sm font-medium">Page Title for Brand Section</Label>
+                        <Input
+                          value={sectionTitles.brands}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, brands: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      {/* Add New Brand Section */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Add New Brand</CardTitle>
+                          <CardDescription>Add a new brand to your brand slider</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Brand Name</Label>
+                            <Input
+                              placeholder="Enter brand name"
+                              value={brandContent.newBrandName || ''}
+                              onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandName: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Brand Photo</Label>
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Photo URL or upload below"
+                                value={brandContent.newBrandLogo || ''}
+                                onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandLogo: e.target.value }))}
+                                className="rounded-2xl"
+                              />
+                              <ImageUpload
+                                onUpload={(url) => setBrandContent(prev => ({ ...prev, newBrandLogo: url }))}
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              if (!brandContent.newBrandName?.trim()) {
+                                alert('Please enter a brand name')
+                                return
+                              }
+                              const newBrand = {
+                                name: brandContent.newBrandName.trim(),
+                                logo: brandContent.newBrandLogo || '',
+                              }
+                              setBrandContent(prev => ({
+                                ...prev,
+                                brands: [...(prev.brands || []), newBrand],
+                                newBrandName: '',
+                                newBrandLogo: '',
+                              }))
+                            }}
+                            className="w-full rounded-2xl"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Brand
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      {/* Brands Table */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Added Brands</CardTitle>
+                          <CardDescription>Manage your brand collection</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {brandContent.brands?.length > 0 ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Brand Name</TableHead>
+                                  <TableHead>Logo</TableHead>
+                                  <TableHead className="w-20">Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {brandContent.brands.map((brand: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium">{brand.name}</TableCell>
+                                    <TableCell>
+                                      {brand.logo ? (
+                                        <img
+                                          src={brand.logo}
+                                          alt={brand.name}
+                                          className="h-8 w-8 object-cover rounded-2xl"
+                                        />
+                                      ) : (
+                                        <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
+                                          <ImageIcon className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setBrandContent(prev => ({
+                                            ...prev,
+                                            brands: prev.brands.filter((_, i) => i !== index)
+                                          }))
+                                        }}
+                                        className="rounded-xl"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center py-8">
+                              <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No brands added yet</h3>
+                              <p className="text-gray-600">Add your first brand using form above</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-3 pt-6 border-t">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button onClick={async () => {
+                          if (!business) return
+                          setIsLoading(true)
+                          try {
+                            // Clean up temporary form fields before saving
+                            const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent
+                            const response = await fetch('/api/business', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ brandContent: cleanBrandContent }),
+                            })
+                            if (response.ok) {
+                              alert('Brand content saved successfully!')
+                            } else {
+                              alert('Failed to save brand content')
+                            }
+                          } catch (error) {
+                            alert('Failed to save brand content')
+                          } finally {
+                            setIsLoading(false)
+                          }
+                        }} className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'footer' && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.footer}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, footer: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Footer Settings</Label>
+                        <div className="mt-2 space-y-4">
+                          <div>
+                            <Label>Copyright Text</Label>
+                            <Input placeholder="© 2024 Your Business Name. All rights reserved." className="rounded-2xl" />
+                          </div>
+                          <div>
+                            <Label>Footer Links</Label>
+                            <div className="space-y-2">
+                              <div className="flex space-x-2">
+                                <Input placeholder="Link Text" className="rounded-2xl" />
+                                <Input placeholder="URL" className="rounded-2xl" />
+                                <Button size="sm" variant="outline" className="rounded-xl">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <Button variant="outline" size="sm" className="rounded-2xl">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Link
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch />
+                            <Label>Show Social Media Links</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-6">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Cancel
+                        </Button>
+                        <Button className="rounded-2xl">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Footer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProfileSection === 'products' && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-sm font-medium">Section Title</Label>
+                        <Input
+                          value={sectionTitles.products}
+                          onChange={(e) => setSectionTitles(prev => ({ ...prev, products: e.target.value }))}
+                          placeholder="Enter section title"
+                          className="rounded-2xl"
+                        />
+                      </div>
+
+                      <div className="text-center py-12">
+                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Products Manager</h3>
+                        <p className="text-gray-600 mb-6">
+                          Manage your products and services from Products section in sidebar.
+                        </p>
+                        <Button onClick={() => setActiveSection('products')} className="rounded-2xl">
+                          Go to Products Section
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-6">
+                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
+                          Close
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {selectedProfileSection === 'hero' && (
-                <div className="space-y-6">
-                  {/* Section Title */}
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.hero}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, hero: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
+              {activeSection === 'products' && showProductRightbar && (
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-semibold">
+                      {editingProduct ? 'Edit Product' : 'Add New Product'}
+                    </h3>
+                    {!isMobile && (
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setShowProductRightbar(false)
+                        setEditingProduct(null)
+                        setProductFormData({
+                          name: '',
+                          description: '',
+                          price: '',
+                          image: '',
+                          categoryId: '',
+                          brandId: '',
+                          inStock: true,
+                          isActive: true,
+                        })
+                      }} className="rounded-xl">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  {/* Slide Selector and Add Button */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium">Select Slide</Label>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Product Name *</Label>
+                      <Input
+                        id="name"
+                        value={productFormData.name}
+                        onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter product name"
+                        required
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={productFormData.description}
+                        onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe your product or service"
+                        rows={4}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price</Label>
+                      <Input
+                        id="price"
+                        value={productFormData.price}
+                        onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="e.g., $50, Starting at $100, Free consultation"
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="image">Image URL</Label>
+                      <Input
+                        id="image"
+                        value={productFormData.image}
+                        onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
+                        placeholder="https://..."
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Existing Image</Label>
                       <Select
-                        value={selectedSlideIndex?.toString()}
-                        onValueChange={(value) => setSelectedSlideIndex(parseInt(value))}
+                        key={images.length}
+                        value={productFormData.image || "no-image"}
+                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, image: value === "no-image" ? "" : value }))}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a slide to edit" />
+                        <SelectTrigger className="rounded-2xl">
+                          <SelectValue placeholder="Choose an existing image" />
                         </SelectTrigger>
                         <SelectContent>
-                          {heroContent.slides?.map((slide: any, index: number) => (
-                            <SelectItem key={index} value={index.toString()}>
-                              Slide {index + 1}: {slide.headline || 'Untitled'}
+                          <SelectItem value="no-image">No image</SelectItem>
+                          {images.map((image) => (
+                            <SelectItem key={image} value={image}>
+                              {image}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedSlideIndex > 0) {
-                            const newSlides = [...heroContent.slides]
-                            const temp = newSlides[selectedSlideIndex]
-                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex - 1]
-                            newSlides[selectedSlideIndex - 1] = temp
-                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                            setSelectedSlideIndex(selectedSlideIndex - 1)
-                          }
-                        }}
-                        disabled={selectedSlideIndex === 0}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedSlideIndex < heroContent.slides.length - 1) {
-                            const newSlides = [...heroContent.slides]
-                            const temp = newSlides[selectedSlideIndex]
-                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex + 1]
-                            newSlides[selectedSlideIndex + 1] = temp
-                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                            setSelectedSlideIndex(selectedSlideIndex + 1)
-                          }
-                        }}
-                        disabled={selectedSlideIndex === heroContent.slides.length - 1}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newSlides = heroContent.slides.filter((_, i) => i !== selectedSlideIndex)
-                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                          setSelectedSlideIndex(Math.max(0, selectedSlideIndex - 1))
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          const newSlide = {
-                            mediaType: 'image',
-                            media: '',
-                            headline: '',
-                            headlineSize: 'text-4xl md:text-6xl',
-                            headlineColor: '#ffffff',
-                            headlineAlignment: 'center',
-                            subtext: '',
-                            subtextSize: 'text-xl md:text-2xl',
-                            subtextColor: '#ffffff',
-                            subtextAlignment: 'center',
-                            cta: 'Get in Touch',
-                            ctaLink: ''
-                          }
-                          setHeroContent(prev => ({ ...prev, slides: [...prev.slides, newSlide] }))
-                          setSelectedSlideIndex(heroContent.slides.length)
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Slide
-                      </Button>
-                    </div>
-                  </div>
 
-                  {/* Tabs */}
-                  <div className="border-b">
-                    <div className="flex space-x-8">
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'content'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('content')}
-                      >
-                        Content
-                      </button>
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'style'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('style')}
-                      >
-                        Style
-                      </button>
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'settings'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('settings')}
-                      >
-                        Settings
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Tab Content */}
-                  {selectedSlideIndex !== null && heroContent.slides[selectedSlideIndex] && (
-                    <div className="space-y-6">
-                      {activeTab === 'content' && (
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              {/* Background Media */}
-                              <div>
-                                <Label className="text-sm font-medium">Background Media</Label>
-                                <div className="mt-2 space-y-3">
-                                  <Select
-                                    value={heroContent.slides[selectedSlideIndex].mediaType || 'image'}
-                                    onValueChange={(value) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], mediaType: value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="image">Image</SelectItem>
-                                      <SelectItem value="video">Video</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <Input
-                                    placeholder="Media URL"
-                                    value={heroContent.slides[selectedSlideIndex].media || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                  />
-                                  <Button variant="outline" className="w-full">
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    Upload Media
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* Headline */}
-                              <div>
-                                <Label className="text-sm font-medium">Headline</Label>
-                                <Input
-                                  placeholder="Enter headline"
-                                  value={heroContent.slides[selectedSlideIndex].headline || ''}
-                                  onChange={(e) => {
-                                    const newSlides = [...heroContent.slides]
-                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headline: e.target.value }
-                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                  }}
-                                  className="mt-2"
-                                />
-                              </div>
-
-                              {/* Subtext */}
-                              <div>
-                                <Label className="text-sm font-medium">Subtext</Label>
-                                <Textarea
-                                  placeholder="Enter subtext"
-                                  rows={3}
-                                  value={heroContent.slides[selectedSlideIndex].subtext || ''}
-                                  onChange={(e) => {
-                                    const newSlides = [...heroContent.slides]
-                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtext: e.target.value }
-                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                  }}
-                                  className="mt-2"
-                                />
-                              </div>
-
-                              {/* CTA */}
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-sm font-medium">CTA Text</Label>
-                                  <Input
-                                    placeholder="Call to action text"
-                                    value={heroContent.slides[selectedSlideIndex].cta || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], cta: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                    className="mt-2"
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium">CTA Link</Label>
-                                  <Input
-                                    placeholder="https://..."
-                                    value={heroContent.slides[selectedSlideIndex].ctaLink || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], ctaLink: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                    className="mt-2"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {activeTab === 'style' && (
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              {/* Headline Style */}
-                              <div>
-                                <h3 className="text-sm font-medium mb-4">Headline Style</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm">Size</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].headlineSize || 'text-4xl md:text-6xl'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineSize: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="text-2xl md:text-4xl">Small</SelectItem>
-                                        <SelectItem value="text-3xl md:text-5xl">Medium</SelectItem>
-                                        <SelectItem value="text-4xl md:text-6xl">Large</SelectItem>
-                                        <SelectItem value="text-5xl md:text-7xl">Extra Large</SelectItem>
-                                        <SelectItem value="text-6xl md:text-8xl">Huge</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Color</Label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Input
-                                        type="color"
-                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        className="w-12 h-10 p-1"
-                                      />
-                                      <Input
-                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        placeholder="#ffffff"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Alignment</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].headlineAlignment || 'center'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineAlignment: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="left">Left</SelectItem>
-                                        <SelectItem value="center">Center</SelectItem>
-                                        <SelectItem value="right">Right</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Subtext Style */}
-                              <div>
-                                <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm">Size</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].subtextSize || 'text-xl md:text-2xl'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextSize: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="text-sm md:text-base">Small</SelectItem>
-                                        <SelectItem value="text-base md:text-lg">Medium</SelectItem>
-                                        <SelectItem value="text-lg md:text-xl">Large</SelectItem>
-                                        <SelectItem value="text-xl md:text-2xl">Extra Large</SelectItem>
-                                        <SelectItem value="text-2xl md:text-3xl">Huge</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Color</Label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Input
-                                        type="color"
-                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        className="w-12 h-10 p-1"
-                                      />
-                                      <Input
-                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        placeholder="#ffffff"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Alignment</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].subtextAlignment || 'center'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextAlignment: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="left">Left</SelectItem>
-                                        <SelectItem value="center">Center</SelectItem>
-                                        <SelectItem value="right">Right</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {activeTab === 'settings' && (
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              <h3 className="text-sm font-medium">Slider Settings</h3>
-
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
-                                  <Switch
-                                    id="autoplay"
-                                    checked={heroContent.autoPlay}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, autoPlay: checked }))}
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm">Transition Speed (seconds)</Label>
-                                  <Select
-                                    value={heroContent.transitionSpeed?.toString()}
-                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionSpeed: parseInt(value) }))}
-                                  >
-                                    <SelectTrigger className="mt-2">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="3">3 seconds</SelectItem>
-                                      <SelectItem value="5">5 seconds</SelectItem>
-                                      <SelectItem value="7">7 seconds</SelectItem>
-                                      <SelectItem value="10">10 seconds</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm">Transition Effect</Label>
-                                  <Select
-                                    value={heroContent.transitionEffect || 'fade'}
-                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionEffect: value }))}
-                                  >
-                                    <SelectTrigger className="mt-2">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="fade">Fade</SelectItem>
-                                      <SelectItem value="slide">Slide</SelectItem>
-                                      <SelectItem value="zoom">Zoom</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="showDots" className="text-sm">Show Navigation Dots</Label>
-                                  <Switch
-                                    id="showDots"
-                                    checked={heroContent.showDots !== false}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showDots: checked }))}
-                                  />
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="showArrows" className="text-sm">Show Navigation Arrows</Label>
-                                  <Switch
-                                    id="showArrows"
-                                    checked={heroContent.showArrows !== false}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showArrows: checked }))}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                    <div className="space-y-2">
+                      <Label>Upload New Image</Label>
+                      {mounted && (
+                        <ImageUpload
+                          onUpload={(url) => setProductFormData(prev => ({ ...prev, image: url }))}
+                        />
                       )}
                     </div>
-                  )}
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 pt-6 border-t">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Cancel
-                    </Button>
-                    <Button onClick={async () => {
-                      if (!business) return
-                      setIsLoading(true)
-                      try {
-                        const response = await fetch('/api/business', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ heroContent }),
-                        })
-                        if (response.ok) {
-                          alert('Hero content saved successfully!')
-                        } else {
-                          alert('Failed to save hero content')
-                        }
-                      } catch (error) {
-                        alert('Failed to save hero content')
-                      } finally {
-                        setIsLoading(false)
-                      }
-                    }}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {selectedProfileSection === 'info' && (
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.info}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, info: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Business Information</Label>
-                    <div className="mt-2 space-y-4">
-                      <div>
-                        <Label>Business Name</Label>
-                        <Input
-                          value={businessInfoFormData.name}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Owner Name</Label>
-                        <Input
-                          value={businessInfoFormData.ownerName}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, ownerName: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={businessInfoFormData.description}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, description: e.target.value }))}
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <Label>Logo URL</Label>
-                        <div className="space-y-2">
-                          <Input
-                            value={businessInfoFormData.logo}
-                            onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, logo: e.target.value }))}
-                            placeholder="https://..."
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const input = document.createElement('input')
-                                input.type = 'file'
-                                input.accept = 'image/*'
-                                input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0]
-                                  if (file) {
-                                    const formData = new FormData()
-                                    formData.append('image', file)
-                                    try {
-                                      const response = await fetch('/api/business/upload', {
-                                        method: 'POST',
-                                        body: formData,
-                                      })
-                                      if (response.ok) {
-                                        const data = await response.json()
-                                        setBusinessInfoFormData(prev => ({ ...prev, logo: data.url }))
-                                      } else {
-                                        alert('Failed to upload image')
-                                      }
-                                    } catch (error) {
-                                      alert('Failed to upload image')
-                                    }
-                                  }
-                                }
-                                input.click()
-                              }}
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              Upload Logo
-                            </Button>
-                            {businessInfoFormData.logo && (
-                              <img src={businessInfoFormData.logo} alt="Logo preview" className="h-8 w-8 object-cover rounded" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Address</Label>
-                        <Input
-                          value={businessInfoFormData.address}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, address: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <Input
-                          value={businessInfoFormData.phone}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input
-                          value={businessInfoFormData.email}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, email: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Website</Label>
-                        <Input
-                          value={businessInfoFormData.website}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, website: e.target.value }))}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select
+                        key={categories.length}
+                        value={productFormData.categoryId}
+                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
+                      >
+                        <SelectTrigger className="rounded-2xl">
+                          <SelectValue placeholder="Choose a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
 
-                  <div className="flex justify-end space-x-3 pt-6">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Cancel
-                    </Button>
-                    <Button onClick={async () => {
-                      setIsLoading(true)
-                      try {
-                        // Filter out empty strings for optional fields
-                        const cleanData = Object.fromEntries(
-                          Object.entries(businessInfoFormData).map(([key, value]) => [
-                            key,
-                            value === "" ? undefined : value
-                          ])
-                        )
+                    <div className="space-y-2">
+                      <Label>Brand</Label>
+                      <Select
+                        key={brands.length}
+                        value={productFormData.brandId}
+                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandId: value }))}
+                      >
+                        <SelectTrigger className="rounded-2xl">
+                          <SelectValue placeholder="Choose a brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {brands.map((brand) => (
+                            <SelectItem key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                        const response = await fetch('/api/business', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(cleanData),
-                        })
-                        if (response.ok) {
-                          const result = await response.json()
-                          setBusiness(result.business)
-                          alert('Business information updated successfully!')
-                        } else {
-                          const error = await response.json()
-                          alert(`Failed to update: ${error.error}`)
-                        }
-                      } catch (error) {
-                        alert('Failed to update business information. Please try again.')
-                      } finally {
-                        setIsLoading(false)
-                      }
-                    }}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {selectedProfileSection === 'content' && (
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.content}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Additional Content</Label>
-                    <div className="mt-2">
-                      <RichTextEditor
-                        content={editorContent}
-                        onChange={setEditorContent}
-                        placeholder="Add testimonials, FAQ, or additional information..."
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="inStock"
+                        checked={productFormData.inStock}
+                        onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
                       />
+                      <Label htmlFor="inStock">In Stock</Label>
                     </div>
-                  </div>
 
-                  <div className="flex justify-end space-x-3 pt-6">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAdditionalContentSave}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Content
-                    </Button>
-                  </div>
-                </div>
-              )}
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isActive"
+                        checked={productFormData.isActive}
+                        onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
+                      />
+                      <Label htmlFor="isActive">Visible on public page</Label>
+                    </div>
 
-              {selectedProfileSection === 'brands' && (
-                <div className="space-y-6">
-                  {/* Section Title */}
-                  <div>
-                    <Label className="text-sm font-medium">Page Title for Brand Section</Label>
-                    <Input
-                      value={sectionTitles.brands}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, brands: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
-                  </div>
+                    <Separator />
 
-                  {/* Add New Brand Section */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Add New Brand</CardTitle>
-                      <CardDescription>Add a new brand to your brand slider</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Brand Name</Label>
-                        <Input
-                          placeholder="Enter brand name"
-                          value={brandContent.newBrandName || ''}
-                          onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandName: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Brand Photo</Label>
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Photo URL or upload below"
-                            value={brandContent.newBrandLogo || ''}
-                            onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandLogo: e.target.value }))}
-                          />
-                          <ImageUpload
-                            onUpload={(url) => setBrandContent(prev => ({ ...prev, newBrandLogo: url }))}
-                          />
-                        </div>
-                      </div>
+                    <div className="flex justify-end space-x-3">
                       <Button
+                        variant="outline"
                         onClick={() => {
-                          if (!brandContent.newBrandName?.trim()) {
-                            alert('Please enter a brand name')
-                            return
-                          }
-                          const newBrand = {
-                            name: brandContent.newBrandName.trim(),
-                            logo: brandContent.newBrandLogo || '',
-                          }
-                          setBrandContent(prev => ({
-                            ...prev,
-                            brands: [...(prev.brands || []), newBrand],
-                            newBrandName: '',
-                            newBrandLogo: '',
-                          }))
+                          setShowProductRightbar(false)
+                          setEditingProduct(null)
+                          setProductFormData({
+                            name: '',
+                            description: '',
+                            price: '',
+                            image: '',
+                            categoryId: '',
+                            brandId: '',
+                            inStock: true,
+                            isActive: true,
+                          })
                         }}
-                        className="w-full"
+                        className="rounded-2xl"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Brand
+                        Cancel
                       </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Brands Table */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Added Brands</CardTitle>
-                      <CardDescription>Manage your brand collection</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {brandContent.brands?.length > 0 ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Brand Name</TableHead>
-                              <TableHead>Logo</TableHead>
-                              <TableHead className="w-20">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {brandContent.brands.map((brand: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">{brand.name}</TableCell>
-                                <TableCell>
-                                  {brand.logo ? (
-                                    <img
-                                      src={brand.logo}
-                                      alt={brand.name}
-                                      className="h-8 w-8 object-cover rounded"
-                                    />
-                                  ) : (
-                                    <div className="h-8 w-8 bg-gray-200 rounded flex items-center justify-center">
-                                      <ImageIcon className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setBrandContent(prev => ({
-                                        ...prev,
-                                        brands: prev.brands.filter((_, i) => i !== index)
-                                      }))
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <div className="text-center py-8">
-                          <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No brands added yet</h3>
-                          <p className="text-gray-600">Add your first brand using the form above</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 pt-6 border-t">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Cancel
-                    </Button>
-                    <Button onClick={async () => {
-                      if (!business) return
-                      setIsLoading(true)
-                      try {
-                        // Clean up temporary form fields before saving
-                        const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent
-                        const response = await fetch('/api/business', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ brandContent: cleanBrandContent }),
-                        })
-                        if (response.ok) {
-                          alert('Brand content saved successfully!')
-                        } else {
-                          alert('Failed to save brand content')
+                      <Button onClick={async () => {
+                        setIsLoading(true)
+                        try {
+                          const url = editingProduct
+                            ? `/api/business/products/${editingProduct.id}`
+                            : '/api/business/products'
+                          const method = editingProduct ? 'PUT' : 'POST'
+                          const response = await fetch(url, {
+                            method,
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(productFormData),
+                          })
+                          if (response.ok) {
+                            await fetchData()
+                            setShowProductRightbar(false)
+                            setEditingProduct(null)
+                            setProductFormData({
+                              name: '',
+                              description: '',
+                              price: '',
+                              image: '',
+                              categoryId: '',
+                              brandId: '',
+                              inStock: true,
+                              isActive: true,
+                            })
+                            alert(editingProduct ? 'Product updated successfully!' : 'Product added successfully!')
+                          } else {
+                            const errorResult = await response.json()
+                            alert(`Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`)
+                          }
+                        } catch (error) {
+                          alert(`Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`)
+                        } finally {
+                          setIsLoading(false)
                         }
-                      } catch (error) {
-                        alert('Failed to save brand content')
-                      } finally {
-                        setIsLoading(false)
-                      }
-                    }}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {selectedProfileSection === 'footer' && (
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.footer}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, footer: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Footer Settings</Label>
-                    <div className="mt-2 space-y-4">
-                      <div>
-                        <Label>Copyright Text</Label>
-                        <Input placeholder="© 2024 Your Business Name. All rights reserved." />
-                      </div>
-                      <div>
-                        <Label>Footer Links</Label>
-                        <div className="space-y-2">
-                          <div className="flex space-x-2">
-                            <Input placeholder="Link Text" />
-                            <Input placeholder="URL" />
-                            <Button size="sm" variant="outline">
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Link
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch />
-                        <Label>Show Social Media Links</Label>
-                      </div>
+                      }} disabled={isLoading} className="rounded-2xl">
+                        {isLoading ? (
+                          'Saving...'
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            {editingProduct ? 'Update' : 'Add'} Product
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex justify-end space-x-3 pt-6">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Cancel
-                    </Button>
-                    <Button>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Footer
-                    </Button>
-                  </div>
-                </div>
+                </>
               )}
 
-              {selectedProfileSection === 'products' && (
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.products}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, products: e.target.value }))}
-                      placeholder="Enter section title"
-                    />
-                  </div>
-
-                  <div className="text-center py-12">
-                    <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Products Manager</h3>
-                    <p className="text-gray-600 mb-6">
-                      Manage your products and services from the Products section in the sidebar.
-                    </p>
-                    <Button onClick={() => setActiveSection('products')}>
-                      Go to Products Section
-                    </Button>
-                  </div>
-
-                  <div className="flex justify-end space-x-3 pt-6">
-                    <Button variant="outline" onClick={handleCloseEditor}>
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
       </div>
-      {/* Product Dialog */}
-      <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? 'Edit Product' : 'Add New Product'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingProduct ? 'Update product information below' : 'Fill in the details to add a new product or service'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleProductSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                value={productFormData.name}
-                onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter product name"
-                required
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={productFormData.description}
-                onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe your product or service"
-                rows={4}
-              />
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <>
+          {/* More Menu Overlay */}
+          {showMoreMenu && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
+              <div className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="space-y-2">
+                  {menuItems.slice(4).map((item) => {
+                    const MobileIcon = item.mobileIcon
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => {
+                          setActiveSection(item.value)
+                          setShowMoreMenu(false)
+                        }}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${activeSection === item.value
+                          ? 'bg-orange-100 text-orange-600'
+                          : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                      >
+                        <MobileIcon className="h-5 w-5" />
+                        <span className="font-medium">{item.title}</span>
+                      </button>
+                    )
+                  })}
+                  <button
+                    onClick={async () => {
+                      await logout()
+                      router.push('/login')
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                value={productFormData.price}
-                onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="e.g., $50, Starting at $100, Free consultation"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="image">Image URL</Label>
-              <Input
-                id="image"
-                value={productFormData.image}
-                onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Select Existing Image</Label>
-              <Select
-                key={images.length}
-                value={productFormData.image || "no-image"}
-                onValueChange={(value) => setProductFormData(prev => ({ ...prev, image: value === "no-image" ? "" : value }))}
+          {/* Bottom Navigation Bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {menuItems.slice(0, 4).map((item) => {
+                const MobileIcon = item.mobileIcon
+                return (
+                  <button
+                    key={item.value}
+                    onClick={() => setActiveSection(item.value)}
+                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${activeSection === item.value
+                      ? 'text-orange-500'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <MobileIcon className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">{item.mobileTitle}</span>
+                  </button>
+                )
+              })}
+              {/* More button for additional items */}
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${showMoreMenu || menuItems.slice(4).some(item => item.value === activeSection)
+                  ? 'text-orange-500'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an existing image" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no-image">No image</SelectItem>
-                  {images.map((image) => (
-                    <SelectItem key={image} value={image}>
-                      {image}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <MoreHorizontal className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">More</span>
+              </button>
             </div>
-
-            <div className="space-y-2">
-              <Label>Upload New Image</Label>
-              {mounted && (
-                <ImageUpload
-                  onUpload={(url) => setProductFormData(prev => ({ ...prev, image: url }))}
-                />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select
-                key={categories.length}
-                value={productFormData.categoryId}
-                onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Brand</Label>
-              <Select
-                key={brands.length}
-                value={productFormData.brandId}
-                onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandId: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a brand" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="inStock"
-                checked={productFormData.inStock}
-                onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
-              />
-              <Label htmlFor="inStock">In Stock</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="isActive"
-                checked={productFormData.isActive}
-                onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
-              />
-              <Label htmlFor="isActive">Visible on public page</Label>
-            </div>
-
-            <Separator />
-
-            <div className="flex justify-end space-x-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowProductDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  'Saving...'
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {editingProduct ? 'Update' : 'Add'} Product
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -39,7 +39,12 @@ import {
   ChevronRight,
   Send,
   X,
-  MessageCircle
+  MessageCircle,
+  Image,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin
 } from 'lucide-react'
 
 interface BusinessProfileProps {
@@ -163,17 +168,17 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   }
 
   return (
-    <div className="min-h-screen bg-transparent" suppressHydrationWarning>
+    <div className="min-h-screen bg-linear-to-b from-amber-100 to-white  " suppressHydrationWarning>
   {/* Navigation */ }
-  <nav className="sticky top-0 z-40 bg-white border-b">
+      <nav className="sticky top-0 z-40 bg-amber-50/80 border-b backdrop-blur-md">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-16">
-        <div className="flex items-center space-x-4">
+            <div className="flex relative items-center space-x-4">
               {business.logo && business.logo.trim() !== '' && (
             <img
               src={business.logo}
               alt={business.name}
-              className="h-8 w-auto"
+                  className="h-12 w-auto"
             />
           )}
           <span className="font-semibold text-lg">{business.name}</span>
@@ -189,7 +194,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
 
   {/* Hero Section with Slider */ }
   <section className="relative">
-    <div className="max-w-7xl mx-auto rounded-2xl mt-3   overflow-hidden">
+        <div className="max-w-7xl mx-auto rounded-3xl mt-3   overflow-hidden">
       <Carousel className="w-full">
         <CarouselContent>
           {heroContent.slides?.map((slide: any, index: number) => (
@@ -234,44 +239,44 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Card - About */}
-        <Card className="bg-transparent">
-          <CardContent className="p-6">
+            <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-white relative overflow-hidden" style={{ backgroundImage: 'linear-gradient(to bottom right, rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url(/card-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+              <CardContent className="p-6 relative z-10">
             <div className="flex items-start space-x-4">
                   {business.logo && business.logo.trim() !== '' && (
                 <img
                   src={business.logo}
                   alt={business.name}
-                  className="h-40 w-40 rounded-full object-cover flex-shrink-0"
+                      className="h-40 w-40 rounded-full border-2 object-cover shrink-0"
                 />
               )}
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">{business.name}</h3>
                 {business.category && (
-                  <Badge variant="secondary" className="mb-3">{business.category.name}</Badge>
+                      <Badge variant="outline" className="mb-3 border-white/20 text-white bg-white/10">{business.category.name}</Badge>
                 )}
-                <p className="text-gray-600 mb-4 leading-relaxed">
+                    <p className="text-gray-100 mb-4 leading-relaxed">
                   {business.description || 'No description available yet.'}
                 </p>
-                
+
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Right Card - Contact */}
-        <Card className="bg-transparent">
-          <CardHeader>
-            <CardTitle>Get in Touch</CardTitle>
+            <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-white relative overflow-hidden" style={{ backgroundImage: 'linear-gradient(to bottom right, rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url(/card-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-white">Get in Touch</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+              <CardContent className="space-y-4 relative z-10">
             {business.address && (
               <div className="flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-gray-400" />
+                    <MapPin className="h-5 w-5 text-gray-300" />
                 <a
                   href={`https://maps.google.com/?q=${encodeURIComponent(business.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                      className="text-blue-300 hover:underline"
                 >
                   {business.address}
                 </a>
@@ -279,10 +284,10 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             )}
             {business.phone && (
               <div className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-gray-400" />
+                    <Phone className="h-5 w-5 text-gray-300" />
                 <a
                   href={`tel:${business.phone}`}
-                  className="text-blue-600 hover:underline"
+                      className="text-blue-300 hover:underline"
                 >
                   {business.phone}
                 </a>
@@ -290,10 +295,10 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             )}
             {business.email && (
               <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5 text-gray-300" />
                 <a
                   href={`mailto:${business.email}`}
-                  className="text-blue-600 hover:underline"
+                      className="text-blue-300 hover:underline"
                 >
                   {business.email}
                 </a>
@@ -301,19 +306,19 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             )}
             {business.website && (
               <div className="flex items-center space-x-3">
-                <Globe className="h-5 w-5 text-gray-400" />
+                    <Globe className="h-5 w-5 text-gray-300" />
                 <a
                   href={business.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                      className="text-blue-300 hover:underline"
                 >
                   Visit Website
                 </a>
               </div>
             )}
-            <Separator />
-            <Button className="w-full" onClick={() => openInquiryModal()}>
+                <Separator className="bg-white/20" />
+                <Button variant="outline" className="w-full border-white text-gray-900 hover:bg-white hover:text-gray-800" onClick={() => openInquiryModal()}>
               Get a Quote
             </Button>
           </CardContent>
@@ -336,13 +341,17 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
           {viewAllBrands ? (
             <div className="flex flex-wrap gap-4">
               {brandContent.brands.map((brand: any, index: number) => (
-                <Card key={index} className="overflow-hidden flex-shrink-0 w-48 bg-transparent">
+                <Card key={index} className="overflow-hidden shrink-0 w-48 bg-transparent">
                   <div className="h-32 bg-transparent flex items-center justify-center p-4">
-                    <img
-                      src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
-                      alt={brand.name}
-                      className="max-w-full max-h-full object-contain"
-                    />
+                    {brand.logo && brand.logo.trim() !== '' ? (
+                      <img
+                        src={brand.logo}
+                        alt={brand.name}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    ) : (
+                      <Image className="h-16 w-16 text-gray-400" />
+                    )}
                   </div>
                   <CardHeader>
                     <CardTitle className="text-center">{brand.name}</CardTitle>
@@ -357,11 +366,15 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                   <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
                     <Card className="overflow-hidden bg-transparent">
                       <div className="h-32 bg-white flex items-center justify-center p-4">
-                        <img
-                          src={brand.logo && brand.logo.trim() !== '' ? brand.logo : '/api/placeholder/200/100'}
-                          alt={brand.name}
-                          className="max-w-full max-h-full object-contain"
-                        />
+                        {brand.logo && brand.logo.trim() !== '' ? (
+                          <img
+                            src={brand.logo}
+                            alt={brand.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <Image className="h-16 w-16 text-gray-400" />
+                        )}
                       </div>
                       <CardHeader>
                         <CardTitle className="text-center">{brand.name}</CardTitle>
@@ -393,7 +406,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
           {viewAllCategories ? (
             <div className="flex flex-wrap gap-4">
               {categoryContent.categories.map((category: any, index: number) => (
-                <Card key={index} className="overflow-hidden flex-shrink-0 w-48 bg-transparent">
+                <Card key={index} className="overflow-hidden shrink-0 w-48 bg-transparent">
                   <CardHeader>
                     <CardTitle className="text-center">{category.name}</CardTitle>
                   </CardHeader>
@@ -435,15 +448,15 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                 </Button>
               </div>
               {mounted && (
-                <div className="flex flex-col sm:flex-row gap-4 mb-4" suppressHydrationWarning>
+                <div className="flex flex-col  sm:flex-row gap-4 mb-4" suppressHydrationWarning>
                   <Input
                     placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   />
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-full sm:w-48">
+                    <SelectTrigger className="w-full bg-white sm:w-48">
                       <SelectValue placeholder="All categories" />
                     </SelectTrigger>
                     <SelectContent>
@@ -455,85 +468,37 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                   </Select>
                 </div>
               )}
-          {viewAllProducts ? (
-            <div className="flex flex-wrap gap-4">
-              {filteredProducts.map((product) => (
-                <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex-shrink-0 w-80 bg-transparent">
-                  <div className="relative">
-                    <div className="h-48 bg-transparent">
-                      <img
-                        src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <Badge
-                      className="absolute top-2 right-2"
-                      variant={product.inStock ? "default" : "destructive"}
-                    >
-                      {product.inStock ? "In Stock" : "Out of Stock"}
-                    </Badge>
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {product.brand && (
-                        <Badge variant="outline" className="text-xs">
-                          {product.brand.name}
-                        </Badge>
-                      )}
-                      {product.category && (
-                        <Badge variant="outline" className="text-xs">
-                          {product.category.name}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="mb-4 text-sm leading-relaxed">
-                      {product.description || "No description available"}
-                    </CardDescription>
-                    <Button
-                      className="w-full"
-                      onClick={() => {
-                        if (business.phone) {
-                          const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
-                          const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
-                          const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
-                          window.open(whatsappUrl, '_blank');
-                        } else {
-                          alert('Phone number not available');
-                        }
-                      }}
-                    >
-                      Enquire
-                      <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                      </svg>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Carousel className="w-full">
-              <CarouselContent>
-                {filteredProducts.map((product) => (
-                  <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <Card id={`product-${product.id}`} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-transparent">
-                      <div className="relative">
-                        <div className="h-48 bg-gray-200">
+              {viewAllProducts ? (
+                <div className="flex flex-wrap gap-4">
+                  {filteredProducts.map((product) => (
+                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300 shrink-0 w-80 ">
+                      <div className="relative h-48">
+                        {product.image && product.image.trim() !== '' ? (
                           <img
-                            src={product.image && product.image.trim() !== '' ? product.image : '/api/placeholder/400/300'}
+                            src={product.image}
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
-                        </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <Image className="h-16 w-16 text-gray-400" />
+                            </div>
+                        )}
                         <Badge
-                          className="absolute top-2 right-2"
+                          className={`absolute top-2 rounded-full right-2 `}
                           variant={product.inStock ? "default" : "destructive"}
                         >
-                          {product.inStock ? "In Stock" : "Out of Stock"}
+                          {product.inStock ? (
+                            <span className="flex items-center gap-1">
+
+                              {product.inStock && (
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                              )}  In Stock
+                            </span>
+                          ) : "Out of Stock"}
                         </Badge>
                       </div>
                       <CardHeader>
@@ -556,7 +521,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                           {product.description || "No description available"}
                         </CardDescription>
                         <Button
-                          className="w-full"
+                          className="w-full bg-green-500 hover:bg-green-700 cursor-pointer "
                           onClick={() => {
                             if (business.phone) {
                               const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
@@ -570,53 +535,371 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                         >
                           Enquire
                           <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
                           </svg>
                         </Button>
                       </CardContent>
                     </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          )}
+                  ))}
+                </div>
+              ) : (
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {filteredProducts.map((product) => (
+                      <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
+                        <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300 ">
+                          <div className="relative h-48">
+                            {product.image && product.image.trim() !== '' ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <Image className="h-16 w-16 text-gray-400" />
+                                </div>
+                            )}
+                            <Badge
+                              className={`absolute top-2 rounded-full right-2 `}
+                              variant={product.inStock ? "default" : "destructive"}
+                            >
+                              {product.inStock ? (
+                                <span className="flex items-center gap-1">
+
+                                  {product.inStock && (
+                                    <span className="relative flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                    </span>
+                                  )}  In Stock
+                                </span>
+                              ) : "Out of Stock"}
+                            </Badge>
+                          </div>
+                          <CardHeader>
+                            <CardTitle className="text-lg">{product.name}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {product.brand && (
+                                <Badge variant="outline" className="text-xs">
+                                  {product.brand.name}
+                                </Badge>
+                              )}
+                              {product.category && (
+                                <Badge variant="outline" className="text-xs">
+                                  {product.category.name}
+                                </Badge>
+                              )}
+                            </div>
+                            <CardDescription className="mb-4 text-sm leading-relaxed">
+                              {product.description || "No description available"}
+                            </CardDescription>
+                            <Button
+                              className="w-full bg-green-500 hover:bg-green-700 cursor-pointer "
+                              onClick={() => {
+                                if (business.phone) {
+                                  const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
+                                  const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
+                                  const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
+                                  window.open(whatsappUrl, '_blank');
+                                } else {
+                                  alert('Phone number not available');
+                                }
+                              }}
+                            >
+                              Enquire
+                              <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
+                              </svg>
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              )}
         </div>
       </section>
     )
   }
 
-  {/* Additional Content Section */ }
-  {
-    business.additionalContent && (
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-transparent">
-        <div className="max-w-4xl mx-auto prose prose-lg">
-          <div dangerouslySetInnerHTML={{ __html: business.additionalContent as string }} />
+
+      {/* Start of Bento Section */}
+      <section
+        className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8"
+        id="bento"
+      >
+        {/* Responsive 4x2 Bento Grid, with 2 big cards */}
+        <div className="
+    grid 
+    gap-6 
+    grid-cols-1 
+    md:grid-cols-4 
+    md:grid-rows-2
+    "
+        >
+          {/* Main Highlight (About) - Top Left Big Card */}
+          <div
+            className="
+        bg-gray-100 
+        border 
+        rounded-xl 
+        shadow-sm 
+        flex 
+        items-center 
+        justify-center 
+        aspect-2/1 
+        min-h-[180px] 
+        min-w-[200px] 
+        hover:shadow 
+        transition-shadow 
+        bg-center bg-cover
+        md:row-span-2 md:col-span-2
+        col-span-1 row-span-1
+      "
+            style={{
+              backgroundImage: business.logo
+                ? `url(${business.logo})`
+                : undefined
+            }}
+          >
+            {!business.logo && (
+              <span className="flex items-center justify-center w-20 h-20 rounded-full bg-gray-200">
+                <Image className="w-10 h-10 text-gray-400" />
+              </span>
+            )}
+          </div>
+
+          {/* Product/Service Card 1 - Top Right Small Card */}
+          <div
+            className="
+        bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center
+        aspect-square min-h-[120px] min-w-[120px] hover:shadow transition-shadow
+        bg-center bg-cover
+        md:row-span-1 md:col-span-1
+      "
+            style={{
+              backgroundImage: business.products && business.products[1]?.image
+                ? `url(${business.products[1].image})`
+                : undefined
+            }}
+          >
+            {!(business.products && business.products[1]?.image) && (
+              <span className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-200">
+                <Image className="w-8 h-8 text-gray-400" />
+              </span>
+            )}
+          </div>
+
+          {/* Contact 1 - Top Right Small Card */}
+          <div
+            className="
+        bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center
+        aspect-square min-h-[120px] min-w-[120px] hover:shadow transition-shadow
+        bg-center bg-cover
+        md:row-span-1 md:col-span-1
+      "
+            style={{
+              backgroundImage: business.logo
+                ? `url(${business.logo})`
+                : undefined
+            }}
+          >
+            {!business.logo && (
+              <span className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-200">
+                <Image className="w-8 h-8 text-gray-400" />
+              </span>
+            )}
+          </div>
+
+          {/* -- Second Large Card -- - Bottom Left Big Card */}
+          <div
+            className="
+        bg-gray-100 
+        border 
+        rounded-xl 
+        shadow-sm 
+        flex 
+        flex-col
+        items-center 
+        justify-center 
+        aspect-2/1 
+        min-h-[180px] 
+        min-w-[200px] 
+        hover:shadow 
+        transition-shadow 
+        bg-center bg-cover
+        md:row-span-2 md:col-span-2
+        col-span-1 row-span-1
+        md:col-start-3 md:row-start-1
+      "
+            // Use a featured product image or fallback
+            style={{
+              backgroundImage:
+                business.products && business.products[0]?.image
+                  ? `url(${business.products[0].image})`
+                  : undefined
+            }}
+          >
+            {!(business.products && business.products[0]?.image) && (
+              <span className="flex items-center justify-center w-20 h-20 rounded-full bg-gray-200">
+                <Image className="w-10 h-10 text-gray-400" />
+              </span>
+            )}
+            {/* Content for featured product/service */}
+            {business.products && business.products[0] && (
+              <div className="bg-white/80 rounded-lg px-4 py-2 mt-4 text-center max-w-[80%]">
+                <h3 className="text-lg font-semibold mb-1 line-clamp-1">
+                  {business.products[0].name}
+                </h3>
+                <p className="text-xs text-gray-600 line-clamp-2">
+                  {business.products[0].description || "No description available"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Product/Service Card 2 - Bottom Right Small Card */}
+          <div
+            className="
+        bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center
+        aspect-square min-h-[120px] min-w-[120px] hover:shadow transition-shadow
+        bg-center bg-cover
+        md:row-span-1 md:col-span-1
+      "
+            style={{
+              backgroundImage: business.products && business.products[2]?.image
+                ? `url(${business.products[2].image})`
+                : undefined
+            }}
+          >
+            {!(business.products && business.products[2]?.image) && (
+              <span className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-200">
+                <Image className="w-8 h-8 text-gray-400" />
+              </span>
+            )}
+          </div>
+
+          {/* Contact 2 - Bottom Right Small Card */}
+          <div
+            className="
+        bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center
+        aspect-square min-h-[120px] min-w-[120px] hover:shadow transition-shadow
+        bg-center bg-cover
+        md:row-span-1 md:col-span-1
+      "
+            style={{
+              backgroundImage: business.logo
+                ? `url(${business.logo})`
+                : undefined
+            }}
+          >
+            {!business.logo && (
+              <span className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-200">
+                <Image className="w-8 h-8 text-gray-400" />
+              </span>
+            )}
+          </div>
         </div>
       </section>
-    )
-  }
+      {/* End of Bento Section */}
+
 
   {/* Footer */ }
-  <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-    <div className="max-w-7xl mx-auto text-center">
-      <div className="flex items-center justify-center space-x-2 mb-4">
+      <footer id="contact" className="bg-gray-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
             {business.logo && business.logo.trim() !== '' && (
-          <img
-            src={business.logo}
-            alt={business.name}
-            className="h-8 w-auto"
-          />
-        )}
-        <span className="text-lg font-semibold">{business.name}</span>
+                  <img
+                    src={business.logo}
+                    alt={business.name}
+                    className="h-8 w-auto"
+                  />
+                )}
+                <span className="text-lg font-semibold">{business.name}</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                {business.description || 'Your trusted business partner'}
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Quick Links</h3>
+              <ul className="space-y-2">
+                <li><a href="#about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#products" className="text-gray-400 hover:text-white transition-colors">Products & Services</a></li>
+                <li><a href="#contact" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Contact Info</h3>
+              <div className="space-y-2">
+                {business.address && (
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400 text-sm">{business.address}</span>
+                  </div>
+                )}
+                {business.phone && (
+                  <div className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <a href={`tel:${business.phone}`} className="text-gray-400 hover:text-white transition-colors text-sm">{business.phone}</a>
+                  </div>
+                )}
+                {business.email && (
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <a href={`mailto:${business.email}`} className="text-gray-400 hover:text-white transition-colors text-sm">{business.email}</a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Social Media & CTA */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Follow Us</h3>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Twitter className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Linkedin className="h-5 w-5" />
+                </a>
+              </div>
+              <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-gray-900" onClick={() => openInquiryModal()}>
+                Get in Touch
+              </Button>
+            </div>
       </div>
-      <p className="text-gray-400 mb-4">
-        © 2024 {business.name}. All rights reserved.
-      </p>
-      <Button variant="outline" onClick={() => openInquiryModal()}>
-        Contact Us
-      </Button>
+
+          {/* Bottom Section */}
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <p className="text-gray-400 text-sm">
+                © 2024 {business.name}. All rights reserved.
+              </p>
+              <p className="text-gray-400 text-sm">
+                Powered by DigiSence - Your Trusted Portal Developers.
+              </p>
+            </div>
+          </div>
     </div>
   </footer>
 

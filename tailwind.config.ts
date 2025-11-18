@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
     darkMode: "class",
@@ -59,6 +60,22 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    plugin(function({ addUtilities }) {
+      addUtilities({
+        '.dg-light-grt': {
+          'background': 'linear-gradient(to right, #fb923c, #f59e0b)',
+        },
+        '.dg-dark-light': {
+          'background-color': '#18181b',
+        },
+        '.dashboard-bg': {
+          'background': 'linear-gradient(to bottom, #fef3c7, #ffffff)',
+          'backdrop-filter': 'blur(10px)',
+        },
+      });
+    }),
+  ],
 };
 export default config;

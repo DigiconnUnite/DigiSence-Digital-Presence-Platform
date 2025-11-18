@@ -72,7 +72,13 @@ import {
   Globe,
   UserCheck,
   AlertTriangle,
-  Menu
+  Home,
+  Grid3X3,
+  FolderTree,
+  MessageCircle,
+  LineChart,
+  Cog,
+  MoreHorizontal
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -153,6 +159,23 @@ export default function SuperAdminDashboard() {
   const [deleteBusiness, setDeleteBusiness] = useState<Business | null>(null)
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+
+  useEffect(() => {
+    // Check if mobile on initial load and on resize
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(false)
+      }
+    }
+
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'SUPER_ADMIN')) {
@@ -527,32 +550,44 @@ export default function SuperAdminDashboard() {
     {
       title: 'Dashboard',
       icon: BarChart3,
+      mobileIcon: Home,
       value: 'dashboard',
+      mobileTitle: 'Home'
     },
     {
       title: 'Businesses',
       icon: Building,
+      mobileIcon: Grid3X3,
       value: 'businesses',
+      mobileTitle: 'Business'
     },
     {
       title: 'Categories',
       icon: Settings,
+      mobileIcon: FolderTree,
       value: 'categories',
+      mobileTitle: 'Category'
     },
     {
       title: 'Inquiries',
       icon: MessageSquare,
+      mobileIcon: MessageCircle,
       value: 'inquiries',
+      mobileTitle: 'Inquiry'
     },
     {
       title: 'Analytics',
       icon: TrendingUp,
+      mobileIcon: LineChart,
       value: 'analytics',
+      mobileTitle: 'Analytics'
     },
     {
       title: 'Settings',
       icon: Settings,
+      mobileIcon: Cog,
       value: 'settings',
+      mobileTitle: 'Settings'
     },
   ]
 
@@ -560,10 +595,10 @@ export default function SuperAdminDashboard() {
     switch (currentView) {
       case 'dashboard':
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20 md:pb-0">
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-white border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">Total Businesses</CardTitle>
                   <Building className="h-4 w-4 text-gray-400" />
@@ -573,7 +608,7 @@ export default function SuperAdminDashboard() {
                   <p className="text-xs text-gray-500">Registered businesses</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm">
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">Active Businesses</CardTitle>
                   <UserCheck className="h-4 w-4 text-gray-400" />
@@ -583,7 +618,7 @@ export default function SuperAdminDashboard() {
                   <p className="text-xs text-gray-500">Currently active</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm">
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">Total Products</CardTitle>
                   <Package className="h-4 w-4 text-gray-400" />
@@ -593,7 +628,7 @@ export default function SuperAdminDashboard() {
                   <p className="text-xs text-gray-500">All products & services</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm">
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">Platform Health</CardTitle>
                   <Activity className="h-4 w-4 text-gray-400" />
@@ -606,82 +641,26 @@ export default function SuperAdminDashboard() {
                 </CardContent>
               </Card>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Quick Actions */}
-              {/* <Card className="bg-white border border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-gray-900">Quick Actions</CardTitle>
-                  <CardDescription className="text-gray-600">Common administrative tasks</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button onClick={() => setShowAddBusiness(true)} className="w-full justify-start bg-black hover:bg-gray-800 text-white">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Business
-                  </Button>
-                  <Button variant="outline" onClick={() => setCurrentView('businesses')} className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50">
-                    <Building className="h-4 w-4 mr-2" />
-                    Manage Businesses
-                  </Button>
-                  <Button variant="outline" onClick={() => setCurrentView('categories')} className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configure Categories
-                  </Button>
-                </CardContent>
-              </Card> */}
-
-              {/* Platform Analytics */}
-              {/* <Card className="bg-white border border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-gray-900">Platform Analytics</CardTitle>
-                  <CardDescription className="text-gray-600">Key performance indicators</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-green-600">+{Math.floor(stats.totalBusinesses * 1.2)}%</div>
-                      <p className="text-sm text-gray-600">Growth Rate</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Users className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-gray-600">{stats.totalUsers}</div>
-                      <p className="text-sm text-gray-600">Active Admins</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Mail className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-gray-600">{stats.totalInquiries}</div>
-                      <p className="text-sm text-gray-600">Total Inquiries</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Activity className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-gray-600">{stats.totalProducts}</div>
-                      <p className="text-sm text-gray-600">Total Products</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card> */}
-            </div>
           </div>
         )
       case 'businesses':
         return (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">ALL BUSINESSES</h2>
-                <p className="text-gray-600">Manage all business accounts and their administrators</p>
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
+              <div className="p-4 sm:p-6 border-b bg-zinc-950 border-gray-200 rounded-t-3xl">
+                <h2 className="text-xl font-bold text-gray-50">ALL BUSINESSES</h2>
+                <p className="text-gray-300">Manage all business accounts and their administrators</p>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {/* Search and Filters */}
-                <div className="flex space-x-4 mb-6">
-                  <Button onClick={() => { setRightPanelContent('add-business'); setShowRightPanel(true); }} className="bg-black hover:bg-gray-800 text-white">
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Button onClick={() => { setRightPanelContent('add-business'); setShowRightPanel(true); }} className="bg-black hover:bg-gray-800 text-white rounded-2xl">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
                   </Button>
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Filter by Status: Active v" />
+                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
+                      <SelectValue placeholder="Filter by Status: Active" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All ({filteredStats.total})</SelectItem>
@@ -689,64 +668,66 @@ export default function SuperAdminDashboard() {
                       <SelectItem value="inactive">Inactive ({filteredStats.inactive})</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline">
+                  <Button variant="outline" className="rounded-2xl">
                     <Download className="h-4 w-4 mr-2" />
                     Export Data
                   </Button>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-gray-900">Business Name</TableHead>
-                      <TableHead className="text-gray-900">Admin Email</TableHead>
-                      <TableHead className="text-gray-900">Category</TableHead>
-                      <TableHead className="text-gray-900">Status</TableHead>
-                      <TableHead className="text-gray-900">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBusinesses.map((business) => (
-                      <TableRow key={business.id}>
-                        <TableCell className="text-gray-900 font-medium">{business.name}</TableCell>
-                        <TableCell className="text-gray-900">{business.admin.email}</TableCell>
-                        <TableCell className="text-gray-900">{business.category?.name || 'None'}</TableCell>
-                        <TableCell>
-                          <Badge variant={business.isActive ? "default" : "secondary"}>
-                            {business.isActive ? 'Active' : 'Suspended'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEditBusiness(business)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDeleteBusiness(business)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <Table>
+                    <TableHeader className='bg-amber-100'>
+                      <TableRow>
+                        <TableHead className="text-gray-900">Business Name</TableHead>
+                        <TableHead className="text-gray-900">Admin Email</TableHead>
+                        <TableHead className="text-gray-900">Category</TableHead>
+                        <TableHead className="text-gray-900">Status</TableHead>
+                        <TableHead className="text-gray-900">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBusinesses.map((business) => (
+                        <TableRow key={business.id}>
+                          <TableCell className="text-gray-900 font-medium">{business.name}</TableCell>
+                          <TableCell className="text-gray-900">{business.admin.email}</TableCell>
+                          <TableCell className="text-gray-900">{business.category?.name || 'None'}</TableCell>
+                          <TableCell>
+                            <Badge variant={business.isActive ? "default" : "secondary"} className="rounded-full">
+                              {business.isActive ? 'Active' : 'Suspended'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button size="sm" variant="outline" className="rounded-xl">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditBusiness(business)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteBusiness(business)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </div>
         )
       case 'categories':
         return (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
                 <h2 className="text-xl font-semibold text-gray-900">CATEGORY MANAGER</h2>
                 <p className="text-gray-600">Configure business categories and classifications</p>
               </div>
-              <div className="p-6">
-                <Button onClick={() => { setRightPanelContent('add-category'); setShowRightPanel(true); }} variant="outline" className="mb-6">
+              <div className="p-4 sm:p-6">
+                <Button onClick={() => { setRightPanelContent('add-category'); setShowRightPanel(true); }} variant="outline" className="mb-6 rounded-2xl">
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Category
                 </Button>
@@ -754,27 +735,27 @@ export default function SuperAdminDashboard() {
                 <div className="space-y-4">
                   {filteredCategories.filter(c => !c.parentId).map((parentCategory) => (
                     <div key={parentCategory.id}>
-                      <div className="flex items-center space-x-2 p-2 border rounded-lg">
+                      <div className="flex items-center space-x-2 p-4 border rounded-2xl bg-gray-50">
                         <span className="text-lg">📁</span>
                         <span className="font-medium">{parentCategory.name}</span>
                         <div className="ml-auto flex space-x-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEditCategory(parentCategory)}>
+                          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditCategory(parentCategory)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteCategory(parentCategory)}>
+                          <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteCategory(parentCategory)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                       {filteredCategories.filter(c => c.parentId === parentCategory.id).map((childCategory) => (
-                        <div key={childCategory.id} className="ml-8 flex items-center space-x-2 p-2 border-l-2 border-gray-200">
+                        <div key={childCategory.id} className="ml-8 flex items-center space-x-2 p-3 border-l-2 border-gray-200">
                           <span className="text-sm">📄</span>
                           <span className="text-sm">{childCategory.name}</span>
                           <div className="ml-auto flex space-x-2">
-                            <Button size="sm" variant="outline" onClick={() => handleEditCategory(childCategory)}>
+                            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditCategory(childCategory)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDeleteCategory(childCategory)}>
+                            <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteCategory(childCategory)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -789,57 +770,59 @@ export default function SuperAdminDashboard() {
         )
       case 'inquiries':
         return (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
                 <h2 className="text-xl font-semibold text-gray-900">INQUIRIES MANAGEMENT</h2>
                 <p className="text-gray-600">View and manage customer inquiries</p>
               </div>
-              <div className="p-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-gray-900">Customer</TableHead>
-                      <TableHead className="text-gray-900">Business</TableHead>
-                      <TableHead className="text-gray-900">Message</TableHead>
-                      <TableHead className="text-gray-900">Status</TableHead>
-                      <TableHead className="text-gray-900">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inquiries.map((inquiry) => (
-                      <TableRow key={inquiry.id}>
-                        <TableCell className="text-gray-900">
-                          <div>
-                            <div className="font-medium">{inquiry.name}</div>
-                            <div className="text-sm text-gray-500">{inquiry.email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-900">{inquiry.business?.name}</TableCell>
-                        <TableCell className="text-gray-900 max-w-xs truncate">{inquiry.message}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{inquiry.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+              <div className="p-4 sm:p-6">
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-900">Customer</TableHead>
+                        <TableHead className="text-gray-900">Business</TableHead>
+                        <TableHead className="text-gray-900">Message</TableHead>
+                        <TableHead className="text-gray-900">Status</TableHead>
+                        <TableHead className="text-gray-900">Date</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {inquiries.map((inquiry) => (
+                        <TableRow key={inquiry.id}>
+                          <TableCell className="text-gray-900">
+                            <div>
+                              <div className="font-medium">{inquiry.name}</div>
+                              <div className="text-sm text-gray-500">{inquiry.email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-900">{inquiry.business?.name}</TableCell>
+                          <TableCell className="text-gray-900 max-w-xs truncate">{inquiry.message}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </div>
         )
       case 'analytics':
         return (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
                 <h2 className="text-xl font-semibold text-gray-900">PLATFORM ANALYTICS</h2>
                 <p className="text-gray-600">Detailed analytics and insights</p>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <Card>
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                     <CardHeader>
                       <CardTitle>Total Inquiries</CardTitle>
                     </CardHeader>
@@ -847,7 +830,7 @@ export default function SuperAdminDashboard() {
                       <div className="text-2xl font-bold">{inquiries.length}</div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                     <CardHeader>
                       <CardTitle>Active Businesses</CardTitle>
                     </CardHeader>
@@ -855,7 +838,7 @@ export default function SuperAdminDashboard() {
                       <div className="text-2xl font-bold">{stats.activeBusinesses}</div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                     <CardHeader>
                       <CardTitle>Total Products</CardTitle>
                     </CardHeader>
@@ -870,23 +853,23 @@ export default function SuperAdminDashboard() {
         )
       case 'settings':
         return (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
                 <h2 className="text-xl font-semibold text-gray-900">SYSTEM SETTINGS</h2>
                 <p className="text-gray-600">Configure system preferences</p>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="space-y-4">
                   <div>
                     <Label>Platform Name</Label>
-                    <Input defaultValue="DigiSence" />
+                    <Input defaultValue="DigiSence" className="rounded-2xl" />
                   </div>
                   <div>
                     <Label>Admin Email</Label>
-                    <Input defaultValue="admin@digisence.com" />
+                    <Input defaultValue="admin@digisence.com" className="rounded-2xl" />
                   </div>
-                  <Button>Save Settings</Button>
+                  <Button className="rounded-2xl">Save Settings</Button>
                 </div>
               </div>
             </div>
@@ -902,22 +885,22 @@ export default function SuperAdminDashboard() {
 
     if (rightPanelContent === 'add-business') {
       return (
-        <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">ADD BUSINESS</h3>
             <form onSubmit={handleAddBusiness} className="space-y-4">
               <div className="space-y-2">
                 <Label>Business Name</Label>
-                <Input name="name" required />
+                <Input name="name" required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea name="description" />
+                <Textarea name="description" className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select name="categoryId">
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -931,26 +914,26 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="space-y-2">
                 <Label>Address</Label>
-                <Input name="address" />
+                <Input name="address" className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
-                <Input name="phone" />
+                <Input name="phone" className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Website</Label>
-                <Input name="website" />
+                <Input name="website" className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>--- Admin Account ---</Label>
               </div>
               <div className="space-y-2">
                 <Label>Admin Name</Label>
-                <Input name="adminName" required />
+                <Input name="adminName" required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input name="email" type="email" required />
+                <Input name="email" type="email" required className="rounded-2xl" />
               </div>
               <Button type="button" onClick={(e) => {
                 e.preventDefault()
@@ -958,20 +941,20 @@ export default function SuperAdminDashboard() {
                 const businessName = (form.querySelector('input[name="name"]') as HTMLInputElement)?.value || ''
                 const adminName = (form.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || ''
                 handleGenerateCredentials(businessName, adminName)
-              }}>Generate Credentials</Button>
+              }} className="rounded-2xl">Generate Credentials</Button>
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} />
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
                 <div className="relative">
-                  <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10" />
+                  <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -980,8 +963,8 @@ export default function SuperAdminDashboard() {
                 <p className="text-xs text-gray-500">(Leave empty to use generated or enter manually)</p>
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); setGeneratedPassword(''); setGeneratedUsername(''); }}>Cancel</Button>
-                <Button type="submit">Create Business</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); setGeneratedPassword(''); setGeneratedUsername(''); }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Create Business</Button>
               </div>
             </form>
           </div>
@@ -991,38 +974,38 @@ export default function SuperAdminDashboard() {
 
     if (rightPanelContent === 'edit-business' && editingBusiness) {
       return (
-        <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">EDIT BUSINESS</h3>
             <form onSubmit={handleUpdateBusiness} className="space-y-4">
               <div className="space-y-2">
                 <Label>Business Name</Label>
-                <Input name="name" defaultValue={editingBusiness.name} required />
+                <Input name="name" defaultValue={editingBusiness.name} required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea name="description" defaultValue={editingBusiness.description} />
+                <Textarea name="description" defaultValue={editingBusiness.description} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Logo URL</Label>
-                <Input name="logo" defaultValue={editingBusiness.logo} />
+                <Input name="logo" defaultValue={editingBusiness.logo} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Address</Label>
-                <Input name="address" defaultValue={editingBusiness.address} />
+                <Input name="address" defaultValue={editingBusiness.address} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
-                <Input name="phone" defaultValue={editingBusiness.phone} />
+                <Input name="phone" defaultValue={editingBusiness.phone} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Website</Label>
-                <Input name="website" defaultValue={editingBusiness.website} />
+                <Input name="website" defaultValue={editingBusiness.website} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select name="categoryId" defaultValue={editingBusiness.category?.id}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1036,11 +1019,11 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input name="email" defaultValue={editingBusiness.admin.email} type="email" />
+                <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="rounded-2xl" />
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
-                <Button type="submit">Save Changes</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Save Changes</Button>
               </div>
             </form>
           </div>
@@ -1050,22 +1033,22 @@ export default function SuperAdminDashboard() {
 
     if (rightPanelContent === 'add-category') {
       return (
-        <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">ADD CATEGORY</h3>
             <form onSubmit={handleAddCategory} className="space-y-4">
               <div className="space-y-2">
                 <Label>Category Name</Label>
-                <Input name="name" required />
+                <Input name="name" required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea name="description" />
+                <Textarea name="description" className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Parent Category</Label>
                 <Select name="parentId">
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1077,8 +1060,8 @@ export default function SuperAdminDashboard() {
                 </Select>
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
-                <Button type="submit">Create Category</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Create Category</Button>
               </div>
             </form>
           </div>
@@ -1088,22 +1071,22 @@ export default function SuperAdminDashboard() {
 
     if (rightPanelContent === 'edit-category' && editingCategory) {
       return (
-        <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">EDIT CATEGORY</h3>
             <form onSubmit={handleUpdateCategory} className="space-y-4">
               <div className="space-y-2">
                 <Label>Category Name</Label>
-                <Input name="name" defaultValue={editingCategory.name} required />
+                <Input name="name" defaultValue={editingCategory.name} required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea name="description" defaultValue={editingCategory.description} />
+                <Textarea name="description" defaultValue={editingCategory.description} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Parent Category</Label>
                 <Select name="parentId" defaultValue={editingCategory.parentId || ''}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1115,8 +1098,8 @@ export default function SuperAdminDashboard() {
                 </Select>
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }}>Cancel</Button>
-                <Button type="submit">Update Category</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Update Category</Button>
               </div>
             </form>
           </div>
@@ -1128,35 +1111,34 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen relative flex flex-col bg-gradient-to-b from-amber-100 to-white">
       {/* Top Header Bar */}
-      <div className="bg-white  border-b border-gray-200">
-        <div className="flex justify-between items-center px-6 py-3">
+      <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-3">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-black rounded-xl">
+            <div className="p-3 bg-black rounded-2xl">
               {/* <Crown className="h-8 w-8 text-white" /> */}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">DigiSence Logo.</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">DigiSence Logo.</h1>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-
-            <div className="relative">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search..."
-                className="pl-10 w-64"
+                className="pl-10 w-48 sm:w-64 rounded-2xl"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-gray-900">{user?.name || 'Super Admin'}</p>
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
-            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-              <Shield className="h-6 w-6 text-white" />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center">
+              <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
         </div>
@@ -1164,51 +1146,132 @@ export default function SuperAdminDashboard() {
 
       {/* Main Layout: Three Column Grid */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center space-x-2">
-              <Crown className="h-6 w-6" />
-              <span className="font-semibold">Super Admin</span>
+        {/* Left Sidebar - Desktop Only */}
+        {!isMobile && (
+          <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+              <div className="flex items-center space-x-2">
+                <Crown className="h-6 w-6" />
+                <span className="font-semibold">Super Admin</span>
+              </div>
             </div>
+            <nav className="flex-1 p-4">
+              <ul className="space-y-2">
+                {menuItems.map((item) => (
+                  <li key={item.value}>
+                    <button
+                      onClick={() => setCurrentView(item.value)}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
+                        ? ' bg-gradient-to-r from-orange-400 to-amber-500 text-white'
+                        : 'text-gray-700 hover:bg-orange-50'
+                        }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
-          <nav className="flex-1 p-4">
-            <ul className="space-y-2">
-              {menuItems.map((item) => (
-                <li key={item.value}>
-                  <button
-                    onClick={() => setCurrentView(item.value)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      currentView === item.value
-                        ? 'bg-black text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.title}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
+        )}
 
         {/* Middle Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 p-6 overflow-auto">
+        <div className={`flex-1 m-4 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out ${showRightPanel && !isMobile ? 'mr-0' : ''}`}>
+          <div className="flex-1 pt-4 overflow-auto hide-scrollbar">
             {renderMiddleContent()}
           </div>
         </div>
 
-        {/* Right Editor Panel */}
-        <div className={`w-80 bg-white border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out ${
-          showRightPanel ? 'translate-x-0' : 'translate-x-full'
-        }`}>
-          <div className="flex-1 overflow-auto">
-            {renderRightPanel()}
+        {/* Right Editor Panel - Desktop or Mobile Bottom Sheet */}
+        {showRightPanel && (
+          <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50' : 'relative'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm ${isMobile ? 'h-96' : 'w-96'}`}>
+            {isMobile && (
+              <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+                <h3 className="font-semibold">Panel</h3>
+                <button
+                  onClick={() => setShowRightPanel(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 6l8 8M6 14L14 6" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <div className="flex-1 overflow-auto hide-scrollbar">
+              {renderRightPanel()}
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <>
+          {/* More Menu Overlay */}
+          {showMoreMenu && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
+              <div className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="space-y-2">
+                  {menuItems.slice(4).map((item) => {
+                    const MobileIcon = item.mobileIcon
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => {
+                          setCurrentView(item.value)
+                          setShowMoreMenu(false)
+                        }}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${currentView === item.value
+                          ? 'bg-orange-100 text-orange-600'
+                          : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                      >
+                        <MobileIcon className="h-5 w-5" />
+                        <span className="font-medium">{item.title}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Navigation Bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {menuItems.slice(0, 4).map((item) => {
+                const MobileIcon = item.mobileIcon
+                return (
+                  <button
+                    key={item.value}
+                    onClick={() => setCurrentView(item.value)}
+                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
+                      ? 'text-orange-500'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    <MobileIcon className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">{item.mobileTitle}</span>
+                  </button>
+                )
+              })}
+              {/* More button for additional items */}
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${showMoreMenu || menuItems.slice(4).some(item => item.value === currentView)
+                  ? 'text-orange-500'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                <MoreHorizontal className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">More</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

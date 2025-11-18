@@ -170,7 +170,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
         >
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card>
+              <Card className="bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
                     {business.logo && (
@@ -193,7 +193,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                   <CardTitle>Get in Touch</CardTitle>
                 </CardHeader>
@@ -438,7 +438,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
           <section className="py-8">
             <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card>
+                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       {mergedBusiness.logo && (
@@ -461,7 +461,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
                     <CardTitle>Get in Touch</CardTitle>
                   </CardHeader>

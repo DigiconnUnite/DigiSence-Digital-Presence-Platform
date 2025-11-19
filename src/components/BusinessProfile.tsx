@@ -332,7 +332,13 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <div className="flex relative items-center space-x-4">
               {business.logo && business.logo.trim() !== '' && (
                 <img
-                  src={getOptimizedImageUrl(business.logo, { width: 200, height: 200, quality: 85 })}
+                  src={getOptimizedImageUrl(business.logo, {
+                    width: 200,
+                    height: 200,
+                    quality: 85,
+                    format: 'auto',
+                    crop: 'fit'
+                  })}
                   alt={business.name}
                   className="h-12 w-auto"
                   loading="lazy"
@@ -399,7 +405,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                       />
                     ) : (
                         <img
-                          src={(slide.media || slide.image) && (slide.media || slide.image).trim() !== '' ? getOptimizedImageUrl(slide.media || slide.image, { width: 1200, height: 600, quality: 85, format: 'auto' }) : '/api/placeholder/1200/600'}
+                          src={(slide.media || slide.image) && (slide.media || slide.image).trim() !== '' ? getOptimizedImageUrl(slide.media || slide.image, {
+                            width: 1200,
+                            height: 600,
+                            quality: 85,
+                            format: 'auto',
+                            crop: 'fill',
+                            gravity: 'auto'
+                          }) : '/api/placeholder/1200/600'}
                           srcSet={(slide.media || slide.image) && (slide.media || slide.image).trim() !== '' ? generateSrcSet(slide.media || slide.image) : undefined}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                           alt={slide.headline}
@@ -444,7 +457,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <Card className="rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center w-48 h-48 md:w-64 md:h-64 md:shrink-0 mx-auto md:mx-0">
               {business.logo && business.logo.trim() !== '' ? (
                 <img
-                  src={getOptimizedImageUrl(business.logo, { width: 300, height: 300, quality: 90 })}
+                  src={getOptimizedImageUrl(business.logo, {
+                    width: 300,
+                    height: 300,
+                    quality: 90,
+                    format: 'auto',
+                    crop: 'fill',
+                    gravity: 'center'
+                  })}
                   alt={business.name}
                   className="w-40 h-40 md:w-56 md:h-56 rounded-full object-cover"
                   loading="lazy"
@@ -537,7 +557,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                       <div className="h-32 flex items-center justify-center p-2">
                         {brand.logo && brand.logo.trim() !== '' ? (
                           <img
-                            src={getOptimizedImageUrl(brand.logo, { width: 400, height: 300, quality: 85, format: 'auto' })}
+                            src={getOptimizedImageUrl(brand.logo, {
+                              width: 400,
+                              height: 300,
+                              quality: 85,
+                              format: 'auto',
+                              crop: 'fit',
+                              gravity: 'center'
+                            })}
                             srcSet={generateSrcSet(brand.logo)}
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             alt={brand.name}
@@ -671,7 +698,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                       <div className="relative h-48">
                         {product.image && product.image.trim() !== '' ? (
                           <img
-                            src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
+                            src={getOptimizedImageUrl(product.image, {
+                              width: 400,
+                              height: 300,
+                              quality: 85,
+                              format: 'auto',
+                              crop: 'fill',
+                              gravity: 'center'
+                            })}
                             srcSet={generateSrcSet(product.image)}
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             alt={product.name}
@@ -870,7 +904,10 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                       src={getOptimizedImageUrl(image.url, {
                         width: index === 0 || index === 3 ? 600 : 300,
                         height: index === 0 || index === 3 ? 300 : 300,
-                        quality: 85
+                        quality: 85,
+                        format: 'auto',
+                        crop: 'fill',
+                        gravity: 'auto'
                       })}
                       alt={image.alt || 'Portfolio image'}
                       className="w-full h-full object-cover"
@@ -916,7 +953,13 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
               <div className="flex items-center space-x-2">
                 {business.logo && business.logo.trim() !== '' && (
                   <img
-                    src={getOptimizedImageUrl(business.logo, { width: 150, height: 150, quality: 85 })}
+                    src={getOptimizedImageUrl(business.logo, {
+                      width: 150,
+                      height: 150,
+                      quality: 85,
+                      format: 'auto',
+                      crop: 'fit'
+                    })}
                     alt={business.name}
                     className="h-8 w-auto"
                     loading="lazy"

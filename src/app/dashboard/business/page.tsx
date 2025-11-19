@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -537,8 +538,264 @@ export default function BusinessAdminDashboard() {
     setEditingSection(null)
   }
 
+  const renderSkeletonContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <div className=" mx-auto">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-6 w-96" />
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-4 rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-16 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Quick Actions and Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="rounded-3xl">
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full rounded-2xl" />
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardHeader>
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-56" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl">
+                        <Skeleton className="h-5 w-5 rounded" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-48 mb-1" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )
+      case 'products':
+        return (
+          <div className=" mx-auto">
+            <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-6 w-64" />
+              </div>
+              <Skeleton className="h-10 w-32 rounded-2xl" />
+            </div>
+
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              <Skeleton className="h-10 flex-1 rounded-2xl" />
+              <Skeleton className="h-10 w-48 rounded-2xl" />
+            </div>
+
+            <Card className="rounded-3xl">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto border border-gray-200">
+                  <div className="bg-amber-100 p-4">
+                    <div className="flex space-x-4">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                  <div className="space-y-4 p-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex space-x-4">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-12 w-12 rounded-2xl" />
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <div className="flex space-x-2">
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      case 'inquiries':
+        return (
+          <div className=" mx-auto">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-56 mb-2" />
+              <Skeleton className="h-6 w-72" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-4 rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-12 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="border-l-4 border-l-blue-500 rounded-3xl">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Skeleton className="h-6 w-32" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-16 w-full mb-4" />
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Skeleton className="h-8 w-24 rounded-xl" />
+                      <Skeleton className="h-8 w-28 rounded-xl" />
+                      <Skeleton className="h-8 w-20 rounded-xl" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+      default:
+        return (
+          <div className=" mx-auto">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        )
+    }
+  }
+
   if (loading || isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      <div className="min-h-screen flex flex-col relative">
+        <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
+        {/* Top Header Bar */}
+        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+            <div className="flex items-center space-x-4">
+              <div className="p-2 rounded-2xl">
+                <Skeleton className="h-8 w-8" />
+              </div>
+              <div>
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Skeleton className="h-8 w-24 rounded-2xl hidden sm:flex" />
+              <Skeleton className="h-8 w-20 rounded-2xl hidden sm:flex" />
+              <Skeleton className="h-8 w-20 rounded-2xl hidden sm:flex" />
+              <div className="text-right hidden sm:block">
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex flex-1 h-fit overflow-hidden">
+          {/* Left Sidebar - Desktop Only */}
+          {!isMobile && (
+            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-6 w-6" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+              <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <li key={i}>
+                      <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                        <Skeleton className="h-5 w-5" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+                <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Middle Content */}
+          <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
+              {renderSkeletonContent()}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center justify-center py-2 px-3 rounded-xl">
+                  <Skeleton className="h-5 w-5 mb-1" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   if (!user || user.role !== 'BUSINESS_ADMIN' || !business) {
@@ -595,7 +852,7 @@ export default function BusinessAdminDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
+      <div className="fixed inset-0 bg-[url('https://res.cloudinary.com/dycm4ujkn/image/upload/f_auto,q_auto,w_1920,h_1080,c_limit/bdpp-backgrounds/dashbaord-bg.jpg')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-4 sm:px-6 py-2">

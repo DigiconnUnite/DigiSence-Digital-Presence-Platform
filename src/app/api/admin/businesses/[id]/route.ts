@@ -119,16 +119,15 @@ export async function POST(
     }
   }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await getSuperAdmin(request)
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    
+    const { id } = await params
+
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }

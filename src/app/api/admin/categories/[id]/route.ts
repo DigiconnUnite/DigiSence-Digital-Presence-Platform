@@ -39,9 +39,42 @@ export async function PUT(
     const body = await request.json()
     const updateData = categorySchema.parse(body)
 
+    // Get existing category to check if name changed
+    const existingCategory = await db.category.findUnique({
+      where: { id: categoryId }
+    })
+
+    if (!existingCategory) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    }
+
+    const finalUpdateData: any = { ...updateData }
+
+    // Generate new slug if name changed
+    if (updateData.name && updateData.name !== existingCategory.name) {
+      const newSlug = updateData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+      // Check if new slug is already taken by another category
+      const slugExists = await db.category.findFirst({
+        where: {
+          slug: newSlug,
+          id: { not: categoryId }
+        }
+      })
+
+      if (slugExists) {
+        return NextResponse.json(
+          { error: 'Category with this name already exists' },
+          { status: 400 }
+        )
+      }
+
+      finalUpdateData.slug = newSlug
+    }
+
     const category = await db.category.update({
       where: { id: categoryId },
-      data: updateData,
+      data: finalUpdateData,
     })
 
     return NextResponse.json({

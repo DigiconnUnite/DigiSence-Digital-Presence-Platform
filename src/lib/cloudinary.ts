@@ -19,6 +19,12 @@ export const getOptimizedImageUrl = (url: string, options?: {
   height?: number
   quality?: number
   format?: string
+  crop?: string
+  gravity?: string
+  effect?: string
+  blur?: number
+  brightness?: number
+  contrast?: number
 }) => {
   if (!url || !url.includes('cloudinary.com')) return url
 
@@ -32,8 +38,11 @@ export const getOptimizedImageUrl = (url: string, options?: {
   // Build transformation string
   const transformations: string[] = []
 
+  // Basic transformations
   if (options?.width) transformations.push(`w_${options.width}`)
   if (options?.height) transformations.push(`h_${options.height}`)
+  if (options?.crop) transformations.push(`c_${options.crop}`)
+  if (options?.gravity) transformations.push(`g_${options.gravity}`)
   if (options?.quality) transformations.push(`q_${options.quality}`)
   if (options?.format) {
     if (options.format === 'auto') {
@@ -42,6 +51,12 @@ export const getOptimizedImageUrl = (url: string, options?: {
       transformations.push(`f_${options.format}`)
     }
   }
+
+  // Advanced transformations
+  if (options?.effect) transformations.push(`e_${options.effect}`)
+  if (options?.blur) transformations.push(`e_blur:${options.blur}`)
+  if (options?.brightness) transformations.push(`e_brightness:${options.brightness}`)
+  if (options?.contrast) transformations.push(`e_contrast:${options.contrast}`)
 
   // Add default optimizations if no specific options provided
   if (transformations.length === 0) {

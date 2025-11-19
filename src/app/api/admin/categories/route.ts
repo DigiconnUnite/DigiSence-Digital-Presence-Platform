@@ -74,8 +74,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const categoryData = categorySchema.parse(body)
 
+    // Generate slug from name
+    const slug = categoryData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+    // Check if slug is already taken
+    const existingCategory = await db.category.findUnique({
+      where: { slug }
+    })
+
+    if (existingCategory) {
+      return NextResponse.json(
+        { error: 'Category with this name already exists' },
+        { status: 400 }
+      )
+    }
+
     const createData: any = {
       name: categoryData.name,
+      slug,
       description: categoryData.description,
     }
 

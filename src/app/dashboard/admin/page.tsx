@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Table,
+  Table,  
   TableBody,
   TableCell,
   TableHead,
@@ -78,7 +80,8 @@ import {
   MessageCircle,
   LineChart,
   Cog,
-  MoreHorizontal
+  MoreHorizontal,
+  LogOut
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -131,8 +134,9 @@ interface AdminStats {
 }
 
 export default function SuperAdminDashboard() {
-  const { user, loading } = useAuth()
+  const { user, loading, logout } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
@@ -290,7 +294,10 @@ export default function SuperAdminDashboard() {
       if (response.ok) {
         const result = await response.json()
         console.log('Business creation successful')
-        alert(`Business created successfully!\n\nLogin credentials:\nEmail: ${businessData.email}\nPassword: ${businessData.password}`)
+        toast({
+          title: "Success",
+          description: `Business created successfully! Login credentials: Email: ${businessData.email}, Password: ${businessData.password}`,
+        })
         setShowRightPanel(false)
         setRightPanelContent(null)
         setGeneratedPassword('')
@@ -300,11 +307,19 @@ export default function SuperAdminDashboard() {
       } else {
         const error = await response.json()
         console.error('Business creation failed:', error)
-        alert(`Failed to create business: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to create business: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Business creation error:', error)
-      alert('Failed to create business. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to create business. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -348,15 +363,26 @@ export default function SuperAdminDashboard() {
         await fetchData()
         setShowRightPanel(false)
         setRightPanelContent(null)
-        alert('Business updated successfully!')
+        toast({
+          title: "Success",
+          description: "Business updated successfully!",
+        })
       } else {
         const error = await response.json()
         console.error('Update failed:', error)
-        alert(`Failed to update business: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to update business: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Update error:', error)
-      alert('Failed to update business. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to update business. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -374,13 +400,24 @@ export default function SuperAdminDashboard() {
 
       if (response.ok) {
         await fetchData()
-        alert('Business deleted successfully')
+        toast({
+          title: "Success",
+          description: "Business deleted successfully",
+        })
       } else {
         const error = await response.json()
-        alert(`Failed to delete business: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to delete business: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert('Failed to delete business. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to delete business. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -401,11 +438,19 @@ export default function SuperAdminDashboard() {
       } else {
         const error = await response.json()
         console.error('Toggle failed:', error)
-        alert(`Failed to update business status: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to update business status: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Toggle error:', error)
-      alert('Failed to toggle business status. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to toggle business status. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -413,10 +458,11 @@ export default function SuperAdminDashboard() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
 
+    const rawParentId = formData.get('parentId') as string
     const categoryData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
-      parentId: formData.get('parentId') as string || undefined,
+      parentId: rawParentId === 'none' ? null : rawParentId || undefined,
     }
 
     try {
@@ -430,17 +476,28 @@ export default function SuperAdminDashboard() {
 
       if (response.ok) {
         const result = await response.json()
-        alert('Category created successfully!')
+        toast({
+          title: "Success",
+          description: "Category created successfully!",
+        })
         setShowRightPanel(false)
         setRightPanelContent(null)
         fetchData()
         e.currentTarget.reset()
       } else {
         const error = await response.json()
-        alert(`Failed to create category: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to create category: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert('Failed to create category. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to create category. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -456,10 +513,11 @@ export default function SuperAdminDashboard() {
 
     const formData = new FormData(e.currentTarget)
 
+    const rawParentId = formData.get('parentId') as string
     const updateData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
-      parentId: formData.get('parentId') as string || null,
+      parentId: rawParentId === 'none' ? null : rawParentId || null,
     }
 
     console.log('Updating category:', editingCategory.id, updateData)
@@ -478,15 +536,26 @@ export default function SuperAdminDashboard() {
         fetchData()
         setShowRightPanel(false)
         setRightPanelContent(null)
-        alert('Category updated successfully!')
+        toast({
+          title: "Success",
+          description: "Category updated successfully!",
+        })
       } else {
         const error = await response.json()
         console.error('Category update failed:', error)
-        alert(`Failed to update category: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to update category: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Category update error:', error)
-      alert('Failed to update category. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to update category. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -505,15 +574,26 @@ export default function SuperAdminDashboard() {
       if (response.ok) {
         console.log('Category delete successful')
         fetchData()
-        alert('Category deleted successfully')
+        toast({
+          title: "Success",
+          description: "Category deleted successfully",
+        })
       } else {
         const error = await response.json()
         console.error('Category delete failed:', error)
-        alert(`Failed to delete category: ${error.error}`)
+        toast({
+          title: "Error",
+          description: `Failed to delete category: ${error.error}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Category delete error:', error)
-      alert('Failed to delete category. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -538,8 +618,206 @@ export default function SuperAdminDashboard() {
     inactive: filteredBusinesses.filter(b => !b.isActive).length,
   }
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  const renderSkeletonContent = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-6 w-96" />
+            </div>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-4 rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-16 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+      case 'businesses':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-6 w-80" />
+            </div>
+            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Skeleton className="h-10 w-24 rounded-2xl" />
+                  <Skeleton className="h-10 w-48 rounded-2xl" />
+                  <Skeleton className="h-10 w-32 rounded-2xl" />
+                </div>
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <div className="bg-amber-100 p-4">
+                    <div className="flex space-x-4">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                  <div className="space-y-4 p-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex space-x-4">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <div className="flex space-x-2">
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'categories':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-56 mb-2" />
+              <Skeleton className="h-6 w-72" />
+            </div>
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6">
+                <Skeleton className="h-10 w-40 mb-6 rounded-2xl" />
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i}>
+                      <div className="flex items-center space-x-2 p-4 border rounded-2xl bg-gray-50">
+                        <Skeleton className="h-6 w-6 rounded" />
+                        <Skeleton className="h-5 w-32" />
+                        <div className="ml-auto flex space-x-2">
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                          <Skeleton className="h-8 w-8 rounded-xl" />
+                        </div>
+                      </div>
+                      {i === 0 && (
+                        <div className="ml-8 flex items-center space-x-2 p-3 border-l-2 border-gray-200">
+                          <Skeleton className="h-4 w-4 rounded" />
+                          <Skeleton className="h-4 w-24" />
+                          <div className="ml-auto flex space-x-2">
+                            <Skeleton className="h-8 w-8 rounded-xl" />
+                            <Skeleton className="h-8 w-8 rounded-xl" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      default:
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        )
+    }
+  }
+
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen relative flex flex-col">
+        <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
+        {/* Top Header Bar */}
+        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 rounded-2xl">
+                <Skeleton className="h-8 w-8" />
+              </div>
+              <div>
+                <Skeleton className="h-6 w-32" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Skeleton className="h-8 w-24 rounded-2xl hidden sm:flex" />
+              <Skeleton className="h-8 w-20 rounded-2xl hidden sm:flex" />
+              <div className="text-right hidden sm:block">
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex flex-1 h-fit overflow-hidden">
+          {/* Left Sidebar - Desktop Only */}
+          {!isMobile && (
+            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-6 w-6" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+              <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <li key={i}>
+                      <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                        <Skeleton className="h-5 w-5" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+                <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Middle Content */}
+          <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
+              {renderSkeletonContent()}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center justify-center py-2 px-3 rounded-xl">
+                  <Skeleton className="h-5 w-5 mb-1" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   if (!user || user.role !== 'SUPER_ADMIN') {
@@ -592,6 +870,10 @@ export default function SuperAdminDashboard() {
   ]
 
   const renderMiddleContent = () => {
+    if (isLoading) {
+      return renderSkeletonContent()
+    }
+
     switch (currentView) {
       case 'dashboard':
         return (
@@ -703,7 +985,7 @@ export default function SuperAdminDashboard() {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button size="sm" variant="outline" className="rounded-xl">
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.open(`/${business.slug}`, '_blank')}>
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditBusiness(business)}>
@@ -1055,7 +1337,7 @@ export default function SuperAdminDashboard() {
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent</SelectItem>
+                    <SelectItem value="none">No parent</SelectItem>
                     {categories.filter(c => !c.parentId).map((category) => (
                       <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                     ))}
@@ -1088,12 +1370,12 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="space-y-2">
                 <Label>Parent Category</Label>
-                <Select name="parentId" defaultValue={editingCategory.parentId || ''}>
+                <Select name="parentId" defaultValue={editingCategory.parentId || 'none'}>
                   <SelectTrigger className="rounded-2xl">
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent</SelectItem>
+                    <SelectItem value="none">No parent</SelectItem>
                     {categories.filter(c => !c.parentId && c.id !== editingCategory.id).map((category) => (
                       <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                     ))}
@@ -1177,6 +1459,20 @@ export default function SuperAdminDashboard() {
                 ))}
               </ul>
             </nav>
+
+            {/* Logout Section */}
+            <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+              <button
+                onClick={async () => {
+                  await logout()
+                  router.push('/login')
+                }}
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         )}
 

@@ -36,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/login-bg.png')] bg-cover bg-center relative">
+    <div className="min-h-screen flex items-center justify-center bg-[url('https://res.cloudinary.com/dycm4ujkn/image/upload/f_auto,q_auto,w_1920,h_1080,c_limit/bdpp-backgrounds/login-bg.jpg')] bg-cover bg-center relative">
       <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
         <div className="text-white font-bold text-xl">DigiSence</div>
         <Button

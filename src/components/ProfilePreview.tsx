@@ -1,7 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { Business, Product } from '@prisma/client'
+import { Business } from '@prisma/client'
+
+// Define custom Product type to match the updated schema
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  price: string | null
+  image: string | null
+  inStock: boolean
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  businessId: string
+  categoryId: string | null
+  brandName: string | null
+  category?: {
+    id: string
+    name: string
+  }
+}
 import { Button } from '@/components/ui/button'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,10 +48,7 @@ interface ProfilePreviewProps {
       admin: { name?: string | null; email: string }
       category?: { name: string } | null
       portfolioContent?: any
-      products: (Product & {
-        category?: { id: string; name: string } | null
-        brand?: { id: string; name: string } | null
-      })[]
+      products: Product[]
     }
     selectedSection: string | null
     sectionTitles?: Record<string, string>
@@ -51,7 +68,6 @@ interface ProfilePreviewProps {
     }
   products?: (Product & {
     category?: { id: string; name: string } | null
-    brand?: { id: string; name: string } | null
   })[]
   }
 
@@ -489,8 +505,17 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
               )}
               <span className="text-lg font-semibold">{mergedBusiness.name}</span>
             </div>
-            <p className="text-gray-400 mb-4">
-              © 2024 {mergedBusiness.name}. All rights reserved.
+            <Separator className="my-4 bg-gray-700" />
+            <p className="text-gray-400 mb-2">
+              © {new Date().getFullYear()} {mergedBusiness.name}. All rights reserved.
+            </p>
+            {mergedBusiness.admin?.name && (
+              <p className="text-gray-500 text-sm mb-4">
+                Founded by {mergedBusiness.admin.name}
+              </p>
+            )}
+            <p className="text-gray-400 text-sm mb-4">
+              Powered by DigiSence - Your Trusted Portal Developers.
             </p>
             <Button variant="outline">Contact Us</Button>
           </div>
@@ -863,10 +888,16 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                 )}
                 <span className="text-lg font-semibold">{mergedBusiness.name}</span>
               </div>
-              <p className="text-gray-400 mb-4">
-                © 2024 {mergedBusiness.name}. All rights reserved.
+              <Separator className="my-4 bg-gray-700" />
+              <p className="text-gray-400 mb-2">
+                © {new Date().getFullYear()} {mergedBusiness.name}. All rights reserved.
               </p>
-              <p className="text-gray-400 text-sm">
+              {mergedBusiness.admin?.name && (
+                <p className="text-gray-500 text-sm mb-4">
+                  Founded by {mergedBusiness.admin.name}
+                </p>
+              )}
+              <p className="text-gray-400 text-sm mb-4">
                 Powered by DigiSence - Your Trusted Portal Developers.
               </p>
               <Button variant="outline" className="mt-4">{sectionTitles?.footer || 'Contact Us'}</Button>

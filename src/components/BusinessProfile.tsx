@@ -1,7 +1,28 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Business, Product } from '@prisma/client'
+import { Business } from '@prisma/client'
+
+// Define custom Product type to match the updated schema
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  price: string | null
+  image: string | null
+  inStock: boolean
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  businessId: string
+  categoryId: string | null
+  brandName: string | null
+  category?: {
+    id: string
+    name: string
+  }
+}
+
 import { Button } from '@/components/ui/button'
 import { getOptimizedImageUrl, generateSrcSet } from '@/lib/cloudinary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,7 +79,6 @@ interface BusinessProfileProps {
     portfolioContent?: any
     products: (Product & {
       category?: { id: string; name: string } | null
-      brand?: { id: string; name: string } | null
     })[]
   }
 }
@@ -90,11 +110,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  console.log('BusinessProfile render, mounted:', mounted)
-  console.log('viewAllBrands:', viewAllBrands, 'viewAllCategories:', viewAllCategories, 'viewAllProducts:', viewAllProducts)
-
   useEffect(() => {
-    console.log('setting mounted to true')
     setMounted(true)
     // Simulate loading time for skeleton
     const timer = setTimeout(() => setIsLoading(false), 1500)
@@ -226,9 +242,9 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <Skeleton className="h-6 w-24" />
             <Skeleton className="h-8 w-20" />
           </div>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="w-48 h-32 rounded-3xl" />
+              <Skeleton key={i} className="h-32 rounded-3xl" />
             ))}
           </div>
         </div>
@@ -241,9 +257,9 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <Skeleton className="h-6 w-24" />
             <Skeleton className="h-8 w-20" />
           </div>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="w-48 h-16 rounded-xl" />
+              <Skeleton key={i} className="h-16 rounded-xl" />
             ))}
           </div>
         </div>
@@ -260,9 +276,9 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <Skeleton className="h-10 flex-1" />
             <Skeleton className="h-10 w-48" />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="w-80 h-64 rounded-xl" />
+              <Skeleton key={i} className="h-80 rounded-xl" />
             ))}
           </div>
         </div>
@@ -273,7 +289,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         <div className="flex justify-between items-center mb-8">
           <Skeleton className="h-6 w-20" />
         </div>
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-4 md:grid-rows-2">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 md:grid-rows-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="rounded-xl h-32 md:h-40" />
           ))}
@@ -330,6 +346,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                 <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
                 <a href="#brands" className="text-gray-700 hover:text-gray-900 transition-colors ">Brands</a>
                 <a href="#products" className="text-gray-600 hover:text-gray-900 transition-colors">Products</a>
+                <a href="#portfolio" className="text-gray-600 hover:text-gray-900 transition-colors">Portfolio</a>
                 <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
               </div>
               <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -353,7 +370,9 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <nav className="space-y-4">
               <a href="#" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Home</a>
               <a href="#about" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
+              <a href="#brands" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Brands</a>
               <a href="#products" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Products</a>
+              <a href="#portfolio" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Portfolio</a>
               <a href="#contact" className="block text-gray-600 hover:text-gray-900 transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Contact</a>
             </nav>
           </div>
@@ -362,7 +381,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
 
       {/* Hero Section with Slider */}
       <section className="relative">
-        <div className="max-w-7xl mx-auto rounded-3xl mt-3   overflow-hidden">
+        <div className="max-w-7xl mx-auto rounded-3xl mt-3 overflow-hidden">
           <Carousel className="w-full">
             <CarouselContent>
               {heroContent.slides?.map((slide: any, index: number) => (
@@ -388,7 +407,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                           loading="lazy"
                         />
                     )}
-                    <div className="absolute inset-0  bg-opacity-40 flex items-center justify-center rounded-2xl">
+                    <div className="absolute inset-0 bg-opacity-40 flex items-center justify-center rounded-2xl">
                       <div className={`text-center text-white px-4 ${slide.headlineAlignment === 'left' ? 'text-left' : slide.headlineAlignment === 'right' ? 'text-right' : 'text-center'}`}>
                         <h1
                           className={`${slide.headlineSize || 'text-4xl md:text-6xl'} font-bold mb-4`}
@@ -411,8 +430,8 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
+            <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
+            <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
           </Carousel>
         </div>
       </section>
@@ -422,24 +441,24 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row gap-8 items-stretch">
             {/* Logo Card */}
-            <Card className="rounded-full shadow-lg hover:shadow-xl transition-shadow  duration-300 flex items-center justify-center  w-64 h-64 md:shrink-0">
+            <Card className="rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center w-48 h-48 md:w-64 md:h-64 md:shrink-0 mx-auto md:mx-0">
               {business.logo && business.logo.trim() !== '' ? (
                 <img
                   src={getOptimizedImageUrl(business.logo, { width: 300, height: 300, quality: 90 })}
                   alt={business.name}
-                  className="w-56 h-56 rounded-full object-cover"
+                  className="w-40 h-40 md:w-56 md:h-56 rounded-full object-cover"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-56 h-56 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Image className="w-28 h-28 text-gray-400" />
+                  <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-gray-50 flex items-center justify-center">
+                    <Image className="w-20 h-20 md:w-28 md:h-28 text-gray-400" />
                 </div>
               )}
             </Card>
 
             {/* Business Info Card */}
-            <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64">
-              <h3 className="text-3xl  text-gray-700 font-bold mb-2">{business.name}</h3>
+            <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1">
+              <h3 className="text-3xl text-gray-700 font-bold mb-2">{business.name}</h3>
               {business.category && (
                 <Badge variant="outline" className="mb-3">{business.category.name}</Badge>
               )}
@@ -449,7 +468,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             </Card>
 
             {/* Contact Card */}
-            <Card className="rounded-3xl  shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64 flex flex-row justify-between">
+            <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 flex flex-col md:flex-row justify-between">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
                 {business.address && (
@@ -488,11 +507,11 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                   </div>
                 )}
               </div>
-              <div className="flex items-center bg-white shadow-md p-2 h-fit rounded-2xl my-auto border">
+              <div className="flex items-center bg-white shadow-md p-2 h-fit rounded-2xl my-auto border mt-4 md:mt-0">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${business.slug}`)}`}
                   alt="Profile QR Code"
-                  className="w-30 h-30"
+                  className="w-20  h-20"
                 />
               </div>
             </Card>
@@ -507,30 +526,30 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold">Trusted By</h2>
-                <Button variant="outline" onClick={() => { console.log('View All Brands clicked'); setViewAllBrands(!viewAllBrands); }}>
+                <Button variant="outline" onClick={() => { setViewAllBrands(!viewAllBrands); }}>
                   {viewAllBrands ? 'Show Less' : 'View All'}
                 </Button>
               </div>
               {viewAllBrands ? (
-                <div className="flex flex-wrap gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {brandContent.brands.map((brand: any, index: number) => (
-                    <Card key={index} className="overflow-hidden rounded-3xl py-6 shrink-0 w-48 bg-white">
-                      <div className="h-32  flex items-center justify-center ">
+                    <Card key={index} className="overflow-hidden rounded-3xl py-6 bg-white h-full flex flex-col">
+                      <div className="h-32 flex items-center justify-center p-2">
                         {brand.logo && brand.logo.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(brand.logo, { width: 400, height: 300, quality: 85, format: 'auto' })}
                             srcSet={generateSrcSet(brand.logo)}
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             alt={brand.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             loading="lazy"
                           />
                         ) : (
                           <Image className="h-full w-full text-gray-400" />
                         )}
                       </div>
-                      <CardHeader>
-                        <CardTitle className="text-center">{brand.name}</CardTitle>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-center text-sm md:text-base">{brand.name}</CardTitle>
                       </CardHeader>
                     </Card>
                   ))}
@@ -539,31 +558,31 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                 <Carousel className="w-full" suppressHydrationWarning>
                   <CarouselContent>
                     {brandContent.brands.map((brand: any, index: number) => (
-                      <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                        <Card key={index} className="overflow-hidden rounded-3xl py-6 shrink-0 w-48 bg-white">
-                          <div className="h-32  flex items-center justify-center ">
+                      <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
+                        <Card className="overflow-hidden rounded-3xl py-6 bg-white h-full flex flex-col">
+                          <div className="h-32 flex items-center justify-center p-2">
                             {brand.logo && brand.logo.trim() !== '' ? (
                               <img
                                 src={getOptimizedImageUrl(brand.logo, { width: 400, height: 300, quality: 85, format: 'auto' })}
                                 srcSet={generateSrcSet(brand.logo)}
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                 alt={brand.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                                 loading="lazy"
                               />
                             ) : (
                               <Image className="h-full w-full text-gray-400" />
                             )}
                           </div>
-                          <CardHeader>
-                            <CardTitle className="text-center">{brand.name}</CardTitle>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-center text-sm md:text-base">{brand.name}</CardTitle>
                           </CardHeader>
                         </Card>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
+                    <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
+                    <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
                 </Carousel>
               )}
             </div>
@@ -572,46 +591,45 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
       }
 
       {/* Category Slider */}
-      {
-        categoryContent.categories?.length > 0 && (
-          <section className="py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Categories</h2>
-                <Button variant="outline" onClick={() => { console.log('View All Categories clicked'); setViewAllCategories(!viewAllCategories); }}>
-                  {viewAllCategories ? 'Show Less' : 'View All'}
-                </Button>
-              </div>
-              {viewAllCategories ? (
-                <div className="flex flex-wrap gap-4">
-                  {categoryContent.categories.map((category: any, index: number) => (
-                    <Card key={index} className="overflow-hidden shrink-0 w-48 bg-transparent">
-                      <CardHeader>
-                        <CardTitle className="text-center">{category.name}</CardTitle>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {categoryContent.categories.map((category: any, index: number) => (
-                      <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                        <Card className="overflow-hidden bg-transparent">
-                          <CardHeader>
-                            <CardTitle className="text-center">{category.name}</CardTitle>
-                          </CardHeader>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-              )}
+      {categoryContent.categories?.length > 0 && (
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-bold">Categories</h2>
+              <Button variant="outline" onClick={() => { setViewAllCategories(!viewAllCategories); }}>
+                {viewAllCategories ? 'Show Less' : 'View All'}
+              </Button>
             </div>
-          </section>
-        )
+            {viewAllCategories ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {categoryContent.categories.map((category: any, index: number) => (
+                  <Card key={index} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
+                    <CardHeader>
+                      <CardTitle className="text-center text-sm md:text-base">{category.name}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {categoryContent.categories.map((category: any, index: number) => (
+                    <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
+                      <Card className="overflow-hidden bg-transparent h-full flex items-center justify-center">
+                        <CardHeader>
+                          <CardTitle className="text-center text-sm md:text-base">{category.name}</CardTitle>
+                        </CardHeader>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                  </CarouselContent>
+                <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
+                <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
+              </Carousel>
+            )}
+          </div>
+        </section>
+      )
       }
 
       {/* Products/Services Section */}
@@ -619,15 +637,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
         business.products.length > 0 && (
           <section id="products" className="py-16 px-4 sm:px-6 lg:px-8 bg-transparent">
             <div className="max-w-7xl mx-auto">
-
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold">Our Products & Services</h2>
-                <Button variant="outline" onClick={() => { console.log('View All Products clicked'); setViewAllProducts(!viewAllProducts); }}>
+                <Button variant="outline" onClick={() => { setViewAllProducts(!viewAllProducts); }}>
                   {viewAllProducts ? 'Show Less' : 'View All'}
                 </Button>
               </div>
               {mounted && (
-                <div className="flex flex-col  sm:flex-row gap-4 mb-4" suppressHydrationWarning>
+                <div className="flex flex-col sm:flex-row gap-4 mb-4" suppressHydrationWarning>
                   <Input
                     placeholder="Search products..."
                     value={searchTerm}
@@ -648,9 +665,9 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                 </div>
               )}
               {viewAllProducts ? (
-                <div className="flex flex-wrap gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredProducts.map((product) => (
-                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg  transition-shadow duration-300 shrink-0  ">
+                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300" style={{ height: '24rem' }}>
                       <div className="relative h-48">
                         {product.image && product.image.trim() !== '' ? (
                           <img
@@ -672,9 +689,8 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                         >
                           {product.inStock ? (
                             <span className="flex items-center gap-1">
-
                               {product.inStock && (
-                                <span className="relative  flex h-2 w-2">
+                                <span className="relative flex h-2 w-2">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                 </span>
@@ -683,27 +699,27 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                           ) : "Out of Stock"}
                         </Badge>
                       </div>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                      <CardHeader className="pb-2 px-3 md:px-6">
+                        <CardTitle className="text-base md:text-lg line-clamp-1">{product.name}</CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {product.brand && (
-                            <Badge variant="outline" className="text-xs">
-                              {product.brand.name}
+                      <CardContent className="pt-0 px-3 md:px-6">
+                        <div className="flex flex-row flex-nowrap gap-1 mb-3 overflow-x-auto hide-scrollbar">
+                          {product.brandName && (
+                            <Badge variant="outline" className="text-[10px] md:text-xs px-2 py-0.5 h-5 min-w-max">
+                              {product.brandName}
                             </Badge>
                           )}
                           {product.category && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[10px] md:text-xs px-2 py-0.5 h-5 min-w-max">
                               {product.category.name}
                             </Badge>
                           )}
                         </div>
-                        <CardDescription className="mb-4 text-sm leading-relaxed">
+                        <CardDescription className="mb-4 text-xs md:text-sm leading-relaxed line-clamp-2">
                           {product.description || "No description available"}
                         </CardDescription>
                         <Button
-                          className="w-full bg-green-500 hover:bg-green-700 cursor-pointer "
+                          className="w-full bg-green-500 hover:bg-green-700 cursor-pointer"
                           onClick={() => {
                             if (business.phone) {
                               const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
@@ -729,7 +745,7 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                   <CarouselContent>
                     {filteredProducts.map((product) => (
                       <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                        <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 ">
+                        <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300" style={{ height: '24rem' }}>
                           <div className="relative h-48">
                             {product.image && product.image.trim() !== '' ? (
                               <img
@@ -744,12 +760,11 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                                 </div>
                             )}
                             <Badge
-                              className={`absolute top-2   rounded-full bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 right-2 `}
+                              className={`absolute top-2 rounded-full bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 right-2 `}
                               variant={product.inStock ? "default" : "destructive"}
                             >
                               {product.inStock ? (
                                 <span className="flex items-center gap-1">
-
                                   {product.inStock && (
                                     <span className="relative flex h-2 w-2">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
@@ -760,14 +775,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                               ) : "Out of Stock"}
                             </Badge>
                           </div>
-                          <CardHeader>
-                            <CardTitle className="text-lg">{product.name}</CardTitle>
+                          <CardHeader className="pb-2 px-3 md:px-6">
+                            <CardTitle className="text-base md:text-lg line-clamp-1">{product.name}</CardTitle>
                           </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {product.brand && (
+                          <CardContent className="pt-0 px-3 md:px-6">
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {product.brandName && (
                                 <Badge variant="outline" className="text-xs">
-                                  {product.brand.name}
+                                  {product.brandName}
                                 </Badge>
                               )}
                               {product.category && (
@@ -776,11 +791,11 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                                 </Badge>
                               )}
                             </div>
-                            <CardDescription className="mb-4 text-sm leading-relaxed">
+                            <CardDescription className="mb-4 text-xs md:text-sm leading-relaxed line-clamp-2">
                               {product.description || "No description available"}
                             </CardDescription>
                             <Button
-                              className="w-full bg-green-500 hover:bg-green-700 cursor-pointer "
+                              className="w-full bg-green-500 hover:bg-green-700 cursor-pointer"
                               onClick={() => {
                                 if (business.phone) {
                                   const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
@@ -802,15 +817,14 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
+                    <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
+                    <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
                 </Carousel>
               )}
             </div>
           </section>
         )
       }
-
 
       {/* Start of Portfolio Section */}
       {portfolioContent.images?.length > 0 && (
@@ -819,16 +833,16 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
             <h2 className="text-2xl font-bold">Portfolio</h2>
           </div>
 
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-4 md:grid-rows-2">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4 md:grid-rows-2">
             {portfolioContent.images.slice(0, 6).map((image: any, index: number) => {
-              // Define grid positions for the bento layout
+              // Define grid positions for bento layout
               const gridClasses = [
-                "md:row-span-2 md:col-span-2 col-span-1 row-span-1", // Large top-left
-                "md:row-span-1 md:col-span-1", // Top-right small
-                "md:row-span-1 md:col-span-1", // Top-right small
-                "md:row-span-2 md:col-span-2 col-span-1 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
-                "md:row-span-1 md:col-span-1", // Bottom-left small
-                "md:row-span-1 md:col-span-1"  // Bottom-right small
+                "md:row-span-2 md:col-span-2 col-span-2 row-span-1", // Large top-left
+                "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
+                "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
+                "md:row-span-2 md:col-span-2 col-span-2 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
+                "md:row-span-1 md:col-span-1 col-span-1", // Bottom-left small
+                "md:row-span-1 md:col-span-1 col-span-1"  // Bottom-right small
               ]
 
               const isVideo = image.url && (image.url.includes('.mp4') || image.url.includes('.webm') || image.url.includes('.ogg'))
@@ -887,12 +901,15 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
           </div>
         </section>
       )}
-      {/* End of Portfolio Section */}
-
 
       {/* Footer */}
-      <footer id="contact" className="bg-gray-950 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <footer id="contact" className="relative bg-linear-to-b from-gray-950 to-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Glowing Elements */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-blue-800 rounded-full filter blur-3xl opacity-10 -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-zinc-800 rounded-full filter blur-3xl opacity-10 translate-x-1/2 translate-y-1/2"></div>
+        <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-cyan-800 rounded-full filter blur-3xl opacity-5 -translate-x-1/2 -translate-y-1/2"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             {/* Company Info */}
             <div className="space-y-4">
@@ -947,26 +964,23 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
               </div>
             </div>
 
-            {/* Social Media & CTA */}
+            {/* DigiSence Online Presence CTA Card */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Follow Us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Instagram className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Linkedin className="h-5 w-5" />
+              <div className="bg-linear-to-br from-gray-900 via-gray-900 to-lime-900 rounded-xl shadow-lg p-6 flex flex-col items-center text-center">
+                <a
+                  href="https://www.digisence.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full"
+                >
+                  <Button
+                    variant="default"
+                    className="w-full bg-white text-[#027BE6] hover:bg-[#f0f7ff] hover:text-[#01b1e6] font-bold shadow"
+                  >
+                    Get Started
+                  </Button>
                 </a>
               </div>
-              <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-gray-900" onClick={() => openInquiryModal()}>
-                Get in Touch
-              </Button>
             </div>
           </div>
 
@@ -974,10 +988,10 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <p className="text-gray-400 text-sm">
-                © 2024 {business.name}. All rights reserved.
+                © {new Date().getFullYear()} <span className='font-bold'>{business.name}</span>. All rights reserved.
               </p>
               <p className="text-gray-400 text-sm">
-                Powered by DigiSence - Your Trusted Portal Developers.
+                Powered by <a className='font-bold' href="">DigiSence</a> - The Product of <a className='font-bold ' href="https://digiconnunite.com/">Digiconn Unite Pvt. Ltd.</a>
               </p>
             </div>
           </div>
@@ -1056,6 +1070,6 @@ export default function BusinessProfile({ business }: BusinessProfileProps) {
           </form>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   )
 }

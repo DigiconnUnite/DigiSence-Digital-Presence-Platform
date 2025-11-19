@@ -7,7 +7,10 @@ const updateProductSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
   price: z.string().optional(),
-  image: z.string().url().optional(),
+  image: z.string().optional(),
+  categoryId: z.string().optional(),
+  brandName: z.string().optional(),
+  inStock: z.boolean().optional(),
   isActive: z.boolean().optional(),
 })
 

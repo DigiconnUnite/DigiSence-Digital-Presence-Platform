@@ -596,6 +596,10 @@ export default function SuperAdminDashboard() {
       case 'dashboard':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2"> Admin Dashboard Overview</h1>
+              <p className="text-xl text-gray-600">Welcome back! Here's what's happening with your business.</p>
+            </div>
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
@@ -646,11 +650,12 @@ export default function SuperAdminDashboard() {
       case 'businesses':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Add Businesses</h1>
+              <p className="text-xl text-gray-600">Manage and monitor your businesses from this dashboard section.</p>
+            </div>
             <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
-              <div className="p-4 sm:p-6 border-b bg-zinc-950 border-gray-200 rounded-t-3xl">
-                <h2 className="text-xl font-bold text-gray-50">ALL BUSINESSES</h2>
-                <p className="text-gray-300">Manage all business accounts and their administrators</p>
-              </div>
+
               <div className="p-4 sm:p-6">
                 {/* Search and Filters */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -721,11 +726,12 @@ export default function SuperAdminDashboard() {
       case 'categories':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2"> CATEGORY MANAGER</h1>
+              <p className="text-xl text-gray-600">Configure business categories and classifications</p>
+            </div>
             <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
-                <h2 className="text-xl font-semibold text-gray-900">CATEGORY MANAGER</h2>
-                <p className="text-gray-600">Configure business categories and classifications</p>
-              </div>
+
               <div className="p-4 sm:p-6">
                 <Button onClick={() => { setRightPanelContent('add-category'); setShowRightPanel(true); }} variant="outline" className="mb-6 rounded-2xl">
                   <Plus className="h-4 w-4 mr-2" />
@@ -771,11 +777,11 @@ export default function SuperAdminDashboard() {
       case 'inquiries':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">INQUIRIES MANAGEMENT</h1>
+              <p className="text-xl text-gray-600">View and manage customer inquiries</p>
+            </div>
             <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
-                <h2 className="text-xl font-semibold text-gray-900">INQUIRIES MANAGEMENT</h2>
-                <p className="text-gray-600">View and manage customer inquiries</p>
-              </div>
               <div className="p-4 sm:p-6">
                 <div className="overflow-x-auto rounded-2xl border border-gray-200">
                   <Table>
@@ -815,12 +821,12 @@ export default function SuperAdminDashboard() {
       case 'analytics':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
-                <h2 className="text-xl font-semibold text-gray-900">PLATFORM ANALYTICS</h2>
-                <p className="text-gray-600">Detailed analytics and insights</p>
-              </div>
-              <div className="p-4 sm:p-6">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Platform Analytics</h1>
+              <p className="text-xl text-gray-600">Detailed analytics and insights</p>
+            </div>
+            <div className="    rounded-3xl">
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
                     <CardHeader>
@@ -845,32 +851,29 @@ export default function SuperAdminDashboard() {
                     <CardContent>
                       <div className="text-2xl font-bold">{stats.totalProducts}</div>
                     </CardContent>
-                  </Card>
-                </div>
+                </Card>
               </div>
             </div>
           </div>
-        )
+        ) 
       case 'settings':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6 border-b border-gray-200 rounded-t-3xl">
-                <h2 className="text-xl font-semibold text-gray-900">SYSTEM SETTINGS</h2>
-                <p className="text-gray-600">Configure system preferences</p>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Platform Name</Label>
-                    <Input defaultValue="DigiSence" className="rounded-2xl" />
-                  </div>
-                  <div>
-                    <Label>Admin Email</Label>
-                    <Input defaultValue="admin@digisence.com" className="rounded-2xl" />
-                  </div>
-                  <Button className="rounded-2xl">Save Settings</Button>
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">System Settings</h1>
+              <p className="text-xl text-gray-600">Configure system preferences</p>
+            </div>
+            <div className="p-4 bg-white rounded-3xl sm:p-6">
+              <div className="space-y-4">
+                <div>
+                  <Label>Platform Name</Label>
+                  <Input defaultValue="DigiSence" className="rounded-2xl" />
                 </div>
+                <div>
+                  <Label>Admin Email</Label>
+                  <Input defaultValue="admin@digisence.com" className="rounded-2xl" />
+                </div>
+                <Button className="rounded-2xl">Save Settings</Button>
               </div>
             </div>
           </div>
@@ -1115,7 +1118,7 @@ export default function SuperAdminDashboard() {
       <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-4 sm:px-6 py-3">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-2">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-black rounded-2xl">
               {/* <Crown className="h-8 w-8 text-white" /> */}
@@ -1178,8 +1181,8 @@ export default function SuperAdminDashboard() {
         )}
 
         {/* Middle Content */}
-        <div className={`flex-1 m-4 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out ${showRightPanel && !isMobile ? 'mr-0' : ''}`}>
-          <div className="flex-1 pt-4 overflow-auto hide-scrollbar">
+        <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out   pb-20 md:pb-0 ${showRightPanel && !isMobile ? 'mr-0' : ''}`}>
+          <div className="flex-1  p-4 sm:p-6 overflow-auto hide-scrollbar">
             {renderMiddleContent()}
           </div>
         </div>

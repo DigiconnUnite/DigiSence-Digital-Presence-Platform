@@ -13,7 +13,24 @@ export default async function BusinessPage({ params }: PageProps) {
   
   const business = await db.business.findUnique({
     where: { slug: businessSlug },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      logo: true,
+      address: true,
+      phone: true,
+      email: true,
+      website: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
+      adminId: true,
+      categoryId: true,
+      heroContent: true,
+      brandContent: true,
+      portfolioContent: true,
       admin: {
         select: {
           name: true,
@@ -23,9 +40,25 @@ export default async function BusinessPage({ params }: PageProps) {
       category: true,
       products: {
         where: { isActive: true },
-        include: {
-          category: true,
-          brand: true,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          image: true,
+          inStock: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          businessId: true,
+          categoryId: true,
+          brandName: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       },

@@ -39,7 +39,8 @@ import {
   Image as ImageIcon,
   Package,
   MessageCircle,
-  ExternalLink
+  ExternalLink,
+  RotateCcw
 } from 'lucide-react'
 
 interface Product {
@@ -66,6 +67,8 @@ export default function ProductsManagementPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [brandFilterText, setBrandFilterText] = useState('')
+  const [isRefreshingBrands, setIsRefreshingBrands] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -121,6 +124,7 @@ export default function ProductsManagementPage() {
 
   const fetchBrands = async () => {
     try {
+      setIsRefreshingBrands(true)
       const response = await fetch('/api/brands')
       if (response.ok) {
         const data = await response.json()
@@ -128,7 +132,13 @@ export default function ProductsManagementPage() {
       }
     } catch (error) {
       console.error('Failed to fetch brands:', error)
+    } finally {
+      setIsRefreshingBrands(false)
     }
+  }
+
+  const refreshBrands = async () => {
+    await fetchBrands()
   }
 
   const fetchBusiness = async () => {
@@ -492,21 +502,75 @@ export default function ProductsManagementPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="brand">Select Brand</Label>
-                  <Select
-                    value={formData.brandId}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, brandId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a brand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brands.map((brand) => (
-                        <SelectItem key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <div className="flex space-x-2 mb-2">
+                      <Input
+                        placeholder="Search brands..."
+                        value={brandFilterText}
+                        onChange={(e) => setBrandFilterText(e.target.value)}
+                        className="flex-1 rounded-2xl"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={refreshBrands}
+                        disabled={isRefreshingBrands}
+                        className="rounded-2xl"
+                      >
+                        <RotateCcw className={`h-4 w-4 ${isRefreshingBrands ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
+                    <Select
+                      value={formData.brandId}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, brandId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a brand" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="sticky top-0 bg-white border-b pb-2 mb-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Create new brand flow
+                              setShowAddDialog(false)
+                              window.open('/dashboard?section=brands', '_blank')
+                            }}
+                            className="w-full rounded-2xl"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Manage Brands
+                          </Button>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {brands
+                            .filter(brand =>
+                              brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                            )
+                            .map((brand) => (
+                            <SelectItem key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                          {brands.filter(brand =>
+                            brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                          ).length === 0 && (
+                            <div className="p-3 text-center text-sm text-gray-500">
+                              No brands found matching "{brandFilterText}"
+                            </div>
+                          )}
+                        </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.brandId && (
+                    <div className="text-xs text-gray-500">
+                      Selected: {brands.find(b => b.id === formData.brandId)?.name}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

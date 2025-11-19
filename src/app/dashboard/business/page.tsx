@@ -108,7 +108,7 @@ interface Product {
   updatedAt: Date
   businessId: string
   categoryId: string | null
-  brandId: string | null
+  brandName: string | null
   category?: {
     id: string
     name: string
@@ -177,11 +177,11 @@ export default function BusinessAdminDashboard() {
   const { toast } = useToast()
   const [business, setBusiness] = useState<Business | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
-  const [brands, setBrands] = useState<{ id: string, name: string }[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
   const [images, setImages] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [brandFilterText, setBrandFilterText] = useState('')
   const [activeSection, setActiveSection] = useState('dashboard')
   const [expandedSections, setExpandedSections] = useState<string[]>(['profile'])
   const [editingSection, setEditingSection] = useState<string | null>(null)
@@ -206,7 +206,7 @@ export default function BusinessAdminDashboard() {
     price: '',
     image: '',
     categoryId: '',
-    brandId: '',
+    brandName: '',
     inStock: true,
     isActive: true,
   })
@@ -327,13 +327,6 @@ export default function BusinessAdminDashboard() {
         setCategories(data.categories)
       }
 
-      // Fetch brands
-      const brandsRes = await fetch('/api/brands')
-      if (brandsRes.ok) {
-        const data = await brandsRes.json()
-        setBrands(data.brands)
-      }
-
       // Fetch products
       const productsRes = await fetch('/api/business/products')
       if (productsRes.ok) {
@@ -393,7 +386,7 @@ export default function BusinessAdminDashboard() {
       price: product.price || '',
       image: product.image || '',
       categoryId: product.categoryId || '',
-      brandId: product.brandId || '',
+      brandName: product.brandName || '',
       inStock: product.inStock,
       isActive: product.isActive,
     })
@@ -605,13 +598,13 @@ export default function BusinessAdminDashboard() {
       <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-4 sm:px-6 py-3">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-2">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-black rounded-2xl">
+            <div className="p-2 bg-black rounded-2xl">
               {/* <Building className="h-8 w-8 text-white" /> */}
             </div>
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">{business.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{business.name}</h1>
               <p className="text-sm text-gray-500">DigiSence Logo.</p>
             </div>
           </div>
@@ -640,7 +633,7 @@ export default function BusinessAdminDashboard() {
       </div>
 
       {/* Main Layout: Three Column Grid */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-fit overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
           <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
@@ -686,15 +679,15 @@ export default function BusinessAdminDashboard() {
         )}
 
         {/* Middle Content */}
-        <div className={`flex-1 m-4 rounded-3xl bg-white border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+        <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out   pb-20 md:pb-0`}>
           <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
             {/* Main Content based on activeSection */}
             {activeSection === 'dashboard' && (
               <>
                 <div className=" mx-auto">
                   <div className="mb-8">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
-                    <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
+                    <h1 className="text-xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+                    <p className="text-xl text-gray-600">Welcome back! Here's what's happening with your business.</p>
                   </div>
 
                   {/* Stats Overview */}
@@ -779,7 +772,7 @@ export default function BusinessAdminDashboard() {
                             price: '',
                             image: '',
                             categoryId: '',
-                            brandId: '',
+                            brandName: '',
                             inStock: true,
                             isActive: true,
                           });
@@ -838,8 +831,8 @@ export default function BusinessAdminDashboard() {
             {activeSection === 'profile' && (
               <div className=" mx-auto">
                 <div className="mb-6">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Profile Management</h2>
-                  <p className="text-gray-600">Manage your business profile sections</p>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Profile Management</h1>
+                  <p className="text-xl text-gray-600">Manage your business profile sections</p>
                 </div>
 
                 {/* Section Tabs */}
@@ -907,8 +900,8 @@ export default function BusinessAdminDashboard() {
               <div className=" mx-auto">
                 <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Products & Services</h2>
-                    <p className="text-gray-600">Manage your product offerings</p>
+                    <h1 className="text-xl font-bold text-gray-900 mb-2">Products & Services</h1>
+                    <p className="text-xl text-gray-600">Manage your product offerings</p>
                   </div>
                   <Button onClick={() => {
                     setEditingProduct(null);
@@ -918,7 +911,7 @@ export default function BusinessAdminDashboard() {
                       price: '',
                       image: '',
                       categoryId: '',
-                      brandId: '',
+                      brandName: '',
                       inStock: true,
                       isActive: true,
                     });
@@ -933,13 +926,13 @@ export default function BusinessAdminDashboard() {
                   <div className="flex-1">
                     <Input
                       placeholder="Search products..."
-                      className="w-full rounded-2xl"
+                      className="w-full bg-white rounded-2xl"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}>
-                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
+                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
                       <SelectValue placeholder="Filter by category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1152,8 +1145,8 @@ export default function BusinessAdminDashboard() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  {product.brand ? (
-                                    <Badge variant="outline" className="rounded-full">{product.brand.name}</Badge>
+                                  {product.brandName ? (
+                                    <Badge variant="outline" className="rounded-full">{product.brandName}</Badge>
                                   ) : (
                                     <span className="text-gray-400">—</span>
                                   )}
@@ -1195,7 +1188,7 @@ export default function BusinessAdminDashboard() {
                             price: '',
                             image: '',
                             categoryId: '',
-                            brandId: '',
+                            brandName: '',
                             inStock: true,
                             isActive: true,
                           });
@@ -1214,8 +1207,8 @@ export default function BusinessAdminDashboard() {
             {activeSection === 'inquiries' && (
               <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Customer Inquiries</h2>
-                  <p className="text-gray-600">View and respond to customer inquiries</p>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Customer Inquiries</h1>
+                  <p className="text-xl text-gray-600">View and respond to customer inquiries</p>
                 </div>
 
                 {inquiries.length === 0 ? (
@@ -1371,8 +1364,8 @@ export default function BusinessAdminDashboard() {
             {activeSection === 'analytics' && (
               <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Analytics</h2>
-                  <p className="text-gray-600">Track your business performance</p>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Analytics</h1>
+                  <p className="text-xl text-gray-600">Track your business performance</p>
                 </div>
                 <Card className="rounded-3xl">
                   <CardContent className="text-center py-12">
@@ -1387,8 +1380,8 @@ export default function BusinessAdminDashboard() {
             {activeSection === 'settings' && (
               <div className=" mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h2>
-                  <p className="text-gray-600">Manage your account and preferences</p>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Settings</h1>
+                  <p className="text-xl text-gray-600">Manage your account and preferences</p>
                 </div>
                 <Card className="rounded-3xl">
                   <CardContent className="text-center py-12">
@@ -2593,7 +2586,7 @@ export default function BusinessAdminDashboard() {
                           price: '',
                           image: '',
                           categoryId: '',
-                          brandId: '',
+                          brandName: '',
                           inStock: true,
                           isActive: true,
                         })
@@ -2702,22 +2695,66 @@ export default function BusinessAdminDashboard() {
 
                     <div className="space-y-2">
                       <Label>Brand</Label>
-                      <Select
-                        key={brands.length}
-                        value={productFormData.brandId}
-                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandId: value }))}
-                      >
-                        <SelectTrigger className="rounded-2xl">
-                          <SelectValue placeholder="Choose a brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {brands.map((brand) => (
-                            <SelectItem key={brand.id} value={brand.id}>
-                              {brand.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <div className="flex space-x-2 mb-2">
+                          <Input
+                            placeholder="Search brands..."
+                            value={brandFilterText}
+                            onChange={(e) => setBrandFilterText(e.target.value)}
+                            className="flex-1 rounded-2xl"
+                          />
+                        </div>
+                        <Select
+                          value={productFormData.brandName}
+                          onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandName: value }))}
+                        >
+                          <SelectTrigger className="rounded-2xl">
+                            <SelectValue placeholder="Choose a brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="sticky top-0 bg-white border-b pb-2 mb-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Manage brands flow
+                                  setActiveSection('profile')
+                                  setSelectedProfileSection('brands')
+                                  setShowProductRightbar(false)
+                                }}
+                                className="w-full rounded-2xl"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Manage Brands
+                              </Button>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {(brandContent.brands || []).filter(brand =>
+                                typeof brand.name === 'string' &&
+                                brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                              ).map((brand) => (
+                                <SelectItem key={brand.name} value={brand.name}>
+                                  {brand.name}
+                                </SelectItem>
+                              ))}
+                              {((brandContent.brands || []).filter(brand =>
+                                typeof brand.name === 'string' &&
+                                brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                              ).length === 0) && (
+                                  <div className="p-3 text-center text-sm text-gray-500">
+                                    No brands found matching "{brandFilterText}"
+                                  </div>
+                                )}
+                            </div>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {productFormData.brandName && (
+                        <div className="text-xs text-gray-500">
+                          Selected: {productFormData.brandName}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -2752,7 +2789,7 @@ export default function BusinessAdminDashboard() {
                             price: '',
                             image: '',
                             categoryId: '',
-                            brandId: '',
+                            brandName: '',
                             inStock: true,
                             isActive: true,
                           })
@@ -2785,7 +2822,7 @@ export default function BusinessAdminDashboard() {
                               price: '',
                               image: '',
                               categoryId: '',
-                              brandId: '',
+                              brandName: '',
                               inStock: true,
                               isActive: true,
                             })

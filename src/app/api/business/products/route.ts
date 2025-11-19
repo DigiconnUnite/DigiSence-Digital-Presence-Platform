@@ -9,7 +9,7 @@ const productSchema = z.object({
   price: z.string().optional(),
   image: z.string().optional(),
   categoryId: z.string().optional(),
-  brandId: z.string().optional(),
+  brandName: z.string().optional(),
   inStock: z.boolean().default(true),
   isActive: z.boolean().default(true),
 })
@@ -20,7 +20,7 @@ const updateProductSchema = z.object({
   price: z.string().optional(),
   image: z.string().optional(),
   categoryId: z.string().optional(),
-  brandId: z.string().optional(),
+  brandName: z.string().optional(),
   inStock: z.boolean().optional(),
   isActive: z.boolean().optional(),
 })
@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
       where: { businessId },
       include: {
         category: true,
-        brand: true,
       },
       orderBy: { createdAt: 'desc' },
     })

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -36,7 +36,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/login-bg.png')] bg-cover bg-center">
+    <div className="min-h-screen flex items-center justify-center bg-[url('/login-bg.png')] bg-cover bg-center relative">
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
+        <div className="text-white font-bold text-xl">DigiSence</div>
+        <Button
+          onClick={() => router.push('/')}
+          className="backdrop-blur-md bg-white/10 border border-white/20 text-white hover:bg-white/20 rounded-lg px-4 py-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+      </div>
       <Card className="w-full max-w-md backdrop-blur-sm bg-white/90">
         <CardHeader>
           <CardTitle>Login to BDPP</CardTitle>

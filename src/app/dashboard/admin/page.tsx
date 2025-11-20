@@ -767,7 +767,7 @@ export default function SuperAdminDashboard() {
         <div className="flex flex-1 h-fit overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm overflow-auto hide-scrollbar">
               <div className="p-4 border-b border-gray-200 rounded-t-3xl">
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-6 w-6" />
@@ -1396,7 +1396,7 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative flex flex-col">
+    <div className="max-h-screen min-h-screen relative flex flex-col">
       <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
@@ -1477,7 +1477,7 @@ export default function SuperAdminDashboard() {
         )}
 
         {/* Middle Content */}
-        <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out   pb-20 md:pb-0 ${showRightPanel && !isMobile ? 'mr-0' : ''}`}>
+        <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-auto hide-scrollbar transition-all duration-300 ease-in-out   pb-20 md:pb-0 ${showRightPanel && !isMobile ? 'mr-0' : ''}`}>
           <div className="flex-1  p-4 sm:p-6 overflow-auto hide-scrollbar">
             {renderMiddleContent()}
           </div>

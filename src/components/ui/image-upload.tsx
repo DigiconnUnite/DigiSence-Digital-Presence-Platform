@@ -39,6 +39,27 @@ export default function ImageUpload({
 
     if (fileArray.length === 0) return
 
+    const file = fileArray[0]
+
+    // Validate file size (50MB for videos, 10MB for images)
+    const maxSize = allowVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      const sizeText = allowVideo ? '50MB' : '10MB'
+      alert(`File size must be less than ${sizeText}`)
+      return
+    }
+
+    // Validate file type
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+    const allowedTypes = allowVideo ? [...allowedImageTypes, ...allowedVideoTypes] : allowedImageTypes
+
+    if (!allowedTypes.includes(file.type)) {
+      const typeText = allowVideo ? 'images (JPEG, PNG, GIF, WebP) or videos (MP4, WebM, OGG)' : 'images (JPEG, PNG, GIF, WebP)'
+      alert(`Invalid file type. Please select ${typeText}.`)
+      return
+    }
+
     setUploading(true)
     setUploadProgress(0)
     setUploadStatus('Preparing upload...')
@@ -48,12 +69,22 @@ export default function ImageUpload({
       setUploadStatus('Uploading to server...')
 
       const formData = new FormData()
-      formData.append('file', fileArray[0])
+      formData.append('image', file)
 
-      const response = await fetch('/api/upload', {
+      // Use business-specific upload API if available, fallback to general upload
+      const uploadUrl = '/api/business/upload'
+      let response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       })
+
+      // If business upload fails, try general upload
+      if (!response.ok) {
+        response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+      }
 
       setUploadProgress(75)
       setUploadStatus('Processing...')
@@ -66,7 +97,7 @@ export default function ImageUpload({
       const data = await response.json()
       setUploadProgress(100)
       setUploadStatus('Upload complete!')
-      onUpload(data.url)
+      onUpload(data.url || data.secure_url)
 
       // Clear status after a moment
       setTimeout(() => {
@@ -85,7 +116,7 @@ export default function ImageUpload({
         setTimeout(() => setUploadStatus(''), 3000)
       }
     }
-  }, [onUpload, maxFiles])
+  }, [onUpload, maxFiles, allowVideo])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()

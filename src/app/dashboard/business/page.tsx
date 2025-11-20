@@ -224,6 +224,7 @@ export default function BusinessAdminDashboard() {
   const [editorContent, setEditorContent] = useState('')
   const [brandContent, setBrandContent] = useState<any>({ brands: [] })
   const [portfolioContent, setPortfolioContent] = useState<any>({ images: [] })
+  const [newsContent, setNewsContent] = useState<any>({ news: [] })
   const [footerContent, setFooterContent] = useState<any>({})
   const [heroContent, setHeroContent] = useState<any>({
     slides: [],
@@ -237,10 +238,12 @@ export default function BusinessAdminDashboard() {
     categories: 'Categories',
     portfolio: 'Portfolio',
     products: 'Products',
+    news: 'News & Updates',
     footer: 'Footer'
   })
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'settings'>('content')
+  const [savingStates, setSavingStates] = useState<Record<string, boolean>>({})
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -297,59 +300,120 @@ export default function BusinessAdminDashboard() {
       let tempInquiries: Inquiry[] = []
 
       // Fetch business data
-      const businessRes = await fetch('/api/business')
-      if (businessRes.ok) {
-        const data = await businessRes.json()
-        setBusiness(data.business)
-        setBrandContent(data.business.brandContent || { brands: [] })
-        setPortfolioContent(data.business.portfolioContent || { images: [] })
-        setFooterContent(data.business.footerContent || {})
-        setHeroContent(data.business.heroContent || {
-          slides: [],
-          autoPlay: true,
-          transitionSpeed: 5
-        })
-        setBusinessInfoFormData({
-          name: data.business.name || '',
-          description: data.business.description || '',
-          logo: data.business.logo || '',
-          address: data.business.address || '',
-          phone: data.business.phone || '',
-          email: data.business.email || '',
-          website: data.business.website || '',
-          ownerName: data.business.admin?.name || '',
+      try {
+        const businessRes = await fetch('/api/business')
+        if (businessRes.ok) {
+          const data = await businessRes.json()
+          setBusiness(data.business)
+          setBrandContent(data.business.brandContent || { brands: [] })
+          setPortfolioContent(data.business.portfolioContent || { images: [] })
+          setFooterContent(data.business.footerContent || {})
+          setHeroContent(data.business.heroContent || {
+            slides: [],
+            autoPlay: true,
+            transitionSpeed: 5
+          })
+          setBusinessInfoFormData({
+            name: data.business.name || '',
+            description: data.business.description || '',
+            logo: data.business.logo || '',
+            address: data.business.address || '',
+            phone: data.business.phone || '',
+            email: data.business.email || '',
+            website: data.business.website || '',
+            ownerName: data.business.admin?.name || '',
+          })
+        } else {
+          const errorData = await businessRes.json()
+          toast({
+            title: "Error",
+            description: `Failed to load business data: ${errorData.error}`,
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error('Business data fetch error:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load business data. Please refresh the page.",
+          variant: "destructive",
         })
       }
 
       // Fetch categories
-      const categoriesRes = await fetch('/api/categories')
-      if (categoriesRes.ok) {
-        const data = await categoriesRes.json()
-        setCategories(data.categories)
+      try {
+        const categoriesRes = await fetch('/api/categories')
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json()
+          setCategories(data.categories)
+        } else {
+          console.warn('Failed to fetch categories')
+          setCategories([])
+        }
+      } catch (error) {
+        console.error('Categories fetch error:', error)
+        setCategories([])
       }
 
       // Fetch products
-      const productsRes = await fetch('/api/business/products')
-      if (productsRes.ok) {
-        const data = await productsRes.json()
-        setProducts(data.products)
-        setImages([...new Set(data.products.map(p => p.image).filter(Boolean))] as string[])
-        tempProducts = data.products
-      } else {
+      try {
+        const productsRes = await fetch('/api/business/products')
+        if (productsRes.ok) {
+          const data = await productsRes.json()
+          setProducts(data.products)
+          setImages([...new Set(data.products.map(p => p.image).filter(Boolean))] as string[])
+          tempProducts = data.products
+        } else {
+          const errorData = await productsRes.json()
+          console.warn('Products fetch failed:', errorData.error)
+          setProducts([])
+          setImages([])
+          tempProducts = []
+          toast({
+            title: "Warning",
+            description: "Failed to load products data.",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error('Products fetch error:', error)
         setProducts([])
         setImages([])
         tempProducts = []
+        toast({
+          title: "Error",
+          description: "Failed to load products. Please check your connection.",
+          variant: "destructive",
+        })
       }
 
       // Fetch inquiries
-      const inquiriesRes = await fetch('/api/business/inquiries')
-      if (inquiriesRes.ok) {
-        const data = await inquiriesRes.json()
-        setInquiries(data.inquiries)
-        tempInquiries = data.inquiries
-      } else {
+      try {
+        const inquiriesRes = await fetch('/api/business/inquiries')
+        if (inquiriesRes.ok) {
+          const data = await inquiriesRes.json()
+          setInquiries(data.inquiries)
+          tempInquiries = data.inquiries
+        } else {
+          const errorData = await inquiriesRes.json()
+          console.warn('Inquiries fetch failed:', errorData.error)
+          setInquiries([])
+          tempInquiries = []
+          toast({
+            title: "Warning",
+            description: "Failed to load inquiries data.",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error('Inquiries fetch error:', error)
         setInquiries([])
         tempInquiries = []
+        toast({
+          title: "Error",
+          description: "Failed to load inquiries. Please check your connection.",
+          variant: "destructive",
+        })
       }
 
       // Calculate stats after fetching all data, use locally fetched data
@@ -373,6 +437,11 @@ export default function BusinessAdminDashboard() {
 
     } catch (error) {
       console.error('Failed to fetch data:', error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while loading data. Please refresh the page.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -464,6 +533,8 @@ export default function BusinessAdminDashboard() {
 
   const handleBasicInfoSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setSavingStates(prev => ({ ...prev, basicInfo: true }))
+
     const formData = new FormData(e.currentTarget)
 
     const updateData = {
@@ -474,6 +545,41 @@ export default function BusinessAdminDashboard() {
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
       website: formData.get('website') as string,
+    }
+
+    // Validation
+    if (!updateData.name?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Business name is required.",
+        variant: "destructive",
+      })
+      setSavingStates(prev => ({ ...prev, basicInfo: false }))
+      return
+    }
+
+    if (updateData.name.length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Business name must be at least 2 characters long.",
+        variant: "destructive",
+      })
+      setSavingStates(prev => ({ ...prev, basicInfo: false }))
+      return
+    }
+
+    if (updateData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      })
+      setSavingStates(prev => ({ ...prev, basicInfo: false }))
+      return
+    }
+
+    if (updateData.website && updateData.website.trim() && !updateData.website.startsWith('http')) {
+      updateData.website = `https://${updateData.website}`
     }
 
     try {
@@ -501,13 +607,14 @@ export default function BusinessAdminDashboard() {
         })
       }
     } catch (error) {
+      console.error('Business update error:', error)
       toast({
         title: "Error",
-        description: "Failed to update business information. Please try again.",
+        description: "Failed to update business information. Please check your connection and try again.",
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setSavingStates(prev => ({ ...prev, basicInfo: false }))
     }
   }
 
@@ -851,7 +958,7 @@ export default function BusinessAdminDashboard() {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex h-screen  flex-col relative">
       <div className="fixed inset-0 bg-[url('https://res.cloudinary.com/dycm4ujkn/image/upload/f_auto,q_auto,w_1920,h_1080,c_limit/bdpp-backgrounds/dashbaord-bg.jpg')] bg-cover bg-center blur-md -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
@@ -890,7 +997,7 @@ export default function BusinessAdminDashboard() {
       </div>
 
       {/* Main Layout: Three Column Grid */}
-      <div className="flex flex-1 h-fit overflow-hidden">
+      <div className="flex  flex-1  overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
           <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
@@ -936,12 +1043,12 @@ export default function BusinessAdminDashboard() {
         )}
 
         {/* Middle Content */}
-        <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out   pb-20 md:pb-0`}>
-          <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
+        <div className={`flex-1 m-4 rounded-3xl  bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-auto hide-scrollbar transition-all duration-300 ease-in-out   pb-20 md:pb-0`}>
+          <div className="flex-1 p-4 sm:p-6   overflow-auto hide-scrollbar">
             {/* Main Content based on activeSection */}
             {activeSection === 'dashboard' && (
               <>
-                <div className=" mx-auto">
+                <div className="  mx-auto">
                   <div className="mb-8">
                     <h1 className="text-xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
                     <p className="text-xl text-gray-600">Welcome back! Here's what's happening with your business.</p>
@@ -2332,8 +2439,9 @@ export default function BusinessAdminDashboard() {
                         <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
                           Cancel
                         </Button>
-                        <Button onClick={async () => {
+                        <Button disabled={savingStates.basicInfo} onClick={async () => {
                           try {
+                            setSavingStates(prev => ({ ...prev, basicInfo: true }))
                             // Filter out empty strings for optional fields
                             const cleanData = Object.fromEntries(
                               Object.entries(businessInfoFormData).map(([key, value]) => [
@@ -2365,11 +2473,20 @@ export default function BusinessAdminDashboard() {
                           } catch (error) {
                             alert('Failed to update business information. Please try again.')
                           } finally {
-                            setIsLoading(false)
+                            setSavingStates(prev => ({ ...prev, basicInfo: false }))
                           }
                         }} className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Changes
+                          {savingStates.basicInfo ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save Changes
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>

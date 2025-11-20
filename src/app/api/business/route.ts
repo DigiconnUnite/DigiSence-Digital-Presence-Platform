@@ -2,21 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
+import { headers } from 'next/headers'
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100 // Max requests per window
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now()
+  const userLimit = rateLimitMap.get(identifier)
+
+  if (!userLimit || now > userLimit.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+    return true
+  }
+
+  if (userLimit.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false
+  }
+
+  userLimit.count++
+  return true
+}
 
 const updateBusinessSchema = z.object({
-  name: z.string().min(2).optional(),
-  description: z.string().optional(),
-  logo: z.string().optional(),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().optional(),
-  website: z.string().optional(),
-  categoryId: z.string().optional(),
+  name: z.string().min(2).max(100).regex(/^[a-zA-Z0-9\s\-&.,()]+$/, 'Name contains invalid characters').optional(),
+  description: z.string().max(1000).optional(),
+  logo: z.string().url().optional().or(z.literal('')),
+  address: z.string().max(500).optional(),
+  phone: z.string().regex(/^[\+]?[1-9][\d\s\-\(\)]{0,20}$/, 'Invalid phone format').optional(),
+  email: z.string().email().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  categoryId: z.string().uuid().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
   portfolioContent: z.any().optional(),
   isActive: z.boolean().optional(),
-  ownerName: z.string().optional(),
+  ownerName: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-.,]+$/, 'Owner name contains invalid characters').optional(),
   slug: z.string().optional(),
 })
 
@@ -99,6 +122,14 @@ export async function PUT(request: NextRequest) {
     const admin = await getBusinessAdmin(request)
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting
+    if (!checkRateLimit(`business_update_${admin.userId}`)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      )
     }
 
     const body = await request.json()

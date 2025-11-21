@@ -20,7 +20,7 @@ interface Product {
   category?: {
     id: string
     name: string
-  }
+  } | null
 }
 
 import { Button } from '@/components/ui/button'
@@ -75,8 +75,13 @@ import {
   Grid3X3,
   MessageSquare,
   User,
-  Briefcase
+  Briefcase,
+  UserPlus,
+  Share2,
+  Download
 } from 'lucide-react'
+import { FaWhatsapp } from "react-icons/fa";
+import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
 
 interface BusinessProfileProps {
   business: Business & {
@@ -87,6 +92,10 @@ interface BusinessProfileProps {
     twitter?: string | null
     instagram?: string | null
     linkedin?: string | null
+    about?: string | null
+    catalogPdf?: string | null
+    openingHours?: any[]
+    gstNumber?: string | null
     products: (Product & {
       category?: { id: string; name: string } | null
     })[]
@@ -121,7 +130,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('home')
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [lastUpdateCheck, setLastUpdateCheck] = useState(Date.now())
 
   // Refs for smooth scrolling
@@ -209,6 +218,21 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
     transitionSpeed: 5
   }
 
+  // Autoplay functionality for hero carousel
+  useEffect(() => {
+    if (heroContent.slides && heroContent.slides.length > 1 && heroContent.autoPlay) {
+      const interval = setInterval(() => {
+        setCurrentSlideIndex(prev => (prev + 1) % heroContent.slides.length)
+      }, (heroContent.transitionSpeed || 5) * 1000)
+      return () => clearInterval(interval)
+    }
+  }, [heroContent.slides, heroContent.autoPlay, heroContent.transitionSpeed])
+
+  // Reset slide index when slides change
+  useEffect(() => {
+    setCurrentSlideIndex(0)
+  }, [heroContent.slides?.length])
+
   // Default brand content if not set
   const brandContent = business.brandContent as any || {
     brands: []
@@ -224,15 +248,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
   // Default portfolio content if not set
   const portfolioContent = business.portfolioContent as any || { images: [] }
 
-  // News items for bento grid
-  const newsItems = [
-    { headline: "Exciting New Product Launch", image: "/placeholder.png", summary: "We're thrilled to announce the launch of our latest product that will revolutionize the industry." },
-    { headline: "Company Milestone Achieved", image: "/placeholder.png", summary: "Celebrating 10 years of innovation and customer satisfaction with this special milestone." },
-    { headline: "Industry Recognition Award", image: "/placeholder.png", summary: "Proud to receive the Innovation Award for our groundbreaking technology solutions." },
-    { headline: "Partnership Announcement", image: "/placeholder.png", summary: "Exciting news about our new strategic partnership that will expand our market reach." },
-    { headline: "Customer Success Story", image: "/placeholder.png", summary: "Hear how our solutions helped a client achieve remarkable business growth." },
-    { headline: "Sustainability Initiative", image: "/placeholder.png", summary: "Our commitment to environmental responsibility through new green initiatives." }
-  ]
+
 
   // Categories and filtered products for search/filter - memoized for performance
   const { categories, filteredProducts } = useMemo(() => {
@@ -594,14 +610,14 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
             <span className="text-xs mt-1 font-medium">Products</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'contact'
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'portfolio'
               ? 'text-orange-600 bg-orange-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
-            onClick={() => scrollToSection(contactRef as React.RefObject<HTMLDivElement>, 'contact')}
+            onClick={() => scrollToSection(portfolioRef as React.RefObject<HTMLDivElement>, 'portfolio')}
           >
-            <MessageSquare className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">Contact</span>
+            <Briefcase className="h-5 w-5" />
+            <span className="text-xs mt-1 font-medium">Portfolio</span>
           </button>
         </div>
       </div>
@@ -610,144 +626,211 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
       <section className="relative mx-auto px-2 pt-2 pb-4 md:pb-0">
         <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-3xl mt-0 sm:mt-3 overflow-hidden shadow-lg">
           {heroContent.slides && heroContent.slides.length > 0 ? (
-            <Carousel
-              className="w-full"
-            >
-              <CarouselContent>
-                {heroContent.slides.map((slide: any, index: number) => {
-                  const isVideo = slide.mediaType === 'video' || (slide.media && (slide.media.includes('.mp4') || slide.media.includes('.webm') || slide.media.includes('.ogg')));
-                  const mediaUrl = slide.media || slide.image;
+            <div className="relative w-full">
+              <div className="overflow-hidden rounded-2xl">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+                >
+                  {heroContent.slides.map((slide: any, index: number) => {
+                    const isVideo = slide.mediaType === 'video' || (slide.media && (slide.media.includes('.mp4') || slide.media.includes('.webm') || slide.media.includes('.ogg')));
+                    const mediaUrl = slide.media || slide.image;
 
-                  return (
-                    <CarouselItem key={index}>
-                      <div className="relative h-[40vw] min-h-[160px] max-h-[240px] w-full md:h-[500px] md:min-h-[320px] md:max-h-full bg-gradient-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
-                        {isVideo && mediaUrl ? (
-                          <video
-                            src={mediaUrl}
-                            className="w-full h-full object-cover rounded-2xl"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            poster={slide.poster || (slide.image && slide.image !== mediaUrl ? slide.image : undefined)}
+                    return (
+                      <div key={index} className="w-full flex-shrink-0">
+                        <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] md:max-h-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
+                          {isVideo && mediaUrl ? (
+                            <video
+                              src={mediaUrl}
+                              className="w-full h-full object-cover rounded-2xl absolute top-0 left-0"
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              poster={slide.poster || (slide.image && slide.image !== mediaUrl ? slide.image : undefined)}
+                              onError={(e) => {
+                                console.error('Video failed to load:', mediaUrl);
+                                const target = e.target as HTMLVideoElement;
+                                target.style.display = 'none';
+                                const fallbackImg = target.nextElementSibling as HTMLImageElement;
+                                if (fallbackImg) {
+                                  fallbackImg.style.display = 'block';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <img
+                            src={mediaUrl && mediaUrl.trim() !== '' ? getOptimizedImageUrl(mediaUrl, {
+                              width: 1200,
+                              height: 600,
+                              quality: 85,
+                              format: 'auto',
+                              crop: 'fill',
+                              gravity: 'auto'
+                            }) : '/api/placeholder/1200/600'}
+                            srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                            alt={slide.headline || 'Hero image'}
+                            className={`w-full h-full object-cover rounded-2xl ${isVideo ? 'hidden' : ''} absolute top-0 left-0`}
+                            loading={index === 0 ? "eager" : "lazy"}
                             onError={(e) => {
-                              console.error('Video failed to load:', mediaUrl);
-                              const target = e.target as HTMLVideoElement;
-                              target.style.display = 'none';
-                              const fallbackImg = target.nextElementSibling as HTMLImageElement;
-                              if (fallbackImg) {
-                                fallbackImg.style.display = 'block';
-                              }
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/api/placeholder/1200/600';
                             }}
                           />
-                        ) : null}
-                        <img
-                          src={mediaUrl && mediaUrl.trim() !== '' ? getOptimizedImageUrl(mediaUrl, {
-                            width: 1200,
-                            height: 600,
-                            quality: 85,
-                            format: 'auto',
-                            crop: 'fill',
-                            gravity: 'auto'
-                          }) : '/api/placeholder/1200/600'}
-                          srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                          alt={slide.headline || 'Hero image'}
-                          className={`w-full h-full object-cover rounded-2xl ${isVideo ? 'hidden' : ''}`}
-                          loading={index === 0 ? "eager" : "lazy"}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/api/placeholder/1200/600';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-opacity-40 flex items-center justify-center rounded-2xl">
-                          <div
-                            className={`
-                              text-white px-2 md:px-4 py-2 md:py-4
-                              ${slide.headlineAlignment === 'left'
-                                ? 'text-left items-start justify-start'
-                                : slide.headlineAlignment === 'right'
-                                  ? 'text-right items-end justify-end'
-                                  : 'text-center items-center justify-center'}
-                              max-w-[95vw] md:max-w-4xl mx-auto flex flex-col h-full
-                            `}
-                          >
-                            {slide.headline && (
-                              <h1
+                          {slide.showText !== false && (
+                            <div className="absolute inset-0  bg-opacity-40 flex items-center justify-center rounded-2xl">
+                              <div
                                 className={`
-                                  ${slide.headlineSize
-                                    ? slide.headlineSize
-                                    : 'text-base xs:text-lg sm:text-xl md:text-3xl lg:text-5xl xl:text-6xl'}
-                                  font-bold mb-3 md:mb-6
-                                  leading-tight md:leading-tight
-                                  drop-shadow-lg
+                                  text-white
+                                  px-2 py-1
+                                  md:px-4 md:py-4
+                                  ${slide.headlineAlignment === 'left'
+                                    ? 'text-left items-start justify-start'
+                                    : slide.headlineAlignment === 'right'
+                                      ? 'text-right items-end justify-end'
+                                      : 'text-center items-center justify-center'}
+                                  max-w-[95vw]
+                                  md:max-w-4xl
+                                  mx-auto
+                                  flex flex-col
+                                  h-full
+                                  justify-center
                                 `}
-                                style={{
-                                  color: slide.headlineColor || '#ffffff',
-                                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-                                }}
                               >
-                                {slide.headline}
-                              </h1>
-                            )}
-                            {slide.subheadline && (
-                              <p
-                                className={`
-                                  ${slide.subtextSize
-                                    ? slide.subtextSize
-                                    : 'text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl'}
-                                  mb-4 sm:mb-6 md:mb-8
-                                  leading-relaxed md:leading-relaxed
-                                  drop-shadow-md
-                                  max-w-2xl
-                                `}
-                                style={{
-                                  color: slide.subtextColor || '#ffffff',
-                                  textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
-                                }}
-                              >
-                                {slide.subheadline}
-                              </p>
-                            )}
-                            {slide.cta && (
-                              <div className="flex justify-center sm:justify-start">
-                                <Button
-                                  size="lg"
-                                  onClick={() => openInquiryModal()}
-                                  className="text-sm xs:text-base md:text-lg px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
-                                >
-                                  {slide.cta}
-                                </Button>
+                                {slide.headline && (
+                                  <h1
+                                    className={`
+                                      font-bold
+                                      leading-tight
+                                      drop-shadow-lg
+                                      mb-1 xs:mb-2 md:mb-4
+                                      tracking-tight
+                                      font-display
+                                      whitespace-pre-line
+                                      ${slide.headlineSize
+                                        ? slide.headlineSize
+                                        : 'text-sm xs:text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl'}
+                                      ${slide.headlineAlignment === 'left'
+                                        ? 'text-left'
+                                        : slide.headlineAlignment === 'right'
+                                          ? 'text-right'
+                                          : 'text-center'}
+                                    `}
+                                    style={{
+                                      color: slide.headlineColor || '#ffffff',
+                                      textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                                    }}
+                                  >
+                                    {slide.headline}
+                                  </h1>
+                                )}
+                                {slide.subheadline && (
+                                  <p
+                                    className={`
+                                      drop-shadow-md
+                                      max-w-2xl
+                                      leading-relaxed
+                                      tracking-normal
+                                      font-normal
+                                      font-sans
+                                      mb-2 xs:mb-3 sm:mb-4 md:mb-6
+                                      ${slide.subtextSize
+                                        ? slide.subtextSize
+                                        : 'text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl'}
+                                      ${slide.headlineAlignment === 'left'
+                                        ? 'text-left'
+                                        : slide.headlineAlignment === 'right'
+                                          ? 'text-right'
+                                          : 'text-center'}
+                                    `}
+                                    style={{
+                                      color: slide.subtextColor || '#ffffff',
+                                      textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                                    }}
+                                  >
+                                    {slide.subheadline}
+                                  </p>
+                                )}
+                                {slide.cta && (
+                                  <div className={`
+                                    flex w-full
+                                    ${slide.headlineAlignment === 'left'
+                                      ? 'justify-start'
+                                      : slide.headlineAlignment === 'right'
+                                        ? 'justify-end'
+                                        : 'justify-center'}
+                                    mt-0 md:mt-4
+                                  `}>
+                                    <Button
+                                      size="lg"
+                                      onClick={() => openInquiryModal()}
+                                      className={`
+                                        text-sm xs:text-base md:text-lg
+                                        px-4 xs:px-6 md:px-8
+                                        py-2 xs:py-3 md:py-4
+                                        font-semibold rounded-xl md:rounded-2xl
+                                        shadow-xl hover:shadow-2xl
+                                        transition-all duration-300
+                                        bg-white text-gray-900 hover:bg-gray-100
+                                      `}
+                                    >
+                                      {slide.cta}
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </CarouselItem>
-                  );
-                })}
-              </CarouselContent>
-              {/* Desktop Navigation */}
-              <div className="hidden md:block">
-                <CarouselPrevious className="left-4 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300" />
-                <CarouselNext className="right-4 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300" />
+                    );
+                  })}
+                </div>
               </div>
-            </Carousel>
+              {heroContent.showArrows !== false && heroContent.slides.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentSlideIndex(prev => prev > 0 ? prev - 1 : heroContent.slides.length - 1)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentSlideIndex(prev => prev < heroContent.slides.length - 1 ? prev + 1 : 0)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              {heroContent.showDots !== false && heroContent.slides.length > 1 && (
+                <div className="flex justify-center mt-4 space-x-2">
+                  {heroContent.slides.map((_: any, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSlideIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-colors ${index === currentSlideIndex ? 'bg-white' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             // Default hero when no slides are configured
-            <div className="relative h-[40vw] min-h-[160px] max-h-[240px] w-full md:h-[500px] md:min-h-[320px] bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl overflow-hidden shadow-lg">
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
-                <div className="text-white text-center px-4 py-4 max-w-4xl mx-auto">
-                  <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight drop-shadow-lg">
+              <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] bg-linear-to-br from-orange-400 to-amber-500 rounded-2xl overflow-hidden shadow-lg">
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
+                  <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto flex flex-col justify-center h-full">
+                    <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg whitespace-pre-line">
                     Welcome to {business.name}
                   </h1>
-                  <p className="text-base xs:text-lg sm:text-xl md:text-2xl mb-6 md:mb-8 leading-relaxed drop-shadow-md">
+                    <p className="text-xs xs:text-sm sm:text-base md:text-2xl mb-2 xs:mb-3 md:mb-8 leading-relaxed drop-shadow-md max-w-2xl">
                     {business.description || 'Discover our amazing products and services'}
                   </p>
                   <Button
                     size="lg"
                     onClick={() => openInquiryModal()}
-                    className="text-lg px-8 py-4 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
+                      className="text-sm xs:text-base md:text-lg px-4 xs:px-6 md:px-8 py-2 xs:py-3 md:py-4 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
                   >
                     Get in Touch
                   </Button>
@@ -758,92 +841,184 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
         </div>
       </section>
 
-      {/* Business Information Section */}
+
       <section
         id="about"
         ref={aboutRef}
         className="py-4 md:py-16 px-3 sm:px-5 md:px-8 lg:px-12"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Two column row: Logo+Info and Contact/QR */}
           <div className="flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-12">
-            {/* Logo + Name/Info Card */}
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
-              <Card className="rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 px-4 py-5 md:p-8 h-full flex flex-col items-center md:items-start justify-center w-full bg-white relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 via-amber-500/15 to-yellow-400/20 rounded-2xl blur-2xl -z-10"></div>
-                <div className="flex flex-row items-center gap-4 md:gap-6 w-full relative z-10">
-                  {/* Logo */}
-                  <div className="shrink-0">
+              <Card className="relative bg-linear-to-bl from-lime-100 via-white to-white  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
+                <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
+                  <div className="flex-shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
                       <img
                         src={getOptimizedImageUrl(business.logo, {
-                          width: 300,
-                          height: 300,
+                          width: 280,
+                          height: 280,
                           quality: 90,
                           format: 'auto',
                           crop: 'fill',
-                          gravity: 'center'
+                          gravity: 'center',
                         })}
                         alt={business.name}
-                        className="w-20 h-20 xs:w-28 xs:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full object-cover border border-gray-200 shadow-sm"
+                        className="w-20 h-20 xs:w-24 xs:h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full object-cover border border-gray-200 shadow-sm"
                         loading="lazy"
                       />
                     ) : (
-                        <div className="w-20 h-20 xs:w-28 xs:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full bg-gray-50 flex items-center justify-center border shadow-sm">
-                          <Image className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 text-gray-400" />
+                        <div className="w-20 h-20 xs:w-24 xs:h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full bg-gray-50 flex items-center justify-center border shadow-sm">
+                          <Image className="w-12 h-12 md:w-20 md:h-20 lg:w-28 lg:h-28 text-gray-400" />
                         </div>
                     )}
                   </div>
-                  {/* Info */}
-                  <div className="flex flex-col flex-1 gap-1 w-full min-w-0 items-center sm:items-start">
-                    <h3 className="text-lg md:text-2xl lg:text-3xl text-gray-800 font-extrabold mb-1 md:mb-2 truncate w-full sm:text-left">
-                      {business.name || 'Business Name'}
+                  <div className="flex-1 flex flex-col gap-2 md:gap-3 w-full min-w-0">
+                    <h3 className="font-extrabold text-lg xs:text-xl sm:text-2xl md:text-3xl text-gray-800 mb-0.5 truncate w-full">
+                      {business.name || "Business Name"}
                     </h3>
-                    {/* Owner Name and Category combined */}
-                    <div className="flex flex-wrap gap-2 items-center mb-1 md:mb-2 w-full">
-                      {business.admin?.name && (
-                        <span className="flex items-center text-xs border rounded-full py-0.5 px-1.5 md:text-sm text-gray-500 font-medium bg-gray-50">
-                          <User className="w-4 h-4 mr-1 text-gray-400" />
-                          Owner: {business.admin.name}
-                        </span>
-                      )}
-                      {business.category && (
-                        <span className="flex items-center text-xs border rounded-full py-0.5 px-1.5 md:text-sm text-gray-500 font-medium bg-gray-50">
-                          <Briefcase className="w-4 h-4 mr-1 text-gray-400" />
-                          Category: {business.category.name}
-                        </span>
-                      )}
-                    </div>
-                    {/* Description */}
+                    {business.category && (
+                      <span className="inline-block text-xs xs:text-sm md:text-sm px-2 py-0.5 rounded-full border border-orange-200 bg-orange-50 text-orange-700 font-medium mb-1 md:mb-2 w-fit">
+                        {business.category.name}
+                      </span>
+                    )}
                     {business.description && (
-                      <p className="text-xs md:text-sm text-gray-600 line-clamp-2 w-full sm:text-left">
+                      <p className="text-xs xs:text-sm sm:text-base md:text-lg text-gray-600 mb-1 md:mb-2 w-full line-clamp-3">
                         {business.description}
                       </p>
                     )}
+                    <div className="flex flex-row items-center gap-2 md:gap-4 mt-1">
+                      {business.admin?.name && (
+                        <span className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold">
+                          <User className="w-4 h-4 mr-1 text-gray-400" />
+                          {business.admin.name}
+                        </span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold gap-1 shadow-none hover:shadow active:scale-95 transition"
+                        onClick={() => {
+                          if (business.catalogPdf) {
+                            const link = document.createElement('a');
+                            link.href = business.catalogPdf;
+                            link.download = `${business.name}-catalog.pdf`;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          } else {
+                            alert('Catalog not available for download');
+                          }
+                        }}
+                        title="Download catalog PDF"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Catalog
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
+              <div className="flex gap-2 mt-3 md:mt-4 w-full relative z-10">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                  onClick={() => {
+                    const vCardData = `BEGIN:VCARD
+                        VERSION:3.0
+                        FN:${business.name || ''}
+                        ORG:${business.category?.name || ''}
+                        TEL:${business.phone || ''}
+                        EMAIL:${business.email || ''}
+                        ADR:;;${business.address || ''};;;;
+                        END:VCARD`;
+
+                    const blob = new Blob([vCardData], { type: 'text/vcard' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${business.name || 'contact'}.vcf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                  }}
+                  title="Save contact to your device"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Save Contact
+                </Button>
+                {/* WhatsApp Button */}
+                <Button
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs md:text-sm font-medium shadow-sm border-0"
+                  style={{ backgroundColor: '#25D366' }}
+                  onClick={() => {
+                    if (business.phone) {
+                      const phoneNum = business.phone.replace(/[^\d]/g, '');
+                      const waUrl = `https://wa.me/${phoneNum}?text=${encodeURIComponent(`Hi, I'm interested in ${business.name}${business.category?.name ? ` (${business.category.name})` : ''}`)}`;
+                      window.open(waUrl, '_blank');
+                    } else {
+                      alert('No WhatsApp number available');
+                    }
+                  }}
+                  title="Contact via WhatsApp"
+                >
+                  {/* WhatsApp SVG Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12.004 2.002c-5.51 0-9.985 4.475-9.985 9.985 0 1.76.465 3.465 1.34 4.963l-1.398 5.084a.942.942 0 0 0 1.164 1.153l5.067-1.404a9.916 9.916 0 0 0 4.813 1.216H12.02c5.509 0 9.985-4.476 9.985-9.985 0-5.51-4.476-9.985-9.986-9.985zm5.48 13.485c-.227.634-1.335 1.194-1.823 1.273-.488.08-1.032.115-1.662-.104-.384-.134-.879-.287-1.519-.564-2.67-1.153-4.408-3.99-4.546-4.173-.134-.182-1.086-1.447-1.086-2.763 0-1.316.687-1.968.93-2.21l.165-.166c.205-.206.457-.242.611-.252.157-.011.314-.018.454.006.14.025.334.14.444.332.109.19.435.673.609.929.176.258.252.443.208.655-.042.21-.16.33-.333.52-.139.156-.295.351-.423.476-.091.09-.185.187-.076.377.106.184.47.777 1.007 1.248.543.476 1.006.626 1.214.701.129.043.205.036.279-.054.08-.099.328-.385.419-.518.09-.134.188-.109.316-.065.129.045.793.374.926.441.132.068.221.099.253.155.032.057.032.326-.08.648z"
+                    />
+                  </svg>
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: business.name || 'Business Profile',
+                        text: business.description || `Check out ${business.name}`,
+                        url: window.location.href
+                      }).catch(err => console.log('Error sharing:', err));
+                    } else {
+                      navigator.clipboard.writeText(window.location.href).then(() => {
+                        alert('Link copied to clipboard!');
+                      }).catch(err => console.log('Error copying link:', err));
+                    }
+                  }}
+                  title="Share this business profile"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </Button>
+              </div>
             </div>
-            {/* Contact Info + QR Card */}
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch mt-4 md:mt-0">
-              <Card className="rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 px-4 py-3 md:p-6 flex flex-col items-stretch h-full w-full relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 via-amber-500/15 to-yellow-400/20 rounded-2xl blur-2xl -z-10"></div>
-                {/* Contact Information Header */}
-                <h3 className="text-sm md:text-lg font-semibold mb-3 md:mb-5 text-gray-700 px-1 w-full relative z-10">
-                  Contact Information
-                </h3>
-                {/* Row: Contact Details + QR Code */}
+              <Card className="rounded-2xl sm:rounded-3xl shadow-md bg-linear-to-bl from-lime-900 via-gray-900 to-gray-950 hover:shadow-md transition-shadow duration-300 px-4 py-3 md:p-4  flex flex-col items-stretch h-full w-full relative " >
+
                 <div className="flex flex-row gap-2 md:gap-4 w-full items-center justify-between relative z-10">
-                  {/* Contact Text Info */}
-                  <div className="flex flex-col flex-1 min-w-0 space-y-2">
+                  <div className="flex flex-col flex-1 min-w-0 space-y-3">
                     {business.address && business.address.trim() !== '' && (
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-[2px] text-gray-500 flex-shrink-0" />
+                      <div className="flex items-center gap-4 group">
+                        <span className="inline-flex items-center justify-center rounded-full border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
+                          <MapPin className="h-4 w-4 text-gray-800 group-hover:text-blue-300 transition-colors shrink-0" />
+                        </span>
                         <a
                           href={`https://maps.google.com/?q=${encodeURIComponent(business.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs md:text-sm text-orange-600 hover:underline break-words"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-blue-300 hover:underline font-semibold break-words transition-colors"
                           title="Open in Google Maps"
                         >
                           {business.address}
@@ -851,11 +1026,13 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                       </div>
                     )}
                     {business.phone && business.phone.trim() !== '' && (
-                      <div className="flex items-start gap-2">
-                        <Phone className="h-4 w-4 mt-[2px] text-gray-500 flex-shrink-0" />
+                      <div className="flex items-center gap-4 group">
+                        <span className="inline-flex items-center justify-center rounded-full  border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
+                          <Phone className="h-4 w-4 text-800 group-hover:text-green-300 transition-colors shrink-0" />
+                        </span>
                         <a
                           href={`tel:${business.phone}`}
-                          className="text-xs md:text-sm text-orange-600 hover:underline break-all"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-green-300 hover:underline font-semibold break-words transition-colors"
                           title="Call this number"
                         >
                           {business.phone}
@@ -863,11 +1040,13 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                       </div>
                     )}
                     {business.email && business.email.trim() !== '' && (
-                      <div className="flex items-start gap-2">
-                        <Mail className="h-4 w-4 mt-[2px] text-gray-500 flex-shrink-0" />
+                      <div className="flex items-center gap-4 group">
+                        <span className="inline-flex items-center justify-center rounded-full  border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
+                          <Mail className="h-4 w-4 text-800 group-hover:text-purple-300 transition-colors shrink-0" />
+                        </span>
                         <a
                           href={`mailto:${business.email}`}
-                          className="text-xs md:text-sm text-orange-600 hover:underline break-all"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-purple-300 hover:underline font-semibold break-words transition-colors"
                           title="Send email"
                         >
                           {business.email}
@@ -877,14 +1056,15 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                     {(!business.address || business.address.trim() === '') &&
                       (!business.phone || business.phone.trim() === '') &&
                       (!business.email || business.email.trim() === '') && (
-                        <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
-                          <MessageCircle className="h-4 w-4 text-gray-400" />
-                          Contact information not available
+                      <div className="flex items-center gap-3 text-[15px] sm:text-base md:text-lg text-gray-300">
+                        <span className="inline-flex items-center justify-center rounded-full border border-gray-400 w-8 h-8 bg-gray-900">
+                          <MessageCircle className="h-5 w-5 text-gray-400" />
+                        </span>
+                        Contact information not available
                       </div>
                       )}
                   </div>
-                  {/* QR Code */}
-                  <div className="flex flex-col items-center gap-1 bg-white shadow-md p-2 rounded-2xl border border-gray-100 ml-3">
+                  <div className="flex flex-col items-center gap-1  bg-linear-120 from-lime-900 via-gray-800 to-gray-900 shadow-md p-3 rounded-lg border border-gray-500 ml-3">
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${business.slug || business.id}`)}`}
                       alt="Profile QR Code"
@@ -892,34 +1072,24 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
-                        // Could add a fallback icon here
                       }}
                       loading="lazy"
                     />
-                    <span className="text-[10px] md:text-xs text-gray-400 mt-1">Scan Me</span>
+                    <span className="text-[10px] md:text-xs text-gray-300 mt-1">Scan Me</span>
                   </div>
                 </div>
-                {/* Social Links Bar */}
                 {(business.facebook || business.twitter || business.instagram || business.linkedin || business.website) && (
-                  <div className="w-full mt-1 md:mt-4 relative z-10">
-                    <div className="
-                      flex flex-wrap gap-3 w-full
-                      border border-gray-100
-                      rounded-xl
-                      px-4 py-1 bg-white/50
-                      backdrop-blur-md
-                      justify-center items-center
-                      shadow-inner
-                    ">
+                  <div className="w-full border-t  pt-4 border-gray-200/80 mt-auto md:mt-auto relative z-10">
+                    <div className="flex flex-wrap gap-3 w-full justify-center items-center">
                       {business.website && (
                         <a
                           href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-full border border-gray-200 p-2 hover:bg-gray-100 transition"
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
                           aria-label="Website"
                         >
-                          <Globe className="h-5 w-5 text-gray-600" />
+                          <Globe className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
                         </a>
                       )}
                       {business.facebook && (
@@ -927,10 +1097,10 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           href={business.facebook.startsWith('http') ? business.facebook : `https://${business.facebook}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-full border border-gray-200 p-2 hover:bg-blue-50 transition"
+                          className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
                           aria-label="Facebook"
                         >
-                          <Facebook className="h-5 w-5 text-[#1877F3]" />
+                          <SiFacebook className="h-5 w-5 text-blue-600 group-hover:text-blue-800" />
                         </a>
                       )}
                       {business.twitter && (
@@ -938,10 +1108,10 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           href={business.twitter.startsWith('http') ? business.twitter : `https://${business.twitter}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-full border border-gray-200 p-2 hover:bg-blue-50 transition"
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
                           aria-label="Twitter"
                         >
-                          <Twitter className="h-5 w-5 text-[#1DA1F2]" />
+                          <SiX className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
                         </a>
                       )}
                       {business.instagram && (
@@ -949,10 +1119,10 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           href={business.instagram.startsWith('http') ? business.instagram : `https://${business.instagram}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-full border border-gray-200 p-2 hover:bg-pink-50 transition"
+                          className="p-2 rounded-full bg-pink-100 hover:bg-pink-200 transition-colors group"
                           aria-label="Instagram"
                         >
-                          <Instagram className="h-5 w-5 text-[#E4405F]" />
+                          <SiInstagram className="h-5 w-5 text-pink-600 group-hover:text-pink-800" />
                         </a>
                       )}
                       {business.linkedin && (
@@ -960,20 +1130,74 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           href={business.linkedin.startsWith('http') ? business.linkedin : `https://${business.linkedin}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-full border border-gray-200 p-2 hover:bg-blue-50 transition"
-                          aria-label="Linkedin"
+                          className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                          aria-label="LinkedIn"
                         >
-                          <Linkedin className="h-5 w-5 text-[#0A66C2]" />
+                          <SiLinkedin className="h-5 w-5 text-blue-600 group-hover:text-blue-800" />
                         </a>
                       )}
                     </div>
                   </div>
                 )}
+
               </Card>
             </div>
           </div>
+
+
+          <div className="w-full mt-8">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+              {/* Left Side: About Us */}
+              <div className="flex-1">
+                <h2 className="text-xl md:text-2xl font-bold mb-3">About Us</h2>
+                <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
+                  {business.about || "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
+                </p>
+              </div>
+              {/* Separator */}
+              <div className="hidden md:flex flex-col items-center justify-center">
+                <Separator orientation="vertical" className="h-32" />
+              </div>
+              {/* Right Side: Opening Hours & GST Number */}
+              <div className="flex-1">
+                <h2 className="text-xl md:text-2xl font-bold mb-3">Opening Hours & Details</h2>
+                <div className="space-y-4 flex justify-between">
+                  <div>
+                    <Label className="block text-gray-600 mb-1">Opening Hours</Label>
+                    {business.openingHours && business.openingHours.length > 0 ? (
+                      <ul className="text-sm text-gray-800">
+                        {business.openingHours.map((item: any, idx: number) => (
+                          <li key={idx} className="flex justify-between items-center py-0.5">
+                            <span className="font-medium">{item.day}</span>
+                            <span>
+                              {item.open && item.close
+                                ? `${item.open} - ${item.close}`
+                                : "Closed"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-400">Not provided</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="block text-gray-600 mb-1">GST Number</Label>
+                    <p className="text-sm text-gray-800">{business.gstNumber || <span className="text-gray-400">Not provided</span>}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+
         </div>
       </section>
+
 
       {/* Brand Slider - Enhanced for Mobile */}
       {
@@ -1012,7 +1236,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                         )}
                       </div>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-center text-xs md:text-sm md:text-base">{brand.name}</CardTitle>
+                        <CardTitle className="text-center text-xs  md:text-base">{brand.name}</CardTitle>
                       </CardHeader>
                     </Card>
                   ))}
@@ -1038,7 +1262,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                             )}
                           </div>
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-center text-xs md:text-sm md:text-base">{brand.name}</CardTitle>
+                            <CardTitle className="text-center text-xs  md:text-base">{brand.name}</CardTitle>
                           </CardHeader>
                         </Card>
                       </CarouselItem>
@@ -1071,7 +1295,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                 {categoryContent.categories.map((category: any, index: number) => (
                   <Card key={index} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
                     <CardHeader className="p-2 md:p-4">
-                      <CardTitle className="text-center text-xs md:text-sm md:text-base">{category.name}</CardTitle>
+                      <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
                     </CardHeader>
                   </Card>
                 ))}
@@ -1083,7 +1307,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                     <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
                       <Card className="overflow-hidden bg-transparent h-full flex items-center justify-center">
                         <CardHeader className="p-2 md:p-4">
-                          <CardTitle className="text-center text-xs md:text-sm md:text-base">{category.name}</CardTitle>
+                          <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
                         </CardHeader>
                       </Card>
                     </CarouselItem>
@@ -1145,7 +1369,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
               {viewAllProducts ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                   {filteredProducts.map((product) => (
-                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 h-80 md:h-96">
+                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2">
                       <div className="relative h-32 md:h-48">
                         {product.image && product.image.trim() !== '' ? (
                           <img
@@ -1169,7 +1393,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                             </div>
                         )}
                         <Badge
-                          className={`absolute top-2 bg-gradient-to-l from-gray-900 to-lime-900 border border-gray-50/25 rounded-full right-2 text-xs`}
+                          className={`absolute top-2 bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 rounded-full right-2 text-xs`}
                           variant={product.inStock ? "default" : "destructive"}
                         >
                           {product.inStock ? (
@@ -1184,10 +1408,10 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           ) : "Out of Stock"}
                         </Badge>
                       </div>
-                      <CardHeader className="pb-2 px-2 md:px-3 md:px-6">
-                        <CardTitle className="text-xs md:text-sm md:text-base md:text-lg line-clamp-1">{product.name}</CardTitle>
+                      <CardHeader className="pb-2 px-2 md:px-3 ">
+                        <CardTitle className="text-xs  md:text-lg line-clamp-1">{product.name}</CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0 px-2 md:px-3 md:px-6">
+                      <CardContent className="pt-0 px-2 md:px-3 ">
                         <div className="flex flex-row flex-nowrap gap-1 mb-2 md:mb-3 overflow-x-auto hide-scrollbar">
                           {product.brandName && (
                             <Badge variant="outline" className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max">
@@ -1200,7 +1424,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                             </Badge>
                           )}
                         </div>
-                        <CardDescription className="mb-2 md:mb-4 text-[10px] md:text-xs md:text-sm leading-relaxed line-clamp-2">
+                        <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
                           {product.description || "No description available"}
                         </CardDescription>
                         <Button
@@ -1216,8 +1440,8 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                             }
                           }}
                         >
-                          Enquire
-                          <MessageCircle className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
+                          Inquire Now
+                          <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
                         </Button>
                       </CardContent>
                     </Card>
@@ -1228,7 +1452,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                   <CarouselContent>
                     {filteredProducts.map((product) => (
                       <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                        <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 h-80 md:h-96">
+                        <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2">
                           <div className="relative h-32 md:h-48">
                             {product.image && product.image.trim() !== '' ? (
                               <img
@@ -1243,7 +1467,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                                 </div>
                             )}
                             <Badge
-                              className={`absolute top-2 rounded-full bg-gradient-to-l from-gray-900 to-lime-900 border border-gray-50/25 right-2 text-xs`}
+                              className={`absolute top-2 rounded-full bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 right-2 text-xs`}
                               variant={product.inStock ? "default" : "destructive"}
                             >
                               {product.inStock ? (
@@ -1258,10 +1482,10 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                               ) : "Out of Stock"}
                             </Badge>
                           </div>
-                          <CardHeader className="pb-2 px-2 md:px-3 md:px-6">
-                            <CardTitle className="text-xs md:text-sm md:text-base md:text-lg line-clamp-1">{product.name}</CardTitle>
+                          <CardHeader className="pb-2 px-2 md:px-3 ">
+                            <CardTitle className="text-xs e md:text-lg line-clamp-1">{product.name}</CardTitle>
                           </CardHeader>
-                          <CardContent className="pt-0 px-2 md:px-3 md:px-6">
+                          <CardContent className="pt-0 px-2  md:px-6">
                             <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
                               {product.brandName && (
                                 <Badge variant="outline" className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max">
@@ -1274,7 +1498,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                                 </Badge>
                               )}
                             </div>
-                            <CardDescription className="mb-2 md:mb-4 text-[10px] md:text-xs md:text-sm leading-relaxed line-clamp-2">
+                            <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
                               {product.description || "No description available"}
                             </CardDescription>
                             <Button
@@ -1290,8 +1514,8 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                                 }
                               }}
                             >
-                              Enquire
-                              <MessageCircle className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
+                              Inquire Now
+                              <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
                             </Button>
                           </CardContent>
                         </Card>
@@ -1385,7 +1609,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
       )}
 
       {/* Footer - Enhanced for Mobile */}
-      <footer id="contact" ref={contactRef} className="relative bg-gradient-to-b from-gray-950 to-gray-900 text-white py-8 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <footer id="contact" ref={contactRef} className="relative bg-linear-to-b from-gray-950 to-gray-900 text-white py-8 pb-10 mb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Glowing Elements */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-blue-800 rounded-full filter blur-3xl opacity-10 -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-zinc-800 rounded-full filter blur-3xl opacity-10 translate-x-1/2 translate-y-1/2"></div>
@@ -1393,68 +1617,13 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-8">
-            {/* Company Info */}
-            <div className="space-y-2 md:space-y-4">
-              <div className="flex items-center space-x-2">
-                {business.logo && business.logo.trim() !== '' && (
-                  <img
-                    src={getOptimizedImageUrl(business.logo, {
-                      width: 150,
-                      height: 150,
-                      quality: 85,
-                      format: 'auto',
-                      crop: 'fit'
-                    })}
-                    alt={business.name}
-                    className="h-6 md:h-8 w-auto"
-                    loading="lazy"
-                  />
-                )}
-                <span className="text-sm md:text-lg font-semibold">{business.name}</span>
-              </div>
-              <p className="text-gray-400 text-xs md:text-sm">
-                {business.description || 'Your trusted business partner'}
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div className="space-y-2 md:space-y-4">
-              <h3 className="text-sm md:text-lg font-semibold">Quick Links</h3>
-              <ul className="space-y-1 md:space-y-2">
-                <li><a href="#about" className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm">About Us</a></li>
-                <li><a href="#products" className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm">Products & Services</a></li>
-                <li><a href="#contact" className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm">Contact</a></li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-2 md:space-y-4">
-              <h3 className="text-sm md:text-lg font-semibold">Contact Info</h3>
-              <div className="space-y-1 md:space-y-2">
-                {business.address && (
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-3 w-3 md:h-4 md:w-4 text-gray-400" />
-                    <span className="text-gray-400 text-xs md:text-sm">{business.address}</span>
-                  </div>
-                )}
-                {business.phone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-400" />
-                    <a href={`tel:${business.phone}`} className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm">{business.phone}</a>
-                  </div>
-                )}
-                {business.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-3 w-3 md:h-4 md:w-4 text-gray-400" />
-                    <a href={`mailto:${business.email}`} className="text-gray-400 hover:text-white transition-colors text-xs md:text-sm">{business.email}</a>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* DigiSence Online Presence CTA Card */}
-            <div className="space-y-2 md:space-y-4">
-              <div className="bg-gradient-to-br from-gray-900 via-gray-900 to-lime-900 rounded-xl shadow-lg p-4 md:p-6 flex flex-col items-center text-center">
+            <div className="space-y-2 bg-linear-120 from-lime-900 via-gray-800 to-gray-900 rounded-xl  md:space-y-4">
+              <div className="bg-lienar-to-br from-gray-900 via-gray-900 to-lime-900 rounded-xl shadow-lg p-4 md:p-6 flex flex-col items-center text-center">
+                <p className="mb-3 text-sm md:text-base text-white font-medium">
+                  Make your online presence with DigiSence
+                </p>
                 <a
                   href="https://www.digisence.io/"
                   target="_blank"

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Validate file
     const maxSize = 50 * 1024 * 1024 // 50MB for videos
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'image/svg+xml']
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov']
     const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes]
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({
-        error: 'File must be a valid format (Images: JPEG, PNG, WebP, GIF; Videos: MP4, WebM, OGG, AVI, MOV)'
+        error: 'File must be a valid format (Images: JPEG, JPG, PNG, WebP, GIF, BMP, TIFF, SVG; Videos: MP4, WebM, OGG, AVI, MOV)'
       }, { status: 400 })
     }
 

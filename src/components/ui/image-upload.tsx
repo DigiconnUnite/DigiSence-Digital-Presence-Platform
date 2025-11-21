@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +13,7 @@ import {
 
 interface ImageUploadProps {
   onUpload: (url: string) => void
+  onError?: (error: string) => void
   maxFiles?: number
   accept?: string
   className?: string
@@ -21,6 +22,7 @@ interface ImageUploadProps {
 
 export default function ImageUpload({
   onUpload,
+  onError,
   maxFiles = 1,
   accept = 'image/*',
   className = '',
@@ -30,9 +32,11 @@ export default function ImageUpload({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragActive, setDragActive] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const mediaAccept = allowVideo ? 'image/*,video/*' : accept
-  const mediaTypeText = allowVideo ? 'images and videos' : 'images'
+  const isPdf = accept.includes('pdf') || accept.includes('application/pdf')
+  const mediaAccept = allowVideo ? 'image/*,video/*' : isPdf ? accept : accept
+  const mediaTypeText = allowVideo ? 'images and videos' : isPdf ? 'images or PDFs' : 'images'
 
   const handleFileUpload = useCallback(async (files: FileList) => {
     const fileArray = Array.from(files).slice(0, maxFiles)
@@ -41,22 +45,38 @@ export default function ImageUpload({
 
     const file = fileArray[0]
 
-    // Validate file size (50MB for videos, 10MB for images)
+    // Validate file size (50MB for videos, 10MB for images/PDFs)
     const maxSize = allowVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024
     if (file.size > maxSize) {
       const sizeText = allowVideo ? '50MB' : '10MB'
-      alert(`File size must be less than ${sizeText}`)
+      const errorMsg = `File size must be less than ${sizeText}`
+      if (onError) {
+        onError(errorMsg)
+      } else {
+        alert(errorMsg)
+      }
       return
     }
 
     // Validate file type
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/svg+xml']
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg']
-    const allowedTypes = allowVideo ? [...allowedImageTypes, ...allowedVideoTypes] : allowedImageTypes
+    const allowedPdfTypes = ['application/pdf']
+    let allowedTypes = allowVideo ? [...allowedImageTypes, ...allowedVideoTypes] : allowedImageTypes
+
+    // If accept includes PDF, allow PDF types
+    if (accept.includes('pdf') || accept.includes('application/pdf')) {
+      allowedTypes = [...allowedTypes, ...allowedPdfTypes]
+    }
 
     if (!allowedTypes.includes(file.type)) {
-      const typeText = allowVideo ? 'images (JPEG, PNG, GIF, WebP) or videos (MP4, WebM, OGG)' : 'images (JPEG, PNG, GIF, WebP)'
-      alert(`Invalid file type. Please select ${typeText}.`)
+      const typeText = allowVideo ? 'images (JPEG, JPG, PNG, GIF, WebP, BMP, TIFF, SVG), videos (MP4, WebM, OGG), or PDFs' : accept.includes('pdf') ? 'images (JPEG, JPG, PNG, GIF, WebP, BMP, TIFF, SVG) or PDFs' : 'images (JPEG, JPG, PNG, GIF, WebP, BMP, TIFF, SVG)'
+      const errorMsg = `Invalid file type. Please select ${typeText}.`
+      if (onError) {
+        onError(errorMsg)
+      } else {
+        alert(errorMsg)
+      }
       return
     }
 
@@ -69,7 +89,7 @@ export default function ImageUpload({
       setUploadStatus('Uploading to server...')
 
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('file', file)
 
       // Use business-specific upload API if available, fallback to general upload
       const uploadUrl = '/api/business/upload'
@@ -107,7 +127,11 @@ export default function ImageUpload({
       console.error('Upload error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload media. Please try again.'
       setUploadStatus('Upload failed')
-      alert(errorMessage)
+      if (onError) {
+        onError(errorMessage)
+      } else {
+        alert(errorMessage)
+      }
     } finally {
       setUploading(false)
       setUploadProgress(0)
@@ -148,17 +172,18 @@ export default function ImageUpload({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="w-5 h-5" />
-          Upload {allowVideo ? 'Media' : 'Images'}
+          Upload {allowVideo ? 'Media' : isPdf ? 'Files' : 'Images'}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div
-          className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors ${
+          className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors cursor-pointer ${
             dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
           }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
+          onClick={() => fileInputRef.current?.click()}
         >
           {uploading ? (
             <div className="space-y-4">
@@ -170,15 +195,16 @@ export default function ImageUpload({
             <div className="space-y-4">
               <Upload className="w-12 h-12 mx-auto text-gray-400" />
               <p className="text-sm text-gray-600 mb-4">
-                  Drag and drop {allowVideo ? 'an image or video' : 'an image'} here, or click to select
+                  Drag and drop {mediaTypeText} here, or click to select
               </p>
               <div className="flex items-center justify-center">
                 <Label htmlFor="file-upload" className="cursor-pointer">
                   <div className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                      Select {allowVideo ? 'Media' : 'Image'}
+                      Select {allowVideo ? 'Media' : isPdf ? 'File' : 'Image'}
                   </div>
                 </Label>
                 <Input
+                    ref={fileInputRef}
                   id="file-upload"
                   type="file"
                     accept={mediaAccept}

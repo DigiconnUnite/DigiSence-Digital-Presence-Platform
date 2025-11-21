@@ -34,11 +34,19 @@ model Business {
   name        String
   slug        String   @unique
   description String?
+  about       String?  // About section content
   logo        String?
   address     String?
   phone       String?
   email       String?
   website     String?
+  facebook    String?
+  twitter     String?
+  instagram   String?
+  linkedin    String?
+  catalogPdf  String?  // Catalog PDF URL
+  openingHours Json?   // Opening hours data
+  gstNumber   String?  // GST number
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

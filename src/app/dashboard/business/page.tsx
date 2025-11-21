@@ -91,7 +91,8 @@ import {
   FolderTree,
   MessageCircle,
   LineChart,
-  Cog
+  Cog,
+  Fullscreen
 } from 'lucide-react'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
@@ -145,6 +146,10 @@ interface Business {
   phone: string | null
   email: string | null
   website: string | null
+  facebook: string | null
+  twitter: string | null
+  instagram: string | null
+  linkedin: string | null
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -211,15 +216,40 @@ export default function BusinessAdminDashboard() {
     inStock: true,
     isActive: true,
   })
-  const [businessInfoFormData, setBusinessInfoFormData] = useState({
+  const [businessInfoFormData, setBusinessInfoFormData] = useState<{
+    name: string
+    description: string
+    about: string
+    logo: string
+    address: string
+    phone: string
+    email: string
+    website: string
+    ownerName: string
+    facebook: string
+    twitter: string
+    instagram: string
+    linkedin: string
+    catalogPdf: string
+    openingHours: { day: string; open: string; close: string }[]
+    gstNumber: string
+  }>({
     name: '',
     description: '',
+    about: '',
     logo: '',
     address: '',
     phone: '',
     email: '',
     website: '',
     ownerName: '',
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+    catalogPdf: '',
+    openingHours: [],
+    gstNumber: '',
   })
   const [editorContent, setEditorContent] = useState('')
   const [brandContent, setBrandContent] = useState<any>({ brands: [] })
@@ -232,14 +262,13 @@ export default function BusinessAdminDashboard() {
     transitionSpeed: 5
   })
   const [sectionTitles, setSectionTitles] = useState({
+    full: 'Full Preview',
     hero: 'Hero',
     info: 'Business Info',
     brands: 'Brand Slider',
     categories: 'Categories',
     portfolio: 'Portfolio',
     products: 'Products',
-    news: 'News & Updates',
-    footer: 'Footer'
   })
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'settings'>('content')
@@ -252,6 +281,25 @@ export default function BusinessAdminDashboard() {
   // Mobile responsiveness states
   const [isMobile, setIsMobile] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
+
+  // Sidebar collapse state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  const getEditorTitle = () => {
+    if (activeSection === 'profile') {
+      if (selectedProfileSection === 'hero') return 'Hero Section Editor'
+      if (selectedProfileSection === 'info') return 'Business Info Editor'
+      if (selectedProfileSection === 'brands') return 'Brand Slider Editor'
+      if (selectedProfileSection === 'categories') return 'Categories Editor'
+      if (selectedProfileSection === 'portfolio') return 'Portfolio Editor'
+      if (selectedProfileSection === 'products') return 'Products Editor'
+      if (selectedProfileSection === 'content') return 'Additional Content Editor'
+      if (selectedProfileSection === 'footer') return 'Footer Editor'
+    } else if (activeSection === 'products' && showProductRightbar) {
+      return editingProduct ? 'Edit Product' : 'Add New Product'
+    }
+    return 'Editor Panel'
+  }
 
   // Stats
   const [stats, setStats] = useState({
@@ -291,6 +339,11 @@ export default function BusinessAdminDashboard() {
     setMounted(true)
   }, [])
 
+  // Auto-collapse sidebar when in editor mode
+  useEffect(() => {
+    setSidebarCollapsed(!!selectedProfileSection)
+  }, [selectedProfileSection])
+
   const fetchData = async () => {
     try {
       setIsLoading(true)
@@ -316,12 +369,20 @@ export default function BusinessAdminDashboard() {
           setBusinessInfoFormData({
             name: data.business.name || '',
             description: data.business.description || '',
+            about: data.business.about || '',
             logo: data.business.logo || '',
             address: data.business.address || '',
             phone: data.business.phone || '',
             email: data.business.email || '',
             website: data.business.website || '',
             ownerName: data.business.admin?.name || '',
+            facebook: data.business.facebook || '',
+            twitter: data.business.twitter || '',
+            instagram: data.business.instagram || '',
+            linkedin: data.business.linkedin || '',
+            catalogPdf: data.business.catalogPdf || '',
+            openingHours: data.business.openingHours || [],
+            gstNumber: data.business.gstNumber || '',
           })
         } else {
           const errorData = await businessRes.json()
@@ -535,16 +596,22 @@ export default function BusinessAdminDashboard() {
     e.preventDefault()
     setSavingStates(prev => ({ ...prev, basicInfo: true }))
 
-    const formData = new FormData(e.currentTarget)
-
     const updateData = {
-      name: formData.get('name') as string,
-      description: formData.get('description') as string,
-      logo: formData.get('logo') as string,
-      address: formData.get('address') as string,
-      phone: formData.get('phone') as string,
-      email: formData.get('email') as string,
-      website: formData.get('website') as string,
+      name: businessInfoFormData.name,
+      description: businessInfoFormData.description,
+      about: businessInfoFormData.about,
+      logo: businessInfoFormData.logo,
+      address: businessInfoFormData.address,
+      phone: businessInfoFormData.phone,
+      email: businessInfoFormData.email,
+      website: businessInfoFormData.website,
+      facebook: businessInfoFormData.facebook,
+      twitter: businessInfoFormData.twitter,
+      instagram: businessInfoFormData.instagram,
+      linkedin: businessInfoFormData.linkedin,
+      catalogPdf: businessInfoFormData.catalogPdf,
+      openingHours: businessInfoFormData.openingHours,
+      gstNumber: businessInfoFormData.gstNumber,
     }
 
     // Validation
@@ -578,9 +645,36 @@ export default function BusinessAdminDashboard() {
       return
     }
 
-    if (updateData.website && updateData.website.trim() && !updateData.website.startsWith('http')) {
+    if (updateData.website && updateData.website.trim() && !updateData.website.startsWith('http://') && !updateData.website.startsWith('https://')) {
       updateData.website = `https://${updateData.website}`
     }
+
+    if (updateData.logo && updateData.logo.trim() && !updateData.logo.startsWith('http://') && !updateData.logo.startsWith('https://')) {
+      updateData.logo = `https://${updateData.logo}`
+    }
+
+    // Social links validation and URL formatting
+    const socialFields = ['facebook', 'twitter', 'instagram', 'linkedin']
+    socialFields.forEach(field => {
+      const value = updateData[field as keyof typeof updateData] as string
+      if (value && value.trim()) {
+        if (!value.startsWith('http')) {
+          (updateData as any)[field] = `https://${value}`
+        }
+        // Basic URL validation
+        try {
+          new URL((updateData as any)[field])
+        } catch {
+          toast({
+            title: "Validation Error",
+            description: `Please enter a valid URL for ${field.charAt(0).toUpperCase() + field.slice(1)}.`,
+            variant: "destructive",
+          })
+          setSavingStates(prev => ({ ...prev, basicInfo: false }))
+          return
+        }
+      }
+    })
 
     try {
       const response = await fetch('/api/business', {
@@ -1000,12 +1094,21 @@ export default function BusinessAdminDashboard() {
       <div className="flex  flex-1  overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
-          <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
-            <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-              <div className="flex items-center space-x-2">
+          <div className={`m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+            <div className="p-4 border-b border-gray-200 rounded-t-3xl flex items-center justify-between min-h-[60px]">
+              <div className={`flex items-center space-x-2 transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
                 <Building className="h-6 w-6" />
                 <span className="font-semibold">Business Admin</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={`h-8 w-8 p-0 hover:bg-gray-100 transition-all duration-300 ${sidebarCollapsed ? 'mx-auto' : ''}`}
+                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              >
+                <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+              </Button>
             </div>
             <nav className="flex-1 p-4 overflow-auto hide-scrollbar">
               <ul className="space-y-2">
@@ -1013,13 +1116,14 @@ export default function BusinessAdminDashboard() {
                   <li key={item.value}>
                     <button
                       onClick={() => setActiveSection(item.value)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${activeSection === item.value
+                      className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 ${activeSection === item.value
                         ? 'bg-linear-to-r from-orange-400 to-amber-500 text-white'
                         : 'text-gray-700 hover:bg-orange-50'
-                        }`}
+                        } ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
+                      title={sidebarCollapsed ? item.title : undefined}
                     >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>{item.title}</span>
                     </button>
                   </li>
                 ))}
@@ -1033,12 +1137,15 @@ export default function BusinessAdminDashboard() {
                   await logout()
                   router.push('/login')
                 }}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
+                className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 text-red-600 hover:bg-red-50 ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
+                title={sidebarCollapsed ? 'Logout' : undefined}
               >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Logout</span>
               </button>
             </div>
+
+
           </div>
         )}
 
@@ -1209,7 +1316,7 @@ export default function BusinessAdminDashboard() {
                       { id: 'categories', label: 'Categories', icon: Grid3X3 },
                       { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree },
                       { id: 'products', label: sectionTitles.products, icon: Package },
-                      { id: 'footer', label: sectionTitles.footer, icon: Globe }
+                      { id: 'full', label: sectionTitles.full, icon: Fullscreen }
                     ].map((tab) => {
                       const Icon = tab.icon
                       return (
@@ -1219,7 +1326,7 @@ export default function BusinessAdminDashboard() {
                             setSelectedProfileSection(tab.id)
                             setEditingSection(tab.id)
                           }}
-                          className={`flex-1 flex items-center justify-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-w-fit ${selectedProfileSection === tab.id
+                          className={`flex-1 flex items-center justify-center px-3 py-1 rounded-xl text-sm font-medium transition-colors min-w-fit ${selectedProfileSection === tab.id
                             ? 'bg-white text-black shadow-sm'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                             }`}
@@ -1720,6 +1827,194 @@ export default function BusinessAdminDashboard() {
                         </Card>
                       ))}
                     </div>
+
+                      {/* Fixed Action Buttons */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg z-10">
+                        <div className="flex justify-end space-x-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              if (activeSection === 'profile') setSelectedProfileSection(null);
+                              if (activeSection === 'products') {
+                                setShowProductRightbar(false);
+                                setEditingProduct(null);
+                                setProductFormData({
+                                  name: '',
+                                  description: '',
+                                  price: '',
+                                  image: '',
+                                  categoryId: '',
+                                  brandName: '',
+                                  inStock: true,
+                                  isActive: true,
+                                });
+                              }
+                            }}
+                            className="rounded-2xl flex-1"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              if (activeSection === 'profile') {
+                                if (selectedProfileSection === 'info') {
+                                  await handleBasicInfoSave({ preventDefault: () => { } } as any);
+                                } else if (selectedProfileSection === 'hero') {
+                                  if (!business) return;
+                                  try {
+                                    const response = await fetch('/api/business', {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ heroContent }),
+                                    });
+                                    if (response.ok) {
+                                      const result = await response.json();
+                                      setBusiness(result.business);
+                                      toast({
+                                        title: "Success",
+                                        description: "Hero content saved successfully!",
+                                      });
+                                    } else {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to save hero content",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to save hero content",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } else if (selectedProfileSection === 'brands') {
+                                  if (!business) return;
+                                  try {
+                                    const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent;
+                                    const response = await fetch('/api/business', {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ brandContent: cleanBrandContent }),
+                                    });
+                                    if (response.ok) {
+                                      const result = await response.json();
+                                      setBusiness(result.business);
+                                      toast({
+                                        title: "Success",
+                                        description: "Brand content saved successfully!",
+                                      });
+                                    } else {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to save brand content",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to save brand content",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } else if (selectedProfileSection === 'portfolio') {
+                                  if (!business) return;
+                                  try {
+                                    const { newImageUrl, ...cleanPortfolioContent } = portfolioContent;
+                                    const response = await fetch('/api/business', {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ portfolioContent: cleanPortfolioContent }),
+                                    });
+                                    if (response.ok) {
+                                      const result = await response.json();
+                                      setBusiness(result.business);
+                                      toast({
+                                        title: "Success",
+                                        description: "Portfolio content saved successfully!",
+                                      });
+                                    } else {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to save portfolio content",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to save portfolio content",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              } else if (activeSection === 'products' && showProductRightbar) {
+                                setIsLoading(true);
+                                try {
+                                  const url = editingProduct
+                                    ? `/api/business/products/${editingProduct.id}`
+                                    : '/api/business/products';
+                                  const method = editingProduct ? 'PUT' : 'POST';
+                                  const response = await fetch(url, {
+                                    method,
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(productFormData),
+                                  });
+                                  if (response.ok) {
+                                    await fetchData();
+                                    setShowProductRightbar(false);
+                                    setEditingProduct(null);
+                                    setProductFormData({
+                                      name: '',
+                                      description: '',
+                                      price: '',
+                                      image: '',
+                                      categoryId: '',
+                                      brandName: '',
+                                      inStock: true,
+                                      isActive: true,
+                                    });
+                                    toast({
+                                      title: "Success",
+                                      description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
+                                    });
+                                  } else {
+                                    const errorResult = await response.json();
+                                    toast({
+                                      title: "Error",
+                                      description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+                                    variant: "destructive",
+                                  });
+                                } finally {
+                                  setIsLoading(false);
+                                }
+                              }
+                            }}
+                            disabled={savingStates.basicInfo || isLoading}
+                            className="rounded-2xl flex-1"
+                          >
+                            {savingStates.basicInfo || isLoading ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save Changes
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                   </div>
                 )}
               </div>
@@ -1761,42 +2056,29 @@ export default function BusinessAdminDashboard() {
 
         {/* Right Editor Panel - Fixed Width */}
         {((activeSection === 'profile' && selectedProfileSection) || (activeSection === 'products' && showProductRightbar)) && (
-          <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50 h-96' : 'w-[480px]'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out`}>
-            {isMobile && (
-              <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-semibold">Editor Panel</h3>
-                <button
-                  onClick={() => {
-                    if (activeSection === 'profile') setSelectedProfileSection(null);
-                    if (activeSection === 'products') setShowProductRightbar(false);
-                  }}
-                  className="p-1 rounded-lg hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            )}
+          <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50 h-96' : 'w-[480px]'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out relative`}>
+            <div className="p-4  px-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold">
+                {selectedProfileSection === 'hero' && ' Hero Section Editor'}
+                {selectedProfileSection === 'info' && 'Business Info Editor'}
+                {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
+                {selectedProfileSection === 'categories' && ' Categories Editor'}
+                {selectedProfileSection === 'portfolio' && ' Portfolio Editor'}
+                {selectedProfileSection === 'products' && ' Products Editor'}
+                {selectedProfileSection === 'content' && ' Additional Content Editor'}
+                {selectedProfileSection === 'footer' && ' Footer Editor'}
+              </h3>
+              <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="flex-1 overflow-auto p-4 sm:p-6 hide-scrollbar">
               {activeSection === 'profile' && (
                 <>
                   {selectedProfileSection ? (
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-semibold">
-                        {selectedProfileSection === 'hero' && ' Hero Section Editor'}
-                        {selectedProfileSection === 'info' && 'Business Info Editor'}
-                        {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
-                        {selectedProfileSection === 'categories' && ' Categories Editor'}
-                        {selectedProfileSection === 'portfolio' && ' Portfolio Editor'}
-                        {selectedProfileSection === 'products' && ' Products Editor'}
-                        {selectedProfileSection === 'content' && ' Additional Content Editor'}
-                        {selectedProfileSection === 'footer' && '🔗 Footer Editor'}
-                      </h3>
-                      {!isMobile && (
-                        <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <>
+
+                    </>
                   ) : (
                     <div className="text-center py-12">
                       <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -2087,11 +2369,11 @@ export default function BusinessAdminDashboard() {
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="text-2xl md:text-4xl">Small</SelectItem>
-                                            <SelectItem value="text-3xl md:text-5xl">Medium</SelectItem>
-                                            <SelectItem value="text-4xl md:text-6xl">Large</SelectItem>
-                                            <SelectItem value="text-5xl md:text-7xl">Extra Large</SelectItem>
-                                            <SelectItem value="text-6xl md:text-8xl">Huge</SelectItem>
+                                            <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">Small</SelectItem>
+                                            <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">Medium</SelectItem>
+                                            <SelectItem value="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">Large</SelectItem>
+                                            <SelectItem value="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">Extra Large</SelectItem>
+                                            <SelectItem value="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl">Huge</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
@@ -2161,11 +2443,11 @@ export default function BusinessAdminDashboard() {
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="text-sm md:text-base">Small</SelectItem>
-                                            <SelectItem value="text-base md:text-lg">Medium</SelectItem>
-                                            <SelectItem value="text-lg md:text-xl">Large</SelectItem>
-                                            <SelectItem value="text-xl md:text-2xl">Extra Large</SelectItem>
-                                            <SelectItem value="text-2xl md:text-3xl">Huge</SelectItem>
+                                            <SelectItem value="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl">Small</SelectItem>
+                                            <SelectItem value="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl">Medium</SelectItem>
+                                            <SelectItem value="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl">Large</SelectItem>
+                                            <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl">Extra Large</SelectItem>
+                                            <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl">Huge</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
@@ -2228,6 +2510,19 @@ export default function BusinessAdminDashboard() {
                                   <h3 className="text-sm font-medium">Slider Settings</h3>
 
                                   <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="showText" className="text-sm">Show Text Overlay</Label>
+                                      <Switch
+                                        id="showText"
+                                        checked={heroContent.slides[selectedSlideIndex]?.showText !== false}
+                                        onCheckedChange={(checked) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], showText: checked }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                      />
+                                    </div>
+
                                     <div className="flex items-center justify-between">
                                       <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
                                       <Switch
@@ -2297,47 +2592,6 @@ export default function BusinessAdminDashboard() {
                         </div>
                       )}
 
-                      {/* Action Buttons */}
-                      <div className="flex justify-end space-x-3 mt-auto pt-6 border-t">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button onClick={async () => {
-                          if (!business) return
-                          try {
-                            const response = await fetch('/api/business', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ heroContent }),
-                            })
-                            if (response.ok) {
-                              const result = await response.json()
-                              setBusiness(result.business)
-                              toast({
-                                title: "Success",
-                                description: "Hero content saved successfully!",
-                              })
-                            } else {
-                              toast({
-                                title: "Error",
-                                description: "Failed to save hero content",
-                                variant: "destructive",
-                              })
-                            }
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Failed to save hero content",
-                              variant: "destructive",
-                            })
-                          } finally {
-                            setIsLoading(false)
-                          }
-                        }} className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Changes
-                        </Button>
-                      </div>
                     </div>
                   )}
 
@@ -2354,14 +2608,16 @@ export default function BusinessAdminDashboard() {
                       </div>
 
                       <div>
-                        <Label className="text-sm font-medium">Business Information</Label>
+
                         <div className="mt-2 space-y-4">
                           <div>
                             <Label>Business Name</Label>
                             <Input
+                              name="name"
                               value={businessInfoFormData.name}
                               onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
                               className="rounded-2xl"
+                              required
                             />
                           </div>
                           <div>
@@ -2382,6 +2638,104 @@ export default function BusinessAdminDashboard() {
                             />
                           </div>
                           <div>
+                            <Label>About Section</Label>
+                            <Textarea
+                              value={businessInfoFormData.about}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, about: e.target.value }))}
+                              rows={3}
+                              placeholder="Detailed about section content"
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Catalog PDF URL</Label>
+                            <div className="space-y-2">
+                              <Input
+                                value={businessInfoFormData.catalogPdf}
+                                onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, catalogPdf: e.target.value }))}
+                                placeholder="https://..."
+                                className="rounded-2xl"
+                              />
+                              <ImageUpload
+                                accept=".pdf"
+                                onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, catalogPdf: url }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>GST Number</Label>
+                            <Input
+                              value={businessInfoFormData.gstNumber}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, gstNumber: e.target.value }))}
+                              placeholder="Enter GST number"
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Opening Hours</Label>
+                            <div className="space-y-2">
+                              {businessInfoFormData.openingHours?.map((hour: any, index: number) => (
+                                <div key={index} className="flex gap-2 items-center">
+                                  <Input
+                                    value={hour.day}
+                                    onChange={(e) => {
+                                      const newHours = [...businessInfoFormData.openingHours]
+                                      newHours[index].day = e.target.value
+                                      setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                                    }}
+                                    placeholder="Day"
+                                    className="rounded-2xl"
+                                  />
+                                  <Input
+                                    value={hour.open}
+                                    onChange={(e) => {
+                                      const newHours = [...businessInfoFormData.openingHours]
+                                      newHours[index].open = e.target.value
+                                      setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                                    }}
+                                    placeholder="Open"
+                                    className="rounded-2xl"
+                                  />
+                                  <Input
+                                    value={hour.close}
+                                    onChange={(e) => {
+                                      const newHours = [...businessInfoFormData.openingHours]
+                                      newHours[index].close = e.target.value
+                                      setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                                    }}
+                                    placeholder="Close"
+                                    className="rounded-2xl"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newHours = businessInfoFormData.openingHours.filter((_, i) => i !== index)
+                                      setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                                    }}
+                                    className="rounded-xl"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newHours = [...(businessInfoFormData.openingHours || []), { day: '', open: '', close: '' }]
+                                  setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                                }}
+                                className="rounded-2xl"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Opening Hour
+                              </Button>
+                            </div>
+                          </div>
+                          <div>
                             <Label>Logo URL</Label>
                             <div className="space-y-2">
                               <Input
@@ -2392,7 +2746,13 @@ export default function BusinessAdminDashboard() {
                               />
                               <div className="space-y-2">
                                 <ImageUpload
+                                  accept="image/*"
                                   onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, logo: url }))}
+                                  onError={(error) => toast({
+                                    title: "Upload Error",
+                                    description: error,
+                                    variant: "destructive",
+                                  })}
                                 />
                                 {businessInfoFormData.logo && (
                                   <img src={getOptimizedImageUrl(businessInfoFormData.logo, { width: 64, height: 64, quality: 85, format: 'auto' })} alt="Logo preview" className="h-16 w-16 object-cover rounded-2xl border-2 border-gray-200" loading="lazy" />
@@ -2432,62 +2792,43 @@ export default function BusinessAdminDashboard() {
                               className="rounded-2xl"
                             />
                           </div>
+                          <div>
+                            <Label>Facebook</Label>
+                            <Input
+                              value={businessInfoFormData.facebook}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, facebook: e.target.value }))}
+                              placeholder="https://facebook.com/yourpage"
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Twitter</Label>
+                            <Input
+                              value={businessInfoFormData.twitter}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, twitter: e.target.value }))}
+                              placeholder="https://twitter.com/yourhandle"
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>Instagram</Label>
+                            <Input
+                              value={businessInfoFormData.instagram}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, instagram: e.target.value }))}
+                              placeholder="https://instagram.com/yourhandle"
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div>
+                            <Label>LinkedIn</Label>
+                            <Input
+                              value={businessInfoFormData.linkedin}
+                              onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, linkedin: e.target.value }))}
+                              placeholder="https://linkedin.com/in/yourprofile"
+                              className="rounded-2xl"
+                            />
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="flex justify-end space-x-3 pt-6">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button disabled={savingStates.basicInfo} onClick={async () => {
-                          try {
-                            setSavingStates(prev => ({ ...prev, basicInfo: true }))
-                            // Filter out empty strings for optional fields
-                            const cleanData = Object.fromEntries(
-                              Object.entries(businessInfoFormData).map(([key, value]) => [
-                                key,
-                                value === "" ? undefined : value
-                              ])
-                            )
-
-                            const response = await fetch('/api/business', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify(cleanData),
-                            })
-                            if (response.ok) {
-                              const result = await response.json()
-                              setBusiness(result.business)
-                              toast({
-                                title: "Success",
-                                description: "Business information updated successfully!",
-                              })
-                            } else {
-                              const error = await response.json()
-                              toast({
-                                title: "Error",
-                                description: `Failed to update: ${error.error}`,
-                                variant: "destructive",
-                              })
-                            }
-                          } catch (error) {
-                            alert('Failed to update business information. Please try again.')
-                          } finally {
-                            setSavingStates(prev => ({ ...prev, basicInfo: false }))
-                          }
-                        }} className="rounded-2xl">
-                          {savingStates.basicInfo ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                                <Save className="h-4 w-4 mr-2" />
-                                Save Changes
-                            </>
-                          )}
-                        </Button>
                       </div>
                     </div>
                   )}
@@ -2628,49 +2969,6 @@ export default function BusinessAdminDashboard() {
                         </CardContent>
                       </Card>
 
-                      {/* Action Buttons */}
-                      <div className="flex justify-end space-x-3 pt-6 border-t">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button onClick={async () => {
-                          if (!business) return
-                          try {
-                            // Clean up temporary form fields before saving
-                            const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent
-                            const response = await fetch('/api/business', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ brandContent: cleanBrandContent }),
-                            })
-                            if (response.ok) {
-                              const result = await response.json()
-                              setBusiness(result.business)
-                              toast({
-                                title: "Success",
-                                description: "Brand content saved successfully!",
-                              })
-                            } else {
-                              toast({
-                                title: "Error",
-                                description: "Failed to save brand content",
-                                variant: "destructive",
-                              })
-                            }
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Failed to save brand content",
-                              variant: "destructive",
-                            })
-                          } finally {
-                            setIsLoading(false)
-                          }
-                        }} className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Changes
-                        </Button>
-                      </div>
                     </div>
                   )}
 
@@ -2780,54 +3078,12 @@ export default function BusinessAdminDashboard() {
                         </CardContent>
                       </Card>
 
-                      {/* Action Buttons */}
-                      <div className="flex justify-end space-x-3 pt-6 border-t">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button onClick={async () => {
-                          if (!business) return
-                          try {
-                            // Clean up temporary form fields before saving
-                            const { newImageUrl, ...cleanPortfolioContent } = portfolioContent
-                            const response = await fetch('/api/business', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ portfolioContent: cleanPortfolioContent }),
-                            })
-                            if (response.ok) {
-                              const result = await response.json()
-                              setBusiness(result.business)
-                              toast({
-                                title: "Success",
-                                description: "Portfolio content saved successfully!",
-                              })
-                            } else {
-                              toast({
-                                title: "Error",
-                                description: "Failed to save portfolio content",
-                                variant: "destructive",
-                              })
-                            }
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Failed to save portfolio content",
-                              variant: "destructive",
-                            })
-                          } finally {
-                            setIsLoading(false)
-                          }
-                        }} className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Changes
-                        </Button>
-                      </div>
                     </div>
                   )}
 
                   {selectedProfileSection === 'footer' && (
                     <div className="space-y-6">
+                      {console.log('Footer content:', footerContent)}
                       <div>
                         <Label className="text-sm font-medium">Section Title</Label>
                         <Input
@@ -2868,15 +3124,6 @@ export default function BusinessAdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex justify-end space-x-3 pt-6">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Cancel
-                        </Button>
-                        <Button className="rounded-2xl">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Footer
-                        </Button>
-                      </div>
                     </div>
                   )}
 
@@ -2946,11 +3193,11 @@ export default function BusinessAdminDashboard() {
 
               {activeSection === 'products' && showProductRightbar && (
                 <>
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-semibold">
-                      {editingProduct ? 'Edit Product' : 'Add New Product'}
-                    </h3>
-                    {!isMobile && (
+                  {!isMobile && (
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">
+                        {editingProduct ? 'Edit Product' : 'Add New Product'}
+                      </h3>
                       <Button variant="outline" size="sm" onClick={() => {
                         setShowProductRightbar(false)
                         setEditingProduct(null)
@@ -2967,8 +3214,8 @@ export default function BusinessAdminDashboard() {
                       }} className="rounded-xl">
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -3150,13 +3397,149 @@ export default function BusinessAdminDashboard() {
                     </div>
 
                     <Separator />
+                  </div>
+                </>
+              )}
 
-                    <div className="flex justify-end space-x-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowProductRightbar(false)
-                          setEditingProduct(null)
+
+            </div>
+            {/* Fixed Action Buttons for Rightbar */}
+            <div className="p-3   border-t border-gray-200 shadow-lg">
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (activeSection === 'profile') setSelectedProfileSection(null);
+                    if (activeSection === 'products') {
+                      setShowProductRightbar(false);
+                      setEditingProduct(null);
+                      setProductFormData({
+                        name: '',
+                        description: '',
+                        price: '',
+                        image: '',
+                        categoryId: '',
+                        brandName: '',
+                        inStock: true,
+                        isActive: true,
+                      });
+                    }
+                  }}
+                  className="rounded-2xl  "
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (activeSection === 'profile') {
+                      if (selectedProfileSection === 'info') {
+                        await handleBasicInfoSave({ preventDefault: () => { } } as any);
+                      } else if (selectedProfileSection === 'hero') {
+                        if (!business) return;
+                        try {
+                          const response = await fetch('/api/business', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ heroContent }),
+                          });
+                          if (response.ok) {
+                            const result = await response.json();
+                            setBusiness(result.business);
+                            toast({
+                              title: "Success",
+                              description: "Hero content saved successfully!",
+                            });
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Failed to save hero content",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to save hero content",
+                            variant: "destructive",
+                          });
+                        }
+                      } else if (selectedProfileSection === 'brands') {
+                        if (!business) return;
+                        try {
+                          const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent;
+                          const response = await fetch('/api/business', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ brandContent: cleanBrandContent }),
+                          });
+                          if (response.ok) {
+                            const result = await response.json();
+                            setBusiness(result.business);
+                            toast({
+                              title: "Success",
+                              description: "Brand content saved successfully!",
+                            });
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Failed to save brand content",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to save brand content",
+                            variant: "destructive",
+                          });
+                        }
+                      } else if (selectedProfileSection === 'portfolio') {
+                        if (!business) return;
+                        try {
+                          const { newImageUrl, ...cleanPortfolioContent } = portfolioContent;
+                          const response = await fetch('/api/business', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ portfolioContent: cleanPortfolioContent }),
+                          });
+                          if (response.ok) {
+                            const result = await response.json();
+                            setBusiness(result.business);
+                            toast({
+                              title: "Success",
+                              description: "Portfolio content saved successfully!",
+                            });
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Failed to save portfolio content",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to save portfolio content",
+                            variant: "destructive",
+                          });
+                        }
+                      }
+                    } else if (activeSection === 'products' && showProductRightbar) {
+                      setIsLoading(true);
+                      try {
+                        const url = editingProduct
+                          ? `/api/business/products/${editingProduct.id}`
+                          : '/api/business/products';
+                        const method = editingProduct ? 'PUT' : 'POST';
+                        const response = await fetch(url, {
+                          method,
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(productFormData),
+                        });
+                        if (response.ok) {
+                          await fetchData();
+                          setShowProductRightbar(false);
+                          setEditingProduct(null);
                           setProductFormData({
                             name: '',
                             description: '',
@@ -3166,76 +3549,46 @@ export default function BusinessAdminDashboard() {
                             brandName: '',
                             inStock: true,
                             isActive: true,
-                          })
-                        }}
-                        className="rounded-2xl"
-                      >
-                        Cancel
-                      </Button>
-                      <Button onClick={async () => {
-                        setIsLoading(true)
-                        try {
-                          const url = editingProduct
-                            ? `/api/business/products/${editingProduct.id}`
-                            : '/api/business/products'
-                          const method = editingProduct ? 'PUT' : 'POST'
-                          const response = await fetch(url, {
-                            method,
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(productFormData),
-                          })
-                          if (response.ok) {
-                            await fetchData()
-                            setShowProductRightbar(false)
-                            setEditingProduct(null)
-                            setProductFormData({
-                              name: '',
-                              description: '',
-                              price: '',
-                              image: '',
-                              categoryId: '',
-                              brandName: '',
-                              inStock: true,
-                              isActive: true,
-                            })
-                            toast({
-                              title: "Success",
-                              description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
-                            })
-                          } else {
-                            const errorResult = await response.json()
-                            toast({
-                              title: "Error",
-                              description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
-                              variant: "destructive",
-                            })
-                          }
-                        } catch (error) {
+                          });
+                          toast({
+                            title: "Success",
+                            description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
+                          });
+                        } else {
+                          const errorResult = await response.json();
                           toast({
                             title: "Error",
-                            description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+                            description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
                             variant: "destructive",
-                          })
-                        } finally {
-                          setIsLoading(false)
+                          });
                         }
-                      }} disabled={isLoading} className="rounded-2xl">
-                        {isLoading ? (
-                          'Saving...'
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            {editingProduct ? 'Update' : 'Add'} Product
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }
+                  }}
+                  disabled={savingStates.basicInfo || isLoading}
+                  className="rounded-2xl "
+                >
+                  {savingStates.basicInfo || isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -3249,25 +3602,29 @@ export default function BusinessAdminDashboard() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
               <div className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="space-y-2">
-                  {menuItems.slice(4).map((item) => {
-                    const MobileIcon = item.mobileIcon
-                    return (
-                      <button
-                        key={item.value}
-                        onClick={() => {
-                          setActiveSection(item.value)
-                          setShowMoreMenu(false)
-                        }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${activeSection === item.value
-                          ? 'bg-orange-100 text-orange-600'
-                          : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                      >
-                        <MobileIcon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
-                      </button>
-                    )
-                  })}
+                  {(() => {
+                    const moreMenuItems = menuItems.slice(4);
+                    console.log('More menu items:', moreMenuItems);
+                    return moreMenuItems.map((item) => {
+                      const MobileIcon = item.mobileIcon
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => {
+                            setActiveSection(item.value)
+                            setShowMoreMenu(false)
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${activeSection === item.value
+                            ? 'bg-orange-100 text-orange-600'
+                            : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                          <MobileIcon className="h-5 w-5" />
+                          <span className="font-medium">{item.title}</span>
+                        </button>
+                      )
+                    })
+                  })()}
                   <button
                     onClick={async () => {
                       await logout()
@@ -3286,22 +3643,26 @@ export default function BusinessAdminDashboard() {
           {/* Bottom Navigation Bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
             <div className="flex justify-around items-center py-2">
-              {menuItems.slice(0, 4).map((item) => {
-                const MobileIcon = item.mobileIcon
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setActiveSection(item.value)}
-                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${activeSection === item.value
-                      ? 'text-orange-500'
-                      : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                  >
-                    <MobileIcon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">{item.mobileTitle}</span>
-                  </button>
-                )
-              })}
+              {(() => {
+                const mobileNavItems = menuItems.slice(0, 4);
+                console.log('Mobile nav items:', mobileNavItems);
+                return mobileNavItems.map((item) => {
+                  const MobileIcon = item.mobileIcon
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setActiveSection(item.value)}
+                      className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${activeSection === item.value
+                        ? 'text-orange-500'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                      <MobileIcon className="h-5 w-5 mb-1" />
+                      <span className="text-xs font-medium">{item.mobileTitle}</span>
+                    </button>
+                  )
+                })
+              })()}
               {/* More button for additional items */}
               <button
                 onClick={() => setShowMoreMenu(!showMoreMenu)}

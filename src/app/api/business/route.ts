@@ -29,11 +29,37 @@ function checkRateLimit(identifier: string): boolean {
 const updateBusinessSchema = z.object({
   name: z.string().min(2).max(100).regex(/^[a-zA-Z0-9\s\-&.,()]+$/, 'Name contains invalid characters').optional(),
   description: z.string().max(1000).optional(),
-  logo: z.string().url().optional().or(z.literal('')),
+  about: z.string().max(2000).optional(),
+  logo: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Logo must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
   address: z.string().max(500).optional(),
   phone: z.string().regex(/^[\+]?[1-9][\d\s\-\(\)]{0,20}$/, 'Invalid phone format').optional(),
   email: z.string().email().optional(),
-  website: z.string().url().optional().or(z.literal('')),
+  website: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Website must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  facebook: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Facebook must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  twitter: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Twitter must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  instagram: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Instagram must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  linkedin: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'LinkedIn must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  catalogPdf: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
+    message: 'Catalog PDF must be a valid URL starting with http:// or https://, or empty'
+  }).optional(),
+  openingHours: z.array(z.object({
+    day: z.string(),
+    open: z.string().optional(),
+    close: z.string().optional()
+  })).optional(),
+  gstNumber: z.string().max(50).optional(),
   categoryId: z.string().uuid().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
@@ -151,7 +177,7 @@ export async function PUT(request: NextRequest) {
     const cleanBusinessUpdateData = Object.fromEntries(
       Object.entries(businessUpdateData).map(([key, value]) => [
         key,
-        value === "" ? null : value
+        key === 'logo' ? value : value === "" ? null : value
       ])
     )
 

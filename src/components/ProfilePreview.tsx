@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Business } from '@prisma/client'
 
 // Define custom Product type to match the updated schema
@@ -23,7 +23,7 @@ interface Product {
   }
 }
 import { Button } from '@/components/ui/button'
-import { getOptimizedImageUrl } from '@/lib/cloudinary'
+import { getOptimizedImageUrl, generateSrcSet } from '@/lib/cloudinary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -40,8 +40,20 @@ import {
   Mail,
   Globe,
   ChevronRight,
-  Eye
+  Eye,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  User,
+  Download,
+  Share2,
+  UserPlus,
+  MessageCircle,
+  Image
 } from 'lucide-react'
+import { FaWhatsapp } from "react-icons/fa";
+import { SiFacebook, SiX, SiInstagram, SiLinkedin } from "react-icons/si";
 
 interface ProfilePreviewProps {
     business: Business & {
@@ -49,6 +61,10 @@ interface ProfilePreviewProps {
       category?: { name: string } | null
       portfolioContent?: any
       products: Product[]
+      about?: string | null
+      catalogPdf?: string | null
+      openingHours?: any[]
+      gstNumber?: string | null
     }
     selectedSection: string | null
     sectionTitles?: Record<string, string>
@@ -59,12 +75,16 @@ interface ProfilePreviewProps {
     businessFormData?: {
       name: string
       description: string
+      about: string
       logo: string
       address: string
       phone: string
       email: string
       website: string
       ownerName: string
+      catalogPdf: string
+      openingHours: any[]
+      gstNumber: string
     }
   products?: (Product & {
     category?: { id: string; name: string } | null
@@ -72,16 +92,26 @@ interface ProfilePreviewProps {
   }
 
 export default function ProfilePreview({ business, selectedSection, sectionTitles = {}, heroContent: propHeroContent, brandContent: propBrandContent, portfolioContent: propPortfolioContent, onSectionClick, businessFormData, products: propProducts }: ProfilePreviewProps) {
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
+
     // Merge business data with form data for real-time preview
     const mergedBusiness = businessFormData ? {
       ...business,
       name: businessFormData.name || business.name,
       description: businessFormData.description || business.description,
+      about: businessFormData.about || business.about,
       logo: businessFormData.logo || business.logo,
       address: businessFormData.address || business.address,
       phone: businessFormData.phone || business.phone,
       email: businessFormData.email || business.email,
       website: businessFormData.website || business.website,
+      catalogPdf: businessFormData.catalogPdf || business.catalogPdf,
+      openingHours: businessFormData.openingHours || business.openingHours,
+      gstNumber: businessFormData.gstNumber || business.gstNumber,
+      facebook: (business as any).facebook,
+      twitter: (business as any).twitter,
+      instagram: (business as any).instagram,
+      linkedin: (business as any).linkedin,
       admin: {
         ...business.admin,
         name: businessFormData.ownerName || business.admin?.name
@@ -120,407 +150,28 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
   })
   const categories = Array.from(categoryMap.values())
 
+  // Reset slide index when slides change
+  useEffect(() => {
+    setCurrentSlideIndex(0)
+  }, [heroContent.slides?.length])
+
+  // Autoplay functionality for hero carousel
+  useEffect(() => {
+    if (heroContent.slides && heroContent.slides.length > 1 && heroContent.autoPlay) {
+      const interval = setInterval(() => {
+        setCurrentSlideIndex(prev => (prev + 1) % heroContent.slides.length)
+      }, (heroContent.transitionSpeed || 5) * 1000)
+      return () => clearInterval(interval)
+    }
+  }, [heroContent.slides, heroContent.autoPlay, heroContent.transitionSpeed])
+
   const renderFullPreview = () => (
-    <div className="bg-amber-50 border rounded-lg overflow-hidden max-h-[600px] overflow-y-auto scale-75 origin-top transform-gpu" suppressHydrationWarning>
-      <div className="min-h-screen bg-amber-50">
-        {/* Navigation */}
-        <nav className="sticky top-0 z-40 bg-white/95 border-b backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex relative items-center space-x-4">
-                {mergedBusiness.logo && mergedBusiness.logo.trim() !== '' && (
-                  <img
-                    src={getOptimizedImageUrl(mergedBusiness.logo, { width: 200, height: 200, quality: 85 })}
-                    alt={mergedBusiness.name}
-                    className="h-12 w-auto"
-                    loading="lazy"
-                  />
-                )}
-                <span className="font-semibold text-lg">{mergedBusiness.name}</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="hidden font-bold md:flex space-x-8">
-                  <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
-                  <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
-                  <a href="#brands" className="text-gray-700 hover:text-gray-900 transition-colors ">Brands</a>
-                  <a href="#products" className="text-gray-600 hover:text-gray-900 transition-colors">Products</a>
-                  <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        {/* Hero Section with Slider */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto rounded-2xl mt-3 overflow-hidden">
-            <Carousel className="w-full">
-              <CarouselContent>
-                {heroContent.slides?.map((slide: any, index: number) => (
-                  <CarouselItem key={index}>
-                    <div className="relative h-96 w-full md:h-[500px] bg-gray-200 rounded-2xl overflow-hidden">
-                      {slide.mediaType === 'video' ? (
-                        <video
-                          src={slide.media || '/api/placeholder/1200/600'}
-                          className="w-full h-full object-cover rounded-2xl"
-                          autoPlay
-                          muted
-                          loop
-                        />
-                      ) : (
-                        <img
-                          src={slide.media || slide.image || '/api/placeholder/1200/600'}
-                          alt={slide.headline}
-                          className="w-full h-full object-cover rounded-2xl"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-2xl">
-                        <div className={`text-white px-4 max-w-4xl ${slide.headlineAlignment === 'left' ? 'text-left' : slide.headlineAlignment === 'right' ? 'text-right' : 'text-center'}`}>
-                          <h1
-                            className={`font-bold mb-4 ${slide.headlineSize || 'text-4xl md:text-6xl'}`}
-                            style={{ color: slide.headlineColor || '#ffffff' }}
-                          >
-                            {slide.headline}
-                          </h1>
-                          <p
-                            className={`mb-8 ${slide.subtextSize || 'text-xl md:text-2xl'}`}
-                            style={{ color: slide.subtextColor || '#ffffff', textAlign: slide.subtextAlignment || 'center' }}
-                          >
-                            {slide.subheadline || slide.subtext}
-                          </p>
-                          <div className={`${slide.headlineAlignment === 'left' ? 'text-left' : slide.headlineAlignment === 'right' ? 'text-right' : 'text-center'}`}>
-                            <Button size="lg">
-                              {slide.cta || 'Get in Touch'}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
-            </Carousel>
-          </div>
-        </section>
-
-        {/* Business Information Section */}
-        <section id="about" className="py-16 px-4 sm:px-6 lg:px-8 cursor-pointer hover:bg-blue-50 transition-colors" onClick={() => onSectionClick('info')}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-8 items-stretch">
-              {/* Logo Card */}
-              <Card className="rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center w-64 h-64 md:shrink-0">
-                {mergedBusiness.logo && mergedBusiness.logo.trim() !== '' ? (
-                  <img
-                    src={getOptimizedImageUrl(mergedBusiness.logo, { width: 300, height: 300, quality: 90 })}
-                    alt={mergedBusiness.name}
-                    className="w-56 h-56 rounded-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-56 h-56 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Eye className="w-28 h-28 text-gray-400" />
-                  </div>
-                )}
-              </Card>
-
-              {/* Business Info Card */}
-              <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64">
-                <h3 className="text-3xl text-gray-700 font-bold mb-2">{mergedBusiness.name}</h3>
-                {mergedBusiness.category && (
-                  <Badge variant="outline" className="mb-3">{mergedBusiness.category.name}</Badge>
-                )}
-                <p className="text-gray-600 leading-relaxed text-sm">
-                  {mergedBusiness.description || 'No description available yet.'}
-                </p>
-              </Card>
-
-              {/* Contact Card */}
-              <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64 flex flex-row justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-                  {mergedBusiness.address && (
-                    <div className="flex items-center space-x-3 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <a
-                        href={`https://maps.google.com/?q=${encodeURIComponent(mergedBusiness.address)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-md text-orange-600 hover:underline"
-                      >
-                        {mergedBusiness.address}
-                      </a>
-                    </div>
-                  )}
-                  {mergedBusiness.phone && (
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <a
-                        href={`tel:${mergedBusiness.phone}`}
-                        className="text-md text-orange-600 hover:underline"
-                      >
-                        {mergedBusiness.phone}
-                      </a>
-                    </div>
-                  )}
-                  {mergedBusiness.email && (
-                    <div className="flex items-center space-x-3 mb-3">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <a
-                        href={`mailto:${mergedBusiness.email}`}
-                        className="text-md text-orange-600 hover:underline"
-                      >
-                        {mergedBusiness.email}
-                      </a>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center bg-white shadow-md p-2 h-fit rounded-2xl my-auto border">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${business.slug}`)}`}
-                    alt="Profile QR Code"
-                    className="w-30 h-30"
-                  />
-                </div>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Brand Slider */}
-        {brandContent.brands?.length > 0 && (
-          <section
-            className="py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 cursor-pointer hover:bg-blue-100 transition-colors"
-            onClick={() => onSectionClick('brands')}
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Trusted By</h2>
-                <Button variant="outline">View All</Button>
-              </div>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {brandContent.brands.map((brand: any, index: number) => (
-                    <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                      <Card className="overflow-hidden">
-                        <div className="h-32 bg-white flex items-center justify-center p-4">
-                          <img
-                            src={getOptimizedImageUrl(brand.logo, { width: 150, height: 150, quality: 85 })}
-                            alt={brand.name}
-                            className="max-w-full max-h-full object-contain"
-                            loading="lazy"
-                          />
-                        </div>
-                        <CardHeader>
-                          <CardTitle className="text-center">{brand.name}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
-            </div>
-          </section>
-        )}
-
-        {/* Category Slider */}
-        {
-          categories.length > 0 && (
-            <section className="py-12 px-4 sm:px-6 lg:px-8 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => onSectionClick('categories')}>
-              <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-bold">Categories</h2>
-                  <Button variant="outline">View All</Button>
-                </div>
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {categories.map((category, index: number) => (
-                      <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                        <Card className="overflow-hidden bg-transparent">
-                          <CardHeader>
-                            <CardTitle className="text-center">{category.name}</CardTitle>
-                          </CardHeader>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-              </div>
-            </section>
-          )
-        }
-
-        {/* Portfolio Section */}
-        {portfolioContent.images?.length > 0 && (
-          <section className="max-w-7xl mx-auto my-12 cursor-pointer hover:bg-blue-100 transition-colors" id="portfolio" onClick={() => onSectionClick('portfolio')}>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold">Portfolio</h2>
-            </div>
-
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-4 md:grid-rows-2">
-              {portfolioContent.images.slice(0, 6).map((image: any, index: number) => {
-                // Define grid positions for the bento layout
-                const gridClasses = [
-                  "md:row-span-2 md:col-span-2 col-span-1 row-span-1", // Large top-left
-                  "md:row-span-1 md:col-span-1", // Top-right small
-                  "md:row-span-1 md:col-span-1", // Top-right small
-                  "md:row-span-2 md:col-span-2 col-span-1 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
-                  "md:row-span-1 md:col-span-1", // Bottom-left small
-                  "md:row-span-1 md:col-span-1"  // Bottom-right small
-                ]
-
-                const isVideo = image.url && (image.url.includes('.mp4') || image.url.includes('.webm') || image.url.includes('.ogg'))
-
-                return (
-                  <div
-                    key={index}
-                    className={`bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center hover:shadow transition-shadow bg-center bg-cover relative overflow-hidden ${gridClasses[index] || "md:row-span-1 md:col-span-1"}`}
-                    style={{
-                      minHeight: index === 0 || index === 3 ? "180px" : "120px",
-                      aspectRatio: index === 0 || index === 3 ? "2/1" : "1/1"
-                    }}
-                  >
-                    {isVideo ? (
-                      <video
-                        src={image.url}
-                        className="w-full h-full object-cover"
-                        muted
-                        loop
-                        playsInline
-                        style={{ pointerEvents: 'none' }}
-                      />
-                    ) : image.url ? (
-                      <img
-                        src={getOptimizedImageUrl(image.url, {
-                          width: index === 0 || index === 3 ? 600 : 300,
-                          height: index === 0 || index === 3 ? 300 : 300,
-                          quality: 85
-                        })}
-                        alt={image.alt || 'Portfolio image'}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="flex items-center justify-center rounded-full bg-gray-200"
-                        style={{
-                          width: index === 0 || index === 3 ? "80px" : "56px",
-                          height: index === 0 || index === 3 ? "80px" : "56px"
-                        }}>
-                        <Eye className="text-gray-400" style={{ width: index === 0 || index === 3 ? "40px" : "32px", height: index === 0 || index === 3 ? "40px" : "32px" }} />
-                      </span>
-                    )}
-
-                    {isVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black bg-opacity-50 rounded-full p-2">
-                          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Products Section */}
-        {currentProducts.length > 0 && (
-          <section
-            id="products"
-            className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 cursor-pointer hover:bg-blue-100 transition-colors"
-            onClick={() => onSectionClick('products')}
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Our Products & Services</h2>
-                <Button variant="outline">View All</Button>
-              </div>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {currentProducts.map((product) => (
-                    <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                      <Card className="overflow-hidden">
-                        {product.image && (
-                          <div className="h-48 bg-gray-200">
-                            <img
-                              src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85 })}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <CardTitle>{product.name}</CardTitle>
-                          {product.price && (
-                            <Badge variant="outline" className="w-fit">
-                              {product.price}
-                            </Badge>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <CardDescription className="mb-4">
-                            {product.description}
-                          </CardDescription>
-                          <Button className="w-full">
-                            Inquire Now
-                            <ChevronRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
-            </div>
-          </section>
-        )}
-
-
-        {/* Footer */}
-        <footer
-          id="contact"
-          className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8 cursor-pointer hover:bg-blue-900 transition-colors"
-          onClick={() => onSectionClick('footer')}
-        >
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              {mergedBusiness.logo && (
-                <img
-                  src={getOptimizedImageUrl(mergedBusiness.logo, { width: 150, height: 150, quality: 85 })}
-                  alt={mergedBusiness.name}
-                  className="h-8 w-auto"
-                  loading="lazy"
-                />
-              )}
-              <span className="text-lg font-semibold">{mergedBusiness.name}</span>
-            </div>
-            <Separator className="my-4 bg-gray-700" />
-            <p className="text-gray-400 mb-2">
-              © {new Date().getFullYear()} {mergedBusiness.name}. All rights reserved.
-            </p>
-            {mergedBusiness.admin?.name && (
-              <p className="text-gray-500 text-sm mb-4">
-                Founded by {mergedBusiness.admin.name}
-              </p>
-            )}
-            <p className="text-gray-400 text-sm mb-4">
-              Powered by DigiSence - Your Trusted Portal Developers.
-            </p>
-            <Button variant="outline">Contact Us</Button>
-          </div>
-        </footer>
-      </div>
+    <div className="w-full h-[80vh] rounded-lg" suppressHydrationWarning>
+      <iframe
+        src={`/${business.slug}`}
+        className="w-full h-full border-0"
+        title="Business Profile Preview"
+      />
     </div>
   )
 
@@ -532,153 +183,481 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
       categories: 'Categories Section',
       portfolio: 'Portfolio Section',
       products: 'Products Section',
-      footer: 'Footer Section'
+      full: 'Full Preview'
     }
     const displayTitles = { ...defaultTitles, ...sectionTitles }
+
+    // Debug logs for contact data
+    if (selectedSection === 'info') {
+      console.log('Contact cards debug:', {
+        address: mergedBusiness.address,
+        phone: mergedBusiness.phone,
+        email: mergedBusiness.email,
+        website: mergedBusiness.website,
+        facebook: (mergedBusiness as any).facebook,
+        twitter: (mergedBusiness as any).twitter,
+        instagram: (mergedBusiness as any).instagram,
+        linkedin: (mergedBusiness as any).linkedin
+      })
+    }
 
     return (
       <div className="bg-amber-50 border rounded-lg p-6" suppressHydrationWarning>
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            FOCUSED PREVIEW: {displayTitles[selectedSection as keyof typeof displayTitles]}
+            Focused Section: {displayTitles[selectedSection as keyof typeof displayTitles]}
           </h3>
         </div>
 
         {selectedSection === 'hero' && (
           <section className="relative">
-            <div className="max-w-7xl mx-auto rounded-3xl mt-3 overflow-hidden">
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {heroContent.slides?.map((slide: any, index: number) => (
-                    <CarouselItem key={index}>
-                      <div className="relative h-96 w-full md:h-[500px] bg-transparent rounded-2xl overflow-hidden">
-                        {slide.mediaType === 'video' || (slide.media && (slide.media.includes('.mp4') || slide.media.includes('.webm') || slide.media.includes('.ogg'))) ? (
-                          <video
-                            src={slide.media || slide.video || slide.image}
-                            className="w-full h-full object-cover rounded-2xl"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            poster={slide.poster || slide.image}
-                          />
-                        ) : (
-                          <img
-                              src={(slide.media || slide.image) && (slide.media || slide.image).trim() !== '' ? getOptimizedImageUrl(slide.media || slide.image, { width: 1200, height: 600, quality: 85 }) : '/api/placeholder/1200/600'}
-                              alt={slide.headline}
-                              className="w-full h-full object-cover rounded-2xl"
-                              loading="lazy"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-opacity-40 flex items-center justify-center rounded-2xl">
-                          <div className={`text-center text-white px-4 ${slide.headlineAlignment === 'left' ? 'text-left' : slide.headlineAlignment === 'right' ? 'text-right' : 'text-center'}`}>
-                            <h1
-                              className={`${slide.headlineSize || 'text-4xl md:text-6xl'} font-bold mb-4`}
-                              style={{ color: slide.headlineColor || '#ffffff' }}
-                            >
-                              {slide.headline}
-                            </h1>
-                            <p
-                              className={`${slide.subtextSize || 'text-xl md:text-2xl'} mb-8 ${slide.subtextAlignment === 'left' ? 'text-left' : slide.subtextAlignment === 'right' ? 'text-right' : 'text-center'}`}
-                              style={{ color: slide.subtextColor || '#ffffff' }}
-                            >
-                              {slide.subheadline}
-                            </p>
-                            <Button size="lg">
-                              {slide.cta || 'Get in Touch'}
-                            </Button>
+            <div className="max-w-7xl mx-auto rounded-3xl mt-3 overflow-hidden shadow-lg">
+              {heroContent.slides && heroContent.slides.length > 0 ? (
+                <div className="relative w-full">
+                  <div className="overflow-hidden rounded-2xl">
+                    <div
+                      className="flex transition-transform duration-500 ease-in-out"
+                      style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+                    >
+                      {heroContent.slides.map((slide: any, index: number) => {
+                        const isVideo = slide.mediaType === 'video' || (slide.media && (slide.media.includes('.mp4') || slide.media.includes('.webm') || slide.media.includes('.ogg')));
+                        const mediaUrl = slide.media || slide.image;
+
+                        return (
+                          <div key={index} className="w-full flex-shrink-0">
+                            <div className="relative h-96 w-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
+                              {isVideo && mediaUrl ? (
+                                <video
+                                  src={mediaUrl}
+                                  className="w-full h-full object-cover rounded-2xl"
+                                  autoPlay
+                                  muted
+                                  loop
+                                  playsInline
+                                  poster={slide.poster || (slide.image && slide.image !== mediaUrl ? slide.image : undefined)}
+                                  onError={(e) => {
+                                    console.error('Video failed to load:', mediaUrl);
+                                    const target = e.target as HTMLVideoElement;
+                                    target.style.display = 'none';
+                                    const fallbackImg = target.nextElementSibling as HTMLImageElement;
+                                    if (fallbackImg) {
+                                      fallbackImg.style.display = 'block';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <img
+                                src={mediaUrl && mediaUrl.trim() !== '' ? getOptimizedImageUrl(mediaUrl, {
+                                  width: 1200,
+                                  height: 600,
+                                  quality: 85,
+                                  format: 'auto',
+                                  crop: 'fill',
+                                  gravity: 'auto'
+                                }) : '/api/placeholder/1200/600'}
+                                srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                                alt={slide.headline || 'Hero image'}
+                                className={`w-full h-full object-cover rounded-2xl ${isVideo ? 'hidden' : ''}`}
+                                loading={index === 0 ? "eager" : "lazy"}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/api/placeholder/1200/600';
+                                }}
+                              />
+                              {slide.showText !== false && (
+                                <div className="absolute inset-0 bg-opacity-40 flex items-center justify-center rounded-2xl">
+                                  <div
+                                    className={`
+                                      text-white px-2 md:px-4 py-2 md:py-4
+                                      ${slide.headlineAlignment === 'left'
+                                        ? 'text-left items-start justify-start'
+                                        : slide.headlineAlignment === 'right'
+                                          ? 'text-right items-end justify-end'
+                                          : 'text-center items-center justify-center'}
+                                      max-w-[95vw] md:max-w-4xl mx-auto flex flex-col h-full
+                                    `}
+                                  >
+                                    {slide.headline && (
+                                      <h1
+                                        className={`
+                                          ${slide.headlineSize
+                                            ? slide.headlineSize
+                                            : 'text-sm xs:text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl'}
+                                          font-bold mb-1 xs:mb-2 md:mb-4
+                                          leading-tight md:leading-tight
+                                          drop-shadow-lg
+                                        `}
+                                        style={{
+                                          color: slide.headlineColor || '#ffffff',
+                                          textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                                        }}
+                                      >
+                                        {slide.headline}
+                                      </h1>
+                                    )}
+                                    {slide.subheadline && (
+                                      <p
+                                        className={`
+                                          ${slide.subtextSize
+                                            ? slide.subtextSize
+                                            : 'text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl'}
+                                          mb-2 xs:mb-3 sm:mb-4 md:mb-6
+                                          leading-relaxed md:leading-relaxed
+                                          drop-shadow-md
+                                          max-w-2xl
+                                        `}
+                                        style={{
+                                          color: slide.subtextColor || '#ffffff',
+                                          textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                                        }}
+                                      >
+                                        {slide.subheadline}
+                                      </p>
+                                    )}
+                                    {slide.cta && (
+                                      <div className="flex justify-center sm:justify-start">
+                                        <Button
+                                          size="lg"
+                                          className="text-sm xs:text-base md:text-lg px-4 xs:px-6 md:px-8 py-2 xs:py-3 md:py-4 rounded-xl md:rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
+                                        >
+                                          {slide.cta}
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-              </Carousel>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {heroContent.showArrows !== false && heroContent.slides.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentSlideIndex(prev => prev > 0 ? prev - 1 : heroContent.slides.length - 1)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
+                      >
+                        <ChevronRight className="h-4 w-4 rotate-180" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentSlideIndex(prev => prev < heroContent.slides.length - 1 ? prev + 1 : 0)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                  {heroContent.showDots !== false && heroContent.slides.length > 1 && (
+                    <div className="flex justify-center mt-4 space-x-2">
+                      {heroContent.slides.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentSlideIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-colors ${index === currentSlideIndex ? 'bg-white' : 'bg-white/50'}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative h-96 w-full bg-linear-to-br from-orange-400 to-amber-500 rounded-2xl overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
+                    <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto">
+                      <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg">
+                        Welcome to {mergedBusiness.name}
+                      </h1>
+                      <p className="text-xs xs:text-sm sm:text-base md:text-2xl mb-2 xs:mb-3 md:mb-8 leading-relaxed drop-shadow-md">
+                        {mergedBusiness.description || 'Discover our amazing products and services'}
+                      </p>
+                      <Button
+                        size="lg"
+                        className="text-sm xs:text-base md:text-lg px-4 xs:px-6 md:px-8 py-2 xs:py-3 md:py-4 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
+                      >
+                        Get in Touch
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         )}
 
         {selectedSection === 'info' && (
-          <section className="py-16 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row gap-8 items-stretch">
-                {/* Logo Card */}
-                <Card className="rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center w-64 h-64 md:shrink-0">
-                  {mergedBusiness.logo && mergedBusiness.logo.trim() !== '' ? (
-                    <img
-                      src={getOptimizedImageUrl(mergedBusiness.logo, { width: 300, height: 300, quality: 90 })}
-                      alt={mergedBusiness.name}
-                      className="w-56 h-56 rounded-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-56 h-56 rounded-full bg-gray-200 flex items-center justify-center">
-                      <Eye className="w-28 h-28 text-gray-400" />
+          <section className="py-4 md:py-8 px-3 sm:px-5 md:px-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-8">
+                <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
+                  <Card className="relative bg-linear-to-bl from-[#ffe4e6] to-[#ccfbf1] rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
+                    <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
+                      <div className="flex-shrink-0 flex items-center justify-center">
+                        {mergedBusiness.logo && mergedBusiness.logo.trim() !== '' ? (
+                          <img
+                            src={getOptimizedImageUrl(mergedBusiness.logo, {
+                              width: 140,
+                              height: 140,
+                              quality: 90,
+                              format: 'auto',
+                              crop: 'fill',
+                              gravity: 'center',
+                            })}
+                            alt={mergedBusiness.name}
+                            className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full object-cover border border-gray-200 shadow-sm"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full bg-gray-50 flex items-center justify-center border shadow-sm">
+                            <Image className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col gap-2 md:gap-3 w-full min-w-0">
+                        <h3 className="font-extrabold text-lg xs:text-xl sm:text-2xl md:text-2xl text-gray-800 mb-0.5 truncate w-full">
+                          {mergedBusiness.name || "Business Name"}
+                        </h3>
+                        {mergedBusiness.category && (
+                          <span className="inline-block text-xs xs:text-sm md:text-sm px-2 py-0.5 rounded-full border border-orange-200 bg-orange-50 text-orange-700 font-medium mb-1 md:mb-2 w-fit">
+                            {mergedBusiness.category.name}
+                          </span>
+                        )}
+                        {mergedBusiness.description && (
+                          <p className="text-xs xs:text-sm sm:text-base md:text-base text-gray-600 mb-1 md:mb-2 w-full line-clamp-3">
+                            {mergedBusiness.description}
+                          </p>
+                        )}
+                        <div className="flex flex-row items-center gap-2 md:gap-4 mt-1">
+                          {mergedBusiness.admin?.name && (
+                            <span className="flex items-center text-xs xs:text-sm md:text-sm rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold">
+                              <User className="w-3 h-3 mr-1 text-gray-400" />
+                              {mergedBusiness.admin.name}
+                            </span>
+                          )}
+                          {mergedBusiness.catalogPdf && (
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              className="flex items-center text-xs xs:text-sm md:text-sm rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold gap-1 shadow-none hover:shadow active:scale-95 transition"
+                              onClick={() => {
+                                if (mergedBusiness.catalogPdf) {
+                                  const link = document.createElement('a');
+                                  link.href = mergedBusiness.catalogPdf;
+                                  link.download = `${mergedBusiness.name}-catalog.pdf`;
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                } else {
+                                  alert('Catalog not available for download');
+                                }
+                              }}
+                              title="Download catalog PDF"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Download Catalog
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </Card>
-
-                {/* Business Info Card */}
-                <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64">
-                  <h3 className="text-3xl text-gray-700 font-bold mb-2">{mergedBusiness.name}</h3>
-                  {mergedBusiness.category && (
-                    <Badge variant="outline" className="mb-3">{mergedBusiness.category.name}</Badge>
-                  )}
-                  <p className="text-gray-600 leading-relaxed text-sm">
-                    {mergedBusiness.description || 'No description available yet.'}
-                  </p>
-                </Card>
-
-                {/* Contact Card */}
-                <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex-1 h-64 flex flex-row justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-                    {mergedBusiness.address && (
-                      <div className="flex items-center space-x-3 mb-2">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                        <a
-                          href={`https://maps.google.com/?q=${encodeURIComponent(mergedBusiness.address)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-md text-orange-600 hover:underline"
-                        >
-                          {mergedBusiness.address}
-                        </a>
-                      </div>
-                    )}
+                  </Card>
+                  <div className="flex gap-2 mt-3 md:mt-4 w-full relative z-10">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                    >
+                      <UserPlus className="h-3 w-3" />
+                      Save Contact
+                    </Button>
                     {mergedBusiness.phone && (
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Phone className="h-4 w-4 text-gray-500" />
-                        <a
-                          href={`tel:${mergedBusiness.phone}`}
-                          className="text-md text-orange-600 hover:underline"
-                        >
-                          {mergedBusiness.phone}
-                        </a>
+                      <Button
+                        size="sm"
+                        className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs md:text-sm font-medium shadow-sm border-0"
+                      >
+                        <FaWhatsapp className="h-3 w-3" />
+                        WhatsApp
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                    >
+                      <Share2 className="h-3 w-3" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+                <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch mt-4 md:mt-0">
+                  <Card className="rounded-2xl sm:rounded-3xl shadow-md hover:shadow-md transition-shadow duration-300 px-4 py-3 md:p-4 flex flex-col items-stretch h-full w-full relative">
+                    <div className="flex flex-row gap-2 md:gap-4 w-full items-center justify-between relative z-10">
+                      <div className="flex flex-col flex-1 min-w-0 space-y-2">
+                        {mergedBusiness.address && mergedBusiness.address.trim() !== '' && (
+                          <div className="flex items-center gap-3 group">
+                            <MapPin className="h-5 w-5 text-blue-600 group-hover:text-blue-800 transition-colors shrink-0" />
+                            <a
+                              href={`https://maps.google.com/?q=${encodeURIComponent(mergedBusiness.address)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-words"
+                            >
+                              {mergedBusiness.address}
+                            </a>
+                          </div>
+                        )}
+                        {mergedBusiness.phone && mergedBusiness.phone.trim() !== '' && (
+                          <div className="flex items-center gap-3 group">
+                            <Phone className="h-5 w-5 text-green-600 group-hover:text-green-800 transition-colors shrink-0" />
+                            <a
+                              href={`tel:${mergedBusiness.phone}`}
+                              className="text-sm text-green-600 hover:text-green-800 hover:underline break-words"
+                            >
+                              {mergedBusiness.phone}
+                            </a>
+                          </div>
+                        )}
+                        {mergedBusiness.email && mergedBusiness.email.trim() !== '' && (
+                          <div className="flex items-center gap-3 group">
+                            <Mail className="h-5 w-5 text-purple-600 group-hover:text-purple-800 transition-colors shrink-0" />
+                            <a
+                              href={`mailto:${mergedBusiness.email}`}
+                              className="text-sm text-purple-600 hover:text-purple-800 hover:underline break-words"
+                            >
+                              {mergedBusiness.email}
+                            </a>
+                          </div>
+                        )}
+                        {(!mergedBusiness.address || mergedBusiness.address.trim() === '') &&
+                          (!mergedBusiness.phone || mergedBusiness.phone.trim() === '') &&
+                          (!mergedBusiness.email || mergedBusiness.email.trim() === '') && (
+                            <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400">
+                              <MessageCircle className="h-4 w-4 text-gray-500" />
+                              Contact information not available
+                          </div>
+                          )}
+                      </div>
+                      <div className="flex flex-col items-center gap-1 bg-linear-120 from-lime-900 via-gray-800 to-gray-900 shadow-md p-2 rounded-lg border border-gray-700 ml-3">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${mergedBusiness.slug || mergedBusiness.id}`)}`}
+                          alt="Profile QR Code"
+                          className="w-12 h-12 md:w-16 md:h-16"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                          loading="lazy"
+                        />
+                        <span className="text-[8px] md:text-xs text-gray-300 mt-1">Scan Me</span>
+                      </div>
+                    </div>
+                    {((mergedBusiness as any).facebook || (mergedBusiness as any).twitter || (mergedBusiness as any).instagram || (mergedBusiness as any).linkedin || mergedBusiness.website) && (
+                      <div className="w-full mt-auto md:mt-auto relative z-10">
+                        <div className="flex flex-wrap gap-3 w-full justify-center items-center">
+                          {mergedBusiness.website && (
+                            <a
+                              href={mergedBusiness.website.startsWith('http') ? mergedBusiness.website : `https://${mergedBusiness.website}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                              aria-label="Website"
+                            >
+                              <Globe className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
+                            </a>
+                          )}
+                          {(mergedBusiness as any).facebook && (
+                            <a
+                              href={(mergedBusiness as any).facebook.startsWith('http') ? (mergedBusiness as any).facebook : `https://${(mergedBusiness as any).facebook}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                              aria-label="Facebook"
+                            >
+                              <SiFacebook className="h-5 w-5 text-blue-600 group-hover:text-blue-800" />
+                            </a>
+                          )}
+                          {(mergedBusiness as any).twitter && (
+                            <a
+                              href={(mergedBusiness as any).twitter.startsWith('http') ? (mergedBusiness as any).twitter : `https://${(mergedBusiness as any).twitter}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                              aria-label="Twitter"
+                            >
+                              <SiX className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
+                            </a>
+                          )}
+                          {(mergedBusiness as any).instagram && (
+                            <a
+                              href={(mergedBusiness as any).instagram.startsWith('http') ? (mergedBusiness as any).instagram : `https://${(mergedBusiness as any).instagram}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-full bg-pink-100 hover:bg-pink-200 transition-colors group"
+                              aria-label="Instagram"
+                            >
+                              <SiInstagram className="h-5 w-5 text-pink-600 group-hover:text-pink-800" />
+                            </a>
+                          )}
+                          {(mergedBusiness as any).linkedin && (
+                            <a
+                              href={(mergedBusiness as any).linkedin.startsWith('http') ? (mergedBusiness as any).linkedin : `https://${(mergedBusiness as any).linkedin}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                              aria-label="LinkedIn"
+                            >
+                              <SiLinkedin className="h-5 w-5 text-blue-600 group-hover:text-blue-800" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
-                    {mergedBusiness.email && (
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Mail className="h-4 w-4 text-gray-500" />
-                        <a
-                          href={`mailto:${mergedBusiness.email}`}
-                          className="text-md text-orange-600 hover:underline"
-                        >
-                          {mergedBusiness.email}
-                        </a>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="w-full mt-6">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                  <div className="flex-1">
+                    <h2 className="text-lg md:text-xl font-bold mb-3">About Us</h2>
+                    <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
+                      {mergedBusiness.about || "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
+                    </p>
+                  </div>
+                  <div className="hidden md:flex flex-col items-center justify-center">
+                    <Separator orientation="vertical" className="h-24" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg md:text-xl font-bold mb-3">Opening Hours & Details</h2>
+                    <div className="space-y-4 flex justify-between">
+                      <div className="flex-1">
+                        <div className="text-gray-600 mb-2 text-sm font-medium">Opening Hours</div>
+                        {mergedBusiness.openingHours && mergedBusiness.openingHours.length > 0 ? (
+                          <ul className="text-sm text-gray-800 space-y-1">
+                            {mergedBusiness.openingHours.map((item: any, idx: number) => (
+                              <li key={idx} className="flex justify-between items-center py-0.5">
+                                <span className="font-medium">{item.day}</span>
+                                <span>
+                                  {item.open && item.close
+                                    ? `${item.open} - ${item.close}`
+                                    : "Closed"}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-gray-400">Not provided</p>
+                        )}
                       </div>
-                    )}
+                      <div className="ml-4">
+                        <div className="text-gray-600 mb-2 text-sm font-medium">GST Number</div>
+                        <p className="text-sm text-gray-800">{mergedBusiness.gstNumber || <span className="text-gray-400">Not provided</span>}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center bg-white shadow-md p-2 h-fit rounded-2xl my-auto border">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${business.slug}`)}`}
-                      alt="Profile QR Code"
-                      className="w-30 h-30"
-                    />
-                  </div>
-                </Card>
+                </div>
               </div>
             </div>
           </section>
@@ -687,100 +666,29 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
         {selectedSection === 'categories' && categories.length > 0 && (
           <section className="py-8">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">{sectionTitles?.categories || 'Categories'}</h2>
-                <Button variant="outline">View All</Button>
+              <h2 className="text-2xl font-bold mb-8">Categories</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {categories.map((category, index) => (
+                  <Card key={index} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-center text-lg">{category.name}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                ))}
               </div>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {categories.map((category, index: number) => (
-                    <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                      <Card className="overflow-hidden bg-transparent">
-                        <CardHeader>
-                          <CardTitle className="text-center">{category.name}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
             </div>
           </section>
         )}
 
         {selectedSection === 'portfolio' && portfolioContent.images?.length > 0 && (
           <section className="max-w-7xl mx-auto my-12">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold">{sectionTitles?.portfolio || 'Portfolio'}</h2>
-            </div>
-
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-4 md:grid-rows-2">
-              {portfolioContent.images.slice(0, 6).map((image: any, index: number) => {
-                // Define grid positions for the bento layout
-                const gridClasses = [
-                  "md:row-span-2 md:col-span-2 col-span-1 row-span-1", // Large top-left
-                  "md:row-span-1 md:col-span-1", // Top-right small
-                  "md:row-span-1 md:col-span-1", // Top-right small
-                  "md:row-span-2 md:col-span-2 col-span-1 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
-                  "md:row-span-1 md:col-span-1", // Bottom-left small
-                  "md:row-span-1 md:col-span-1"  // Bottom-right small
-                ]
-
-                const isVideo = image.url && (image.url.includes('.mp4') || image.url.includes('.webm') || image.url.includes('.ogg'))
-
-                return (
-                  <div
-                    key={index}
-                    className={`bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center hover:shadow transition-shadow bg-center bg-cover relative overflow-hidden ${gridClasses[index] || "md:row-span-1 md:col-span-1"}`}
-                    style={{
-                      minHeight: index === 0 || index === 3 ? "180px" : "120px",
-                      aspectRatio: index === 0 || index === 3 ? "2/1" : "1/1"
-                    }}
-                  >
-                    {isVideo ? (
-                      <video
-                        src={image.url}
-                        className="w-full h-full object-cover"
-                        muted
-                        loop
-                        playsInline
-                        style={{ pointerEvents: 'none' }}
-                      />
-                    ) : image.url ? (
-                      <img
-                        src={getOptimizedImageUrl(image.url, {
-                          width: index === 0 || index === 3 ? 600 : 300,
-                          height: index === 0 || index === 3 ? 300 : 300,
-                          quality: 85
-                        })}
-                        alt={image.alt || 'Portfolio image'}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="flex items-center justify-center rounded-full bg-gray-200"
-                        style={{
-                          width: index === 0 || index === 3 ? "80px" : "56px",
-                          height: index === 0 || index === 3 ? "80px" : "56px"
-                        }}>
-                        <Eye className="text-gray-400" style={{ width: index === 0 || index === 3 ? "40px" : "32px", height: index === 0 || index === 3 ? "40px" : "32px" }} />
-                      </span>
-                    )}
-
-                    {isVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black bg-opacity-50 rounded-full p-2">
-                          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+            <h2 className="text-2xl font-bold mb-8">Portfolio</h2>
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4 md:grid-rows-2">
+              {portfolioContent.images.slice(0, 6).map((image: any, index: number) => (
+                <div key={index} className="bg-gray-100 border rounded-xl flex items-center justify-center overflow-hidden">
+                  <img src={getOptimizedImageUrl(image.url, { width: 200, height: 150, quality: 85, format: 'auto', crop: 'fill' })} alt={image.alt || 'Portfolio'} className="w-full h-24 object-cover" />
+                </div>
+              ))}
             </div>
           </section>
         )}
@@ -788,37 +696,20 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
         {selectedSection === 'brands' && brandContent.brands?.length > 0 && (
           <section className="py-12 px-4 sm:px-6 lg:px-8 bg-transparent">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">{sectionTitles?.brands || 'Trusted By'}</h2>
-                <Button variant="outline">View All</Button>
+              <h2 className="text-2xl font-bold mb-8">Trusted By</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {brandContent.brands.map((brand: any, index: number) => (
+                  <Card key={index} className="overflow-hidden rounded-3xl py-6 bg-white h-full flex flex-col">
+                    <div className="h-20 flex items-center justify-center p-2">
+                      {brand.logo ? (
+                        <img src={getOptimizedImageUrl(brand.logo, { width: 100, height: 60, quality: 85, format: 'auto' })} alt={brand.name} className="max-h-full max-w-full object-contain" />
+                      ) : (
+                        <span className="text-gray-400">{brand.name}</span>
+                      )}
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <Carousel className="w-full" suppressHydrationWarning>
-                <CarouselContent>
-                  {brandContent.brands.map((brand: any, index: number) => (
-                    <CarouselItem key={index} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
-                      <Card className="overflow-hidden bg-white">
-                        <div className="h-32  flex items-center justify-center p-4">
-                          {brand.logo && brand.logo.trim() !== '' ? (
-                            <img
-                              src={getOptimizedImageUrl(brand.logo, { width: 150, height: 150, quality: 85 })}
-                              alt={brand.name}
-                              className="max-w-full max-h-full object-contain"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Eye className="h-16 w-16 text-gray-400" />
-                          )}
-                        </div>
-                        <CardHeader>
-                          <CardTitle className="text-center">{brand.name}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
             </div>
           </section>
         )}
@@ -826,84 +717,35 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
         {selectedSection === 'products' && currentProducts.length > 0 && (
           <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">{sectionTitles?.products || 'Our Products & Services'}</h2>
-                <Button variant="outline">View All</Button>
+              <h2 className="text-2xl font-bold mb-8">Our Products</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {currentProducts.slice(0, 8).map((product) => (
+                  <Card key={product.id} className="overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300 h-80">
+                    <div className="relative h-48">
+                      {product.image ? (
+                        <img src={getOptimizedImageUrl(product.image, { width: 300, height: 200, quality: 85, format: 'auto', crop: 'fill' })} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex items-center justify-center h-full bg-gray-200">
+                          <span className="text-gray-400">No image</span>
+                        </div>
+                      )}
+                      <Badge className="absolute top-2 right-2" variant={product.inStock ? "default" : "destructive"}>
+                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold line-clamp-1">{product.name}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                      <Button className="w-full mt-2" size="sm">Enquire</Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {currentProducts.map((product) => (
-                    <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-                      <Card className="overflow-hidden">
-                        {product.image && (
-                          <div className="h-48 bg-gray-200">
-                            <img
-                              src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85 })}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-                        <CardHeader>
-                          <CardTitle>{product.name}</CardTitle>
-                          {product.price && (
-                            <Badge variant="outline" className="w-fit">
-                              {product.price}
-                            </Badge>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <CardDescription className="mb-4">
-                            {product.description}
-                          </CardDescription>
-                          <Button className="w-full">
-                            Inquire Now
-                            <ChevronRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
             </div>
           </section>
         )}
 
 
-        {selectedSection === 'footer' && (
-          <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto text-center">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                {mergedBusiness.logo && (
-                  <img
-                    src={getOptimizedImageUrl(mergedBusiness.logo, { width: 150, height: 150, quality: 85 })}
-                    alt={mergedBusiness.name}
-                    className="h-8 w-auto"
-                    loading="lazy"
-                  />
-                )}
-                <span className="text-lg font-semibold">{mergedBusiness.name}</span>
-              </div>
-              <Separator className="my-4 bg-gray-700" />
-              <p className="text-gray-400 mb-2">
-                © {new Date().getFullYear()} {mergedBusiness.name}. All rights reserved.
-              </p>
-              {mergedBusiness.admin?.name && (
-                <p className="text-gray-500 text-sm mb-4">
-                  Founded by {mergedBusiness.admin.name}
-                </p>
-              )}
-              <p className="text-gray-400 text-sm mb-4">
-                Powered by DigiSence - Your Trusted Portal Developers.
-              </p>
-              <Button variant="outline" className="mt-4">{sectionTitles?.footer || 'Contact Us'}</Button>
-            </div>
-          </footer>
-        )}
       </div>
     )
   }

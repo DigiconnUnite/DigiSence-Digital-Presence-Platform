@@ -245,7 +245,7 @@ export default function ImageUpload({
           </div>
 
           {/* Right side: Preview */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-200">
               {mediaUrl ? (
                 <div className="relative w-full h-full">

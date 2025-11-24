@@ -168,7 +168,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
   const renderFullPreview = () => (
     <div className="w-full h-[80vh] rounded-lg" suppressHydrationWarning>
       <iframe
-        src={`/${business.slug}`}
+        src={`/catalog/${business.slug}`}
         className="w-full h-full border-0"
         title="Business Profile Preview"
       />
@@ -541,7 +541,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                       </div>
                       <div className="flex flex-col items-center gap-1 bg-linear-120 from-lime-900 via-gray-800 to-gray-900 shadow-md p-2 rounded-lg border border-gray-700 ml-3">
                         <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${mergedBusiness.slug || mergedBusiness.id}`)}`}
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/catalog/${mergedBusiness.slug || mergedBusiness.id}`)}`}
                           alt="Profile QR Code"
                           className="w-12 h-12 md:w-16 md:h-16"
                           onError={(e) => {

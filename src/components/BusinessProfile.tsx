@@ -637,7 +637,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                     const mediaUrl = slide.media || slide.image;
 
                     return (
-                      <div key={index} className="w-full flex-shrink-0">
+                      <div key={index} className="w-full shrink-0">
                         <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] md:max-h-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
                           {isVideo && mediaUrl ? (
                             <video
@@ -852,7 +852,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
               <Card className="relative bg-linear-to-bl from-lime-100 via-white to-white  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
                 <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
-                  <div className="flex-shrink-0 flex items-center justify-center">
+                  <div className="shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
                       <img
                         src={getOptimizedImageUrl(business.logo, {
@@ -1018,7 +1018,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           href={`https://maps.google.com/?q=${encodeURIComponent(business.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-blue-300 hover:underline font-semibold break-words transition-colors"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-blue-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Open in Google Maps"
                         >
                           {business.address}
@@ -1032,7 +1032,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                         </span>
                         <a
                           href={`tel:${business.phone}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-green-300 hover:underline font-semibold break-words transition-colors"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-green-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Call this number"
                         >
                           {business.phone}
@@ -1046,7 +1046,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                         </span>
                         <a
                           href={`mailto:${business.email}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-purple-300 hover:underline font-semibold break-words transition-colors"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-purple-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Send email"
                         >
                           {business.email}
@@ -1066,7 +1066,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                   </div>
                   <div className="flex flex-col items-center gap-1  bg-linear-120 from-lime-900 via-gray-800 to-gray-900 shadow-md p-3 rounded-lg border border-gray-500 ml-3">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/${business.slug || business.id}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/catalog/${business.slug || business.id}`)}`}
                       alt="Profile QR Code"
                       className="w-16 h-16 md:w-20 md:h-20"
                       onError={(e) => {
@@ -1143,58 +1143,6 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
               </Card>
             </div>
           </div>
-
-
-          <div className="w-full mt-8">
-            <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-              {/* Left Side: About Us */}
-              <div className="flex-1">
-                <h2 className="text-xl md:text-2xl font-bold mb-3">About Us</h2>
-                <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
-                  {business.about || "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
-                </p>
-              </div>
-              {/* Separator */}
-              <div className="hidden md:flex flex-col items-center justify-center">
-                <Separator orientation="vertical" className="h-32" />
-              </div>
-              {/* Right Side: Opening Hours & GST Number */}
-              <div className="flex-1">
-                <h2 className="text-xl md:text-2xl font-bold mb-3">Opening Hours & Details</h2>
-                <div className="space-y-4 flex justify-between">
-                  <div>
-                    <Label className="block text-gray-600 mb-1">Opening Hours</Label>
-                    {business.openingHours && business.openingHours.length > 0 ? (
-                      <ul className="text-sm text-gray-800">
-                        {business.openingHours.map((item: any, idx: number) => (
-                          <li key={idx} className="flex justify-between items-center py-0.5">
-                            <span className="font-medium">{item.day}</span>
-                            <span>
-                              {item.open && item.close
-                                ? `${item.open} - ${item.close}`
-                                : "Closed"}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-400">Not provided</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="block text-gray-600 mb-1">GST Number</Label>
-                    <p className="text-sm text-gray-800">{business.gstNumber || <span className="text-gray-400">Not provided</span>}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-
-
-
-
         </div>
       </section>
 
@@ -1431,7 +1379,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           className="w-full bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
                           onClick={() => {
                             if (business.phone) {
-                              const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
+                              const productLink = `${window.location.origin}/catalog/${business.slug}#product-${product.id}`;
                               const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
                               const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
                               window.open(whatsappUrl, '_blank');
@@ -1605,6 +1553,60 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
               )
             })}
           </div>
+
+
+
+          <div className="w-full mt-8">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+              {/* Left Side: About Us */}
+              <div className="flex-1">
+                <h2 className="text-xl md:text-2xl font-bold mb-3">About Us</h2>
+                <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
+                  {business.about || "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
+                </p>
+              </div>
+              {/* Separator */}
+              <div className="hidden md:flex flex-col items-center justify-center">
+                <Separator orientation="vertical" className="h-32" />
+              </div>
+              {/* Right Side: Opening Hours & GST Number */}
+              <div className="flex-1">
+                <h2 className="text-xl md:text-2xl font-bold mb-3">Opening Hours & Details</h2>
+                <div className="space-y-4 flex justify-between">
+                  <div>
+                    <Label className="block text-gray-600 mb-1">Opening Hours</Label>
+                    {business.openingHours && business.openingHours.length > 0 ? (
+                      <ul className="text-sm text-gray-800">
+                        {business.openingHours.map((item: any, idx: number) => (
+                          <li key={idx} className="flex justify-between items-center py-0.5">
+                            <span className="font-medium">{item.day}</span>
+                            <span>
+                              {item.open && item.close
+                                ? `${item.open} - ${item.close}`
+                                : "Closed"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-400">Not provided</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="block text-gray-600 mb-1">GST Number</Label>
+                    <p className="text-sm text-gray-800">{business.gstNumber || <span className="text-gray-400">Not provided</span>}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+
+
         </section>
       )}
 

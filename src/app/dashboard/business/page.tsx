@@ -174,7 +174,19 @@ interface Category {
   id: string
   name: string
   slug: string
+  description?: string
   parentId?: string
+  parent?: {
+    id: string
+    name: string
+  }
+  children?: {
+    id: string
+    name: string
+  }[]
+  _count?: {
+    products: number
+  }
 }
 
 export default function BusinessAdminDashboard() {
@@ -183,6 +195,7 @@ export default function BusinessAdminDashboard() {
   const { toast } = useToast()
   const [business, setBusiness] = useState<Business | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
+  const [businessCategories, setBusinessCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
   const [images, setImages] = useState<string[]>([])
@@ -269,6 +282,7 @@ export default function BusinessAdminDashboard() {
     categories: 'Categories',
     portfolio: 'Portfolio',
     products: 'Products',
+    footer: 'Footer',
   })
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'settings'>('content')
@@ -277,6 +291,14 @@ export default function BusinessAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+
+  // Categories management state
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    description: '',
+    parentId: '',
+  })
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
   // Mobile responsiveness states
   const [isMobile, setIsMobile] = useState(false)
@@ -403,7 +425,7 @@ export default function BusinessAdminDashboard() {
 
       // Fetch categories
       try {
-        const categoriesRes = await fetch('/api/categories')
+        const categoriesRes = await fetch('/api/business/categories')
         if (categoriesRes.ok) {
           const data = await categoriesRes.json()
           setCategories(data.categories)
@@ -1343,7 +1365,7 @@ export default function BusinessAdminDashboard() {
                 <div className="flex-1 overflow-hidden">
                   <ProfilePreview
                     business={{
-                      ...business,
+                      ...(business as any),
                       email: business.email ?? null,
                       products,
                       heroContent,
@@ -1834,8 +1856,8 @@ export default function BusinessAdminDashboard() {
                           <Button
                             variant="outline"
                             onClick={() => {
-                              if (activeSection === 'profile') setSelectedProfileSection(null);
-                              if (activeSection === 'products') {
+                              if (activeSection === 'profile' as typeof activeSection) setSelectedProfileSection(null);
+                              if (activeSection === 'products' as typeof activeSection) {
                                 setShowProductRightbar(false);
                                 setEditingProduct(null);
                                 setProductFormData({
@@ -1856,7 +1878,7 @@ export default function BusinessAdminDashboard() {
                           </Button>
                           <Button
                             onClick={async () => {
-                              if (activeSection === 'profile') {
+                              if (activeSection === "profile" as typeof activeSection) {
                                 if (selectedProfileSection === 'info') {
                                   await handleBasicInfoSave({ preventDefault: () => { } } as any);
                                 } else if (selectedProfileSection === 'hero') {
@@ -3083,7 +3105,6 @@ export default function BusinessAdminDashboard() {
 
                   {selectedProfileSection === 'footer' && (
                     <div className="space-y-6">
-                      {console.log('Footer content:', footerContent)}
                       <div>
                         <Label className="text-sm font-medium">Section Title</Label>
                         <Input
@@ -3139,22 +3160,215 @@ export default function BusinessAdminDashboard() {
                         />
                       </div>
 
-                      <div className="text-center py-12">
-                        <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Categories Manager</h3>
-                        <p className="text-gray-600 mb-6">
-                          Categories are automatically generated from your products. Add products with categories to see them here.
-                        </p>
-                        <Button onClick={() => setActiveSection('products')} className="rounded-2xl">
-                          Go to Products Section
-                        </Button>
-                      </div>
+                      {/* Add New Category Section */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{editingCategory ? 'Edit Category' : 'Add New Category'}</CardTitle>
+                          <CardDescription>
+                            {editingCategory ? 'Update category details' : 'Create a new category for your products'}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Category Name *</Label>
+                            <Input
+                              placeholder="Enter category name"
+                              value={categoryFormData.name}
+                              onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Textarea
+                              placeholder="Describe this category"
+                              value={categoryFormData.description}
+                              onChange={(e) => setCategoryFormData(prev => ({ ...prev, description: e.target.value }))}
+                              rows={3}
+                              className="rounded-2xl"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Parent Category</Label>
+                            <Select
+                              value={categoryFormData.parentId || "none"}
+                              onValueChange={(value) => setCategoryFormData(prev => ({ ...prev, parentId: value === "none" ? "" : value }))}
+                            >
+                              <SelectTrigger className="rounded-2xl">
+                                <SelectValue placeholder="Select parent category (optional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">No parent</SelectItem>
+                                {categories.filter(cat => !cat.parentId).map((category) => (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (!categoryFormData.name.trim()) {
+                                  toast({
+                                    title: "Error",
+                                    description: "Category name is required",
+                                    variant: "destructive",
+                                  })
+                                  return
+                                }
 
-                      <div className="flex justify-end space-x-3 pt-6">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Close
-                        </Button>
-                      </div>
+                                try {
+                                  const url = editingCategory
+                                    ? `/api/business/categories?id=${editingCategory.id}`
+                                    : '/api/business/categories'
+                                  const method = editingCategory ? 'PUT' : 'POST'
+
+                                  const response = await fetch(url, {
+                                    method,
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(categoryFormData),
+                                  })
+
+                                  if (response.ok) {
+                                    await fetchData()
+                                    setCategoryFormData({ name: '', description: '', parentId: '' })
+                                    setEditingCategory(null)
+                                    toast({
+                                      title: "Success",
+                                      description: editingCategory ? 'Category updated successfully!' : 'Category created successfully!',
+                                    })
+                                  } else {
+                                    const errorResult = await response.json()
+                                    toast({
+                                      title: "Error",
+                                      description: `Failed to ${editingCategory ? 'update' : 'create'} category: ${errorResult.error}`,
+                                      variant: "destructive",
+                                    })
+                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: `Failed to ${editingCategory ? 'update' : 'create'} category`,
+                                    variant: "destructive",
+                                  })
+                                }
+                              }}
+                              className="rounded-2xl"
+                            >
+                              {editingCategory ? 'Update Category' : 'Add Category'}
+                            </Button>
+                            {editingCategory && (
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingCategory(null)
+                                  setCategoryFormData({ name: '', description: '', parentId: '' })
+                                }}
+                                className="rounded-2xl"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Categories List */}
+                      <Card className="rounded-3xl">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Your Categories</CardTitle>
+                          <CardDescription>Manage your product categories</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {categories.length > 0 ? (
+                            <div className="space-y-4">
+                              {categories.map((category) => (
+                                <div key={category.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-gray-900">{category.name}</h4>
+                                    {category.description && (
+                                      <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                                    )}
+                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                      {category.parent && (
+                                        <span>Parent: {category.parent.name}</span>
+                                      )}
+                                      <span>{category._count?.products || 0} products</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingCategory(category)
+                                        setCategoryFormData({
+                                          name: category.name,
+                                          description: category.description || '',
+                                          parentId: category.parentId || '',
+                                        })
+                                      }}
+                                      className="rounded-xl"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setConfirmDialogData({
+                                          title: 'Delete Category',
+                                          description: `Are you sure you want to delete "${category.name}"? This will affect ${category._count?.products || 0} products.`,
+                                          action: async () => {
+                                            try {
+                                              const response = await fetch(`/api/business/categories?id=${category.id}`, {
+                                                method: 'DELETE',
+                                              })
+
+                                              if (response.ok) {
+                                                await fetchData()
+                                                toast({
+                                                  title: "Success",
+                                                  description: "Category deleted successfully!",
+                                                })
+                                              } else {
+                                                const errorResult = await response.json()
+                                                toast({
+                                                  title: "Error",
+                                                  description: `Failed to delete category: ${errorResult.error}`,
+                                                  variant: "destructive",
+                                                })
+                                              }
+                                            } catch (error) {
+                                              toast({
+                                                title: "Error",
+                                                description: "Failed to delete category",
+                                                variant: "destructive",
+                                              })
+                                            }
+                                          }
+                                        })
+                                        setShowConfirmDialog(true)
+                                      }}
+                                      className="rounded-xl"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h3>
+                              <p className="text-gray-600">Create your first category using the form above</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 

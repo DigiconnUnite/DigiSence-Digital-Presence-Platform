@@ -55,7 +55,8 @@ model Business {
   adminId     String   @unique
   admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
   categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  category    Category? @relation("BusinessCategory", fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  categories  Category[] @relation("BusinessProductCategories")
   products    Product[]
   inquiries   Inquiry[]
 
@@ -73,13 +74,16 @@ model Category {
   slug        String   @unique
   description String?
   parentId    String?
+  type        CategoryType @default(PRODUCT)
+  businessId  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
   parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children    Category[] @relation("CategoryHierarchy")
-  businesses  Business[]
+  business    Business? @relation("BusinessProductCategories", fields: [businessId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  businesses  Business[] @relation("BusinessCategory")
   products    Product[]
 
   @@map("categories")
@@ -150,4 +154,9 @@ enum InquiryStatus {
   READ
   REPLIED
   CLOSED
+}
+
+enum CategoryType {
+  BUSINESS
+  PRODUCT
 }

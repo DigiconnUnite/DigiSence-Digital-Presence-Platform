@@ -80,7 +80,7 @@ import {
   Share2,
   Download
 } from 'lucide-react'
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaWhatsappSquare } from "react-icons/fa";
 import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
 
 interface BusinessProfileProps {
@@ -100,6 +100,16 @@ interface BusinessProfileProps {
       category?: { id: string; name: string } | null
     })[]
   }
+  categories?: Array<{
+    id: string
+    name: string
+    slug: string
+    description?: string
+    parentId?: string
+    _count?: {
+      products: number
+    }
+  }>
 }
 
 interface InquiryFormData {
@@ -110,10 +120,12 @@ interface InquiryFormData {
   productId?: string
 }
 
-export default function BusinessProfile({ business: initialBusiness }: BusinessProfileProps) {
+export default function BusinessProfile({ business: initialBusiness, categories: initialCategories = [] }: BusinessProfileProps) {
   const [business, setBusiness] = useState(initialBusiness)
   const [inquiryModal, setInquiryModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [productModal, setProductModal] = useState(false)
+  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null)
   const [inquiryData, setInquiryData] = useState<InquiryFormData>({
     name: '',
     email: '',
@@ -252,17 +264,82 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
 
   // Categories and filtered products for search/filter - memoized for performance
   const { categories, filteredProducts } = useMemo(() => {
-    const categoryMap = new Map<string, { id: string; name: string }>()
-    business.products.forEach(p => {
-      if (p.category) categoryMap.set(p.category.id, p.category)
+    const categories = initialCategories.map(cat => ({
+      id: cat.id,
+      name: cat.name
+    }))
+    console.log('Categories in BusinessProfile:', categories)
+    console.log('Selected category:', selectedCategory)
+    const filteredProducts = business.products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = selectedCategory === 'all' || product.category?.id === selectedCategory
+      console.log(`Product ${product.name}: matchesSearch=${matchesSearch}, matchesCategory=${matchesCategory}, product.category?.id=${product.category?.id}`)
+      return matchesSearch && matchesCategory
     })
-    const categories = Array.from(categoryMap.values())
-    const filteredProducts = business.products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedCategory === 'all' || product.category?.id === selectedCategory)
-    )
+    console.log('Filtered products:', filteredProducts.length)
     return { categories, filteredProducts }
-  }, [business.products, searchTerm, selectedCategory])
+  }, [initialCategories, business.products, searchTerm, selectedCategory])
+
+  // Related products for modal - memoized for performance
+  const relatedProducts = useMemo(() => {
+    if (!selectedProductModal) return []
+
+    const mainProduct = selectedProductModal
+    const allProducts = business.products.filter(p => p.id !== mainProduct.id && p.isActive)
+
+    // Keywords that indicate a product is a component/spare part
+    const componentKeywords = ['spare', 'part', 'component', 'accessory', 'kit', 'module', 'unit', 'assembly', 'replacement']
+
+    // Score products based on relevance
+    const scoredProducts = allProducts.map(product => {
+      let score = 0
+
+      // Higher score for products in same category
+      if (product.category?.id === mainProduct.category?.id) {
+        score += 3
+      }
+
+      // Higher score for products with same brand
+      if (product.brandName === mainProduct.brandName) {
+        score += 2
+      }
+
+      // Very high score if product name contains main product name (suggests it's a component)
+      const mainProductWords = mainProduct.name.toLowerCase().split(' ')
+      const productWords = product.name.toLowerCase().split(' ')
+
+      for (const mainWord of mainProductWords) {
+        if (mainWord.length > 3 && product.name.toLowerCase().includes(mainWord)) {
+          score += 5
+          break
+        }
+      }
+
+      // High score for component keywords in product name or description
+      const productText = (product.name + ' ' + (product.description || '')).toLowerCase()
+      for (const keyword of componentKeywords) {
+        if (productText.includes(keyword)) {
+          score += 4
+          break
+        }
+      }
+
+      // Medium score for products that share significant words with main product
+      const commonWords = mainProductWords.filter(word =>
+        word.length > 3 && productWords.includes(word)
+      )
+      score += commonWords.length * 2
+
+      return { product, score }
+    })
+
+    // Sort by score (highest first) and return top 4
+    return scoredProducts
+      .sort((a, b) => b.score - a.score)
+      .filter(item => item.score > 0)
+      .slice(0, 4)
+      .map(item => item.product)
+  }, [business.products, selectedProductModal])
 
   const handleInquiry = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -354,6 +431,11 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
       message: product ? `I'm interested in ${product.name}` : '',
     }))
     setInquiryModal(true)
+  }
+
+  const openProductModal = (product: Product) => {
+    setSelectedProductModal(product)
+    setProductModal(true)
   }
 
   // Smooth scroll function - memoized for performance
@@ -530,9 +612,9 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
   }
 
   return (
-    <div className="min-h-screen bg-amber-50" suppressHydrationWarning>
+    <div className="min-h-screen bg-amber-50   " suppressHydrationWarning>
       {/* Navigation - Hidden on Mobile */}
-      <nav className="hidden md:block sticky top-0 z-40 bg-white/95 border-b backdrop-blur-md">
+      <nav className="hidden md:block sticky top-0 z-40 bg-white/90 border-b backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex relative items-center space-x-4">
@@ -966,18 +1048,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                   }}
                   title="Contact via WhatsApp"
                 >
-                  {/* WhatsApp SVG Icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M12.004 2.002c-5.51 0-9.985 4.475-9.985 9.985 0 1.76.465 3.465 1.34 4.963l-1.398 5.084a.942.942 0 0 0 1.164 1.153l5.067-1.404a9.916 9.916 0 0 0 4.813 1.216H12.02c5.509 0 9.985-4.476 9.985-9.985 0-5.51-4.476-9.985-9.986-9.985zm5.48 13.485c-.227.634-1.335 1.194-1.823 1.273-.488.08-1.032.115-1.662-.104-.384-.134-.879-.287-1.519-.564-2.67-1.153-4.408-3.99-4.546-4.173-.134-.182-1.086-1.447-1.086-2.763 0-1.316.687-1.968.93-2.21l.165-.166c.205-.206.457-.242.611-.252.157-.011.314-.018.454.006.14.025.334.14.444.332.109.19.435.673.609.929.176.258.252.443.208.655-.042.21-.16.33-.333.52-.139.156-.295.351-.423.476-.091.09-.185.187-.076.377.106.184.47.777 1.007 1.248.543.476 1.006.626 1.214.701.129.043.205.036.279-.054.08-.099.328-.385.419-.518.09-.134.188-.109.316-.065.129.045.793.374.926.441.132.068.221.099.253.155.032.057.032.326-.08.648z"
-                    />
-                  </svg>
+                  <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
                   WhatsApp
                 </Button>
                 <Button
@@ -1229,7 +1300,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
       }
 
       {/* Category Slider - Enhanced for Mobile */}
-      {categoryContent.categories?.length > 0 && (
+      {categories?.length > 0 && (
         <section className="py-6 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-4 md:mb-8">
@@ -1240,8 +1311,8 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
             </div>
             {viewAllCategories ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
-                {categoryContent.categories.map((category: any, index: number) => (
-                  <Card key={index} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
+                {categories.map((category, index: number) => (
+                  <Card key={category.id} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
                     <CardHeader className="p-2 md:p-4">
                       <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
                     </CardHeader>
@@ -1251,8 +1322,8 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
             ) : (
               <Carousel className="w-full">
                 <CarouselContent>
-                  {categoryContent.categories.map((category: any, index: number) => (
-                    <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
+                    {categories.map((category) => (
+                      <CarouselItem key={category.id} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
                       <Card className="overflow-hidden bg-transparent h-full flex items-center justify-center">
                         <CardHeader className="p-2 md:p-4">
                           <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
@@ -1287,7 +1358,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
 
               {/* Search Bar */}
               {/* Make the search bar sticky by wrapping it in a sticky div at the parent level */}
-              <div className="sticky top-0 z-30  mb-4" ref={searchRef}>
+              <div className="sticky top-0 backdrop-blur-2xl z-30  mb-4" ref={searchRef}>
                 {mounted && (
                   <div
                     className="flex flex-row  sm:flex-row gap-2 md:gap-4 py-3"
@@ -1318,7 +1389,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                   {filteredProducts.map((product) => (
                     <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2">
-                      <div className="relative h-32 md:h-48">
+                      <div className="relative h-32 md:h-48 cursor-pointer" onClick={() => openProductModal(product)}>
                         {product.image && product.image.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(product.image, {
@@ -1357,7 +1428,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                         </Badge>
                       </div>
                       <CardHeader className="pb-2 px-2 md:px-3 ">
-                        <CardTitle className="text-xs  md:text-lg line-clamp-1">{product.name}</CardTitle>
+                        <CardTitle className="text-xs  md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => openProductModal(product)}>{product.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0 px-2 md:px-3 ">
                         <div className="flex flex-row flex-nowrap gap-1 mb-2 md:mb-3 overflow-x-auto hide-scrollbar">
@@ -1376,7 +1447,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                           {product.description || "No description available"}
                         </CardDescription>
                         <Button
-                          className="w-full bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                          className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
                           onClick={() => {
                             if (business.phone) {
                               const productLink = `${window.location.origin}/catalog/${business.slug}#product-${product.id}`;
@@ -1401,7 +1472,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                     {filteredProducts.map((product) => (
                       <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
                         <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2">
-                          <div className="relative h-32 md:h-48">
+                          <div className="relative h-32 md:h-48 cursor-pointer" onClick={() => openProductModal(product)}>
                             {product.image && product.image.trim() !== '' ? (
                               <img
                                 src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
@@ -1431,7 +1502,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                             </Badge>
                           </div>
                           <CardHeader className="pb-2 px-2 md:px-3 ">
-                            <CardTitle className="text-xs e md:text-lg line-clamp-1">{product.name}</CardTitle>
+                            <CardTitle className="text-xs e md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => openProductModal(product)}>{product.name}</CardTitle>
                           </CardHeader>
                           <CardContent className="pt-0 px-2  md:px-6">
                             <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
@@ -1450,7 +1521,7 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
                               {product.description || "No description available"}
                             </CardDescription>
                             <Button
-                              className="w-full bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                              className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
                               onClick={() => {
                                 if (business.phone) {
                                   const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
@@ -1729,6 +1800,175 @@ export default function BusinessProfile({ business: initialBusiness }: BusinessP
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Product Modal */}
+      <Dialog open={productModal} onOpenChange={setProductModal}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto hide-scrollbar">
+          <DialogHeader>
+            <DialogTitle className="text-xl md:text-2xl">{selectedProductModal?.name}</DialogTitle>
+            <DialogDescription>
+              Product details and related items
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProductModal && (
+            <div className="space-y-6">
+              {/* Product Image */}
+              <div className="flex justify-center">
+                <div className="relative w-full max-w-md h-64 md:h-80 rounded-lg overflow-hidden shadow-lg">
+                  {selectedProductModal.image && selectedProductModal.image.trim() !== '' ? (
+                    <img
+                      src={getOptimizedImageUrl(selectedProductModal.image, {
+                        width: 600,
+                        height: 400,
+                        quality: 90,
+                        format: 'auto',
+                        crop: 'fill',
+                        gravity: 'center'
+                      })}
+                      srcSet={generateSrcSet(selectedProductModal.image)}
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      alt={selectedProductModal.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-100">
+                      <Image className="h-16 w-16 md:h-24 md:w-24 text-gray-400" />
+                    </div>
+                  )}
+                  <Badge
+                    className={`absolute top-3 right-3 ${selectedProductModal.inStock
+                      ? 'bg-green-500 hover:bg-green-600'
+                      : 'bg-red-500 hover:bg-red-600'
+                      } text-white border-0`}
+                  >
+                    {selectedProductModal.inStock ? 'In Stock' : 'Out of Stock'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Product Details */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {selectedProductModal.brandName && (
+                    <Badge variant="outline" className="text-sm">
+                      {selectedProductModal.brandName}
+                    </Badge>
+                  )}
+                  {selectedProductModal.category && (
+                    <Badge variant="outline" className="text-sm">
+                      {selectedProductModal.category.name}
+                    </Badge>
+                  )}
+                </div>
+
+                {selectedProductModal.price && (
+                  <div className="text-2xl font-bold text-green-600">
+                    {selectedProductModal.price}
+                  </div>
+                )}
+
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-gray-700 leading-relaxed">
+                    {selectedProductModal.description || "No description available"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Related Products */}
+              {relatedProducts.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Products Components</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {relatedProducts.map((product) => (
+                      <Card key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2 cursor-pointer" onClick={() => setSelectedProductModal(product)}>
+                        <div className="relative h-32 md:h-48">
+                          {product.image && product.image.trim() !== '' ? (
+                            <img
+                              src={getOptimizedImageUrl(product.image, {
+                                width: 400,
+                                height: 300,
+                                quality: 85,
+                                format: 'auto',
+                                crop: 'fill',
+                                gravity: 'center'
+                              })}
+                              srcSet={generateSrcSet(product.image)}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <Image className="h-10 w-10 md:h-16 md:w-16 text-gray-400" />
+                            </div>
+                          )}
+                          <Badge
+                            className={`absolute top-2 bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 rounded-full right-2 text-xs`}
+                            variant={product.inStock ? "default" : "destructive"}
+                          >
+                            {product.inStock ? (
+                              <span className="flex items-center gap-1">
+                                {product.inStock && (
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                  </span>
+                                )}  In Stock
+                              </span>
+                            ) : "Out of Stock"}
+                          </Badge>
+                        </div>
+                        <CardHeader className="pb-2 px-2 md:px-3 ">
+                          <CardTitle className="text-xs  md:text-lg line-clamp-1">{product.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-2 md:px-3 ">
+                          <div className="flex flex-row flex-nowrap gap-1 mb-2 md:mb-3 overflow-x-auto hide-scrollbar">
+                            {product.brandName && (
+                              <Badge variant="outline" className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max">
+                                {product.brandName}
+                              </Badge>
+                            )}
+                            {product.category && (
+                              <Badge variant="outline" className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max">
+                                {product.category.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
+                            {product.description || "No description available"}
+                          </CardDescription>
+                          <Button
+                            className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (business.phone) {
+                                const productLink = `${window.location.origin}/catalog/${business.slug}#product-${product.id}`;
+                                const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
+                                const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
+                                window.open(whatsappUrl, '_blank');
+                              } else {
+                                alert('Phone number not available');
+                              }
+                            }}
+                          >
+                            Inquire Now
+                            <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }

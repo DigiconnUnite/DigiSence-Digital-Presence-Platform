@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function BusinessPage({ params }: PageProps) {
   const { business: businessSlug } = await params
-  
+
   const business = await db.business.findUnique({
     where: { slug: businessSlug },
     select: {
@@ -73,11 +73,46 @@ export default async function BusinessPage({ params }: PageProps) {
     },
   })
 
+  // Fetch business-specific categories
+  const categories = await db.category.findMany({
+    where: {
+      businessId: business?.id,
+      type: 'PRODUCT'
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      parentId: true,
+      _count: {
+        select: {
+          products: true
+        }
+      }
+    },
+    orderBy: { name: 'asc' }
+  })
+
   if (!business || !business.isActive) {
     notFound()
   }
 
-  return <BusinessProfile business={business} />
+  console.log('Categories fetched from DB:', categories)
+  const mappedCategories = categories.map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    description: cat.description || undefined,
+    parentId: cat.parentId || undefined,
+    _count: cat._count
+  }))
+  console.log('Mapped categories:', mappedCategories)
+
+  return <BusinessProfile business={{
+    ...business,
+    openingHours: (business.openingHours as any) || undefined
+  }} categories={mappedCategories} />
 }
 
 export async function generateMetadata({ params }: PageProps) {

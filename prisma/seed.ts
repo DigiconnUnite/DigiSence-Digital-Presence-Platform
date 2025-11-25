@@ -1,6 +1,5 @@
 import { db } from '../src/lib/db'
 import { hashPassword } from '../src/lib/auth'
-import { UserRole, InquiryStatus } from '@prisma/client'
 
 async function main() {
   console.log('Seeding database...')
@@ -14,7 +13,7 @@ async function main() {
       email: 'admin@bdpp.com',
       name: 'Super Admin',
       password: superAdminPassword,
-      role: UserRole.SUPER_ADMIN,
+      role: 'SUPER_ADMIN',
     },
   })
 
@@ -95,7 +94,7 @@ async function main() {
       email: 'admin@jaksonenterprises.com',
       name: 'Jakson Enterprises Admin',
       password: businessAdminPassword,
-      role: UserRole.BUSINESS_ADMIN,
+      role: 'BUSINESS_ADMIN',
     },
   })
 
@@ -251,7 +250,7 @@ async function main() {
         message: 'I need a bulk order of angle grinders and cutting blades for our construction project. Please provide wholesale pricing.',
         businessId: jaksonBusiness.id,
         userId: businessAdmin.id,
-        status: InquiryStatus.NEW,
+        status: 'NEW',
       },
       {
         name: 'Priya Sharma',
@@ -260,7 +259,7 @@ async function main() {
         message: 'Looking for industrial ball bearings and solar panel installation services for our manufacturing facility.',
         businessId: jaksonBusiness.id,
         userId: businessAdmin.id,
-        status: InquiryStatus.READ,
+        status: 'READ',
       },
     ],
   })

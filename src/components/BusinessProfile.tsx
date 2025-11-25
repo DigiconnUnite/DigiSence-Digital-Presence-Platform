@@ -1,7 +1,35 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { Business } from '@prisma/client'
+
+// Define Business type since Prisma doesn't export it for MongoDB
+interface Business {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  about: string | null
+  logo: string | null
+  address: string | null
+  phone: string | null
+  email: string | null
+  website: string | null
+  facebook: string | null
+  twitter: string | null
+  instagram: string | null
+  linkedin: string | null
+  catalogPdf: string | null
+  openingHours: any
+  gstNumber: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  adminId: string
+  categoryId: string | null
+  heroContent: any
+  brandContent: any
+  portfolioContent: any
+}
 
 // Define custom Product type to match the updated schema
 interface Product {

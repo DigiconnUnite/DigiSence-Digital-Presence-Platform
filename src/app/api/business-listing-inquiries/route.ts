@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     console.error('Business listing inquiry submission error:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       )
     }

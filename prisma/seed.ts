@@ -26,6 +26,7 @@ async function main() {
       name: 'Hospitality',
       slug: 'hospitality',
       description: 'Restaurants, hotels, and food services',
+      type: 'BUSINESS',
     },
   })
 
@@ -35,6 +36,7 @@ async function main() {
       slug: 'restaurants',
       description: 'Dining establishments',
       parentId: hospitalityCategory.id,
+      type: 'BUSINESS',
     },
   })
 
@@ -43,6 +45,7 @@ async function main() {
       name: 'Technology',
       slug: 'technology',
       description: 'Tech companies and services',
+      type: 'BUSINESS',
     },
   })
 
@@ -51,6 +54,7 @@ async function main() {
       name: 'Industrial & Tools',
       slug: 'industrial-tools',
       description: 'Industrial equipment, power tools, and machinery',
+      type: 'BUSINESS',
     },
   })
 
@@ -183,7 +187,7 @@ async function main() {
         image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop',
         businessId: jaksonBusiness.id,
         categoryId: industrialCategory.id,
-        brandId: boschBrand.id,
+        brandName: 'Bosch',
         inStock: true,
         isActive: true,
       },
@@ -193,7 +197,7 @@ async function main() {
         image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop',
         businessId: jaksonBusiness.id,
         categoryId: industrialCategory.id,
-        brandId: makitaBrand.id,
+        brandName: 'Makita',
         inStock: true,
         isActive: true,
       },
@@ -203,7 +207,7 @@ async function main() {
         image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop',
         businessId: jaksonBusiness.id,
         categoryId: industrialCategory.id,
-        brandId: dewaltBrand.id,
+        brandName: 'DeWalt',
         inStock: true,
         isActive: true,
       },

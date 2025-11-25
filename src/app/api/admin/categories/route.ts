@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
     }
 
     const categories = await db.category.findMany({
+      where: {
+        type: 'BUSINESS',
+      },
       include: {
         parent: {
           select: {
@@ -93,6 +96,7 @@ export async function POST(request: NextRequest) {
       name: categoryData.name,
       slug,
       description: categoryData.description,
+      type: 'BUSINESS',
     }
 
     if (categoryData.parentId) {

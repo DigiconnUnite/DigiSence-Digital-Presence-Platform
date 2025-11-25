@@ -2,21 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendInquiryNotification } from '@/lib/email'
 
 interface NotificationData {
-  type: 'inquiry' | 'general'
+  type: 'inquiry' | 'businessListingInquiry' | 'general'
   inquiryId?: string
+  businessListingInquiryId?: string
+  statusUpdate?: boolean
   message?: string
 }
 
 export async function POST(request: NextRequest) {
   try {
     const data: NotificationData = await request.json()
-    
+
     if (data.type === 'inquiry' && data.inquiryId) {
       // Send inquiry notification
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inquiries/${data.inquiryId}`)
       if (response.ok) {
         const inquiry = await response.json()
-        
+
         if (inquiry.inquiry) {
           await sendInquiryNotification({
             businessName: inquiry.business.name,
@@ -30,8 +32,24 @@ export async function POST(request: NextRequest) {
           })
         }
       }
+    } else if (data.type === 'businessListingInquiry' && data.businessListingInquiryId) {
+      // Send business listing inquiry notification to admins
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/business-listing-inquiries/${data.businessListingInquiryId}`)
+      if (response.ok) {
+        const inquiry = await response.json()
+
+        if (inquiry.inquiry) {
+          // Send notification to admin email (you might want to get admin emails from database)
+          const adminEmail = process.env.ADMIN_EMAIL || 'admin@digisence.com'
+
+          // For now, send a simple notification
+          // You can extend sendInquiryNotification or create a new function
+          console.log('Business listing inquiry submitted:', inquiry.inquiry.businessName)
+          // TODO: Implement admin notification email
+        }
+      }
     }
-    
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Notification error:', error)

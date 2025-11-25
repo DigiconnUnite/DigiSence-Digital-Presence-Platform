@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Table,  
+  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -140,6 +140,7 @@ export default function SuperAdminDashboard() {
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
+  const [businessListingInquiries, setBusinessListingInquiries] = useState<any[]>([])
   const [stats, setStats] = useState<AdminStats>({
     totalBusinesses: 0,
     totalInquiries: 0,
@@ -165,6 +166,8 @@ export default function SuperAdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [selectedBusinessListingInquiry, setSelectedBusinessListingInquiry] = useState<any>(null)
+  const [showBusinessListingInquiryDialog, setShowBusinessListingInquiryDialog] = useState(false)
 
   useEffect(() => {
     // Check if mobile on initial load and on resize
@@ -232,6 +235,13 @@ export default function SuperAdminDashboard() {
       if (inquiriesRes.ok) {
         const data = await inquiriesRes.json()
         setInquiries(data.inquiries)
+      }
+
+      // Fetch business listing inquiries
+      const businessListingInquiriesRes = await fetch('/api/business-listing-inquiries')
+      if (businessListingInquiriesRes.ok) {
+        const data = await businessListingInquiriesRes.json()
+        setBusinessListingInquiries(data.inquiries)
       }
     } catch (error) {
       console.error('Failed to fetch admin data:', error)
@@ -597,6 +607,100 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const handleUpdateBusinessListingInquiry = async (inquiryId: string, updates: any) => {
+    try {
+      const response = await fetch(`/api/business-listing-inquiries/${inquiryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update the inquiry in the list
+        setBusinessListingInquiries(prev =>
+          prev.map(inquiry =>
+            inquiry.id === inquiryId ? data.inquiry : inquiry
+          )
+        )
+        toast({
+          title: "Success",
+          description: "Inquiry updated successfully!",
+        })
+        setShowBusinessListingInquiryDialog(false)
+        setSelectedBusinessListingInquiry(null)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to update inquiry: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Failed to update inquiry:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update inquiry. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: BarChart3,
+      mobileIcon: Home,
+      value: 'dashboard',
+      mobileTitle: 'Home'
+    },
+    {
+      title: 'Businesses',
+      icon: Building,
+      mobileIcon: Grid3X3,
+      value: 'businesses',
+      mobileTitle: 'Business'
+    },
+    {
+      title: 'Categories',
+      icon: Settings,
+      mobileIcon: FolderTree,
+      value: 'categories',
+      mobileTitle: 'Category'
+    },
+    {
+      title: 'Inquiries',
+      icon: MessageSquare,
+      mobileIcon: MessageCircle,
+      value: 'inquiries',
+      mobileTitle: 'Inquiry'
+    },
+    {
+      title: 'Business Listings',
+      icon: FileText,
+      mobileIcon: FileText,
+      value: 'business-listings',
+      mobileTitle: 'Listings'
+    },
+    {
+      title: 'Analytics',
+      icon: TrendingUp,
+      mobileIcon: LineChart,
+      value: 'analytics',
+      mobileTitle: 'Analytics'
+    },
+    {
+      title: 'Settings',
+      icon: Settings,
+      mobileIcon: Cog,
+      value: 'settings',
+      mobileTitle: 'Settings'
+    },
+  ]
+
   const filteredBusinesses = businesses.filter(business => {
     const matchesSearch = business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       business.admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -735,139 +839,6 @@ export default function SuperAdminDashboard() {
         )
     }
   }
-
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
-        {/* Top Header Bar */}
-        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-2xl">
-                <Skeleton className="h-8 w-8" />
-              </div>
-              <div>
-                <Skeleton className="h-6 w-32" />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Skeleton className="h-8 w-24 rounded-2xl hidden sm:flex" />
-              <Skeleton className="h-8 w-20 rounded-2xl hidden sm:flex" />
-              <div className="text-right hidden sm:block">
-                <Skeleton className="h-4 w-32 mb-1" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-              <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-2xl" />
-            </div>
-          </div>
-        </div>
-
-        {/* Main Layout */}
-        <div className="flex flex-1 h-fit overflow-hidden">
-          {/* Left Sidebar - Desktop Only */}
-          {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm overflow-auto hide-scrollbar">
-              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-6 w-6" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              </div>
-              <nav className="flex-1 p-4">
-                <ul className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <li key={i}>
-                      <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
-                        <Skeleton className="h-5 w-5" />
-                        <Skeleton className="h-4 w-20" />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
-                <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
-                  <Skeleton className="h-5 w-5" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Middle Content */}
-          <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
-            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
-              {renderSkeletonContent()}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Bottom Navigation */}
-        {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-            <div className="flex justify-around items-center py-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex flex-col items-center justify-center py-2 px-3 rounded-xl">
-                  <Skeleton className="h-5 w-5 mb-1" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  if (!user || user.role !== 'SUPER_ADMIN') {
-    return null
-  }
-
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: BarChart3,
-      mobileIcon: Home,
-      value: 'dashboard',
-      mobileTitle: 'Home'
-    },
-    {
-      title: 'Businesses',
-      icon: Building,
-      mobileIcon: Grid3X3,
-      value: 'businesses',
-      mobileTitle: 'Business'
-    },
-    {
-      title: 'Categories',
-      icon: Settings,
-      mobileIcon: FolderTree,
-      value: 'categories',
-      mobileTitle: 'Category'
-    },
-    {
-      title: 'Inquiries',
-      icon: MessageSquare,
-      mobileIcon: MessageCircle,
-      value: 'inquiries',
-      mobileTitle: 'Inquiry'
-    },
-    {
-      title: 'Analytics',
-      icon: TrendingUp,
-      mobileIcon: LineChart,
-      value: 'analytics',
-      mobileTitle: 'Analytics'
-    },
-    {
-      title: 'Settings',
-      icon: Settings,
-      mobileIcon: Cog,
-      value: 'settings',
-      mobileTitle: 'Settings'
-    },
-  ]
 
   const renderMiddleContent = () => {
     if (isLoading) {
@@ -1100,6 +1071,91 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
         )
+      case 'business-listings':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">BUSINESS LISTING INQUIRIES</h1>
+              <p className="text-xl text-gray-600">Manage business listing requests and digital presence enhancement inquiries</p>
+            </div>
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6">
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-900">Business</TableHead>
+                        <TableHead className="text-gray-900">Contact</TableHead>
+                        <TableHead className="text-gray-900">Requirements</TableHead>
+                        <TableHead className="text-gray-900">Status</TableHead>
+                        <TableHead className="text-gray-900">Assigned To</TableHead>
+                        <TableHead className="text-gray-900">Date</TableHead>
+                        <TableHead className="text-gray-900">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {businessListingInquiries.map((inquiry) => (
+                        <TableRow key={inquiry.id}>
+                          <TableCell className="text-gray-900">
+                            <div>
+                              <div className="font-medium">{inquiry.businessName}</div>
+                              {inquiry.businessDescription && (
+                                <div className="text-sm text-gray-500 max-w-xs truncate">{inquiry.businessDescription}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-900">
+                            <div>
+                              <div className="font-medium">{inquiry.contactName}</div>
+                              <div className="text-sm text-gray-500">{inquiry.email}</div>
+                              {inquiry.phone && (
+                                <div className="text-sm text-gray-500">{inquiry.phone}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-900 max-w-xs truncate">{inquiry.requirements}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-900">
+                            {inquiry.assignedUser ? inquiry.assignedUser.name : 'Unassigned'}
+                          </TableCell>
+                          <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() => {
+                                  setSelectedBusinessListingInquiry(inquiry)
+                                  setShowBusinessListingInquiryDialog(true)
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() => {
+                                  setSelectedBusinessListingInquiry(inquiry)
+                                  setShowBusinessListingInquiryDialog(true)
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'analytics':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
@@ -1109,35 +1165,35 @@ export default function SuperAdminDashboard() {
             </div>
             <div className="    rounded-3xl">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Total Inquiries</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{inquiries.length}</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Active Businesses</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.activeBusinesses}</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Total Products</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.totalProducts}</div>
-                    </CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Total Inquiries</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{inquiries.length}</div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Active Businesses</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.activeBusinesses}</div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Total Products</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.totalProducts}</div>
+                  </CardContent>
                 </Card>
               </div>
             </div>
           </div>
-        ) 
+        )
       case 'settings':
         return (
           <div className="space-y-6 pb-20 md:pb-0">
@@ -1395,9 +1451,97 @@ export default function SuperAdminDashboard() {
     return null
   }
 
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen relative flex flex-col">
+        <div className="fixed inset-0 bg-gradient-to-b from-blue-400 to-white bg-center blur-sm  -z-10"></div>
+        {/* Top Header Bar */}
+        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 rounded-2xl">
+                <Skeleton className="h-8 w-8" />
+              </div>
+              <div>
+                <Skeleton className="h-6 w-32" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Skeleton className="h-8 w-24 rounded-2xl hidden sm:flex" />
+              <Skeleton className="h-8 w-20 rounded-2xl hidden sm:flex" />
+              <div className="text-right hidden sm:block">
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex flex-1 h-fit overflow-hidden">
+          {/* Left Sidebar - Desktop Only */}
+          {!isMobile && (
+            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm overflow-auto hide-scrollbar">
+              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-6 w-6" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+              <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <li key={i}>
+                      <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                        <Skeleton className="h-5 w-5" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+                <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Middle Content */}
+          <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
+              {renderSkeletonContent()}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center justify-center py-2 px-3 rounded-xl">
+                  <Skeleton className="h-5 w-5 mb-1" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (!user || user.role !== 'SUPER_ADMIN') {
+    return null
+  }
+
   return (
     <div className="max-h-screen min-h-screen relative flex flex-col">
-      <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
+      <div className="fixed inset-0  bg-gradient-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -1448,7 +1592,7 @@ export default function SuperAdminDashboard() {
                     <button
                       onClick={() => setCurrentView(item.value)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                        ? ' bg-linear-to-r from-orange-400 to-amber-500 text-white'
+                        ? ' bg-gradient-to-r from-orange-400 to-amber-500 text-white'
                         : 'text-gray-700 hover:bg-orange-50'
                         }`}
                     >
@@ -1572,6 +1716,138 @@ export default function SuperAdminDashboard() {
           </div>
         </>
       )}
+      {/* Business Listing Inquiry Dialog */}
+      <Dialog open={showBusinessListingInquiryDialog} onOpenChange={setShowBusinessListingInquiryDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Business Listing Inquiry Details</DialogTitle>
+            <DialogDescription>
+              Review and manage this business listing inquiry
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedBusinessListingInquiry && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Business Name</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.businessName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Contact Name</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.contactName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Email</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Phone</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.phone || 'Not provided'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium">Business Description</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.businessDescription || 'Not provided'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium">Requirements</Label>
+                  <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{selectedBusinessListingInquiry.requirements}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Update Status</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Status</Label>
+                    <Select
+                      value={selectedBusinessListingInquiry.status}
+                      onValueChange={(value) => {
+                        const updated = { ...selectedBusinessListingInquiry, status: value }
+                        setSelectedBusinessListingInquiry(updated)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                        <SelectItem value="APPROVED">Approved</SelectItem>
+                        <SelectItem value="REJECTED">Rejected</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Assign To</Label>
+                    <Select
+                      value={selectedBusinessListingInquiry.assignedTo || ''}
+                      onValueChange={(value) => {
+                        const updated = { ...selectedBusinessListingInquiry, assignedTo: value || null }
+                        setSelectedBusinessListingInquiry(updated)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {/* You would fetch users here */}
+                        <SelectItem value="admin1">Admin 1</SelectItem>
+                        <SelectItem value="admin2">Admin 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea
+                    value={selectedBusinessListingInquiry.notes || ''}
+                    onChange={(e) => {
+                      const updated = { ...selectedBusinessListingInquiry, notes: e.target.value }
+                      setSelectedBusinessListingInquiry(updated)
+                    }}
+                    placeholder="Add internal notes..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBusinessListingInquiryDialog(false)
+                setSelectedBusinessListingInquiry(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedBusinessListingInquiry) {
+                  const updates: any = {
+                    status: selectedBusinessListingInquiry.status,
+                    notes: selectedBusinessListingInquiry.notes,
+                  }
+                  if (selectedBusinessListingInquiry.assignedTo) {
+                    updates.assignedTo = selectedBusinessListingInquiry.assignedTo
+                  }
+                  handleUpdateBusinessListingInquiry(selectedBusinessListingInquiry.id, updates)
+                }
+              }}
+            >
+              Update Inquiry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

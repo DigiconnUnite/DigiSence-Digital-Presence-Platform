@@ -7,13 +7,10 @@ export async function GET(request: NextRequest) {
     const slug = searchParams.get('slug')
     const id = searchParams.get('id')
 
-    if (!slug && !id) {
-      return NextResponse.json({ error: 'Slug or ID parameter required' }, { status: 400 })
-    }
+    if (slug || id) {
+      const whereClause = slug ? { slug, isActive: true } : { id: id as string, isActive: true }
 
-    const whereClause = slug ? { slug, isActive: true } : { id: id as string, isActive: true }
-
-    const business = await db.business.findFirst({
+      const business = await db.business.findFirst({
       where: whereClause,
       select: {
         id: true,
@@ -80,6 +77,38 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ business })
+  } else {
+    // List all active businesses
+    const businesses = await db.business.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        logo: true,
+        address: true,
+        phone: true,
+        email: true,
+        website: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        products: {
+          where: { isActive: true },
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return NextResponse.json({ businesses })
+  }
   } catch (error) {
     console.error('Business fetch error:', error)
     return NextResponse.json(

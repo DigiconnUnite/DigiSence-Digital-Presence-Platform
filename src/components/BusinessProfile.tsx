@@ -78,10 +78,12 @@ import {
   Briefcase,
   UserPlus,
   Share2,
-  Download
+  Download,
+  Building2
 } from 'lucide-react'
 import { FaWhatsapp, FaWhatsappSquare } from "react-icons/fa";
 import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
+import { LampContainer } from './ui/lamp'
 
 interface BusinessProfileProps {
   business: Business & {
@@ -612,7 +614,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
   }
 
   return (
-    <div className="min-h-screen bg-amber-50   " suppressHydrationWarning>
+    <div className="min-h-screen  bg-slate-100  " suppressHydrationWarning>
       {/* Navigation - Hidden on Mobile */}
       <nav className="hidden md:block sticky top-0 z-40 bg-white/90 border-b backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -653,7 +655,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
         <div className="flex justify-around items-center h-16 px-2">
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'home'
-              ? 'text-orange-600 bg-orange-50'
+              ? 'text-cyan-600 bg-cyan-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -663,7 +665,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           </button>
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'about'
-              ? 'text-orange-600 bg-orange-50'
+              ? 'text-cyan-600 bg-cyan-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             onClick={() => scrollToSection(aboutRef as React.RefObject<HTMLDivElement>, 'about')}
@@ -673,7 +675,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           </button>
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'brands'
-              ? 'text-orange-600 bg-orange-50'
+              ? 'text-cyan-600 bg-cyan-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             onClick={() => scrollToSection(brandsRef as React.RefObject<HTMLDivElement>, 'brands')}
@@ -683,7 +685,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           </button>
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'products'
-              ? 'text-orange-600 bg-orange-50'
+              ? 'text-cyan-600 bg-cyan-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             onClick={() => scrollToSection(productsRef as React.RefObject<HTMLDivElement>, 'products')}
@@ -693,7 +695,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           </button>
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'portfolio'
-              ? 'text-orange-600 bg-orange-50'
+              ? 'text-cyan-600 bg-cyan-50'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             onClick={() => scrollToSection(portfolioRef as React.RefObject<HTMLDivElement>, 'portfolio')}
@@ -900,7 +902,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             </div>
           ) : (
             // Default hero when no slides are configured
-              <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] bg-linear-to-br from-orange-400 to-amber-500 rounded-2xl overflow-hidden shadow-lg">
+              <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] bg-linear-to-br from-cyan-400 via-cyan-500 to-cyan-600 rounded-2xl overflow-hidden shadow-lg">
                 <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
                   <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto flex flex-col justify-center h-full">
                     <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg whitespace-pre-line">
@@ -932,7 +934,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-12">
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
-              <Card className="relative bg-linear-to-bl from-lime-100 via-white to-white  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
+              <Card className="relative bg-linear-to-bl from-cyan-50 via-cyan-100/30 to-cyan-200/20  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
                 <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
                   <div className="shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
@@ -960,7 +962,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       {business.name || "Business Name"}
                     </h3>
                     {business.category && (
-                      <span className="inline-block text-xs xs:text-sm md:text-sm px-2 py-0.5 rounded-full border border-orange-200 bg-orange-50 text-orange-700 font-medium mb-1 md:mb-2 w-fit">
+                      <span className="inline-flex items-center text-xs xs:text-sm md:text-sm px-2 py-0.5 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 font-medium mb-1 md:mb-2 w-fit">
+                        <Building2 className="w-4 h-4 mr-1 text-cyan-700" />
                         {business.category.name}
                       </span>
                     )}
@@ -971,15 +974,15 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                     )}
                     <div className="flex flex-row items-center gap-2 md:gap-4 mt-1">
                       {business.admin?.name && (
-                        <span className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold">
-                          <User className="w-4 h-4 mr-1 text-gray-400" />
+                        <span className="flex items-center text-xs xs:text-sm md:text-base flex-1 rounded-full py-0.5 px-2 bg-linear-to-r from-cyan-900 via-slate-900 to-slate-900  text-gray-200 border border-gray-200 font-semibold">
+                          <User className="w-4 h-4 mr-1 text-gray-100" />
                           {business.admin.name}
                         </span>
                       )}
                       <Button
                         variant="outline"
                         size="xs"
-                        className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 px-2 bg-gray-100 text-gray-700 border border-gray-200 font-semibold gap-1 shadow-none hover:shadow active:scale-95 transition"
+                        className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 cursor-pointer px-3 bg-linear-to-r  from-cyan-900 via-slate-900 hover:px-5 to-slate-900 hover:text-gray-100  text-gray-200 border border-gray-200 font-semibold gap-1 shadow-none active:scale-95 transition"
                         onClick={() => {
                           if (business.catalogPdf) {
                             const link = document.createElement('a');
@@ -1076,7 +1079,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               </div>
             </div>
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch mt-4 md:mt-0">
-              <Card className="rounded-2xl sm:rounded-3xl shadow-md bg-linear-to-bl from-lime-900 via-gray-900 to-gray-950 hover:shadow-md transition-shadow duration-300 px-4 py-3 md:p-4  flex flex-col items-stretch h-full w-full relative " >
+              <Card className="rounded-2xl sm:rounded-3xl shadow-md bg-linear-60 from-cyan-950 via-slate-950 to-cyan-900 hover:shadow-md transition-shadow duration-300 px-4 py-3 md:p-4  flex flex-col items-stretch h-full w-full relative " >
 
                 <div className="flex flex-row gap-2 md:gap-4 w-full items-center justify-between relative z-10">
                   <div className="flex flex-col flex-1 min-w-0 space-y-3">
@@ -1135,7 +1138,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       </div>
                       )}
                   </div>
-                  <div className="flex flex-col items-center gap-1  bg-linear-120 from-lime-900 via-gray-800 to-gray-900 shadow-md p-3 rounded-lg border border-gray-500 ml-3">
+                  <div className="flex flex-col items-center gap-1  bg-linear-120 from-cyan-900 via-slate-800 to-slate-900 shadow-md p-3 rounded-lg border border-gray-500 ml-3">
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/catalog/${business.slug || business.id}`)}`}
                       alt="Profile QR Code"
@@ -1232,8 +1235,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               {viewAllBrands ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
                   {brandContent.brands.map((brand: any, index: number) => (
-                    <Card key={index} className="overflow-hidden rounded-2xl md:rounded-3xl py-3 md:py-6 bg-white h-full flex flex-col">
-                      <div className="h-20 md:h-32 flex items-center justify-center p-2">
+                    <Card key={index} className="overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0  bg-white/70 h-full flex flex-col">
+                      <div className="h-20 md:h-32 flex items-center   justify-center p-2">
                         {brand.logo && brand.logo.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(brand.logo, {
@@ -1265,7 +1268,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <CarouselContent>
                     {brandContent.brands.map((brand: any, index: number) => (
                       <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
-                        <Card className="overflow-hidden rounded-2xl md:rounded-3xl py-3 md:py-6 bg-white h-full flex flex-col">
+                        <Card className="overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0  bg-white/70 h-full flex flex-col">
                           <div className="h-20 md:h-32 flex items-center justify-center p-2">
                             {brand.logo && brand.logo.trim() !== '' ? (
                               <img
@@ -1312,9 +1315,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             {viewAllCategories ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
                 {categories.map((category, index: number) => (
-                  <Card key={category.id} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
-                    <CardHeader className="p-2 md:p-4">
-                      <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
+                  <Card
+                    key={category.id}
+                    className="overflow-hidden h-full  flex items-center justify-center backdrop-blur-md bg-white/50"
+                  >
+                    <CardHeader className="p-2">
+                      <CardTitle className="text-center text-xs md:text-base">{category.name}</CardTitle>
                     </CardHeader>
                   </Card>
                 ))}
@@ -1324,9 +1330,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <CarouselContent>
                     {categories.map((category) => (
                       <CarouselItem key={category.id} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
-                      <Card className="overflow-hidden bg-transparent h-full flex items-center justify-center">
-                        <CardHeader className="p-2 md:p-4">
-                          <CardTitle className="text-center text-xs  md:text-base">{category.name}</CardTitle>
+                        <Card
+                          className="overflow-hidden h-full  flex items-center justify-center backdrop-blur-md bg-white/50"
+                        >
+                          <CardHeader className="p-2">
+                            <CardTitle className="text-center text-xs md:text-base">{category.name}</CardTitle>
                         </CardHeader>
                       </Card>
                     </CarouselItem>
@@ -1341,8 +1349,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             )}
           </div>
         </section>
-      )
-      }
+      )}
 
       {/* Products/Services Section - Enhanced for Mobile */}
       {
@@ -1682,11 +1689,9 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       )}
 
       {/* Footer - Enhanced for Mobile */}
-      <footer id="contact" ref={contactRef} className="relative bg-linear-to-b from-gray-950 to-gray-900 text-white py-8 pb-10 mb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Glowing Elements */}
-        <div className="absolute top-0 left-0 w-64 h-64 bg-blue-800 rounded-full filter blur-3xl opacity-10 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-zinc-800 rounded-full filter blur-3xl opacity-10 translate-x-1/2 translate-y-1/2"></div>
-        <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-cyan-800 rounded-full filter blur-3xl opacity-5 -translate-x-1/2 -translate-y-1/2"></div>
+      <LampContainer>
+        <footer id="contact" ref={contactRef} className="relative  text-white py-8 pb-10 mb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
+
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-8">
@@ -1726,7 +1731,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             </div>
           </div>
         </div>
-      </footer>
+        </footer>
+      </LampContainer>
 
       {/* Inquiry Modal */}
       <Dialog open={inquiryModal} onOpenChange={setInquiryModal}>

@@ -1,44 +1,120 @@
-import { db } from '@/lib/db'
+'use client'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Globe } from 'lucide-react'
+import { Navbar, NavbarButton, NavBody, NavItems, MobileNav, MobileNavHeader, MobileNavToggle, MobileNavMenu } from '@/components/ui/resizable-navbar'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import { useState, useEffect } from 'react'
 
-export default async function BusinessListingPage() {
-  const businesses = await db.business.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      logo: true,
-      address: true,
-      phone: true,
-      email: true,
-      website: true,
-      category: {
-        select: {
-          name: true,
-        },
-      },
-      products: {
-        where: { isActive: true },
-        select: {
-          id: true,
-        },
-        take: 1, // Just to check if there are products
-      },
+type Business = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  logo: string | null
+  address: string | null
+  phone: string | null
+  email: string | null
+  website: string | null
+  category: {
+    name: string
+  } | null
+  products: {
+    id: string
+  }[]
+}
+
+export default function BusinessListingPage() {
+  const [businesses, setBusinesses] = useState<Business[]>([])
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const navItems = [
+    {
+      name: "Home",
+      link: "/",
     },
-    orderBy: { createdAt: 'desc' },
-  })
+    {
+      name: "Businesses",
+      link: "/business",
+    },
+    {
+      name: "Dashboard",
+      link: "/dashboard",
+    },
+  ];
+
+  useEffect(() => {
+    fetch('/api/businesses')
+      .then(res => res.json())
+      .then(data => setBusinesses(data.businesses || []))
+      .catch(err => console.error('Error fetching businesses:', err))
+  }, [])
+
 
   return (
     <>
-      <Navigation />
+      <Navbar>
+        {/* Desktop Navigation */}
+        <NavBody>
+          <a
+            href="/"
+            className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+          >
+            <span className="font-medium text-black dark:text-white">DigiSence</span>
+          </a>
+          <NavItems items={navItems} />
+          <div className="flex items-center gap-4">
+            <NavbarButton variant="secondary" as={Link} href="/login">Login</NavbarButton>
+          </div>
+        </NavBody>
+
+        {/* Mobile Navigation */}
+        <MobileNav>
+          <MobileNavHeader>
+            <a
+              href="/"
+              className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+            >
+              <span className="font-medium text-black dark:text-white">DigiSence</span>
+            </a>
+            <MobileNavToggle
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
+          </MobileNavHeader>
+
+          <MobileNavMenu
+            isOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+          >
+            {navItems.map((item, idx) => (
+              <a
+                key={`mobile-link-${idx}`}
+                href={item.link}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="relative text-neutral-600 dark:text-neutral-300"
+              >
+                <span className="block">{item.name}</span>
+              </a>
+            ))}
+            <div className="flex w-full flex-col gap-4">
+              <NavbarButton
+                onClick={() => setIsMobileMenuOpen(false)}
+                variant="primary"
+                className="w-full"
+                as={Link}
+                href="/login"
+              >
+                Login
+              </NavbarButton>
+            </div>
+          </MobileNavMenu>
+        </MobileNav>
+      </Navbar>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
@@ -59,10 +135,10 @@ export default async function BusinessListingPage() {
                       <img
                         src={business.logo}
                         alt={business.name}
-                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        className="w-16 h-16 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
                         <span className="text-gray-500 text-sm font-medium">
                           {business.name.charAt(0).toUpperCase()}
                         </span>
@@ -91,19 +167,19 @@ export default async function BusinessListingPage() {
                   <div className="space-y-2 mb-4">
                     {business.address && (
                       <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <MapPin className="h-4 w-4 mr-2 shrink-0" />
                         <span className="truncate">{business.address}</span>
                       </div>
                     )}
                     {business.phone && (
                       <div className="flex items-center text-sm text-gray-500">
-                        <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <Phone className="h-4 w-4 mr-2 shrink-0" />
                         <span>{business.phone}</span>
                       </div>
                     )}
                     {business.website && (
                       <div className="flex items-center text-sm text-gray-500">
-                        <Globe className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <Globe className="h-4 w-4 mr-2 shrink-0" />
                         <span className="truncate">{business.website}</span>
                       </div>
                     )}
@@ -136,9 +212,4 @@ export default async function BusinessListingPage() {
       <Footer />
     </>
   )
-}
-
-export const metadata = {
-  title: 'Business Directory - DigiSence',
-  description: 'Discover and connect with professional businesses in our directory.',
 }

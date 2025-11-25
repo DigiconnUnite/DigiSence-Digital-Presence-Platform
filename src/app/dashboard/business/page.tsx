@@ -938,7 +938,7 @@ export default function BusinessAdminDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen flex flex-col relative">
-        <div className="fixed inset-0 bg-[url('/dashbaord-bg.png')] bg-cover bg-center blur-md -z-10"></div>
+        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -1075,7 +1075,7 @@ export default function BusinessAdminDashboard() {
 
   return (
     <div className="min-h-screen flex h-screen  flex-col relative">
-      <div className="fixed inset-0 bg-[url('https://res.cloudinary.com/dycm4ujkn/image/upload/f_auto,q_auto,w_1920,h_1080,c_limit/bdpp-backgrounds/dashbaord-bg.jpg')] bg-cover bg-center blur-md -z-10"></div>
+      <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -3462,7 +3462,7 @@ export default function BusinessAdminDashboard() {
                         id="price"
                         value={productFormData.price}
                         onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
-                        placeholder="e.g., $50, Starting at $100, Free consultation"
+                        placeholder="e.g., ₹50, Starting at ₹100, Free consultation"
                         className="rounded-2xl"
                       />
                     </div>

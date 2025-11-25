@@ -25,6 +25,7 @@ model User {
   // Relations
   business  Business?
   inquiries Inquiry[]
+  assignedBusinessListingInquiries BusinessListingInquiry[]
 
   @@map("users")
 }
@@ -154,6 +155,32 @@ enum InquiryStatus {
   READ
   REPLIED
   CLOSED
+}
+
+model BusinessListingInquiry {
+  id                  String                  @id @default(cuid()) @map("_id")
+  businessName        String
+  businessDescription String?
+  contactName         String
+  email               String
+  phone               String?
+  requirements        String
+  status              BusinessListingStatus   @default(PENDING)
+  assignedTo          String?
+  assignedUser        User?                   @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  notes               String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  @@map("business_listing_inquiries")
+}
+
+enum BusinessListingStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
 }
 
 enum CategoryType {

@@ -234,7 +234,7 @@ export default function HomePage() {
               {/* CTA Section */}
               <section className="py-20 max-w-7xl w-full px-4 sm:px-6 bg-transparent flex justify-center items-center">
                   <div className="max-w-full w-full mx-auto">
-                      <div className="rounded-3xl border border-white/30 bg-slate-900/95 bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900 shadow-lg p-12 px-6 sm:px-12 text-center backdrop-blur-lg">
+                      <div className="rounded-3xl border border-white/30  bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900 shadow-lg p-12 px-6 sm:px-12 text-center backdrop-blur-lg">
                           <h2 className="text-3xl sm:text-4xl font-bold mb-4 drop-shadow-md text-white">
                               Ready to Transform Your Business?
                           </h2>

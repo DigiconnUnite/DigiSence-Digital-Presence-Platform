@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Businesses } from '@prisma/client'
+import { Business } from '@prisma/client'
 
 // Define custom Product type to match the updated schema
 interface Product {
@@ -224,7 +224,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                         const mediaUrl = slide.media || slide.image;
 
                         return (
-                          <div key={index} className="w-full flex-shrink-0">
+                          <div key={index} className="w-full shrink-0">
                             <div className="relative h-96 w-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
                               {isVideo && mediaUrl ? (
                                 <video
@@ -393,7 +393,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                 <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
                   <Card className="relative bg-linear-to-bl from-[#ffe4e6] to-[#ccfbf1] rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
                     <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
-                      <div className="flex-shrink-0 flex items-center justify-center">
+                      <div className="shrink-0 flex items-center justify-center">
                         {mergedBusiness.logo && mergedBusiness.logo.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(mergedBusiness.logo, {
@@ -502,7 +502,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                               href={`https://maps.google.com/?q=${encodeURIComponent(mergedBusiness.address)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-words"
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline wrap-break-word"
                             >
                               {mergedBusiness.address}
                             </a>
@@ -513,7 +513,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                             <Phone className="h-5 w-5 text-green-600 group-hover:text-green-800 transition-colors shrink-0" />
                             <a
                               href={`tel:${mergedBusiness.phone}`}
-                              className="text-sm text-green-600 hover:text-green-800 hover:underline break-words"
+                              className="text-sm text-green-600 hover:text-green-800 hover:underline wrap-break-word"
                             >
                               {mergedBusiness.phone}
                             </a>
@@ -524,7 +524,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                             <Mail className="h-5 w-5 text-purple-600 group-hover:text-purple-800 transition-colors shrink-0" />
                             <a
                               href={`mailto:${mergedBusiness.email}`}
-                              className="text-sm text-purple-600 hover:text-purple-800 hover:underline break-words"
+                              className="text-sm text-purple-600 hover:text-purple-800 hover:underline wrap-break-word"
                             >
                               {mergedBusiness.email}
                             </a>

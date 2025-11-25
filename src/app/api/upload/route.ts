@@ -35,13 +35,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Create temp directory if it doesn't exist
-    const tempDir = join(process.cwd(), 'temp')
-    try {
-      await mkdir(tempDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist, continue
-    }
+    // Use /tmp directory for serverless environments
+    const tempDir = '/tmp'
 
     // Create a temporary file
     const bytes = await file.arrayBuffer()

@@ -779,7 +779,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               format: 'auto',
                               crop: 'fill',
                               gravity: 'auto'
-                            }) : '/api/placeholder/1200/600'}
+                            }) : '/placeholder.png'}
                             srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                             alt={slide.headline || 'Hero image'}
@@ -787,7 +787,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             loading={index === 0 ? "eager" : "lazy"}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = '/api/placeholder/1200/600';
+                              target.src = '/placeholder.png';
                             }}
                           />
                           {slide.showText !== false && (

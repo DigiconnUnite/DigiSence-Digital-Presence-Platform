@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Business } from '@prisma/client'
+import { Businesses } from '@prisma/client'
 
 // Define custom Product type to match the updated schema
 interface Product {
@@ -122,7 +122,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
     const heroContent = propHeroContent || mergedBusiness.heroContent as any || {
       slides: [
         {
-          image: '/api/placeholder/1200/600',
+          image: '/placeholder.png',
           headline: 'Welcome to ' + mergedBusiness.name,
           subheadline: mergedBusiness.description || 'Discover our amazing products and services',
           cta: 'Get in Touch'
@@ -254,7 +254,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                                   format: 'auto',
                                   crop: 'fill',
                                   gravity: 'auto'
-                                }) : '/api/placeholder/1200/600'}
+                                }) : '/placeholder.png'}
                                 srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                                 alt={slide.headline || 'Hero image'}
@@ -262,7 +262,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
                                 loading={index === 0 ? "eager" : "lazy"}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = '/api/placeholder/1200/600';
+                                  target.src = '/placeholder.png';
                                 }}
                               />
                               {slide.showText !== false && (

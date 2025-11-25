@@ -165,6 +165,7 @@ model BusinessListingInquiry {
   email               String
   phone               String?
   requirements        String
+  inquiryType         String?
   status              BusinessListingStatus   @default(PENDING)
   assignedTo          String?
   assignedUser        User?                   @relation(fields: [assignedTo], references: [id], onDelete: SetNull)

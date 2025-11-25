@@ -10,6 +10,7 @@ const businessListingInquirySchema = z.object({
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
   requirements: z.string().min(10, 'Requirements must be at least 10 characters'),
+  inquiryType: z.string().optional(),
 })
 
 async function getSuperAdmin(request: NextRequest) {
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const { businessName, businessDescription, contactName, email, phone, requirements } = businessListingInquirySchema.parse(body)
+    const { businessName, businessDescription, contactName, email, phone, requirements, inquiryType } = businessListingInquirySchema.parse(body)
 
     // Create inquiry
     const inquiry = await db.businessListingInquiry.create({
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         email,
         phone: phone || null,
         requirements,
+        inquiryType: inquiryType || null,
         status: 'PENDING',
       },
     })

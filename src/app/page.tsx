@@ -19,6 +19,8 @@ import {
     MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
     const navItems = [
@@ -31,39 +33,40 @@ export default function HomePage() {
             link: "/business",
         },
         {
-            name: "Dashboard",
-            link: "/dashboard",
+            name: "Contact Us",
+            link: "/contact",
         },
     ];
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const pathname = usePathname();
 
   return (
       <>
           <Navbar>
               {/* Desktop Navigation */}
               <NavBody>
-                  <a
+                  <Link
                       href="/"
-                      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+                      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
                   >
-                      <span className="font-medium text-black dark:text-white">DigiSence</span>
-                  </a>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">DigiSence</span>
+                  </Link>
                   <NavItems items={navItems} />
                   <div className="flex items-center gap-4">
-                      <NavbarButton variant="secondary" as={Link} href="/login">Login</NavbarButton>
-              </div>
+                      <NavbarButton variant="dark" as={Link} href="/dashboard/admin">Login</NavbarButton>
+                  </div>
               </NavBody>
 
               {/* Mobile Navigation */}
               <MobileNav>
                   <MobileNavHeader>
-                      <a
+                      <Link
                           href="/"
-                          className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+                          className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
                       >
-                          <span className="font-medium text-black dark:text-white">DigiSence</span>
-                      </a>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">DigiSence</span>
+                      </Link>
                       <MobileNavToggle
                           isOpen={isMobileMenuOpen}
                           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -74,23 +77,29 @@ export default function HomePage() {
                       isOpen={isMobileMenuOpen}
                       onClose={() => setIsMobileMenuOpen(false)}
                   >
-                      {navItems.map((item, idx) => (
-                          <a
-                              key={`mobile-link-${idx}`}
-                              href={item.link}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="relative text-neutral-600 dark:text-neutral-300"
-                          >
-                              <span className="block">{item.name}</span>
-                          </a>
-                      ))}
+                      {navItems.map((item, idx) => {
+                          const isActive = pathname === item.link;
+                          return (
+                              <Link
+                                  key={`mobile-link-${idx}`}
+                                  href={item.link}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className={cn(
+                                      "relative text-neutral-600 dark:text-neutral-300",
+                                      isActive && "text-blue-600 dark:text-blue-400 font-semibold"
+                                  )}
+                              >
+                                  <span className="block">{item.name}</span>
+                              </Link>
+                          );
+                      })}
                       <div className="flex w-full flex-col gap-4">
                           <NavbarButton
                               onClick={() => setIsMobileMenuOpen(false)}
-                              variant="primary"
+                              variant="dark"
                               className="w-full"
                               as={Link}
-                              href="/login"
+                              href="/dashboard/admin"
                           >
                               Login
                           </NavbarButton>
@@ -148,9 +157,6 @@ export default function HomePage() {
                       </div>
                   </div>
               </section>
-
-
-
 
               {/* Testimonials Section */}
               <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -242,21 +248,25 @@ export default function HomePage() {
                               Join <span className="font-semibold text-cyan-400">DigiSence</span> today and create your professional digital presence.
                           </p>
                           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                              <Button
-                                  size="lg"
-                                  variant="secondary"
-                                  className="rounded-full bg-cyan-400 text-slate-900 border-2 border-cyan-400 hover:bg-cyan-300 hover:border-cyan-300 transition-all duration-200 px-8 shadow-lg font-semibold"
-                              >
-                                  Start Free Trial
-                                  <ArrowRight className="ml-2 h-5 w-5" />
-                              </Button>
-                              <Button
-                                  size="lg"
-                                  variant="outline"
-                                  className="rounded-full border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 px-8 shadow-md transition-all duration-200 font-semibold"
-                              >
-                                  Contact Sales
-                              </Button>
+                              <Link href="/dashboard/admin">
+                                  <Button
+                                      size="lg"
+                                      variant="secondary"
+                                      className="rounded-full bg-cyan-400 text-slate-900 border-2 border-cyan-400 hover:bg-cyan-300 hover:border-cyan-300 transition-all duration-200 px-8 shadow-lg font-semibold"
+                                  >
+                                      Start Free Trial
+                                      <ArrowRight className="ml-2 h-5 w-5" />
+                                  </Button>
+                              </Link>
+                              <Link href="/business">
+                                  <Button
+                                      size="lg"
+                                      variant="outline"
+                                      className="rounded-full border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 px-8 shadow-md transition-all duration-200 font-semibold"
+                                  >
+                                      Contact Sales
+                                  </Button>
+                              </Link>
                           </div>
                           <div className="flex flex-wrap justify-center gap-5 text-sm opacity-90">
                               <div className="flex items-center bg-slate-800/70 rounded-full px-4 py-2 border border-cyan-400/30 shadow-sm mb-2 mx-1 text-gray-200">

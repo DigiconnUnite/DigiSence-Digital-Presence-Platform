@@ -9,6 +9,7 @@ import {
 } from "framer-motion";
 
 import React, { useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 
 interface NavbarProps {
@@ -115,6 +116,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
 
 export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
+  const pathname = usePathname();
 
   return (
     <motion.div
@@ -124,23 +126,31 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
         className,
       )}
     >
-      {items.map((item, idx) => (
-        <a
-          onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
-          className="relative px-4 py-2 text-neutral-600 dark:text-neutral-300"
-          key={`link-${idx}`}
-          href={item.link}
-        >
-          {hovered === idx && (
-            <motion.div
-              layoutId="hovered"
-              className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800"
-            />
-          )}
-          <span className="relative z-20">{item.name}</span>
-        </a>
-      ))}
+      {items.map((item, idx) => {
+        const isActive = pathname === item.link;
+        return (
+          <a
+            onMouseEnter={() => setHovered(idx)}
+            onClick={onItemClick}
+            className="relative px-4 py-2 text-neutral-600 dark:text-neutral-300"
+            key={`link-${idx}`}
+            href={item.link}
+          >
+            {(hovered === idx || isActive) && (
+              <motion.div
+                layoutId="hovered"
+                className={cn(
+                  "absolute inset-0 h-full w-full rounded-full",
+                  isActive
+                    ? "bg-blue-100 dark:bg-blue-900"
+                    : "bg-gray-100 dark:bg-neutral-800"
+                )}
+              />
+            )}
+            <span className="relative z-20">{item.name}</span>
+          </a>
+        );
+      })}
     </motion.div>
   );
 };
@@ -197,6 +207,8 @@ export const MobileNavMenu = ({
   isOpen,
   onClose,
 }: MobileNavMenuProps) => {
+  const pathname = usePathname();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -209,7 +221,11 @@ export const MobileNavMenu = ({
             className,
           )}
         >
-          {children}
+          {React.Children.map(children, (child) =>
+            React.isValidElement(child)
+              ? React.cloneElement(child as React.ReactElement<{ pathname?: string }>, { pathname })
+              : child
+          )}
         </motion.div>
       )}
     </AnimatePresence>

@@ -1087,6 +1087,7 @@ export default function SuperAdminDashboard() {
                         <TableHead className="text-gray-900">Business</TableHead>
                         <TableHead className="text-gray-900">Contact</TableHead>
                         <TableHead className="text-gray-900">Requirements</TableHead>
+                        <TableHead className="text-gray-900">Inquiry Type</TableHead>
                         <TableHead className="text-gray-900">Status</TableHead>
                         <TableHead className="text-gray-900">Assigned To</TableHead>
                         <TableHead className="text-gray-900">Date</TableHead>
@@ -1114,6 +1115,7 @@ export default function SuperAdminDashboard() {
                             </div>
                           </TableCell>
                           <TableCell className="text-gray-900 max-w-xs truncate">{inquiry.requirements}</TableCell>
+                          <TableCell className="text-gray-900">{inquiry.inquiryType || 'Not specified'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
                           </TableCell>
@@ -1748,6 +1750,10 @@ export default function SuperAdminDashboard() {
                 <div className="md:col-span-2">
                   <Label className="text-sm font-medium">Business Description</Label>
                   <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.businessDescription || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Inquiry Type</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedBusinessListingInquiry.inquiryType || 'Not specified'}</p>
                 </div>
                 <div className="md:col-span-2">
                   <Label className="text-sm font-medium">Requirements</Label>

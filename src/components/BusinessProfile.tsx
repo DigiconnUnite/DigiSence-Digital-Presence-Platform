@@ -1678,8 +1678,9 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                     {business.openingHours && business.openingHours.length > 0 ? (
                       <ul className="text-sm flex-1 text-gray-800">
                         {business.openingHours.map((item: any, idx: number) => (
-                          <li key={idx} className="flex gap-5 justify-between items-center py-0.5">
+                          <li key={idx} className="flex flex-1 gap-5 justify-between items-center py-0.5">
                             <span className="font-medium">{item.day}</span>
+                            <span>::</span>
                             <span>
                               {item.open && item.close
                                 ? `${item.open} - ${item.close}`

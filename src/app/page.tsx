@@ -109,6 +109,44 @@ export default function HomePage() {
           </Navbar>
           <AuroraBackground className="pt-24">
               <HeroSectionOne />
+
+              {/* First New Section */}
+              <section className="py-20 px-4 sm:px-6 lg:px-8">
+                  <div className="max-w-7xl mx-auto">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                          <div className="order-2 lg:order-1">
+                              <img src="/placeholder.png" alt="Discover Businesses" className="w-full h-auto rounded-lg shadow-lg" />
+                          </div>
+                          <div className="order-1 lg:order-2">
+                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
+                              <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
+                              <Link href="/business">
+                                  <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                              </Link>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+              {/* Second New Section */}
+              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
+                  <div className="max-w-7xl mx-auto">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                          <div>
+                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Manage Your Business Profile</h2>
+                              <p className="text-lg text-muted-foreground mb-6">Create and manage your professional business profile with ease. Showcase your products and connect with customers.</p>
+                              <Link href="/dashboard/admin">
+                                  <Button size="lg" className="rounded-full">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                              </Link>
+                          </div>
+                          <div>
+                              <img src="/card-bg.jpg" alt="Manage Profile" className="w-full h-auto rounded-lg shadow-lg" />
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+
               {/* Features Section */}
               <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
                   <div className="max-w-7xl mx-auto">
@@ -158,85 +196,6 @@ export default function HomePage() {
                   </div>
               </section>
 
-              {/* Testimonials Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="text-center mb-16">
-                          <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">
-                              What Our Users Say
-                          </h2>
-                          <p className="text-lg text-muted-foreground">
-                              Join thousands of businesses already using DigiSence.
-                          </p>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="flex items-center mb-4">
-                                      {[...Array(5)].map((_, i) => (
-                                          <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                                      ))}
-                                  </div>
-                                  <p className="text-muted-foreground mb-4">
-                                      "DigiSence transformed our online presence. We've seen a 40% increase in customer inquiries since switching to their platform."
-                                  </p>
-                                  <div className="flex items-center">
-                                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                                          <span className="text-primary font-semibold">JD</span>
-                                      </div>
-                                      <div>
-                                          <p className="font-semibold text-primary">John Doe</p>
-                                          <p className="text-sm text-muted-foreground">CEO, TechCorp</p>
-                                      </div>
-                                  </div>
-                              </CardContent>
-                          </Card>
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="flex items-center mb-4">
-                                      {[...Array(5)].map((_, i) => (
-                                          <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                                      ))}
-                                  </div>
-                                  <p className="text-muted-foreground mb-4">
-                                      "The ease of use and professional look helped us stand out. Our customers love the seamless experience."
-                                  </p>
-                                  <div className="flex items-center">
-                                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                                          <span className="text-primary font-semibold">SM</span>
-                                      </div>
-                                      <div>
-                                          <p className="font-semibold text-primary">Sarah Miller</p>
-                                          <p className="text-sm text-muted-foreground">Marketing Director, RetailPlus</p>
-                                      </div>
-                                  </div>
-                              </CardContent>
-                          </Card>
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="flex items-center mb-4">
-                                      {[...Array(5)].map((_, i) => (
-                                          <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                                      ))}
-                                  </div>
-                                  <p className="text-muted-foreground mb-4">
-                                      "Reliable platform with excellent support. It's been a game-changer for our small business growth."
-                                  </p>
-                                  <div className="flex items-center">
-                                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                                          <span className="text-primary font-semibold">MR</span>
-                                      </div>
-                                      <div>
-                                          <p className="font-semibold text-primary">Mike Rodriguez</p>
-                                          <p className="text-sm text-muted-foreground">Owner, Local Services</p>
-                                      </div>
-                                  </div>
-                              </CardContent>
-                          </Card>
-                      </div>
-        </div>
-      </section>
-
               {/* CTA Section */}
               <section className="py-20 max-w-7xl w-full px-4 sm:px-6 bg-transparent flex justify-center items-center">
                   <div className="max-w-full w-full mx-auto">
@@ -275,11 +234,11 @@ export default function HomePage() {
                               </div>
                               <div className="flex items-center bg-slate-800/70 rounded-full px-4 py-2 border border-cyan-400/30 shadow-sm mb-2 mx-1 text-gray-200">
                                   <CheckCircle className="h-4 w-4 mr-2 text-cyan-400" />
-                                  30-day free trial
+                                  Your Online Presence
                               </div>
                               <div className="flex items-center bg-slate-800/70 rounded-full px-4 py-2 border border-cyan-400/30 shadow-sm mb-2 mx-1 text-gray-200">
                                   <CheckCircle className="h-4 w-4 mr-2 text-cyan-400" />
-                                  Cancel anytime
+                                  Easy to use
                               </div>
                           </div>
                       </div>

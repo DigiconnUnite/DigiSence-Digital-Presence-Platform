@@ -1719,8 +1719,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-8">
 
             {/* DigiSence Online Presence CTA Card */}
-            <div className="space-y-2 bg-linear-120 from-lime-900 via-gray-800 to-gray-900 rounded-xl  md:space-y-4">
-              <div className="bg-lienar-to-br from-gray-900 via-gray-900 to-lime-900 rounded-xl shadow-lg p-4 md:p-6 flex flex-col items-center text-center">
+              <div className="space-y-2 bg-linear-120 from-cyan-900 via-gray-800 to-gray-900 rounded-xl  md:space-y-4">
+                <div className="bg-lienar-to-br from-gray-900 via-gray-900 to-cyan-900 rounded-xl shadow-lg p-4 md:p-6 flex flex-col items-center text-center">
                 <p className="mb-3 text-sm md:text-base text-white font-medium">
                   Make your online presence with DigiSence
                 </p>

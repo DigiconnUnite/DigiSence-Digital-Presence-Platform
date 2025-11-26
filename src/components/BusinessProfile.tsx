@@ -1111,28 +1111,24 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <div className="flex flex-col flex-1 min-w-0 space-y-3">
                     {business.address && business.address.trim() !== '' && (
                       <div className="flex items-center gap-4 group">
-                        <span className="inline-flex items-center justify-center rounded-full border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
-                          <MapPin className="h-4 w-4 text-gray-800 group-hover:text-blue-300 transition-colors shrink-0" />
+                        <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-9 h-9 ">
+                          <MapPin className="h-4 w-4 text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
                         </span>
-                        <a
-                          href={`https://maps.google.com/?q=${encodeURIComponent(business.address)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-blue-300 hover:underline font-semibold wrap-break-words transition-colors"
-                          title="Open in Google Maps"
+                        <span
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                         >
                           {business.address}
-                        </a>
+                        </span>
                       </div>
                     )}
                     {business.phone && business.phone.trim() !== '' && (
                       <div className="flex items-center gap-4 group">
-                        <span className="inline-flex items-center justify-center rounded-full  border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
-                          <Phone className="h-4 w-4 text-800 group-hover:text-green-300 transition-colors shrink-0" />
+                        <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-9 h-9 ">
+                          <Phone className="h-4 w-4  text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
                         </span>
                         <a
                           href={`tel:${business.phone}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-green-300 hover:underline font-semibold wrap-break-words transition-colors"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Call this number"
                         >
                           {business.phone}
@@ -1141,12 +1137,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                     )}
                     {business.email && business.email.trim() !== '' && (
                       <div className="flex items-center gap-4 group">
-                        <span className="inline-flex items-center justify-center rounded-full  border bg-white/90 border-blue-300/50 group-hover:border-blue-400 transition-colors w-9 h-9 ">
-                          <Mail className="h-4 w-4 text-800 group-hover:text-purple-300 transition-colors shrink-0" />
+                        <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-9 h-9 ">
+                          <Mail className="h-4 w-4  text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
                         </span>
                         <a
                           href={`mailto:${business.email}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-purple-300 hover:underline font-semibold wrap-break-words transition-colors"
+                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Send email"
                         >
                           {business.email}

@@ -13,6 +13,7 @@ interface Product {
   inStock: boolean
   isActive: boolean
   createdAt: Date
+
   updatedAt: Date
   businessId: string
   categoryId: string | null
@@ -165,6 +166,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
     }
   }, [heroContent.slides, heroContent.autoPlay, heroContent.transitionSpeed])
 
+
   const renderFullPreview = () => (
     <div className="w-full h-[80vh] rounded-lg" suppressHydrationWarning>
       <iframe
@@ -202,7 +204,7 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
     }
 
     return (
-      <div className="bg-amber-50 border rounded-lg p-6" suppressHydrationWarning>
+      <div className="bg-amber-50 border rounded-lg p-6 transform scale-90 origin-top" suppressHydrationWarning>
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
             Focused Section: {displayTitles[selectedSection as keyof typeof displayTitles]}
@@ -750,5 +752,5 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
     )
   }
 
-  return selectedSection ? renderFocusedPreview() : renderFullPreview()
+  return selectedSection && selectedSection !== 'full' ? renderFocusedPreview() : renderFullPreview()
 }

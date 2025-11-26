@@ -100,6 +100,8 @@ async function performHealthChecks(): Promise<HealthReport> {
     { url: `${baseUrl}/api/categories`, method: 'GET', name: 'categories-api' },
     { url: `${baseUrl}/api/brands`, method: 'GET', name: 'brands-api' },
     { url: `${baseUrl}/api/businesses`, method: 'GET', name: 'businesses-api' },
+    { url: `${baseUrl}/api/inquiries`, method: 'GET', name: 'inquiries-api' },
+    { url: `${baseUrl}/api/business-listing-inquiries`, method: 'GET', name: 'business-listing-inquiries-api' },
   ]
 
   // Run endpoint checks in parallel

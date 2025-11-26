@@ -201,10 +201,10 @@ export default function BusinessAdminDashboard() {
   const [images, setImages] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [brandFilterText, setBrandFilterText] = useState('')
-  const [activeSection, setActiveSection] = useState('dashboard')
+  const [activeSection, setActiveSection] = useState('profile')
   const [expandedSections, setExpandedSections] = useState<string[]>(['profile'])
   const [editingSection, setEditingSection] = useState<string | null>(null)
-  const [selectedProfileSection, setSelectedProfileSection] = useState<string | null>(null)
+  const [selectedProfileSection, setSelectedProfileSection] = useState<string | null>('full')
 
   // Dialog states
   // const [showHeroEditor, setShowHeroEditor] = useState(false) // never used
@@ -1029,6 +1029,7 @@ export default function BusinessAdminDashboard() {
 
   // Menu items for navigation
   const menuItems = [
+    /*
     {
       title: 'Dashboard',
       icon: BarChart3,
@@ -1036,6 +1037,7 @@ export default function BusinessAdminDashboard() {
       value: 'dashboard',
       mobileTitle: 'Home'
     },
+    */
     {
       title: 'Profile',
       icon: Palette,
@@ -1050,6 +1052,7 @@ export default function BusinessAdminDashboard() {
       value: 'products',
       mobileTitle: 'Products'
     },
+    /*
     {
       title: 'Inquiries',
       icon: Mail,
@@ -1057,6 +1060,8 @@ export default function BusinessAdminDashboard() {
       value: 'inquiries',
       mobileTitle: 'Inquiries'
     },
+    */
+    /*
     {
       title: 'Analytics',
       icon: TrendingUp,
@@ -1064,6 +1069,8 @@ export default function BusinessAdminDashboard() {
       value: 'analytics',
       mobileTitle: 'Analytics'
     },
+    */
+    /*
     {
       title: 'Settings',
       icon: Settings,
@@ -1071,6 +1078,7 @@ export default function BusinessAdminDashboard() {
       value: 'settings',
       mobileTitle: 'Settings'
     },
+    */
   ]
 
   return (
@@ -1089,17 +1097,9 @@ export default function BusinessAdminDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex">
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex">
+            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex" onClick={() => business?.slug && window.open(`/catalog/${business.slug}`, '_blank')}>
               <Eye className="h-4 w-4 mr-2" />
               Preview
-            </Button>
-            <Button size="sm" className="bg-black hover:bg-gray-800 text-white rounded-2xl hidden sm:flex">
-              <Globe className="h-4 w-4 mr-2" />
-              Publish
             </Button>
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-gray-900">{user?.name || user.email}</p>
@@ -1144,7 +1144,7 @@ export default function BusinessAdminDashboard() {
                         } ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
                       title={sidebarCollapsed ? item.title : undefined}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <item.icon className="h-5 w-5 shrink-0" />
                       <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>{item.title}</span>
                     </button>
                   </li>
@@ -1155,14 +1155,14 @@ export default function BusinessAdminDashboard() {
             {/* Logout Section */}
             <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
               <button
-                onClick={async () => {
+                onClick={async () => {  
                   await logout()
                   router.push('/login')
                 }}
                 className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 text-red-600 hover:bg-red-50 ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
                 title={sidebarCollapsed ? 'Logout' : undefined}
               >
-                <LogOut className="h-5 w-5 flex-shrink-0" />
+                <LogOut className="h-5 w-5 shrink-0" />
                 <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Logout</span>
               </button>
             </div>
@@ -1325,20 +1325,20 @@ export default function BusinessAdminDashboard() {
               <div className=" mx-auto">
                 <div className="mb-6">
                   <h1 className="text-xl font-bold text-gray-900 mb-2">Profile Management</h1>
-                  <p className="text-xl text-gray-600">Manage your business profile sections</p>
+                  <p className="text-xl text-gray-600">Manage your business profile </p>
                 </div>
 
                 {/* Section Tabs */}
                 <div className="mb-6">
                   <div className="flex space-x-1 bg-gray-100 p-1 rounded-2xl overflow-x-auto">
                     {[
+                      { id: 'full', label: sectionTitles.full, icon: Fullscreen },
                       { id: 'hero', label: sectionTitles.hero, icon: ImageIcon },
                       { id: 'info', label: sectionTitles.info, icon: Building },
                       { id: 'brands', label: sectionTitles.brands, icon: Palette },
                       { id: 'categories', label: 'Categories', icon: Grid3X3 },
                       { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree },
-                      { id: 'products', label: sectionTitles.products, icon: Package },
-                      { id: 'full', label: sectionTitles.full, icon: Fullscreen }
+                      { id: 'products', label: sectionTitles.products, icon: Package }
                     ].map((tab) => {
                       const Icon = tab.icon
                       return (
@@ -1363,28 +1363,154 @@ export default function BusinessAdminDashboard() {
 
                 {/* Dynamic Preview Area */}
                 <div className="flex-1 overflow-hidden">
-                  <ProfilePreview
-                    business={{
-                      ...(business as any),
-                      email: business.email ?? null,
-                      products,
-                      heroContent,
-                      brandContent,
-                      portfolioContent,
-                      website: business.website ?? null,
-                    }}
-                    selectedSection={selectedProfileSection}
-                    sectionTitles={sectionTitles}
-                    heroContent={heroContent}
-                    brandContent={brandContent}
-                    portfolioContent={portfolioContent}
-                    businessFormData={businessInfoFormData}
-                    products={products}
-                    onSectionClick={(section) => {
-                      setSelectedProfileSection(section)
-                      setEditingSection(section)
-                    }}
-                  />
+                  {selectedProfileSection === 'brands' ? (
+                    <div className="space-y-6">
+                      {/* Preview Section */}
+                      <div className="bg-amber-50 border rounded-lg p-6 transform scale-90 origin-top">
+                        <div className="mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Brand Slider Preview
+                          </h3>
+                        </div>
+                        {brandContent.brands?.length > 0 ? (
+                          <section className="py-4 px-4 sm:px-6 lg:px-8 bg-transparent">
+                            <div className="max-w-7xl mx-auto">
+                              <h2 className="text-xl font-bold mb-6">Trusted By</h2>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {brandContent.brands.map((brand: any, index: number) => (
+                                  <Card key={index} className="overflow-hidden rounded-3xl py-6 bg-white h-full flex flex-col">
+                                    <div className="h-20 flex items-center justify-center p-2">
+                                      {brand.logo ? (
+                                        <img src={getOptimizedImageUrl(brand.logo, { width: 100, height: 60, quality: 85, format: 'auto' })} alt={brand.name} className="max-h-full max-w-full object-contain" />
+                                      ) : (
+                                        <span className="text-gray-400">{brand.name}</span>
+                                      )}
+                                    </div>
+                                  </Card>
+                                ))}
+                              </div>
+                            </div>
+                          </section>
+                        ) : (
+                          <div className="text-center py-8">
+                            <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No brands added yet</h3>
+                            <p className="text-gray-600">Add brands using the editor panel</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Brands Table Section */}
+                      <Card className="rounded-3xl">
+
+                        <CardContent>
+                          {brandContent.brands?.length > 0 ? (
+                            <Table>
+                              <TableHeader  >
+                                <TableRow>
+                                  <TableHead>Brand Name</TableHead>
+                                  <TableHead>Logo</TableHead>
+                                  <TableHead className="w-32">Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {brandContent.brands.map((brand: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium">{brand.name}</TableCell>
+                                    <TableCell>
+                                      {brand.logo ? (
+                                        <img
+                                          src={getOptimizedImageUrl(brand.logo, { width: 32, height: 32, quality: 85, format: 'auto' })}
+                                          alt={brand.name}
+                                          className="h-8 w-8 object-cover rounded-2xl"
+                                          loading="lazy"
+                                        />
+                                      ) : (
+                                        <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
+                                          <ImageIcon className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex space-x-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            // Edit functionality - could open a modal or set state
+                                            const newBrands = [...brandContent.brands]
+                                            // For now, just remove and re-add with prompt
+                                            const newName = prompt('Edit brand name:', brand.name)
+                                            if (newName && newName.trim()) {
+                                              newBrands[index] = { ...brand, name: newName.trim() }
+                                              setBrandContent(prev => ({ ...prev, brands: newBrands }))
+                                            }
+                                          }}
+                                          className="rounded-xl"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            setConfirmDialogData({
+                                              title: 'Delete Brand',
+                                              description: `Are you sure you want to delete "${brand.name}"?`,
+                                              action: () => {
+                                                setBrandContent(prev => ({
+                                                  ...prev,
+                                                  brands: prev.brands.filter((_, i) => i !== index)
+                                                }))
+                                                setShowConfirmDialog(false)
+                                              }
+                                            })
+                                            setShowConfirmDialog(true)
+                                          }}
+                                          className="rounded-xl"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center py-8">
+                              <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No brands to manage</h3>
+                              <p className="text-gray-600">Add brands using the editor panel</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : (
+                      <ProfilePreview
+                        business={{
+                          ...(business as any),
+                          email: business.email ?? null,
+                          products,
+                          heroContent,
+                          brandContent,
+                          portfolioContent,
+                          website: business.website ?? null,
+                        }}
+                        selectedSection={selectedProfileSection}
+                        sectionTitles={sectionTitles}
+                        heroContent={heroContent}
+                        brandContent={brandContent}
+                        portfolioContent={portfolioContent}
+                        businessFormData={businessInfoFormData}
+                        products={products}
+                        onSectionClick={(section) => {
+                          setSelectedProfileSection(section)
+                          setEditingSection(section)
+                        }}
+                      />
+                  )}
                 </div>
               </div>
             )}
@@ -2077,7 +2203,7 @@ export default function BusinessAdminDashboard() {
         </div>
 
         {/* Right Editor Panel - Fixed Width */}
-        {((activeSection === 'profile' && selectedProfileSection) || (activeSection === 'products' && showProductRightbar)) && (
+        {((activeSection === 'profile' && selectedProfileSection && selectedProfileSection !== 'full') || (activeSection === 'products' && showProductRightbar)) && (
           <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50 h-96' : 'w-[480px]'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out relative`}>
             <div className="p-4  px-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-semibold">
@@ -2928,71 +3054,10 @@ export default function BusinessAdminDashboard() {
                         </CardContent>
                       </Card>
 
-                      {/* Brands Table */}
-                      <Card className="rounded-3xl">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Added Brands</CardTitle>
-                          <CardDescription>Manage your brand collection</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {brandContent.brands?.length > 0 ? (
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Brand Name</TableHead>
-                                  <TableHead>Logo</TableHead>
-                                  <TableHead className="w-20">Actions</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {brandContent.brands.map((brand: any, index: number) => (
-                                  <TableRow key={index}>
-                                    <TableCell className="font-medium">{brand.name}</TableCell>
-                                    <TableCell>
-                                      {brand.logo ? (
-                                        <img
-                                          src={getOptimizedImageUrl(brand.logo, { width: 32, height: 32, quality: 85, format: 'auto' })}
-                                          alt={brand.name}
-                                          className="h-8 w-8 object-cover rounded-2xl"
-                                          loading="lazy"
-                                        />
-                                      ) : (
-                                        <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
-                                          <ImageIcon className="h-4 w-4 text-gray-400" />
-                                        </div>
-                                      )}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          setBrandContent(prev => ({
-                                            ...prev,
-                                            brands: prev.brands.filter((_, i) => i !== index)
-                                          }))
-                                        }}
-                                        className="rounded-xl"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          ) : (
-                            <div className="text-center py-8">
-                              <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">No brands added yet</h3>
-                              <p className="text-gray-600">Add your first brand using form above</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
 
                     </div>
                   )}
+
 
                   {selectedProfileSection === 'portfolio' && (
                     <div className="space-y-6">
@@ -3057,48 +3122,87 @@ export default function BusinessAdminDashboard() {
                         </CardContent>
                       </Card>
 
-                      {/* Portfolio Images Grid */}
+
+                      {/* Portfolio Images Table Section */}
                       <Card className="rounded-3xl">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Portfolio Images</CardTitle>
-                          <CardDescription>Manage your portfolio gallery</CardDescription>
-                        </CardHeader>
+
                         <CardContent>
                           {portfolioContent.images?.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                              {portfolioContent.images.map((image: any, index: number) => (
-                                <div key={index} className="relative group">
-                                  <img
-                                    src={getOptimizedImageUrl(image.url, { width: 200, height: 150, quality: 85, format: 'auto' })}
-                                    alt={image.alt || 'Portfolio image'}
-                                    className="w-full h-24 object-cover rounded-2xl"
-                                    loading="lazy"
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setPortfolioContent(prev => ({
-                                        ...prev,
-                                        images: prev.images.filter((_, i) => i !== index)
-                                      }))
-                                    }}
-                                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Image</TableHead>
+                                  <TableHead>Alt Text</TableHead>
+                                  <TableHead className="w-32">Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {portfolioContent.images.map((image: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell>
+                                      <img
+                                        src={getOptimizedImageUrl(image.url, { width: 32, height: 32, quality: 85, format: 'auto' })}
+                                        alt={image.alt || 'Portfolio image'}
+                                        className="h-8 w-8 object-cover rounded-2xl"
+                                        loading="lazy"
+                                      />
+                                    </TableCell>
+                                    <TableCell className="font-medium">{image.alt || 'Portfolio image'}</TableCell>
+                                    <TableCell>
+                                      <div className="flex space-x-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            const newAlt = prompt('Edit alt text:', image.alt || 'Portfolio image')
+                                            if (newAlt !== null) {
+                                              const newImages = [...portfolioContent.images]
+                                              newImages[index] = { ...image, alt: newAlt.trim() || 'Portfolio image' }
+                                              setPortfolioContent(prev => ({ ...prev, images: newImages }))
+                                            }
+                                          }}
+                                          className="rounded-xl"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            setConfirmDialogData({
+                                              title: 'Delete Portfolio Image',
+                                              description: `Are you sure you want to delete this portfolio image?`,
+                                              action: () => {
+                                                setPortfolioContent(prev => ({
+                                                  ...prev,
+                                                  images: prev.images.filter((_, i) => i !== index)
+                                                }))
+                                                setShowConfirmDialog(false)
+                                              }
+                                            })
+                                            setShowConfirmDialog(true)
+                                          }}
+                                          className="rounded-xl"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
                           ) : (
                             <div className="text-center py-8">
                               <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">No portfolio images added yet</h3>
-                              <p className="text-gray-600">Add your first portfolio image using form above</p>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">No portfolio images to manage</h3>
+                                <p className="text-gray-600">Add portfolio images using the editor panel</p>
                             </div>
                           )}
                         </CardContent>
                       </Card>
+
+
 
                     </div>
                   )}
@@ -3392,12 +3496,6 @@ export default function BusinessAdminDashboard() {
                         </p>
                         <Button onClick={() => setActiveSection('products')} className="rounded-2xl">
                           Go to Products Section
-                        </Button>
-                      </div>
-
-                      <div className="flex justify-end space-x-3 pt-6">
-                        <Button variant="outline" onClick={handleCloseEditor} className="rounded-2xl">
-                          Close
                         </Button>
                       </div>
                     </div>

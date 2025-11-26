@@ -168,6 +168,7 @@ export default function SuperAdminDashboard() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [selectedBusinessListingInquiry, setSelectedBusinessListingInquiry] = useState<any>(null)
   const [showBusinessListingInquiryDialog, setShowBusinessListingInquiryDialog] = useState(false)
+  const [isCreatingBusiness, setIsCreatingBusiness] = useState(false)
 
   useEffect(() => {
     // Check if mobile on initial load and on resize
@@ -273,6 +274,9 @@ export default function SuperAdminDashboard() {
 
   const handleAddBusiness = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (isCreatingBusiness) return
+
+    setIsCreatingBusiness(true)
     const formData = new FormData(e.currentTarget)
 
     const manualUsername = formData.get('username') as string
@@ -330,6 +334,8 @@ export default function SuperAdminDashboard() {
         description: "Failed to create business. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setIsCreatingBusiness(false)
     }
   }
 
@@ -1234,15 +1240,15 @@ export default function SuperAdminDashboard() {
             <form onSubmit={handleAddBusiness} className="space-y-4">
               <div className="space-y-2">
                 <Label>Business Name</Label>
-                <Input name="name" required className="rounded-2xl" />
+                <Input name="name" required className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea name="description" className="rounded-2xl" />
+                <Textarea name="description" className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select name="categoryId">
+                <Select name="categoryId" disabled={isCreatingBusiness}>
                   <SelectTrigger className="rounded-2xl">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -1257,26 +1263,26 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="space-y-2">
                 <Label>Address</Label>
-                <Input name="address" className="rounded-2xl" />
+                <Input name="address" className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
-                <Input name="phone" className="rounded-2xl" />
+                <Input name="phone" className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Website</Label>
-                <Input name="website" className="rounded-2xl" />
+                <Input name="website" className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>--- Admin Account ---</Label>
               </div>
               <div className="space-y-2">
                 <Label>Admin Name</Label>
-                <Input name="adminName" required className="rounded-2xl" />
+                <Input name="adminName" required className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input name="email" type="email" required className="rounded-2xl" />
+                <Input name="email" type="email" required className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <Button type="button" onClick={(e) => {
                 e.preventDefault()
@@ -1284,21 +1290,22 @@ export default function SuperAdminDashboard() {
                 const businessName = (form.querySelector('input[name="name"]') as HTMLInputElement)?.value || ''
                 const adminName = (form.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || ''
                 handleGenerateCredentials(businessName, adminName)
-              }} className="rounded-2xl">Generate Credentials</Button>
+              }} className="rounded-2xl" disabled={isCreatingBusiness}>Generate Credentials</Button>
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" disabled={isCreatingBusiness} />
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
                 <div className="relative">
-                  <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" />
+                  <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" disabled={isCreatingBusiness} />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isCreatingBusiness}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -1306,8 +1313,17 @@ export default function SuperAdminDashboard() {
                 <p className="text-xs text-gray-500">(Leave empty to use generated or enter manually)</p>
               </div>
               <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); setGeneratedPassword(''); setGeneratedUsername(''); }} className="rounded-2xl">Cancel</Button>
-                <Button type="submit" className="rounded-2xl">Create Business</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowRightPanel(false); setRightPanelContent(null); setGeneratedPassword(''); setGeneratedUsername(''); }} className="rounded-2xl" disabled={isCreatingBusiness}>Cancel</Button>
+                <Button type="submit" className="rounded-2xl" disabled={isCreatingBusiness}>
+                  {isCreatingBusiness ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Business'
+                  )}
+                </Button>
               </div>
             </form>
           </div>

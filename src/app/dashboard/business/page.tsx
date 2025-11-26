@@ -1365,41 +1365,6 @@ export default function BusinessAdminDashboard() {
                 <div className="flex-1 overflow-hidden">
                   {selectedProfileSection === 'brands' ? (
                     <div className="space-y-6">
-                      {/* Preview Section */}
-                      <div className="bg-amber-50 border rounded-lg p-6 transform scale-90 origin-top">
-                        <div className="mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Brand Slider Preview
-                          </h3>
-                        </div>
-                        {brandContent.brands?.length > 0 ? (
-                          <section className="py-4 px-4 sm:px-6 lg:px-8 bg-transparent">
-                            <div className="max-w-7xl mx-auto">
-                              <h2 className="text-xl font-bold mb-6">Trusted By</h2>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {brandContent.brands.map((brand: any, index: number) => (
-                                  <Card key={index} className="overflow-hidden rounded-3xl py-6 bg-white h-full flex flex-col">
-                                    <div className="h-20 flex items-center justify-center p-2">
-                                      {brand.logo ? (
-                                        <img src={getOptimizedImageUrl(brand.logo, { width: 100, height: 60, quality: 85, format: 'auto' })} alt={brand.name} className="max-h-full max-w-full object-contain" />
-                                      ) : (
-                                        <span className="text-gray-400">{brand.name}</span>
-                                      )}
-                                    </div>
-                                  </Card>
-                                ))}
-                              </div>
-                            </div>
-                          </section>
-                        ) : (
-                          <div className="text-center py-8">
-                            <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No brands added yet</h3>
-                            <p className="text-gray-600">Add brands using the editor panel</p>
-                          </div>
-                        )}
-                      </div>
-
                       {/* Brands Table Section */}
                       <Card className="rounded-3xl">
 
@@ -1486,6 +1451,8 @@ export default function BusinessAdminDashboard() {
                           )}
                         </CardContent>
                       </Card>
+
+
                     </div>
                   ) : (
                       <ProfilePreview
@@ -3997,7 +3964,7 @@ export default function BusinessAdminDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>{confirmDialogData?.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDialogData?.description}
+              {confirmDialogData?.description}  
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

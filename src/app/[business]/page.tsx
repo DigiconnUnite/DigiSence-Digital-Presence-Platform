@@ -73,11 +73,16 @@ export default async function BusinessPage({ params }: PageProps) {
     },
   })
 
-  // Fetch business-specific categories
+  // Fetch categories that have products for this business
   const categories = await db.category.findMany({
     where: {
-      businessId: business?.id,
-      type: 'PRODUCT'
+      type: 'PRODUCT',
+      products: {
+        some: {
+          businessId: business?.id,
+          isActive: true
+        }
+      }
     },
     select: {
       id: true,
@@ -85,6 +90,7 @@ export default async function BusinessPage({ params }: PageProps) {
       slug: true,
       description: true,
       parentId: true,
+      businessId: true,
       _count: {
         select: {
           products: true
@@ -98,7 +104,7 @@ export default async function BusinessPage({ params }: PageProps) {
     notFound()
   }
 
-  console.log('Categories fetched from DB:', categories)
+  console.log('Categories fetched:', categories.length, categories.map(c => ({ id: c.id, name: c.name, _count: c._count })))
   const mappedCategories = categories.map(cat => ({
     id: cat.id,
     name: cat.name,
@@ -107,7 +113,7 @@ export default async function BusinessPage({ params }: PageProps) {
     parentId: cat.parentId || undefined,
     _count: cat._count
   }))
-  console.log('Mapped categories:', mappedCategories)
+  console.log('Mapped categories:', mappedCategories.length, mappedCategories.map(c => ({ id: c.id, name: c.name })))
 
   return <BusinessProfile business={{
     ...business,

@@ -294,19 +294,17 @@ export default function BusinessProfile({ business: initialBusiness, categories:
 
   // Categories and filtered products for search/filter - memoized for performance
   const { categories, filteredProducts } = useMemo(() => {
+    console.log('DEBUG: initialCategories received:', initialCategories)
     const categories = initialCategories.map(cat => ({
       id: cat.id,
       name: cat.name
     }))
-    console.log('Categories in BusinessProfile:', categories)
-    console.log('Selected category:', selectedCategory)
+    console.log('DEBUG: categories for dropdown:', categories)
     const filteredProducts = business.products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === 'all' || product.category?.id === selectedCategory
-      console.log(`Product ${product.name}: matchesSearch=${matchesSearch}, matchesCategory=${matchesCategory}, product.category?.id=${product.category?.id}`)
       return matchesSearch && matchesCategory
     })
-    console.log('Filtered products:', filteredProducts.length)
     return { categories, filteredProducts }
   }, [initialCategories, business.products, searchTerm, selectedCategory])
 

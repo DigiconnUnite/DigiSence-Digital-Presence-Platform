@@ -1005,7 +1005,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                           {business.admin.name}
                         </span>
                       )}
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="xs"
                         className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 cursor-pointer px-3 bg-linear-to-r  from-cyan-900 via-slate-900  to-slate-900 hover:text-gray-100  text-gray-200 border border-gray-200 font-semibold gap-1 shadow-none active:scale-95 transition"
@@ -1026,7 +1026,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       >
                         <Download className="w-4 h-4 mr-1" />
                         Catalog
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -1676,7 +1676,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <div>
                     <Label className="block text-gray-600 mb-1">Opening Hours</Label>
                     {business.openingHours && business.openingHours.length > 0 ? (
-                      <ul className="text-sm text-gray-800">
+                      <ul className="text-sm flex-1 text-gray-800">
                         {business.openingHours.map((item: any, idx: number) => (
                           <li key={idx} className="flex justify-between items-center py-0.5">
                             <span className="font-medium">{item.day}</span>

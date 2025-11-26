@@ -2762,7 +2762,7 @@ export default function BusinessAdminDashboard() {
                               className="rounded-2xl"
                             />
                           </div>
-                          <div>
+                          {/* <div>
                             <Label>Catalog PDF URL</Label>
                             <div className="space-y-2">
                               <Input
@@ -2776,7 +2776,7 @@ export default function BusinessAdminDashboard() {
                                 onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, catalogPdf: url }))}
                               />
                             </div>
-                          </div>
+                          </div> */}
                           <div>
                             <Label>GST Number</Label>
                             <Input

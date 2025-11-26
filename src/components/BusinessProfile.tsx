@@ -1010,7 +1010,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       <Button
                         variant="outline"
                         size="xs"
-                        className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 cursor-pointer px-3 bg-linear-to-r  from-cyan-900 via-slate-900 hover:px-5 to-slate-900 hover:text-gray-100  text-gray-200 border border-gray-200 font-semibold gap-1 shadow-none active:scale-95 transition"
+                        className="flex items-center text-xs xs:text-sm md:text-base rounded-full py-0.5 cursor-pointer px-3 bg-linear-to-r  from-cyan-900 via-slate-900  to-slate-900 hover:text-gray-100  text-gray-200 border border-gray-200 font-semibold gap-1 shadow-none active:scale-95 transition"
                         onClick={() => {
                           if (business.catalogPdf) {
                             const link = document.createElement('a');

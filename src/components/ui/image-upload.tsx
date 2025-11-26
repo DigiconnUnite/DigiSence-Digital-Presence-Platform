@@ -220,7 +220,7 @@ export default function ImageUpload({
                 <div className="space-y-4">
                   <Upload className="w-12 h-12 mx-auto text-gray-400" />
                   <p className="text-sm text-gray-600 mb-4">
-                    Drag and drop {mediaTypeText} here, or click to select
+                      Drag and drop {mediaTypeText} here
                   </p>
                   <div className="flex items-center justify-center">
                       <Button

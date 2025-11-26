@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     const maxSize = 50 * 1024 * 1024 // 50MB for videos
     const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'image/svg+xml']
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov']
-    const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes]
+    const allowedPdfTypes = ['application/pdf']
+    const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedPdfTypes]
 
     if (file.size > maxSize) {
       return NextResponse.json({ error: 'File size must be less than 50MB' }, { status: 400 })
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({
-        error: 'File must be a valid format (Images: JPEG, JPG, PNG, WebP, GIF, BMP, TIFF, SVG; Videos: MP4, WebM, OGG, AVI, MOV)'
+        error: 'File must be a valid format (Images: JPEG, JPG, PNG, WebP, GIF, BMP, TIFF, SVG; Videos: MP4, WebM, OGG, AVI, MOV; PDFs: PDF)'
       }, { status: 400 })
     }
 
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     // Determine resource type
     const isVideo = allowedVideoTypes.includes(file.type)
-    const resourceType = isVideo ? 'video' : 'image'
+    const isPdf = allowedPdfTypes.includes(file.type)
+    const resourceType = isVideo ? 'video' : isPdf ? 'raw' : 'image'
 
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(tempFilePath, {
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
         size: file.size,
         type: file.type,
         resourceType: result.resource_type,
-        message: `${isVideo ? 'Video' : 'Image'} uploaded successfully!`
+        message: `${isVideo ? 'Video' : isPdf ? 'PDF' : 'Image'} uploaded successfully!`
       })
     } else {
       return NextResponse.json({ error: 'Failed to upload media' }, { status: 500 })

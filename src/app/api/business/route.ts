@@ -34,7 +34,7 @@ const updateBusinessSchema = z.object({
     message: 'Logo must be a valid URL starting with http:// or https://, or empty'
   }).optional(),
   address: z.string().max(500).optional(),
-  phone: z.string().regex(/^[\+]?[1-9][\d\s\-\(\)]{0,20}$/, 'Invalid phone format').optional(),
+  phone: z.string().regex(/^[\+]?[\d][\d\s\-\(\)]{0,20}$/, 'Invalid phone format').optional(),
   email: z.string().email().optional(),
   website: z.string().refine((val) => val === '' || /^https?:\/\/.+/.test(val), {
     message: 'Website must be a valid URL starting with http:// or https://, or empty'

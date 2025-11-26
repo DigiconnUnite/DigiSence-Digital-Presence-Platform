@@ -63,9 +63,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Inquiry submission started')
     const body = await request.json()
-    
+    console.log('Inquiry request body received')
+
     const { name, email, phone, message, businessId, productId } = inquirySchema.parse(body)
+    console.log(`Inquiry submission for business: ${businessId}, product: ${productId || 'none'}`)
 
     // Verify business exists
     const business = await db.business.findUnique({
@@ -73,8 +76,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (!business) {
+      console.log(`Inquiry failed: Business not found - ${businessId}`)
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
+
+    console.log(`Business verified: ${business.name}`)
 
     // Create inquiry
     const inquiry = await db.inquiry.create({
@@ -104,19 +110,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log(`Inquiry created with ID: ${inquiry.id}`)
+
     // Send email notification to business
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications?inquiryId=${inquiry.id}`, {
+      console.log('Sending email notification')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'inquiry',
+          inquiryId: inquiry.id,
+        }),
       })
 
-      if (!response.ok) {
-        console.error('Failed to send email notification')
+      if (response.ok) {
+        console.log('Email notification sent successfully')
+      } else {
+        console.error('Failed to send email notification:', response.status)
       }
     } catch (error) {
       console.error('Email notification error:', error)
     }
 
+    console.log('Inquiry submission completed successfully')
     return NextResponse.json({
       success: true,
       inquiry: {

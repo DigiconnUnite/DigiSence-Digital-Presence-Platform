@@ -60,7 +60,7 @@ const updateBusinessSchema = z.object({
     close: z.string().optional()
   })).optional(),
   gstNumber: z.string().max(50).optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.string().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
   portfolioContent: z.any().optional(),
@@ -120,20 +120,17 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Ensure content fields are included in response
-    if (business) {
-      const businessWithContent = business as any
-      businessWithContent.heroContent = businessWithContent.heroContent || { slides: [] }
-      businessWithContent.brandContent = businessWithContent.brandContent || { brands: [] }
-      businessWithContent.portfolioContent = businessWithContent.portfolioContent || { images: [] }
-      return NextResponse.json({ business: businessWithContent })
-    }
-
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ business })
+    // Ensure content fields are included in response
+    const businessWithContent = business as any
+    businessWithContent.heroContent = businessWithContent.heroContent || { slides: [] }
+    businessWithContent.brandContent = businessWithContent.brandContent || { brands: [] }
+    businessWithContent.portfolioContent = businessWithContent.portfolioContent || { images: [] }
+
+    return NextResponse.json({ business: businessWithContent })
   } catch (error) {
     console.error('Business fetch error:', error)
     return NextResponse.json(

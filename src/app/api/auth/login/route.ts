@@ -9,21 +9,27 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Login attempt started')
     const body = await request.json()
-    
+    console.log('Login request body received')
+
     const { email, password } = loginSchema.parse(body)
-    
+    console.log(`Login attempt for email: ${email}`)
+
     const user = await authenticateUser(email, password)
-    
+
     if (!user) {
+      console.log(`Login failed: Invalid credentials for ${email}`)
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       )
     }
-    
+
+    console.log(`Login successful for user: ${user.email} (${user.role})`)
     const token = generateToken(user)
-    
+    console.log('JWT token generated')
+
     const response = NextResponse.json({
       user: {
         id: user.id,
@@ -34,16 +40,17 @@ export async function POST(request: NextRequest) {
       },
       token,
     })
-    
+
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days
     })
-    
+
+    console.log('Login response sent with token')
     return response
-    
+
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

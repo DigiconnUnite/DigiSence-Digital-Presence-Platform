@@ -14,23 +14,37 @@ export async function POST(request: NextRequest) {
     const data: NotificationData = await request.json()
 
     if (data.type === 'inquiry' && data.inquiryId) {
-      // Send inquiry notification
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inquiries/${data.inquiryId}`)
-      if (response.ok) {
-        const inquiry = await response.json()
+      // For inquiry notifications, we need to fetch the inquiry data
+      // Since this is an internal call, we'll fetch it directly from DB
+      const { db } = await import('@/lib/db')
+      const inquiry = await db.inquiry.findUnique({
+        where: { id: data.inquiryId },
+        include: {
+          business: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      })
 
-        if (inquiry.inquiry) {
-          await sendInquiryNotification({
-            businessName: inquiry.business.name,
-            businessEmail: inquiry.business.email,
-            customerName: inquiry.name,
-            customerEmail: inquiry.email,
-            customerPhone: inquiry.phone,
-            message: inquiry.message,
-            productName: inquiry.product?.name,
-            inquiryUrl: `${process.env.NEXT_PUBLIC_API_URL}/dashboard/inquiries`,
-          })
-        }
+      if (inquiry) {
+        await sendInquiryNotification({
+          businessName: inquiry.business.name,
+          businessEmail: inquiry.business.email || '',
+          customerName: inquiry.name,
+          customerEmail: inquiry.email,
+          customerPhone: inquiry.phone || undefined,
+          message: inquiry.message,
+          productName: inquiry.product?.name,
+          inquiryUrl: `${process.env.NEXT_PUBLIC_API_URL}/dashboard/inquiries`,
+        })
       }
     } else if (data.type === 'businessListingInquiry' && data.businessListingInquiryId) {
       // Send business listing inquiry notification to admins

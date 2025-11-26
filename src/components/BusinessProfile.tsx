@@ -1674,11 +1674,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <h2 className="text-xl md:text-2xl font-bold mb-3">Opening Hours & Details</h2>
                 <div className="space-y-4 flex justify-between">
                   <div>
-                    <Label className="block gap-5 text-gray-600 mb-1">Opening Hours</Label>
+                    <Label className="block  text-gray-600 mb-1">Opening Hours</Label>
                     {business.openingHours && business.openingHours.length > 0 ? (
                       <ul className="text-sm flex-1 text-gray-800">
                         {business.openingHours.map((item: any, idx: number) => (
-                          <li key={idx} className="flex justify-between items-center py-0.5">
+                          <li key={idx} className="flex gap-5 justify-between items-center py-0.5">
                             <span className="font-medium">{item.day}</span>
                             <span>
                               {item.open && item.close

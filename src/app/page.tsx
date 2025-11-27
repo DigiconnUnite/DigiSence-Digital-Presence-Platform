@@ -120,7 +120,7 @@ export default function HomePage() {
                           <div className="order-1 lg:order-2">
                               <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
                               <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
-                              <Link href="/business">
+                              <Link href="/businesses">
                                   <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
                               </Link>
                           </div>

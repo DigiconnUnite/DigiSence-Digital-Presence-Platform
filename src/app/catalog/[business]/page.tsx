@@ -134,6 +134,17 @@ export async function generateMetadata({ params }: PageProps) {
     select: {
       name: true,
       description: true,
+      logo: true,
+      category: {
+        select: {
+          name: true,
+        },
+      },
+      admin: {
+        select: {
+          name: true,
+        },
+      },
     },
   })
 
@@ -143,8 +154,35 @@ export async function generateMetadata({ params }: PageProps) {
     }
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  const pageUrl = `${baseUrl}/catalog/${businessSlug}`
+  const imageUrl = business.logo || `${baseUrl}/placeholder.png`
+
   return {
     title: `${business.name} - Business Profile`,
     description: business.description || `Professional profile for ${business.name}`,
+    keywords: `${business.name}, ${business.category?.name || 'business'}, products, services`,
+    authors: [{ name: business.admin?.name || business.name }],
+    openGraph: {
+      title: `${business.name} - Business Profile`,
+      description: business.description || `Professional profile for ${business.name}`,
+      url: pageUrl,
+      siteName: 'DigiSence',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${business.name} logo`,
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${business.name} - Business Profile`,
+      description: business.description || `Professional profile for ${business.name}`,
+      images: [imageUrl],
+    },
   }
 }

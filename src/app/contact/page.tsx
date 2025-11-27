@@ -126,68 +126,6 @@ export default function ContactPage() {
                 <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
                     <div className="max-w-7xl mx-auto">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                            {/* Contact Info */}
-                            <div>
-                                <h2 className="text-3xl font-bold text-primary mb-8">Get In Touch</h2>
-                                <div className="space-y-6">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <Mail className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-primary mb-1">Email Us</h3>
-                                            <p className="text-muted-foreground mb-2">Send us an email and we'll respond within 24 hours.</p>
-                                            <a href="mailto:support@digisence.com" className="text-primary hover:underline">
-                                                support@digisence.com
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <Phone className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-primary mb-1">Call Us</h3>
-                                            <p className="text-muted-foreground mb-2">Speak directly with our support team.</p>
-                                            <a href="tel:+1-555-0123" className="text-primary hover:underline">
-                                                +1 (555) 012-3456
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <MapPin className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-primary mb-1">Visit Us</h3>
-                                            <p className="text-muted-foreground mb-2">Our headquarters location.</p>
-                                            <address className="text-primary not-italic">
-                                                123 Business Street<br />
-                                                Tech City, TC 12345<br />
-                                                United States
-                                            </address>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <Clock className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-primary mb-1">Business Hours</h3>
-                                            <p className="text-muted-foreground mb-2">When you can reach us.</p>
-                                            <div className="text-primary">
-                                                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                                                <p>Saturday: 10:00 AM - 4:00 PM</p>
-                                                <p>Sunday: Closed</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Contact Form */}
                             <div>
                                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">

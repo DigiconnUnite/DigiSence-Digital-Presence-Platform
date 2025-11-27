@@ -70,7 +70,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
     <motion.div
       ref={ref}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("fixed inset-x-0 top-0 z-50 w-full", className)}
+      className={cn("fixed inset-x-0 top-5 z-50 w-full", className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
@@ -141,13 +141,18 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
                 layoutId="hovered"
                 className={cn(
                   "absolute inset-0 h-full w-full rounded-full",
-                  isActive
-                    ? "bg-blue-100 dark:bg-blue-900"
-                    : "bg-gray-100 dark:bg-neutral-800"
+                  !isActive && "bg-gray-100 dark:bg-neutral-800"
                 )}
               />
             )}
-            <span className="relative z-20">{item.name}</span>
+            <span
+              className={cn(
+                "relative z-20",
+                isActive && " font-extrabold "
+              )}
+            >
+              {item.name}
+            </span>
           </a>
         );
       })}

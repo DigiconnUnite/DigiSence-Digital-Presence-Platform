@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Users, Shield, Zap, ArrowRight, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import HeroSectionOne from "@/components/ui/hero-section-demo-1";
+import HeroSectionOne from "@/components/ui/hero";
 import Footer from "@/components/Footer";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import {
@@ -30,7 +30,7 @@ export default function HomePage() {
         },
         {
             name: "Businesses",
-            link: "/businesses",
+            link: "/business",
         },
         {
             name: "Contact Us",
@@ -38,13 +38,12 @@ export default function HomePage() {
         },
     ];
 
-
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
 
   return (
       <>
-          <Navbar>
+          <Navbar >
               {/* Desktop Navigation */}
               <NavBody>
                   <Link
@@ -121,7 +120,7 @@ export default function HomePage() {
                           <div className="order-1 lg:order-2">
                               <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
                               <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
-                              <Link href="/businesses">
+                              <Link href="/business">
                                   <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
                               </Link>
                           </div>
@@ -218,7 +217,7 @@ export default function HomePage() {
                                       <ArrowRight className="ml-2 h-5 w-5" />
                                   </Button>
                               </Link>
-                              <Link href="/businesses">
+                              <Link href="/business">
                                   <Button
                                       size="lg"
                                       variant="outline"

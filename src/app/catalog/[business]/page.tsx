@@ -157,8 +157,8 @@ export async function generateMetadata({ params }: PageProps) {
   }
 
   const headersList = headers()
-  const host = headersList.get('host') || 'localhost:3000'
-  const protocol = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
+  const host = (await headersList).get('host') || 'localhost:3000'
+  const protocol = (await headersList).get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
   const baseUrl = `${protocol}://${host}`
   const pageUrl = `${baseUrl}/catalog/${businessSlug}`
   const imageUrl = business.logo ? getOptimizedImageUrl(business.logo, {

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
 import BusinessProfile from '@/components/BusinessProfile'
+import { getOptimizedImageUrl } from '@/lib/cloudinary'
+import { headers } from 'next/headers'
 
 interface PageProps {
   params: Promise<{
@@ -154,18 +156,30 @@ export async function generateMetadata({ params }: PageProps) {
     }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  const headersList = headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
+  const baseUrl = `${protocol}://${host}`
   const pageUrl = `${baseUrl}/catalog/${businessSlug}`
-  const imageUrl = business.logo || `${baseUrl}/placeholder.png`
+  const imageUrl = business.logo ? getOptimizedImageUrl(business.logo, {
+    width: 1200,
+    height: 630,
+    quality: 85,
+    format: 'auto',
+    crop: 'fill',
+    gravity: 'auto'
+  }) : `${baseUrl}/placeholder.png`
+
+  const description = (business.description || `Professional profile for ${business.name}`).slice(0, 160)
 
   return {
     title: `${business.name} - Business Profile`,
-    description: business.description || `Professional profile for ${business.name}`,
+    description,
     keywords: `${business.name}, ${business.category?.name || 'business'}, products, services`,
     authors: [{ name: business.admin?.name || business.name }],
     openGraph: {
       title: `${business.name} - Business Profile`,
-      description: business.description || `Professional profile for ${business.name}`,
+      description,
       url: pageUrl,
       siteName: 'DigiSence',
       images: [
@@ -181,7 +195,7 @@ export async function generateMetadata({ params }: PageProps) {
     twitter: {
       card: 'summary_large_image',
       title: `${business.name} - Business Profile`,
-      description: business.description || `Professional profile for ${business.name}`,
+      description,
       images: [imageUrl],
     },
   }

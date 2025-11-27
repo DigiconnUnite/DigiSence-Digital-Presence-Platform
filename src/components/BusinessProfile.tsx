@@ -1768,7 +1768,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   Make your online presence with DigiSence
                 </p>
                 <a
-                  href="https://www.digisence.io/"
+                    href="#"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full"

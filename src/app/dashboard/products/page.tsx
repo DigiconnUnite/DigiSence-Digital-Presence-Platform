@@ -254,7 +254,7 @@ export default function ProductsManagementPage() {
       return
     }
 
-    const productUrl = `${window.location.origin}/${business.slug}#products`
+    const productUrl = `${window.location.origin}/catalog/${business.slug}#products`
     navigator.clipboard.writeText(productUrl).then(() => {
       alert('Product link copied to clipboard!')
     }).catch(() => {

@@ -77,13 +77,53 @@ export default async function BusinessPage({ params }: PageProps) {
     notFound()
   }
 
+  // Fetch categories that have products for this business
+  const categories = await db.category.findMany({
+    where: {
+      type: 'PRODUCT',
+      products: {
+        some: {
+          businessId: business?.id,
+          isActive: true
+        }
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      parentId: true,
+      businessId: true,
+      _count: {
+        select: {
+          products: true
+        }
+      }
+    },
+    orderBy: { name: 'asc' }
+  })
+
+  console.log('Business ID:', business.id)
+  console.log('Products count:', business.products.length)
+  console.log('Categories fetched:', categories.length, categories.map(c => ({ id: c.id, name: c.name, type: 'PRODUCT', _count: c._count })))
+
+  const mappedCategories = categories.map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    description: cat.description || undefined,
+    parentId: cat.parentId || undefined,
+    _count: cat._count
+  }))
+
   // Process openingHours to match the expected type
   const processedBusiness = {
     ...business,
     openingHours: business.openingHours ? (Array.isArray(business.openingHours) ? business.openingHours : JSON.parse(business.openingHours as string)) as any[] : undefined
   } as any
 
-  return <BusinessProfile business={processedBusiness} />
+  return <BusinessProfile business={processedBusiness} categories={mappedCategories} />
 }
 
 export async function generateMetadata({ params }: PageProps) {

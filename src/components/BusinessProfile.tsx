@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 // Define Business type since Prisma doesn't export it for MongoDB
 interface Business {
@@ -151,6 +152,7 @@ interface InquiryFormData {
 }
 
 export default function BusinessProfile({ business: initialBusiness, categories: initialCategories = [] }: BusinessProfileProps) {
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState(initialBusiness)
   const [inquiryModal, setInquiryModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -237,6 +239,34 @@ export default function BusinessProfile({ business: initialBusiness, categories:
     return () => clearInterval(interval)
   }, [mounted, business?.id, business?.slug])
 
+  // Check URL parameters for auto-opening product modal
+  useEffect(() => {
+    if (!mounted || !business.products) return
+
+    const productId = searchParams.get('product')
+    const modal = searchParams.get('modal')
+
+    if (productId && modal === 'open') {
+      const product = business.products.find(p => p.id === productId)
+      if (product) {
+        setSelectedProductModal(product)
+        setProductModal(true)
+        // Clear the URL parameters after opening modal
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('product')
+          url.searchParams.delete('modal')
+          window.history.replaceState({}, '', url.toString())
+        }
+      } else {
+        console.warn('Product not found for ID:', productId)
+        // Optionally show an alert for invalid product
+        if (typeof window !== 'undefined') {
+          alert('The requested product could not be found.')
+        }
+      }
+    }
+  }, [mounted, business.products, searchParams])
 
   // Default hero content if not set
   const heroContent = business.heroContent as any || {
@@ -645,7 +675,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       <nav className="hidden md:block sticky top-0 z-40 bg-white/90 border-b backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex relative items-center space-x-4">
+            <div className="flex relative  items-center space-x-4">
               {business.logo && business.logo.trim() !== '' && (
                 <img
                   src={getOptimizedImageUrl(business.logo, {
@@ -669,7 +699,6 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <a href="#brands" className="text-gray-700 hover:text-gray-900 transition-colors ">Brands</a>
                 <a href="#products" className="text-gray-600 hover:text-gray-900 transition-colors">Products</a>
                 <a href="#portfolio" className="text-gray-600 hover:text-gray-900 transition-colors">Portfolio</a>
-                <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
               </div>
             </div>
           </div>
@@ -960,7 +989,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-12">
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-stretch">
-              <Card className="relative bg-linear-to-bl from-cyan-50 via-cyan-100/30 to-cyan-200/20  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
+              <Card className="relative bg-linear-to-bl from-cyan-50 via-cyan-100/30 to-cyan-200/20 border border-cyan-500  rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4 md:p-4 lg:p-6 flex flex-row items-center md:items-stretch w-full max-w-full overflow-hidden">
                 <div className="flex w-full flex-row items-center gap-4 md:gap-6 lg:gap-10">
                   <div className="shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
@@ -1339,10 +1368,10 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 {categories.map((category, index: number) => (
                   <Card
                     key={category.id}
-                    className="overflow-hidden h-full  flex items-center justify-center backdrop-blur-md bg-white/50"
+                    className="overflow-hidden flex flex-col items-center justify-center backdrop-blur-md bg-white/50 w-full min-h-[70px] md:min-h-[100px]"
                   >
-                    <CardHeader className="p-2">
-                      <CardTitle className="text-center text-xs md:text-base">{category.name}</CardTitle>
+                    <CardHeader className="p-2 w-full flex justify-center items-center">
+                      <CardTitle className="w-full text-center text-xs md:text-base">{category.name}</CardTitle>
                     </CardHeader>
                   </Card>
                 ))}
@@ -1351,12 +1380,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               <Carousel className="w-full">
                 <CarouselContent>
                     {categories.map((category) => (
-                      <CarouselItem key={category.id} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
+                      <CarouselItem key={category.id} className="basis-1/2 md:basis-1/4 lg:basis-1/5 flex">
                         <Card
-                          className="overflow-hidden h-full  flex items-center justify-center backdrop-blur-md bg-white/50"
+                          className="overflow-hidden flex flex-col items-center justify-center backdrop-blur-md bg-white/50 w-full min-h-[70px] md:min-h-[100px]"
                         >
-                          <CardHeader className="p-2">
-                            <CardTitle className="text-center text-xs md:text-base">{category.name}</CardTitle>
+                          <CardHeader className="p-2 w-full flex justify-center items-center">
+                            <CardTitle className="w-full text-center text-xs md:text-base">{category.name}</CardTitle>
                         </CardHeader>
                       </Card>
                     </CarouselItem>
@@ -1417,22 +1446,13 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               {viewAllProducts ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                   {filteredProducts.map((product) => (
-                    <Card id={`product-${product.id}`} key={product.id} className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2">
+                    <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2">
                       <div className="relative h-32 md:h-48 cursor-pointer" onClick={() => openProductModal(product)}>
                         {product.image && product.image.trim() !== '' ? (
                           <img
-                            src={getOptimizedImageUrl(product.image, {
-                              width: 400,
-                              height: 300,
-                              quality: 85,
-                              format: 'auto',
-                              crop: 'fill',
-                              gravity: 'center'
-                            })}
-                            srcSet={generateSrcSet(product.image)}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             loading="lazy"
                           />
                         ) : (
@@ -1441,7 +1461,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             </div>
                         )}
                         <Badge
-                          className={`absolute top-2 bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 rounded-full right-2 text-xs`}
+                          className={`absolute top-2 rounded-full ${product.inStock ? 'bg-linear-to-l from-gray-900 to-lime-900' : 'bg-linear-to-l from-gray-900 to-red-900'} border border-gray-50/25 right-2 text-xs`}
                           variant={product.inStock ? "default" : "destructive"}
                         >
                           {product.inStock ? (
@@ -1453,14 +1473,21 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                 </span>
                               )}  In Stock
                             </span>
-                          ) : "Out of Stock"}
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                              </span>  Out of Stock
+                            </span>
+                          )}
                         </Badge>
                       </div>
-                      <CardHeader className="pb-2 px-2 md:px-3 ">
-                        <CardTitle className="text-xs  md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => openProductModal(product)}>{product.name}</CardTitle>
+                      <CardHeader className="pb-2 px-2 md:px-6">
+                        <CardTitle className="text-xs e md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => openProductModal(product)}>{product.name}</CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0 px-2 md:px-3 ">
-                        <div className="flex flex-row flex-nowrap gap-1 mb-2 md:mb-3 overflow-x-auto hide-scrollbar">
+                      <CardContent className="pt-0 px-2  md:px-6">
+                        <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
                           {product.brandName && (
                             <Badge variant="outline" className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max">
                               {product.brandName}
@@ -1479,10 +1506,14 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                           className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
                           onClick={() => {
                             if (business.phone) {
-                              const productLink = `${window.location.origin}/catalog/${business.slug}#product-${product.id}`;
-                              const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
-                              const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
-                              window.open(whatsappUrl, '_blank');
+                              const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                              const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
+                              const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+                              try {
+                                window.open(whatsappUrl, '_blank');
+                              } catch (error) {
+                                alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                              }
                             } else {
                               alert('Phone number not available');
                             }
@@ -1506,7 +1537,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               <img
                                 src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                                 loading="lazy"
                               />
                             ) : (
@@ -1515,7 +1546,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                 </div>
                             )}
                             <Badge
-                              className={`absolute top-2 rounded-full bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 right-2 text-xs`}
+                              className={`absolute top-2 rounded-full ${product.inStock ? 'bg-linear-to-l from-gray-900 to-lime-900' : 'bg-linear-to-l from-gray-900 to-red-900'} border border-gray-50/25 right-2 text-xs`}
                               variant={product.inStock ? "default" : "destructive"}
                             >
                               {product.inStock ? (
@@ -1527,10 +1558,17 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                     </span>
                                   )}  In Stock
                                 </span>
-                              ) : "Out of Stock"}
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                  </span>  Out of Stock
+                                </span>
+                              )}
                             </Badge>
                           </div>
-                          <CardHeader className="pb-2 px-2 md:px-3 ">
+                          <CardHeader className="pb-2 px-2 md:px-6">
                             <CardTitle className="text-xs e md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => openProductModal(product)}>{product.name}</CardTitle>
                           </CardHeader>
                           <CardContent className="pt-0 px-2  md:px-6">
@@ -1553,10 +1591,14 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
                               onClick={() => {
                                 if (business.phone) {
-                                  const productLink = `${window.location.origin}/${business.slug}#product-${product.id}`;
-                                  const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
-                                  const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
-                                  window.open(whatsappUrl, '_blank');
+                                  const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                                  const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
+                                  const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+                                  try {
+                                    window.open(whatsappUrl, '_blank');
+                                  } catch (error) {
+                                    alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                                  }
                                 } else {
                                   alert('Phone number not available');
                                 }
@@ -1713,7 +1755,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
 
       {/* Footer - Enhanced for Mobile */}
       <LampContainer>
-        <footer id="contact" ref={contactRef} className="relative  text-white py-8 pb-10 mb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <footer className="relative  text-white py-8 pb-10 mb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden">
 
 
         <div className="max-w-7xl mx-auto relative z-10">
@@ -1872,7 +1914,21 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       : 'bg-red-500 hover:bg-red-600'
                       } text-white border-0`}
                   >
-                    {selectedProductModal.inStock ? 'In Stock' : 'Out of Stock'}
+                    {selectedProductModal.inStock ? (
+                      <span className="flex items-center gap-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+                        </span> In Stock
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+                        </span> Out of Stock
+                      </span>
+                    )}
                   </Badge>
                 </div>
               </div>
@@ -1935,7 +1991,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             </div>
                           )}
                           <Badge
-                            className={`absolute top-2 bg-linear-to-l from-gray-900 to-lime-900 border border-gray-50/25 rounded-full right-2 text-xs`}
+                            className={`absolute top-2 ${product.inStock ? 'bg-linear-to-l from-gray-900 to-lime-900' : 'bg-linear-to-l from-gray-900 to-red-900'} border border-gray-50/25 rounded-full right-2 text-xs`}
                             variant={product.inStock ? "default" : "destructive"}
                           >
                             {product.inStock ? (
@@ -1947,7 +2003,14 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                   </span>
                                 )}  In Stock
                               </span>
-                            ) : "Out of Stock"}
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                </span>  Out of Stock
+                              </span>
+                            )}
                           </Badge>
                         </div>
                         <CardHeader className="pb-2 px-2 md:px-3 ">
@@ -1974,10 +2037,14 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             onClick={(e) => {
                               e.stopPropagation()
                               if (business.phone) {
-                                const productLink = `${window.location.origin}/catalog/${business.slug}#product-${product.id}`;
-                                const message = `I want to purchase this product: ${product.name}\n\nDescription: ${product.description || 'No description available'}\n\nLink: ${productLink}`;
-                                const whatsappUrl = `https://wa.me/${business.phone}?text=${encodeURIComponent(message)}`;
-                                window.open(whatsappUrl, '_blank');
+                                const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                                const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
+                                const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+                                try {
+                                  window.open(whatsappUrl, '_blank');
+                                } catch (error) {
+                                  alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                                }
                               } else {
                                 alert('Phone number not available');
                               }

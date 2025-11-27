@@ -156,7 +156,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('Business update request body:', body)
     const updateData = updateBusinessSchema.parse(body)
+    console.log('Parsed updateData:', updateData)
 
     // Check if business exists and belongs to this admin
     const existingBusiness = await db.business.findUnique({
@@ -222,13 +224,18 @@ export async function PUT(request: NextRequest) {
     })
 
     // Update owner name if provided and not empty
+    console.log('Owner name update check:', { ownerName, isUndefined: ownerName === undefined, isEmpty: ownerName?.trim() === "" })
     if (ownerName !== undefined && ownerName.trim() !== "") {
+      console.log('Updating owner name to:', ownerName.trim())
       await db.user.update({
         where: { id: admin.userId },
         data: { name: ownerName.trim() },
       })
       // Update the business response to include the new name
       business.admin.name = ownerName.trim()
+      console.log('Owner name updated successfully')
+    } else {
+      console.log('Owner name not updated - condition not met')
     }
 
     // Ensure content fields are included in response

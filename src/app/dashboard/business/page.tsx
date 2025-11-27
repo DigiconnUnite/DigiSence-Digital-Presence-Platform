@@ -281,7 +281,6 @@ export default function BusinessAdminDashboard() {
     brands: 'Brand Slider',
     categories: 'Categories',
     portfolio: 'Portfolio',
-    products: 'Products',
     footer: 'Footer',
   })
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
@@ -314,7 +313,6 @@ export default function BusinessAdminDashboard() {
       if (selectedProfileSection === 'brands') return 'Brand Slider Editor'
       if (selectedProfileSection === 'categories') return 'Categories Editor'
       if (selectedProfileSection === 'portfolio') return 'Portfolio Editor'
-      if (selectedProfileSection === 'products') return 'Products Editor'
       if (selectedProfileSection === 'content') return 'Additional Content Editor'
       if (selectedProfileSection === 'footer') return 'Footer Editor'
     } else if (activeSection === 'products' && showProductRightbar) {
@@ -627,6 +625,7 @@ export default function BusinessAdminDashboard() {
       phone: businessInfoFormData.phone,
       email: businessInfoFormData.email,
       website: businessInfoFormData.website,
+      ownerName: businessInfoFormData.ownerName,
       facebook: businessInfoFormData.facebook,
       twitter: businessInfoFormData.twitter,
       instagram: businessInfoFormData.instagram,
@@ -635,6 +634,8 @@ export default function BusinessAdminDashboard() {
       openingHours: businessInfoFormData.openingHours,
       gstNumber: businessInfoFormData.gstNumber,
     }
+
+    console.log('Frontend updateData being sent:', updateData)
 
     // Validation
     if (!updateData.name?.trim()) {
@@ -1337,8 +1338,7 @@ export default function BusinessAdminDashboard() {
                       { id: 'info', label: sectionTitles.info, icon: Building },
                       { id: 'brands', label: sectionTitles.brands, icon: Palette },
                       { id: 'categories', label: 'Categories', icon: Grid3X3 },
-                      { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree },
-                      { id: 'products', label: sectionTitles.products, icon: Package }
+                      { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree }
                     ].map((tab) => {
                       const Icon = tab.icon
                       return (
@@ -2179,7 +2179,6 @@ export default function BusinessAdminDashboard() {
                 {selectedProfileSection === 'brands' && ' Brand Slider Editor'}
                 {selectedProfileSection === 'categories' && ' Categories Editor'}
                 {selectedProfileSection === 'portfolio' && ' Portfolio Editor'}
-                {selectedProfileSection === 'products' && ' Products Editor'}
                 {selectedProfileSection === 'content' && ' Additional Content Editor'}
                 {selectedProfileSection === 'footer' && ' Footer Editor'}
               </h3>
@@ -3443,30 +3442,6 @@ export default function BusinessAdminDashboard() {
                     </div>
                   )}
 
-                  {selectedProfileSection === 'products' && (
-                    <div className="space-y-6">
-                      <div>
-                        <Label className="text-sm font-medium">Section Title</Label>
-                        <Input
-                          value={sectionTitles.products}
-                          onChange={(e) => setSectionTitles(prev => ({ ...prev, products: e.target.value }))}
-                          placeholder="Enter section title"
-                          className="rounded-2xl"
-                        />
-                      </div>
-
-                      <div className="text-center py-12">
-                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Products Manager</h3>
-                        <p className="text-gray-600 mb-6">
-                          Manage your products and services from Products section in sidebar.
-                        </p>
-                        <Button onClick={() => setActiveSection('products')} className="rounded-2xl">
-                          Go to Products Section
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
 

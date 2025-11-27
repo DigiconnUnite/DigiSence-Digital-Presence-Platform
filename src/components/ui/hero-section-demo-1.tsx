@@ -89,7 +89,7 @@ export default function HeroSectionOne() {
                     size="lg"
                     variant="ghost"
                     className="h-10.5 rounded-xl px-5 text-base">
-                    <Link href="/business">
+                    <Link href="/businesses">
                       <span className="text-nowrap">Explore Businesses</span>
                     </Link>
                   </Button>
@@ -133,7 +133,7 @@ export default function HeroSectionOne() {
           <div className="group relative m-auto max-w-5xl px-6">
             <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
               <Link
-                href="/business"
+                href="/businesses"
                 className="block text-sm duration-150 hover:opacity-75">
                 <span> Explore Our Business Directory</span>
 

@@ -41,7 +41,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link href="/business" className="text-gray-300 hover:text-white transition-colors duration-300 text-base">
+                    <Link href="/businesses" className="text-gray-300 hover:text-white transition-colors duration-300 text-base">
                       Businesses
                     </Link>
                   </motion.div>

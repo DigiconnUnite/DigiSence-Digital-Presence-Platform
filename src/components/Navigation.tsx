@@ -15,7 +15,7 @@ export default function Navigation() {
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
               Home
             </Link>
-            <Link href="/business" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="/businesses" className="text-muted-foreground hover:text-primary transition-colors">
               Businesses
             </Link>
             <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">

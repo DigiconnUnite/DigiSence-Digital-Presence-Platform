@@ -597,7 +597,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       </section>
 
       {/* Categories Section Skeleton */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
+      {/* <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <Skeleton className="h-6 w-24" />
@@ -609,7 +609,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Products Section Skeleton */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
@@ -1354,7 +1354,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       }
 
       {/* Category Slider - Enhanced for Mobile */}
-      {categories?.length > 0 && (
+      {/* {categories?.length > 0 && (
         <section className="py-6 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-4 md:mb-8">
@@ -1391,7 +1391,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                     </CarouselItem>
                   ))}
                   </CarouselContent>
-                  {/* Desktop Navigation */}
+
                   <div className="hidden md:block">
                     <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
                     <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
@@ -1400,7 +1400,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             )}
           </div>
         </section>
-      )}
+      )} */}
 
       {/* Products/Services Section - Enhanced for Mobile */}
       {

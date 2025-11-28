@@ -167,6 +167,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [viewAllBrands, setViewAllBrands] = useState(false)
   const [viewAllCategories, setViewAllCategories] = useState(false)
@@ -333,10 +334,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
     const filteredProducts = business.products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === 'all' || product.category?.id === selectedCategory
-      return matchesSearch && matchesCategory
+      const matchesBrand = selectedBrand === null || product.brandName === selectedBrand
+      return matchesSearch && matchesCategory && matchesBrand
     })
     return { categories, filteredProducts }
-  }, [initialCategories, business.products, searchTerm, selectedCategory])
+  }, [initialCategories, business.products, searchTerm, selectedCategory, selectedBrand])
 
   // Related products for modal - memoized for performance
   const relatedProducts = useMemo(() => {
@@ -1286,8 +1288,15 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               {viewAllBrands ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
                   {brandContent.brands.map((brand: any, index: number) => (
-                    <Card key={index} className="overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0  bg-white/70 h-full flex flex-col">
-                      <div className="h-20 md:h-32 flex items-center   justify-center p-2">
+                    <Card
+                      key={index}
+                      className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${selectedBrand === brand.name
+                        ? 'bg-cyan-50 border-2 border-cyan-500 shadow-lg scale-105'
+                        : 'bg-white/70 hover:bg-white/90 hover:shadow-md'
+                        }`}
+                      onClick={() => setSelectedBrand(selectedBrand === brand.name ? null : brand.name)}
+                    >
+                      <div className="h-20 md:h-32 flex items-center justify-center p-2">
                         {brand.logo && brand.logo.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(brand.logo, {
@@ -1296,7 +1305,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               quality: 85,
                               format: 'auto',
                               crop: 'fit',
-                              gravity: 'center' 
+                              gravity: 'center'
                             })}
                             srcSet={generateSrcSet(brand.logo)}
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -1309,7 +1318,10 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         )}
                       </div>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-center text-xs  md:text-base">{brand.name}</CardTitle>
+                        <CardTitle className={`text-center text-xs md:text-base transition-colors ${selectedBrand === brand.name ? 'text-cyan-700 font-semibold' : ''
+                          }`}>
+                          {brand.name}
+                        </CardTitle>
                       </CardHeader>
                     </Card>
                   ))}
@@ -1319,7 +1331,13 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <CarouselContent>
                     {brandContent.brands.map((brand: any, index: number) => (
                       <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
-                        <Card className="overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0  bg-white/70 h-full flex flex-col">
+                        <Card
+                          className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${selectedBrand === brand.name
+                            ? 'bg-cyan-50 border-2 border-cyan-500 shadow-lg scale-105'
+                            : 'bg-white/70 hover:bg-white/90 hover:shadow-md'
+                            }`}
+                          onClick={() => setSelectedBrand(selectedBrand === brand.name ? null : brand.name)}
+                        >
                           <div className="h-20 md:h-32 flex items-center justify-center p-2">
                             {brand.logo && brand.logo.trim() !== '' ? (
                               <img
@@ -1335,7 +1353,10 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             )}
                           </div>
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-center text-xs  md:text-base">{brand.name}</CardTitle>
+                            <CardTitle className={`text-center text-xs md:text-base transition-colors ${selectedBrand === brand.name ? 'text-cyan-700 font-semibold' : ''
+                              }`}>
+                              {brand.name}
+                            </CardTitle>
                           </CardHeader>
                         </Card>
                       </CarouselItem>
@@ -1377,7 +1398,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 ))}
               </div>
             ) : (
-              <Carousel className="w-full">
+              <Carousel className="w-full transition-all duration-300 ease-in-out">
                 <CarouselContent>
                     {categories.map((category) => (
                       <CarouselItem key={category.id} className="basis-1/2 md:basis-1/4 lg:basis-1/5 flex">
@@ -1408,7 +1429,25 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           <section id="products" ref={productsRef} className="py-8 md:py-16 px-3 md:px-4 sm:px-6 lg:px-8 bg-transparent">
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-4 md:mb-8">
-                <h2 className="text-lg md:text-2xl font-bold">Our Products & Services</h2>
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-lg md:text-2xl font-bold">Our Products & Services</h2>
+                  {selectedBrand && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-cyan-100 text-cyan-800 border-cyan-300">
+                        Filtered by: {selectedBrand}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedBrand(null)}
+                        className="text-cyan-600 hover:text-cyan-800 hover:bg-cyan-50 h-6 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <Button variant="outline" size="sm" onClick={() => { setViewAllProducts(!viewAllProducts); }}>
                   {viewAllProducts ? 'Show Less' : 'View All'}
                 </Button>
@@ -1444,7 +1483,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               </div>
 
               {viewAllProducts ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 transition-all duration-300 ease-in-out">
                   {filteredProducts.map((product) => (
                     <Card id={`product-${product.id}`} className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2">
                       <div className="relative h-32 md:h-48 cursor-pointer" onClick={() => openProductModal(product)}>

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { getTokenFromRequest, verifyToken, JWTPayload } from '@/lib/jwt'
 
-async function getBusinessAdmin(request: NextRequest) {
+interface BusinessAdmin extends JWTPayload {
+  businessId: string
+}
+
+async function getBusinessAdmin(request: NextRequest): Promise<BusinessAdmin | null> {
   const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
 
   if (!token) {
@@ -14,7 +18,20 @@ async function getBusinessAdmin(request: NextRequest) {
     return null
   }
 
-  return payload
+  // Get business for this admin
+  const business = await db.business.findUnique({
+    where: { adminId: payload.userId },
+    select: { id: true }
+  })
+
+  if (!business) {
+    return null
+  }
+
+  return {
+    ...payload,
+    businessId: business.id
+  }
 }
 
 export async function POST(request: NextRequest) {

@@ -30,7 +30,7 @@ export default function HomePage() {
         },
         {
             name: "Businesses",
-            link: "/business",
+            link: "/businesses",
         },
         {
             name: "Contact Us",

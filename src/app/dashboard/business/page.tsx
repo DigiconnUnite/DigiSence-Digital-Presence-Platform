@@ -299,6 +299,102 @@ export default function BusinessAdminDashboard() {
   })
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
+  // Session management state
+  const [sessionStatus, setSessionStatus] = useState<'checking' | 'granted' | 'denied'>('checking')
+  const [activeUser, setActiveUser] = useState<{ name?: string; email: string } | null>(null)
+  const [sessionInterval, setSessionInterval] = useState<NodeJS.Timeout | null>(null)
+
+  // Session management functions
+  const checkSessionAccess = async () => {
+    try {
+      const response = await fetch('/api/business/session')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.hasActiveSession && !data.isCurrentUser) {
+          setSessionStatus('denied')
+          setActiveUser(data.activeUser)
+          toast({
+            title: "Access Restricted",
+            description: `Another user (${data.activeUser.name || data.activeUser.email}) is currently accessing the admin panel. Please try again later.`,
+            variant: "destructive",
+          })
+          return false
+        } else {
+          setSessionStatus('granted')
+          return true
+        }
+      } else {
+        console.error('Failed to check session')
+        return false
+      }
+    } catch (error) {
+      console.error('Session check error:', error)
+      return false
+    }
+  }
+
+  const startSession = async () => {
+    try {
+      const response = await fetch('/api/business/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' })
+      })
+
+      if (response.ok) {
+        setSessionStatus('granted')
+        // Start heartbeat
+        const interval = setInterval(async () => {
+          try {
+            await fetch('/api/business/session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'heartbeat' })
+            })
+          } catch (error) {
+            console.error('Heartbeat failed:', error)
+          }
+        }, 30000) // Every 30 seconds
+
+        setSessionInterval(interval)
+        return true
+      } else if (response.status === 409) {
+        const data = await response.json()
+        setSessionStatus('denied')
+        setActiveUser(data.activeUser)
+        toast({
+          title: "Access Denied",
+          description: data.message,
+          variant: "destructive",
+        })
+        return false
+      } else {
+        console.error('Failed to start session')
+        return false
+      }
+    } catch (error) {
+      console.error('Session start error:', error)
+      return false
+    }
+  }
+
+  const endSession = async () => {
+    try {
+      await fetch('/api/business/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end' })
+      })
+    } catch (error) {
+      console.error('Session end error:', error)
+    } finally {
+      if (sessionInterval) {
+        clearInterval(sessionInterval)
+        setSessionInterval(null)
+      }
+    }
+  }
+
   // Mobile responsiveness states
   const [isMobile, setIsMobile] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
@@ -350,10 +446,18 @@ export default function BusinessAdminDashboard() {
     }
 
     if (user?.role === 'BUSINESS_ADMIN') {
-      fetchData()
+      initializeSession()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, router])
+
+  const initializeSession = async () => {
+    const hasAccess = await checkSessionAccess()
+    if (hasAccess) {
+      await startSession()
+      fetchData()
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -363,6 +467,35 @@ export default function BusinessAdminDashboard() {
   useEffect(() => {
     setSidebarCollapsed(!!selectedProfileSection)
   }, [selectedProfileSection])
+
+  // Handle page unload to clean up session
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Use sendBeacon for reliable cleanup on page unload
+      if (navigator.sendBeacon) {
+        const data = JSON.stringify({ action: 'end' })
+        navigator.sendBeacon('/api/business/session', data)
+      } else {
+        // Fallback for browsers that don't support sendBeacon
+        fetch('/api/business/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'end' }),
+          keepalive: true
+        })
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Clean up interval on unmount
+      if (sessionInterval) {
+        clearInterval(sessionInterval)
+      }
+    }
+  }, [sessionInterval])
 
   const fetchData = async () => {
     try {
@@ -1022,8 +1155,62 @@ export default function BusinessAdminDashboard() {
     )
   }
 
-  if (!user || user.role !== 'BUSINESS_ADMIN' || !business) {
+  if (!user || user.role !== 'BUSINESS_ADMIN') {
     return null
+  }
+
+  if (sessionStatus === 'denied') {
+    return (
+      <div className="min-h-screen flex flex-col relative">
+        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md rounded-3xl">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Shield className="h-8 w-8 text-red-600" />
+              </div>
+              <CardTitle className="text-xl text-gray-900">Access Restricted</CardTitle>
+              <CardDescription>
+                Another user is currently accessing the business admin panel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              {activeUser && (
+                <div className="text-sm text-gray-600">
+                  <p>Current user: <strong>{activeUser.name || activeUser.email}</strong></p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">
+                  Only one user can access the admin panel at a time. Please try again later or contact support if you believe this is an error.
+                </p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  className="w-full rounded-2xl"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (sessionStatus === 'checking' || !business) {
+    return (
+      <div className="min-h-screen flex flex-col relative">
+        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Checking access permissions...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const heroSlides = business.heroContent?.slides || []
@@ -1156,7 +1343,8 @@ export default function BusinessAdminDashboard() {
             {/* Logout Section */}
             <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
               <button
-                onClick={async () => {  
+                onClick={async () => {
+                  await endSession()
                   await logout()
                   router.push('/login')
                 }}
@@ -3881,6 +4069,7 @@ export default function BusinessAdminDashboard() {
                   })()}
                   <button
                     onClick={async () => {
+                      await endSession()
                       await logout()
                       router.push('/login')
                     }}

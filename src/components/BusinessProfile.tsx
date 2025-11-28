@@ -113,6 +113,7 @@ import {
 import { FaWhatsapp, FaWhatsappSquare } from "react-icons/fa";
 import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
 import { LampContainer } from './ui/lamp'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface BusinessProfileProps {
   business: Business & {
@@ -483,6 +484,24 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       setIsSubmitting(false)
     }
   }, [inquiryData, business.id, selectedProduct])
+
+  const handleShare = useCallback((product: Product) => {
+    const shareUrl = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+    const shareData = {
+      title: product.name,
+      text: `Check out this product: ${product.name}`,
+      url: shareUrl,
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        alert('Failed to copy link');
+      });
+    }
+  }, [business.slug]);
 
   const openInquiryModal = (product?: Product) => {
     setSelectedProduct(product || null)
@@ -1541,26 +1560,46 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
                           {product.description || "No description available"}
                         </CardDescription>
-                        <Button
-                          className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
-                          onClick={() => {
-                            if (business.phone) {
-                              const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                              const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
-                              const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
-                              try {
-                                window.open(whatsappUrl, '_blank');
-                              } catch (error) {
-                                alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                        <div className="flex gap-2 mt-auto">
+                          <Button
+                            className="flex-1 bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                            onClick={() => {
+                              if (business.phone) {
+                                const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                                const message = `Please check this product inquiry: ${product.name}\n\n ${product.description}\n\nLink: ${productLink}`;
+                                const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+                                try {
+                                  window.open(whatsappUrl, '_blank');
+                                } catch (error) {
+                                  alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                                }
+                              } else {
+                                alert('Phone number not available');
                               }
-                            } else {
-                              alert('Phone number not available');
-                            }
-                          }}
-                        >
-                          Inquire Now
-                          <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
-                        </Button>
+                            }}
+                          >
+                            Inquire Now
+                            <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="px-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShare(product);
+                            }}
+                          >
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Share2 className="h-4 w-4" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Share this product</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -1626,26 +1665,46 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
                               {product.description || "No description available"}
                             </CardDescription>
-                            <Button
-                              className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
-                              onClick={() => {
-                                if (business.phone) {
-                                  const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                  const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
-                                  const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
-                                  try {
-                                    window.open(whatsappUrl, '_blank');
-                                  } catch (error) {
-                                    alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                            <div className="flex gap-2 mt-auto">
+                              <Button
+                                className="flex-1 bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                                onClick={() => {
+                                  if (business.phone) {
+                                    const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                                    const message = `Please check this product inquiry: ${product.name}\n\n ${product.description}\n\nLink: ${productLink}`;
+                                    const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+                                    try {
+                                      window.open(whatsappUrl, '_blank');
+                                    } catch (error) {
+                                      alert('Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.');
+                                    }
+                                  } else {
+                                    alert('Phone number not available');
                                   }
-                                } else {
-                                  alert('Phone number not available');
-                                }
-                              }}
-                            >
-                              Inquire Now
-                              <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
-                            </Button>
+                                }}
+                              >
+                                Inquire Now
+                                <SiWhatsapp className=' h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2' />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="px-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShare(product);
+                                }}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Share2 className="h-4 w-4" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Share this product</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       </CarouselItem>

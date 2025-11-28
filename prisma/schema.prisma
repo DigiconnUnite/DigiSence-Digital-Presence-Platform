@@ -26,6 +26,7 @@ model User {
   business  Business?
   inquiries Inquiry[]
   assignedBusinessListingInquiries BusinessListingInquiry[]
+  businessAdminSessions BusinessAdminSession[]
 
   @@map("users")
 }
@@ -60,6 +61,7 @@ model Business {
   categories  Category[] @relation("BusinessProductCategories")
   products    Product[]
   inquiries   Inquiry[]
+  businessAdminSessions BusinessAdminSession[]
 
   // Content sections (stored as JSON for flexibility)
   heroContent Json?      // Hero slider data
@@ -187,4 +189,18 @@ enum BusinessListingStatus {
 enum CategoryType {
   BUSINESS
   PRODUCT
+}
+
+model BusinessAdminSession {
+  id          String   @id @default(cuid()) @map("_id")
+  businessId  String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  startedAt   DateTime @default(now())
+  lastActivity DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  @@unique([businessId, userId])
+  @@map("business_admin_sessions")
 }

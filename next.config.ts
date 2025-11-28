@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   eslint: {
-    // 构建时忽略ESLint错误
+   
     ignoreDuringBuilds: true,
   },
   webpack: (config) => {

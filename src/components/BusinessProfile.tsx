@@ -1066,7 +1066,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm cursor-pointer"
                   onClick={() => {
                     const vCardData = `BEGIN:VCARD
                         VERSION:3.0
@@ -1095,7 +1095,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 {/* WhatsApp Button */}
                 <Button
                   size="sm"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs md:text-sm font-medium shadow-sm border-0"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs md:text-sm font-medium shadow-sm border-0 cursor-pointer"
                   style={{ backgroundColor: '#25D366' }}
                   onClick={() => {
                     if (business.phone) {
@@ -1114,7 +1114,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium shadow-sm cursor-pointer"
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
@@ -1286,12 +1286,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 </Button>
               </div>
               {viewAllBrands ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 py-1 lg:grid-cols-5 gap-2 md:gap-4">
                   {brandContent.brands.map((brand: any, index: number) => (
                     <Card
                       key={index}
                       className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${selectedBrand === brand.name
-                        ? 'bg-cyan-50 border-2 border-cyan-500 shadow-lg scale-105'
+                        ? 'bg-cyan-50 border border-cyan-500 shadow-lg '
                         : 'bg-white/70 hover:bg-white/90 hover:shadow-md'
                         }`}
                       onClick={() => setSelectedBrand(selectedBrand === brand.name ? null : brand.name)}
@@ -1333,7 +1333,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
                         <Card
                           className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${selectedBrand === brand.name
-                            ? 'bg-cyan-50 border-2 border-cyan-500 shadow-lg scale-105'
+                            ? 'bg-cyan-50 border border-cyan-500 shadow-lg'
                             : 'bg-white/70 hover:bg-white/90 hover:shadow-md'
                             }`}
                           onClick={() => setSelectedBrand(selectedBrand === brand.name ? null : brand.name)}

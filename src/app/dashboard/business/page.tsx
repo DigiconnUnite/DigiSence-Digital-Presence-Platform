@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
 import { useToast } from '@/hooks/use-toast'
-import { LogoutModal } from '@/components/LogoutModal'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -306,9 +305,6 @@ export default function BusinessAdminDashboard() {
 
   // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
-  // Logout modal state
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const getEditorTitle = () => {
     if (activeSection === 'profile') {
@@ -1160,7 +1156,10 @@ export default function BusinessAdminDashboard() {
             {/* Logout Section */}
             <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
               <button
-                onClick={() => setShowLogoutModal(true)}
+                onClick={async () => {  
+                  await logout()
+                  router.push('/login')
+                }}
                 className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 text-red-600 hover:bg-red-50 ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
                 title={sidebarCollapsed ? 'Logout' : undefined}
               >
@@ -3881,7 +3880,10 @@ export default function BusinessAdminDashboard() {
                     })
                   })()}
                   <button
-                    onClick={() => setShowLogoutModal(true)}
+                    onClick={async () => {
+                      await logout()
+                      router.push('/login')
+                    }}
                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="h-5 w-5" />
@@ -3951,11 +3953,6 @@ export default function BusinessAdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <LogoutModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-      />
     </div>
   )
 }

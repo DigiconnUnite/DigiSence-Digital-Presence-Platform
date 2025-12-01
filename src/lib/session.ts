@@ -57,6 +57,15 @@ export async function invalidateSession(token: string): Promise<void> {
   })
 }
 
+export async function invalidateUserSessionsExceptCurrent(userId: string, currentToken: string): Promise<void> {
+  await (db as any).session.deleteMany({
+    where: {
+      userId,
+      token: { not: currentToken }
+    },
+  })
+}
+
 export async function cleanupExpiredSessions(): Promise<void> {
   await (db as any).session.deleteMany({
     where: {

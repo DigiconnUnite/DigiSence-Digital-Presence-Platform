@@ -188,3 +188,13 @@ enum CategoryType {
   BUSINESS
   PRODUCT
 }
+
+model Session {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}

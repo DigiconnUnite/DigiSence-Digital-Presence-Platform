@@ -92,7 +92,8 @@ import {
   MessageCircle,
   LineChart,
   Cog,
-  Fullscreen
+  Fullscreen,
+  Share2
 } from 'lucide-react'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
@@ -609,6 +610,24 @@ export default function BusinessAdminDashboard() {
         description: "Failed to update inquiry status. Please try again.",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleShare = (product: Product) => {
+    const shareUrl = `${window.location.origin}/catalog/${business?.slug}?product=${product.id}&modal=open`;
+    const shareData = {
+      title: product.name,
+      text: `Check out this product: ${product.name}\n\n Description: ${product.description}`,
+      url: shareUrl,
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        alert('Failed to copy link');
+      });
     }
   }
 
@@ -1751,7 +1770,10 @@ export default function BusinessAdminDashboard() {
                                     }} className="rounded-xl">
                                       <Edit className="h-4 w-4" />
                                     </Button>
-                                    <Button size="sm" variant="outline" onClick={() => handleProductDelete(product)} className="rounded-xl">
+                                    <Button size="sm" variant="outline" onClick={() => handleShare(product)} className="rounded-xl">
+                                      <Share2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleProductDelete(product)} className="rounded-xl">
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </div>
@@ -2181,10 +2203,30 @@ export default function BusinessAdminDashboard() {
                 {selectedProfileSection === 'portfolio' && ' Portfolio Editor'}
                 {selectedProfileSection === 'content' && ' Additional Content Editor'}
                 {selectedProfileSection === 'footer' && ' Footer Editor'}
+                {activeSection === 'products' && showProductRightbar && (editingProduct ? 'Edit Product' : 'Add New Product')}
               </h3>
-              <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
-                <X className="h-4 w-4" />
-              </Button>
+              {activeSection === 'profile' && selectedProfileSection ? (
+                <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
+                  <X className="h-4 w-4" />
+                </Button>
+              ) : activeSection === 'products' && showProductRightbar ? (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setShowProductRightbar(false)
+                  setEditingProduct(null)
+                  setProductFormData({
+                    name: '',
+                    description: '',
+                    price: '',
+                    image: '',
+                    categoryId: '',
+                    brandName: '',
+                    inStock: true,
+                    isActive: true,
+                  })
+                }} className="rounded-xl">
+                  <X className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
             <div className="flex-1 overflow-auto p-4 sm:p-6 hide-scrollbar">
               {activeSection === 'profile' && (
@@ -3447,29 +3489,6 @@ export default function BusinessAdminDashboard() {
 
               {activeSection === 'products' && showProductRightbar && (
                 <>
-                  {!isMobile && (
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-semibold">
-                        {editingProduct ? 'Edit Product' : 'Add New Product'}
-                      </h3>
-                      <Button variant="outline" size="sm" onClick={() => {
-                        setShowProductRightbar(false)
-                        setEditingProduct(null)
-                        setProductFormData({
-                          name: '',
-                          description: '',
-                          price: '',
-                          image: '',
-                          categoryId: '',
-                          brandName: '',
-                          inStock: true,
-                          isActive: true,
-                        })
-                      }} className="rounded-xl">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
 
                   <div className="space-y-4">
                     <div className="space-y-2">

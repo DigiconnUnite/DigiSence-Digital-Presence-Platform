@@ -1566,7 +1566,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             onClick={() => {
                               if (business.phone) {
                                 const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                const message = `Please check this product inquiry: ${product.name}\n\n ${product.description}\n\nLink: ${productLink}`;
+                                const message = `${product.name}\n\nDescription: ${product.description}\n\nLink: ${productLink}`;
                                 const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
                                 try {
                                   window.open(whatsappUrl, '_blank');
@@ -1671,7 +1671,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                 onClick={() => {
                                   if (business.phone) {
                                     const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                    const message = `Please check this product inquiry: ${product.name}\n\n ${product.description}\n\nLink: ${productLink}`;
+                                    const message = `${product.name}\n\nDescription: ${product.description}\n\nLink: ${productLink}`;
                                     const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
                                     try {
                                       window.open(whatsappUrl, '_blank');
@@ -2136,7 +2136,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               e.stopPropagation()
                               if (business.phone) {
                                 const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                const message = `Please check this product inquiry: ${product.name}\n\nLink: ${productLink}`;
+                                const message = `${product.name}\n\nDescription: ${product.description}\n\nLink: ${productLink}`;
                                 const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
                                 try {
                                   window.open(whatsappUrl, '_blank');

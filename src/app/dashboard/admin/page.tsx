@@ -1508,7 +1508,7 @@ export default function SuperAdminDashboard() {
                   <Skeleton className="h-5 w-5" />
                   <Skeleton className="h-4 w-16" />
                 </div>
-              </div>
+              </div>  
             </div>
           )}
 

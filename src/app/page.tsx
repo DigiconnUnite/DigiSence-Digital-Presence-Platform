@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Users, Shield, Zap, ArrowRight, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import HeroSectionOne from "@/components/ui/hero";
+import MarqueeSection from "@/components/ui/marquee";
 import Footer from "@/components/Footer";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import {
@@ -42,7 +43,7 @@ export default function HomePage() {
     const pathname = usePathname();
 
   return (
-      <>
+      <div className="relative">
           <Navbar >
               {/* Desktop Navigation */}
               <NavBody>
@@ -109,44 +110,7 @@ export default function HomePage() {
           </Navbar>
           <AuroraBackground className="pt-24">
               <HeroSectionOne />
-
-              {/* First New Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                          <div className="order-2 lg:order-1">
-                              <img src="/placeholder.png" alt="Discover Businesses" className="w-full h-auto rounded-lg shadow-lg" />
-                          </div>
-                          <div className="order-1 lg:order-2">
-                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
-                              <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
-                              <Link href="/businesses">
-                                  <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                              </Link>
-                          </div>
-                      </div>
-                  </div>
-              </section>
-
-              {/* Second New Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                          <div>
-                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Manage Your Business Profile</h2>
-                              <p className="text-lg text-muted-foreground mb-6">Create and manage your professional business profile with ease. Showcase your products and connect with customers.</p>
-                              <Link href="/dashboard/admin">
-                                  <Button size="lg" className="rounded-full">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                              </Link>
-                          </div>
-                          <div>
-                              <img src="/card-bg.jpg" alt="Manage Profile" className="w-full h-auto rounded-lg shadow-lg" />
-                          </div>
-                      </div>
-                  </div>
-              </section>
-
-
+              <MarqueeSection />
               {/* Features Section */}
               <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
                   <div className="max-w-7xl mx-auto">
@@ -196,10 +160,51 @@ export default function HomePage() {
                   </div>
               </section>
 
+
+
+
+              {/* First New Section */}
+              <section className="py-20 px-4 sm:px-6 lg:px-8">
+                  <div className="max-w-7xl mx-auto">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                          <div className="order-2 lg:order-1">
+                              <img src="/placeholder.png" alt="Discover Businesses" className="w-full h-auto rounded-lg shadow-lg" />
+                          </div>
+                          <div className="order-1 lg:order-2">
+                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
+                              <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
+                              <Link href="/businesses">
+                                  <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                              </Link>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+              {/* Second New Section */}
+              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
+                  <div className="max-w-7xl mx-auto">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                          <div>
+                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Manage Your Business Profile</h2>
+                              <p className="text-lg text-muted-foreground mb-6">Create and manage your professional business profile with ease. Showcase your products and connect with customers.</p>
+                              <Link href="/dashboard/admin">
+                                  <Button size="lg" className="rounded-full">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                              </Link>
+                          </div>
+                          <div>
+                              <img src="/card-bg.jpg" alt="Manage Profile" className="w-full h-auto rounded-lg shadow-lg" />
+                          </div>
+                      </div>
+                  </div>
+              </section>
+
+
+
               {/* CTA Section */}
               <section className="py-20 max-w-7xl w-full px-4 sm:px-6 bg-transparent flex justify-center items-center">
                   <div className="max-w-full w-full mx-auto">
-                      <div className="rounded-3xl border border-white/30  bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900 shadow-lg p-12 px-6 sm:px-12 text-center backdrop-blur-lg">
+                      <div className="rounded-3xl border border-cyan/90  bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900 shadow-lg p-12 px-6 sm:px-12 text-center backdrop-blur-lg">
                           <h2 className="text-3xl sm:text-4xl font-bold mb-4 drop-shadow-md text-white">
                               Ready to Transform Your Business?
                           </h2>
@@ -246,6 +251,6 @@ export default function HomePage() {
               </section>
           </AuroraBackground>
           <Footer />
-      </>
+      </div>
   );
 }

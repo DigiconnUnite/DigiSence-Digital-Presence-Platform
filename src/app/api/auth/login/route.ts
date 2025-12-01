@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser, generateToken } from '@/lib/auth'
+import { createSession, getUserActiveSessions } from '@/lib/session'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -26,9 +27,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for active sessions
+    const activeSessions = await getUserActiveSessions(user.id)
+    if (activeSessions.length > 0) {
+      console.log(`Login blocked: User ${user.email} already has an active session`)
+      return NextResponse.json(
+        { error: 'This account is already logged in on another device.' },
+        { status: 403 }
+      )
+    }
+
     console.log(`Login successful for user: ${user.email} (${user.role})`)
     const token = generateToken(user)
     console.log('JWT token generated')
+
+    // Create session in database
+    await createSession(user, token)
+    console.log('Session created in database')
 
     const response = NextResponse.json({
       user: {

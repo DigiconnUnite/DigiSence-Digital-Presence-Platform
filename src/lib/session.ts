@@ -12,7 +12,7 @@ export async function createSession(user: AuthUser, token: string): Promise<Sess
   // Set expiration to match JWT expiration (7 days)
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  const session = await db.session.create({
+  const session = await (db as any).session.create({
     data: {
       userId: user.id,
       token,
@@ -29,7 +29,7 @@ export async function createSession(user: AuthUser, token: string): Promise<Sess
 }
 
 export async function getSessionByToken(token: string): Promise<SessionData | null> {
-  const session = await db.session.findUnique({
+  const session = await (db as any).session.findUnique({
     where: { token },
   })
 
@@ -46,19 +46,19 @@ export async function getSessionByToken(token: string): Promise<SessionData | nu
 }
 
 export async function invalidateUserSessions(userId: string): Promise<void> {
-  await db.session.deleteMany({
+  await (db as any).session.deleteMany({
     where: { userId },
   })
 }
 
 export async function invalidateSession(token: string): Promise<void> {
-  await db.session.deleteMany({
+  await (db as any).session.deleteMany({
     where: { token },
   })
 }
 
 export async function cleanupExpiredSessions(): Promise<void> {
-  await db.session.deleteMany({
+  await (db as any).session.deleteMany({
     where: {
       expiresAt: {
         lt: new Date(),
@@ -68,7 +68,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
 }
 
 export async function getUserActiveSessions(userId: string): Promise<SessionData[]> {
-  const sessions = await db.session.findMany({
+  const sessions = await (db as any).session.findMany({
     where: {
       userId,
       expiresAt: { gt: new Date() }

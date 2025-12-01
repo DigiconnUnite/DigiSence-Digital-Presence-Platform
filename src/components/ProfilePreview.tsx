@@ -671,10 +671,10 @@ export default function ProfilePreview({ business, selectedSection, sectionTitle
               <h2 className="text-2xl font-bold mb-8">Categories</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {categories.map((category, index) => (
-                  <Card key={index} className="overflow-hidden bg-transparent h-full flex items-center justify-center">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-center text-lg">{category.name}</CardTitle>
-                    </CardHeader>
+                  <Card key={index} className="overflow-hidden p-0  bg-transparent h-full flex items-center justify-center">
+                    <CardHeader className="p-1">
+                      {category.name}
+                    </CardHeader> 
                   </Card>
                 ))}
               </div>

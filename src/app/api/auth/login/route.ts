@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser, generateToken } from '@/lib/auth'
+import { createSession } from '@/lib/session'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
     console.log(`Login successful for user: ${user.email} (${user.role})`)
     const token = generateToken(user)
     console.log('JWT token generated')
+
+    // Create session in database
+    await createSession(user, token)
+    console.log('Session created in database')
 
     const response = NextResponse.json({
       user: {

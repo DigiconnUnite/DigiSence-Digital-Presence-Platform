@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { LogoutModal } from '@/components/LogoutModal'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,6 +169,7 @@ export default function SuperAdminDashboard() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [selectedBusinessListingInquiry, setSelectedBusinessListingInquiry] = useState<any>(null)
   const [showBusinessListingInquiryDialog, setShowBusinessListingInquiryDialog] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   useEffect(() => {
     // Check if mobile on initial load and on resize
@@ -1609,10 +1611,7 @@ export default function SuperAdminDashboard() {
             {/* Logout Section */}
             <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
               <button
-                onClick={async () => {
-                  await logout()
-                  router.push('/login')
-                }}
+                onClick={() => setShowLogoutModal(true)}
                 className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
               >
                 <LogOut className="h-5 w-5" />
@@ -1854,6 +1853,11 @@ export default function SuperAdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+      />
     </div>
   )
 }

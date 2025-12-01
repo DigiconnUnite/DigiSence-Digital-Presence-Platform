@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { db } from '@/lib/db'
+import { createSession, invalidateUserSessions } from '@/lib/session'
 import type { User as PrismaUser } from '@prisma/client'
 
 /**
@@ -64,10 +65,13 @@ export async function authenticateUser(email: string, password: string): Promise
   }
 
   const isValid = await verifyPassword(password, user.password)
-  
+
   if (!isValid) {
     return null
   }
+
+  // Invalidate all existing sessions for this user (single session enforcement)
+  await invalidateUserSessions(user.id)
 
   return {
     id: user.id,

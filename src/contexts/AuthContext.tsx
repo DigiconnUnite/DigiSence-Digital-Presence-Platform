@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthUser } from '@/lib/auth'
+import { toast } from 'sonner'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -26,9 +27,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
+      } else if (response.status === 401) {
+        // Session expired or invalid
+        setUser(null)
+        toast.error('Your session has expired. Please login again.')
       }
     } catch (error) {
       console.error('Auth check failed:', error)
+      setUser(null)
+      toast.error('Authentication check failed. Please login again.')
     } finally {
       setLoading(false)
     }

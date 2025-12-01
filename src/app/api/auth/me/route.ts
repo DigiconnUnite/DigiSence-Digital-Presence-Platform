@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    const payload = verifyToken(token)
-    
+    const payload = await verifyToken(token)
+
     if (!payload) {
       return NextResponse.json(
         { error: 'Invalid token' },

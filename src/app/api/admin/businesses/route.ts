@@ -43,16 +43,16 @@ const updateBusinessSchema = z.object({
 
 async function getSuperAdmin(request: NextRequest) {
   const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
-  
+
   if (!token) {
     return null
   }
-  
-  const payload = verifyToken(token)
+
+  const payload = await verifyToken(token)
   if (!payload || payload.role !== 'SUPER_ADMIN') {
     return null
   }
-  
+
   return payload
 }
 

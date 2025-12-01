@@ -50,7 +50,7 @@ export default function HomePage() {
                       href="/"
                       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
                   >
-                      <span className="font-medium text-gray-900 dark:text-gray-100">DigiSence</span>
+                      <img src="/logo-digisence.svg" alt="DigiSence" className="h-8 w-auto" />
                   </Link>
                   <NavItems items={navItems} />
                   <div className="flex items-center gap-4">
@@ -65,7 +65,7 @@ export default function HomePage() {
                           href="/"
                           className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
                       >
-                          <span className="font-medium text-gray-900 dark:text-gray-100">DigiSence</span>
+                          <img src="/logo-digisence.svg" alt="DigiSence" className="h-10 w-auto" />
                       </Link>
                       <MobileNavToggle
                           isOpen={isMobileMenuOpen}

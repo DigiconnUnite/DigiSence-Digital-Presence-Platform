@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { AuthUser } from './auth'
+import { getSessionByToken } from './session'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -21,9 +22,17 @@ export function generateToken(user: AuthUser): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
 }
 
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload
+    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
+
+    // Check if session exists and is valid
+    const session = await getSessionByToken(token)
+    if (!session) {
+      return null
+    }
+
+    return payload
   } catch (error) {
     return null
   }

@@ -12,7 +12,7 @@ export async function createSession(user: AuthUser, token: string): Promise<Sess
   // Set expiration to match JWT expiration (7 days)
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  const session = await (db as any).session.create({
+  const session = await db.session.create({
     data: {
       userId: user.id,
       token,
@@ -29,7 +29,7 @@ export async function createSession(user: AuthUser, token: string): Promise<Sess
 }
 
 export async function getSessionByToken(token: string): Promise<SessionData | null> {
-  const session = await (db as any).session.findUnique({
+  const session = await db.session.findUnique({
     where: { token },
   })
 
@@ -46,19 +46,19 @@ export async function getSessionByToken(token: string): Promise<SessionData | nu
 }
 
 export async function invalidateUserSessions(userId: string): Promise<void> {
-  await (db as any).session.deleteMany({
+  await db.session.deleteMany({
     where: { userId },
   })
 }
 
 export async function invalidateSession(token: string): Promise<void> {
-  await (db as any).session.deleteMany({
+  await db.session.deleteMany({
     where: { token },
   })
 }
 
 export async function invalidateUserSessionsExceptCurrent(userId: string, currentToken: string): Promise<void> {
-  await (db as any).session.deleteMany({
+  await db.session.deleteMany({
     where: {
       userId,
       token: { not: currentToken }
@@ -67,7 +67,7 @@ export async function invalidateUserSessionsExceptCurrent(userId: string, curren
 }
 
 export async function cleanupExpiredSessions(): Promise<void> {
-  await (db as any).session.deleteMany({
+  await db.session.deleteMany({
     where: {
       expiresAt: {
         lt: new Date(),
@@ -77,7 +77,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
 }
 
 export async function getUserActiveSessions(userId: string): Promise<SessionData[]> {
-  const sessions = await (db as any).session.findMany({
+  const sessions = await db.session.findMany({
     where: {
       userId,
       expiresAt: { gt: new Date() }

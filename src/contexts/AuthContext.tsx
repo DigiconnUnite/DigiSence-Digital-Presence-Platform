@@ -5,7 +5,7 @@ import { AuthUser } from '@/lib/auth'
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string, force?: boolean) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   loading: boolean
 }
@@ -34,14 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, force = false) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, force }),
       })
 
       if (response.ok) {

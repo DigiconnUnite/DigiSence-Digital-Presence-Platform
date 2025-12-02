@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser, generateToken } from '@/lib/auth'
-import { createSession, getUserActiveSessions } from '@/lib/session'
+import { createSession, getUserActiveSessions, invalidateUserSessions } from '@/lib/session'
 import { z } from 'zod'
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  force: z.boolean().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Login request body received')
 
-    const { email, password } = loginSchema.parse(body)
+    const { email, password, force = false } = loginSchema.parse(body)
     console.log(`Login attempt for email: ${email}`)
 
     const user = await authenticateUser(email, password)
@@ -27,14 +28,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for active sessions
-    const activeSessions = await getUserActiveSessions(user.id)
-    if (activeSessions.length > 0) {
-      console.log(`Login blocked: User ${user.email} already has an active session`)
-      return NextResponse.json(
-        { error: 'This account is already logged in on another device.' },
-        { status: 403 }
-      )
+    // If force logout is requested, invalidate all existing sessions
+    if (force) {
+      await invalidateUserSessions(user.id)
+      console.log(`Force logout: Invalidated all sessions for user ${user.email}`)
+    } else {
+      // Check for active sessions
+      const activeSessions = await getUserActiveSessions(user.id)
+      if (activeSessions.length > 0) {
+        console.log(`Login blocked: User ${user.email} already has an active session`)
+        return NextResponse.json(
+          { error: 'This account is already logged in on another device.' },
+          { status: 403 }
+        )
+      }
     }
 
     console.log(`Login successful for user: ${user.email} (${user.role})`)

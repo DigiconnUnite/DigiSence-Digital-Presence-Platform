@@ -16,15 +16,36 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForceButton, setShowForceButton] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setShowForceButton(false)
     setLoading(true)
 
     const result = await login(email, password)
+
+    if (result.success) {
+      router.push('/dashboard')
+    } else {
+      setError(result.error || 'Login failed')
+      if (result.error === 'This account is already logged in on another device.') {
+        setShowForceButton(true)
+      }
+    }
+
+    setLoading(false)
+  }
+
+  const handleForceLogin = async () => {
+    setError('')
+    setShowForceButton(false)
+    setLoading(true)
+
+    const result = await login(email, password, true)
 
     if (result.success) {
       router.push('/dashboard')
@@ -95,6 +116,17 @@ export default function LoginPage() {
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+            )}
+            {showForceButton && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleForceLogin}
+                disabled={loading}
+              >
+                {loading ? 'Logging in...' : 'Force Logout Everywhere'}
+              </Button>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}

@@ -16,8 +16,9 @@ export default function Footer() {
           className="flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 border-b border-gray-700 mb-8"
         >
           <div className="mb-6 lg:mb-0 lg:mr-8">
-            <Link href="/" className="text-3xl font-bold text-white hover:text-cyan-400 transition-colors duration-300 block mb-3">
-              DigiSence
+            <Link href="/" className="flex items-center space-x-3 text-3xl font-bold text-white hover:text-cyan-400 transition-colors duration-300 block mb-3">
+              <img src="/logo.svg" alt="DigiSence Logo" className="h-10 filter invert hue-rotate-180  w-10" />
+              <span>DigiSence</span>
             </Link>
             <p className="text-gray-300 text-base max-w-md leading-relaxed">
               Create professional digital profiles for your business. Showcase products, connect with customers, and grow your brand.
@@ -111,11 +112,15 @@ export default function Footer() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col sm:flex-row justify-between items-center"
+          className="flex flex-col sm:flex-row justify-between items-center w-full"
         >
-          <p className="text-gray-400 text-sm mb-4 sm:mb-0">
-            &copy; 2024 DigiSence. All rights reserved.
+          <p className="text-gray-400 text-sm mb-2 sm:mb-0">
+            &copy; {new Date().getFullYear()} <strong className="text-white">DigiSence</strong>. All rights reserved.  
           </p>
+          <span className="text-center text-sm text-gray-400 my-2 sm:my-0 flex-1 sm:flex-none">
+            A product of <strong className="text-white">Digiconn Unite Pvt. Ltd.</strong>
+          </span>
+
           <div className="flex space-x-4">
             <motion.a
               href="#"

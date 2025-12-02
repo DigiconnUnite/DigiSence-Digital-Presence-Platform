@@ -1546,13 +1546,12 @@ export default function SuperAdminDashboard() {
       <div className="fixed inset-0  bg-gradient-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-4 sm:px-6 py-2">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-black rounded-2xl">
-              {/* <Crown className="h-8 w-8 text-white" /> */}
-            </div>
+        <div className="flex justify-between items-center px-3 sm:px-4 py-2">
+          <div className="flex items-center ">
+            <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
+            <span className="h-8 border-l border-gray-300 mx-2"></span>
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">DigiSence Logo.</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">DigiSence</h1>
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
@@ -1569,6 +1568,7 @@ export default function SuperAdminDashboard() {
               <p className="text-sm font-medium text-gray-900">{user?.name || 'Super Admin'}</p>
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
+            <span className="h-8 border-l border-gray-300 mx-2"></span>
             <div className="w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center">
               <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>

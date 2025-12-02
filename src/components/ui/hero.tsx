@@ -1,12 +1,46 @@
 "use client";
 
-
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+
+const images = [
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+  "https://assets.aceternity.com/pro/aceternity-landing.webp",
+  "https://assets.aceternity.com/pro/dashboard.webp",
+
+];
 
 export default function HeroSectionOne() {
+  const [activeIndex, setActiveIndex] = useState(2); // Start with middle image active
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleImageClick = (index: number) => {
+    setActiveIndex(index);
+  };
+
+  // Auto-scroll functionality for infinite carousel
+  useEffect(() => {
+    if (isHovered) return; // Pause on hover
+
+    const interval = setInterval(() => {
+      setActiveIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [isHovered]);
+
   return (
-    <div className="relative mx-auto my-10 flex max-w-7xl flex-col items-center justify-center">
-     
+    <>
+      <div className="relative mx-auto my-10 flex max-w-7xl flex-col items-center justify-center">
       <div className="px-4 py-10 md:py-20">
         <h1 className="relative z-10 mx-auto max-w-4xl text-center text-2xl font-bold text-slate-700 md:text-4xl lg:text-7xl dark:text-slate-300">
           {"Launch your website in hours, not days"
@@ -77,19 +111,63 @@ export default function HeroSectionOne() {
             duration: 0.3,
             delay: 1.2,
           }}
-          className="relative z-10 mt-20 rounded-3xl border border-neutral-200 bg-neutral-100 p-4 shadow-md dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div className="w-full overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
-            <img
-              src="https://assets.aceternity.com/pro/aceternity-landing.webp"
-              alt="Landing page preview"
-              className="aspect-[16/9] h-auto w-full object-cover"
-              height={1000}
-              width={1000}
-            />
-          </div>
-        </motion.div>
+            className="relative border  z-10 mt-20"
+          >
+
+          </motion.div>
+        </div>
+
       </div>
-    </div>
+      <div
+        className="relative flex h-[500px] border items-center justify-center"
+        style={{
+          perspective: "1000px",
+          transformStyle: "preserve-3d",
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Only render 11 cards at a time for the carousel effect */}
+        {Array.from({ length: 11 }, (_, i) => {
+          const cardIndex = (activeIndex - 5 + i + images.length) % images.length;
+          const offset = i - 5; // -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5
+          const rotateY = 0;
+          // Progressive scaling: center big, then smaller as distance increases
+          const scale = offset === 0 ? 1 : Math.max(0.3, 1 - Math.abs(offset) * 0.13);
+          const translateX = offset * 190; // Adjust spacing for 11 cards to fit
+          const zIndex = offset === 0 ? 10 : 5 - Math.abs(offset);
+
+          return (
+            <motion.div
+              key={`${cardIndex}-${i}`}
+              className="absolute cursor-pointer"
+              style={{
+                transform: `translateX(${translateX}px) rotateY(${rotateY}deg) scale(${scale})`,
+                zIndex,
+              }}
+              animate={{
+                transform: `translateX(${translateX}px) rotateY(${rotateY}deg) scale(${scale})`,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+              }}
+              onClick={() => handleImageClick(cardIndex)}
+            >
+              <div className="w-[337px] overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
+                <img
+                  src={images[cardIndex]}
+                  alt={`Preview ${cardIndex + 1}`}
+                  className="aspect-[9/16] h-auto w-full object-cover"
+                  height={600}
+                  width={337}
+                />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </>
   );
 }

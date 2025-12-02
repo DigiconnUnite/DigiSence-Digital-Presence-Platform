@@ -16,7 +16,7 @@ export default function Footer() {
           className="flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 border-b border-gray-700 mb-8"
         >
           <div className="mb-6 lg:mb-0 lg:mr-8">
-            <Link href="/" className="flex items-center space-x-3 text-3xl font-bold text-white hover:text-cyan-400 transition-colors duration-300 block mb-3">
+            <Link href="/" className="flex items-center space-x-3 text-3xl font-bold text-white hover:text-cyan-50 transition-colors duration-300 block mb-3">
               <img src="/logo.svg" alt="DigiSence Logo" className="h-10 filter invert hue-rotate-180  w-10" />
               <span>DigiSence</span>
             </Link>
@@ -31,7 +31,7 @@ export default function Footer() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <h3 className="font-semibold text-cyan-400 mb-4 text-lg">Platform</h3>
+              <h3 className="font-semibold text-cyan-50 mb-4 text-lg">Platform</h3>
               <ul className="space-y-2">
                 <li>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -62,7 +62,7 @@ export default function Footer() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <h3 className="font-semibold text-cyan-400 mb-4 text-lg">Account</h3>
+              <h3 className="font-semibold text-cyan-50 mb-4 text-lg">Account</h3>
               <ul className="space-y-2">
                 <li>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -86,7 +86,7 @@ export default function Footer() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <h3 className="font-semibold text-cyan-400 mb-4 text-lg">Connect</h3>
+              <h3 className="font-semibold text-cyan-50 mb-4 text-lg">Connect</h3>
               <ul className="space-y-2">
                 <li>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

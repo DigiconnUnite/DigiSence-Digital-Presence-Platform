@@ -51,8 +51,9 @@ export default function HomePage() {
                       href="/"
                       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
                   >
-                      <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
-                      <span className="font-bold text-xl text-primary">DigiSence.</span>
+                      <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
+
+                      <span className="font-bold text-xl text-primary">DigiSence</span>
                   </Link>
                   <NavItems items={navItems} />
                   <div className="flex items-center gap-4">
@@ -113,93 +114,6 @@ export default function HomePage() {
           <AuroraBackground className="pt-24">
               <HeroSectionOne />
               <MarqueeSection />
-              {/* Features Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="text-center mb-16">
-                          <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">
-                              Why Choose DigiSence?
-                          </h2>
-                          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                              Powerful features designed to help businesses thrive in the digital landscape.
-                          </p>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                                      <Users className="h-6 w-6 text-primary" />
-                                  </div>
-                                  <h3 className="text-xl font-semibold text-primary mb-2">Customer Engagement</h3>
-                                  <p className="text-muted-foreground">
-                                      Connect directly with your customers through inquiries and feedback systems.
-                                  </p>
-                              </CardContent>
-                          </Card>
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                                      <Shield className="h-6 w-6 text-primary" />
-                                  </div>
-                                  <h3 className="text-xl font-semibold text-primary mb-2">Secure & Reliable</h3>
-                                  <p className="text-muted-foreground">
-                                      Enterprise-grade security ensures your business data is always protected.
-                                  </p>
-                              </CardContent>
-                          </Card>
-                          <Card className="border-0 shadow-sm bg-white">
-                              <CardContent className="p-6">
-                                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                                      <Zap className="h-6 w-6 text-primary" />
-                                  </div>
-                                  <h3 className="text-xl font-semibold text-primary mb-2">Fast & Easy Setup</h3>
-                                  <p className="text-muted-foreground">
-                                      Get your professional digital profile up and running in minutes.
-                                  </p>
-                              </CardContent>
-                          </Card>
-                      </div>
-                  </div>
-              </section>
-
-
-
-
-              {/* First New Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                          <div className="order-2 lg:order-1">
-                              <img src="/placeholder.png" alt="Discover Businesses" className="w-full h-auto rounded-lg shadow-lg" />
-                          </div>
-                          <div className="order-1 lg:order-2">
-                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Discover Amazing Businesses</h2>
-                              <p className="text-lg text-muted-foreground mb-6">Explore our curated catalog of local businesses and find exactly what you're looking for.</p>
-                              <Link href="/businesses">
-                                  <Button size="lg" className="rounded-full">Explore Now <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                              </Link>
-                          </div>
-                      </div>
-                  </div>
-              </section>
-
-              {/* Second New Section */}
-              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/20">
-                  <div className="max-w-7xl mx-auto">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                          <div>
-                              <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">Manage Your Business Profile</h2>
-                              <p className="text-lg text-muted-foreground mb-6">Create and manage your professional business profile with ease. Showcase your products and connect with customers.</p>
-                              <Link href="/dashboard/admin">
-                                  <Button size="lg" className="rounded-full">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                              </Link>
-                          </div>
-                          <div>
-                              <img src="/card-bg.jpg" alt="Manage Profile" className="w-full h-auto rounded-lg shadow-lg" />
-                          </div>
-                      </div>
-                  </div>
-              </section>
 
 
 

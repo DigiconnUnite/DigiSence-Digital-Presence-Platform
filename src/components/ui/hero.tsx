@@ -1,172 +1,223 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Android } from "./android";
 
 const images = [
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-  "https://assets.aceternity.com/pro/aceternity-landing.webp",
-  "https://assets.aceternity.com/pro/dashboard.webp",
-
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
+  "profile-1.png",
+  "profile-2.png",
 ];
 
 export default function HeroSectionOne() {
-  const [activeIndex, setActiveIndex] = useState(2); // Start with middle image active
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragStartIndex = useRef(0);
 
   const handleImageClick = (index: number) => {
-    setActiveIndex(index);
+    if (!isDragging) {
+      setActiveIndex(index);
+    }
   };
 
   // Auto-scroll functionality for infinite carousel
   useEffect(() => {
-    if (isHovered) return; // Pause on hover
+    if (isHovered || isDragging) return;
 
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3000); // Change image every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [isHovered]);
+  }, [isHovered, isDragging]);
+
+  // Responsive values
+  const getResponsiveValues = () => {
+    if (typeof window === "undefined") return { radius: 700, cardWidth: 200, dragSensitivity: 100 };
+    const width = window.innerWidth;
+    if (width < 640) return { radius: 350, cardWidth: 120, dragSensitivity: 60 };
+    if (width < 1024) return { radius: 500, cardWidth: 160, dragSensitivity: 80 };
+    return { radius: 700, cardWidth: 200, dragSensitivity: 100 };
+  };
+
+  const [responsiveValues, setResponsiveValues] = useState({ radius: 1500, cardWidth: 300, dragSensitivity: 0 });
+
+  useEffect(() => {
+    const handleResize = () => setResponsiveValues(getResponsiveValues());
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const { radius, cardWidth, dragSensitivity } = responsiveValues;
+  const totalCards = images.length;
+  const angleStep = (2 * Math.PI) / totalCards;
+
+  // Drag handlers
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    dragStartX.current = clientX;
+    dragStartIndex.current = activeIndex;
+  };
+
+  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const deltaX = clientX - dragStartX.current;
+    const indexDelta = Math.round(-deltaX / dragSensitivity);
+    const newIndex = (dragStartIndex.current + indexDelta + totalCards) % totalCards;
+    setActiveIndex(newIndex);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
     <>
-      <div className="relative mx-auto my-10 flex max-w-7xl flex-col items-center justify-center">
-      <div className="px-4 py-10 md:py-20">
-        <h1 className="relative z-10 mx-auto max-w-4xl text-center text-2xl font-bold text-slate-700 md:text-4xl lg:text-7xl dark:text-slate-300">
-          {"Launch your website in hours, not days"
-            .split(" ")
-            .map((word, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0, filter: "blur(4px)", y: 10 }}
-                animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.1,
-                  ease: "easeInOut",
-                }}
-                className="mr-2 inline-block"
-              >
-                {word}
-              </motion.span>
-            ))}
-        </h1>
-        <motion.p
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            duration: 0.3,
-            delay: 0.8,
-          }}
-          className="relative z-10 mx-auto max-w-xl py-4 text-center text-lg font-normal text-neutral-600 dark:text-neutral-400"
-        >
-          With AI, you can launch your website in hours, not days. Try our best
-          in class, state of the art, cutting edge AI tools to get your website
-          up.
-        </motion.p>
-        <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            duration: 0.3,
-            delay: 1,
-          }}
-          className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-4"
-        >
-          <button className="w-60 transform rounded-lg bg-black px-6 py-2 font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
-            Explore Now
-          </button>
-          <button className="w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-100 dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">
-            Contact Support
-          </button>
-        </motion.div>
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.3,
-            delay: 1.2,
-          }}
-            className="relative border  z-10 mt-20"
+      <div className="relative mx-auto   flex max-w-7xl flex-col items-center justify-center px-4">
+        <div className="py-8 md:py-16 lg:py-20 w-full">
+          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-700 dark:text-slate-300">
+            {"Launch your website in hours, not days"
+              .split(" ")
+              .map((word, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ opacity: 0, filter: "blur(4px)", y: 10 }}
+                  animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.08,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  className="mr-1 sm:mr-2 inline-block"
+                >
+                  {word}
+                </motion.span>
+              ))}
+          </h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.5,
+              delay: 0.8,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+            className="relative z-10 mx-auto max-w-xl py-4 text-center text-sm sm:text-base lg:text-lg font-normal text-neutral-600 dark:text-neutral-400"
           >
-
+            With AI, you can launch your website in hours, not days. Try our best
+            in class, state of the art, cutting edge AI tools to get your website
+            up.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.5,
+              delay: 1,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+            className="relative z-10 mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+          >
+            <button className="w-full sm:w-48 md:w-60 transform rounded-lg bg-black px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-gray-200">
+              Explore Now
+            </button>
+            <button className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">
+              Contact Support
+            </button>
           </motion.div>
         </div>
-
       </div>
+
       <div
-        className="relative flex h-[500px] border items-center justify-center"
+        className="relative h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px] flex w-full items-center justify-center overflow-hidden select-none"
         style={{
-          perspective: "1000px",
-          transformStyle: "preserve-3d",
+          perspective: "12000px",
+          cursor: isDragging ? "grabbing" : "grab",
         }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          handleDragEnd();
+        }}
+        onMouseDown={handleDragStart}
+        onMouseMove={handleDragMove}
+        onMouseUp={handleDragEnd}
+        onTouchStart={handleDragStart}
+        onTouchMove={handleDragMove}
+        onTouchEnd={handleDragEnd}
       >
-        {/* Only render 11 cards at a time for the carousel effect */}
-        {Array.from({ length: 11 }, (_, i) => {
-          const cardIndex = (activeIndex - 5 + i + images.length) % images.length;
-          const offset = i - 5; // -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5
-          const rotateY = 0;
-          // Progressive scaling: center big, then smaller as distance increases
-          const scale = offset === 0 ? 1 : Math.max(0.3, 1 - Math.abs(offset) * 0.13);
-          const translateX = offset * 190; // Adjust spacing for 11 cards to fit
-          const zIndex = offset === 0 ? 10 : 5 - Math.abs(offset);
 
-          return (
-            <motion.div
-              key={`${cardIndex}-${i}`}
-              className="absolute cursor-pointer"
-              style={{
-                transform: `translateX(${translateX}px) rotateY(${rotateY}deg) scale(${scale})`,
-                zIndex,
-              }}
-              animate={{
-                transform: `translateX(${translateX}px) rotateY(${rotateY}deg) scale(${scale})`,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-              }}
-              onClick={() => handleImageClick(cardIndex)}
-            >
-              <div className="w-[337px] overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
-                <img
-                  src={images[cardIndex]}
-                  alt={`Preview ${cardIndex + 1}`}
-                  className="aspect-[9/16] h-auto w-full object-cover"
-                  height={600}
-                  width={337}
+        <div
+          className="relative mx-auto flex h-full w-full items-center justify-center"
+          style={{
+            width: cardWidth,
+            height: cardWidth * 2,
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {images.map((image, i) => {
+            // Calculate angle for each card on the cylinder
+            const angle = angleStep * i - angleStep * activeIndex;
+
+            // Calculate 3D position on cylinder
+            const translateX = Math.sin(angle) * radius;
+            const translateZ = Math.cos(angle) * radius - radius;
+            const rotateY = (angle * -0) / Math.PI;
+
+            // Cards in front are more visible
+            const isFront = Math.cos(angle) > 0;
+            // const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
+            const scale = isFront ? 1 + Math.cos(angle) * 0.8 : 0.2;
+            const zIndex = Math.round(Math.cos(angle) * 100) + 100;
+
+            return (
+              <motion.div
+                key={`card-${i}`}
+                className="absolute left-1/2 top-1/2 mx-auto flex items-center justify-center pointer-events-auto"
+                animate={{
+                  x: translateX - cardWidth / 3,
+                  y: -cardWidth,
+                  z: translateZ,
+                  rotateY: rotateY,
+                  scale: scale,
+                  // opacity: opacity,
+                }}
+                transition={{
+                  duration: isDragging ? 0.18 : 0.5,
+                  ease: isDragging ? [0.33, 1, 0.68, 1] : [0.23, 1, 0.32, 1],
+                }}
+                style={{
+                  zIndex,
+                  transformStyle: "preserve-3d",
+                  width: cardWidth,
+                }}
+                onClick={() => handleImageClick(i)}
+              >
+                <Android
+                  src={image}
+                  className="h-full w-full object-contain pointer-events-none"
                 />
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </>
   );

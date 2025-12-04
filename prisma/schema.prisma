@@ -110,6 +110,7 @@ model Product {
   image       String?
   inStock     Boolean  @default(true)
   isActive    Boolean  @default(true)
+  additionalInfo Json? // Key-value pairs for additional product information
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

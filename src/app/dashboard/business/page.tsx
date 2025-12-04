@@ -93,7 +93,8 @@ import {
   LineChart,
   Cog,
   Fullscreen,
-  Share2
+  Share2,
+  Tag
 } from 'lucide-react'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
@@ -107,6 +108,7 @@ interface Product {
   image: string | null
   inStock: boolean
   isActive: boolean
+  additionalInfo?: Record<string, string>
   createdAt: Date
   updatedAt: Date
   businessId: string
@@ -227,6 +229,7 @@ export default function BusinessAdminDashboard() {
     image: '',
     categoryId: '',
     brandName: '',
+    additionalInfo: {} as Record<string, string>,
     inStock: true,
     isActive: true,
   })
@@ -291,6 +294,8 @@ export default function BusinessAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [newInfoKey, setNewInfoKey] = useState('')
+  const [newInfoValue, setNewInfoValue] = useState('')
 
   // Categories management state
   const [categoryFormData, setCategoryFormData] = useState({
@@ -539,6 +544,7 @@ export default function BusinessAdminDashboard() {
       image: product.image || '',
       categoryId: product.categoryId || '',
       brandName: product.brandName || '',
+      additionalInfo: product.additionalInfo || {},
       inStock: product.inStock,
       isActive: product.isActive,
     })
@@ -629,6 +635,46 @@ export default function BusinessAdminDashboard() {
         alert('Failed to copy link');
       });
     }
+  }
+
+
+  const handleAddInfo = () => {
+    const key = newInfoKey.trim()
+    const value = newInfoValue.trim()
+    if (!key || !value) return
+
+    const normalizedKey = key.toLowerCase()
+    const currentInfo = productFormData.additionalInfo || {}
+
+    if (currentInfo[normalizedKey]) {
+      toast({
+        title: "Error",
+        description: "This key already exists",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setProductFormData(prev => ({
+      ...prev,
+      additionalInfo: {
+        ...prev.additionalInfo,
+        [key]: value
+      }
+    }))
+    setNewInfoKey('')
+    setNewInfoValue('')
+  }
+
+  const handleRemoveInfo = (keyToRemove: string) => {
+    setProductFormData(prev => {
+      const newInfo = { ...prev.additionalInfo }
+      delete newInfo[keyToRemove]
+      return {
+        ...prev,
+        additionalInfo: newInfo
+      }
+    })
   }
 
   const handleBasicInfoSave = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -1285,6 +1331,7 @@ export default function BusinessAdminDashboard() {
                             image: '',
                             categoryId: '',
                             brandName: '',
+                            additionalInfo: {},
                             inStock: true,
                             isActive: true,
                           });
@@ -1356,6 +1403,7 @@ export default function BusinessAdminDashboard() {
                       { id: 'info', label: sectionTitles.info, icon: Building },
                       { id: 'brands', label: sectionTitles.brands, icon: Palette },
                       { id: 'categories', label: 'Categories', icon: Grid3X3 },
+
                       { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree }
                     ].map((tab) => {
                       const Icon = tab.icon
@@ -1516,6 +1564,7 @@ export default function BusinessAdminDashboard() {
                       image: '',
                       categoryId: '',
                       brandName: '',
+                      additionalInfo: {},
                       inStock: true,
                       isActive: true,
                     });
@@ -1796,6 +1845,7 @@ export default function BusinessAdminDashboard() {
                             image: '',
                             categoryId: '',
                             brandName: '',
+                            additionalInfo: {},
                             inStock: true,
                             isActive: true,
                           });
@@ -1981,6 +2031,7 @@ export default function BusinessAdminDashboard() {
                                   image: '',
                                   categoryId: '',
                                   brandName: '',
+                                  additionalInfo: {},
                                   inStock: true,
                                   isActive: true,
                                 });
@@ -2108,6 +2159,7 @@ export default function BusinessAdminDashboard() {
                                       image: '',
                                       categoryId: '',
                                       brandName: '',
+                                      additionalInfo: {},
                                       inStock: true,
                                       isActive: true,
                                     });
@@ -2219,6 +2271,7 @@ export default function BusinessAdminDashboard() {
                     image: '',
                     categoryId: '',
                     brandName: '',
+                    additionalInfo: {},
                     inStock: true,
                     isActive: true,
                   })
@@ -3575,6 +3628,64 @@ export default function BusinessAdminDashboard() {
                       <Label htmlFor="isActive">Visible on public page</Label>
                     </div>
 
+                    {/* Additional Information Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Additional Information</h3>
+                      <div className="space-y-2">
+                        <Label>Add key-value pairs for additional product details</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Key (e.g., Material)"
+                            value={newInfoKey || ''}
+                            onChange={(e) => setNewInfoKey(e.target.value)}
+                            className="rounded-2xl"
+                          />
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Value (e.g., Cotton)"
+                              value={newInfoValue || ''}
+                              onChange={(e) => setNewInfoValue(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  handleAddInfo()
+                                }
+                              }}
+                              className="flex-1 rounded-2xl"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleAddInfo}
+                              disabled={!newInfoKey?.trim() || !newInfoValue?.trim()}
+                              className="rounded-xl"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {productFormData.additionalInfo && Object.keys(productFormData.additionalInfo).length > 0 && (
+                          <div className="space-y-2 mt-4">
+                            {Object.entries(productFormData.additionalInfo).map(([key, value], index) => (
+                              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
+                                <span className="font-medium text-sm">{key}:</span>
+                                <span className="text-sm flex-1">{value}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveInfo(key)}
+                                  className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <Separator />
                   </div>
                 </>
@@ -3599,6 +3710,7 @@ export default function BusinessAdminDashboard() {
                         image: '',
                         categoryId: '',
                         brandName: '',
+                        additionalInfo: {},
                         inStock: true,
                         isActive: true,
                       });
@@ -3726,6 +3838,7 @@ export default function BusinessAdminDashboard() {
                             image: '',
                             categoryId: '',
                             brandName: '',
+                            additionalInfo: {},
                             inStock: true,
                             isActive: true,
                           });

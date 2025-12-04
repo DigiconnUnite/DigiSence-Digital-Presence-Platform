@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
             image: true,
             inStock: true,
             isActive: true,
+            additionalInfo: true,
             createdAt: true,
             updatedAt: true,
             businessId: true,

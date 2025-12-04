@@ -40,7 +40,9 @@ import {
   Package,
   MessageCircle,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  X,
+  Tag
 } from 'lucide-react'
 
 interface Product {
@@ -50,6 +52,7 @@ interface Product {
   image?: string
   category?: { id: string; name: string }
   brand?: { id: string; name: string }
+  additionalInfo?: Record<string, string>
   inStock: boolean
   isActive: boolean
   createdAt: string
@@ -69,12 +72,15 @@ export default function ProductsManagementPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [brandFilterText, setBrandFilterText] = useState('')
   const [isRefreshingBrands, setIsRefreshingBrands] = useState(false)
+  const [newInfoKey, setNewInfoKey] = useState('')
+  const [newInfoValue, setNewInfoValue] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     image: '',
     categoryId: '',
     brandId: '',
+    additionalInfo: {} as Record<string, string>,
     inStock: true,
     isActive: true,
   })
@@ -160,10 +166,13 @@ export default function ProductsManagementPage() {
       image: '',
       categoryId: '',
       brandId: '',
+      additionalInfo: {},
       inStock: true,
       isActive: true,
     })
     setEditingProduct(null)
+    setNewInfoKey('')
+    setNewInfoValue('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -209,6 +218,7 @@ export default function ProductsManagementPage() {
       image: product.image || '',
       categoryId: product.category?.id || '',
       brandId: product.brand?.id || '',
+      additionalInfo: product.additionalInfo || {},
       inStock: product.inStock,
       isActive: product.isActive,
     })
@@ -234,6 +244,48 @@ export default function ProductsManagementPage() {
       }
     } catch (error) {
       alert('Failed to delete product. Please try again.')
+    }
+  }
+
+  const handleAddInfo = () => {
+    const key = newInfoKey.trim()
+    const value = newInfoValue.trim()
+    if (!key || !value) return
+
+    const normalizedKey = key.toLowerCase()
+    const currentInfo = formData.additionalInfo || {}
+
+    if (currentInfo[normalizedKey]) {
+      alert('This key already exists')
+      return
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      additionalInfo: {
+        ...prev.additionalInfo,
+        [key]: value
+      }
+    }))
+    setNewInfoKey('')
+    setNewInfoValue('')
+  }
+
+  const handleRemoveInfo = (keyToRemove: string) => {
+    setFormData(prev => {
+      const newInfo = { ...prev.additionalInfo }
+      delete newInfo[keyToRemove]
+      return {
+        ...prev,
+        additionalInfo: newInfo
+      }
+    })
+  }
+
+  const handleInfoKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddInfo()
     }
   }
 
@@ -373,6 +425,18 @@ export default function ProductsManagementPage() {
                             <Badge variant="outline">
                               {product.brand.name}
                             </Badge>
+                          )}
+                          {product.additionalInfo && Object.keys(product.additionalInfo).length > 0 && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              {Object.entries(product.additionalInfo).slice(0, 2).map(([key, value]) => (
+                                <div key={key} className="inline-block mr-2">
+                                  <span className="font-medium">{key}:</span> {value}
+                                </div>
+                              ))}
+                              {Object.keys(product.additionalInfo).length > 2 && (
+                                <span className="text-gray-500">+{Object.keys(product.additionalInfo).length - 2} more</span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -572,6 +636,59 @@ export default function ProductsManagementPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Additional Information</h3>
+              <div className="space-y-2">
+                <Label>Add key-value pairs for additional product details</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Key (e.g., Material)"
+                    value={newInfoKey}
+                    onChange={(e) => setNewInfoKey(e.target.value)}
+                    className="rounded-2xl"
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Value (e.g., Cotton)"
+                      value={newInfoValue}
+                      onChange={(e) => setNewInfoValue(e.target.value)}
+                      onKeyPress={handleInfoKeyPress}
+                      className="flex-1 rounded-2xl"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddInfo}
+                      disabled={!newInfoKey.trim() || !newInfoValue.trim()}
+                      className="rounded-xl"
+                    >
+                      <Tag className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {formData.additionalInfo && Object.keys(formData.additionalInfo).length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    {Object.entries(formData.additionalInfo).map(([key, value], index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
+                        <span className="font-medium text-sm">{key}:</span>
+                        <span className="text-sm flex-1">{value}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveInfo(key)}
+                          className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

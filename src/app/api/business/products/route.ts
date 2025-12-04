@@ -10,6 +10,7 @@ const productSchema = z.object({
   image: z.string().optional(),
   categoryId: z.string().optional(),
   brandName: z.string().optional(),
+  additionalInfo: z.object({}).catchall(z.string()).optional(),
   inStock: z.boolean().default(true),
   isActive: z.boolean().default(true),
 })
@@ -21,6 +22,7 @@ const updateProductSchema = z.object({
   image: z.string().optional(),
   categoryId: z.string().optional(),
   brandName: z.string().optional(),
+  additionalInfo: z.object({}).catchall(z.string()).optional(),
   inStock: z.boolean().optional(),
   isActive: z.boolean().optional(),
 })

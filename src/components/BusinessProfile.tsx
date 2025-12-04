@@ -41,6 +41,7 @@ interface Product {
   image: string | null
   inStock: boolean
   isActive: boolean
+  additionalInfo: Record<string, string>
   createdAt: Date
   updatedAt: Date
   businessId: string
@@ -172,7 +173,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
   const [mounted, setMounted] = useState(false)
   const [viewAllBrands, setViewAllBrands] = useState(false)
   const [viewAllCategories, setViewAllCategories] = useState(false)
-  const [viewAllProducts, setViewAllProducts] = useState(false)
+  const [viewAllProducts, setViewAllProducts] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('home')
@@ -1346,7 +1347,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   ))}
                 </div>
               ) : (
-                <Carousel className="w-full" suppressHydrationWarning>
+                  <Carousel opts={{ loop: true, dragFree: false, align: 'start', watchDrag: true, watchResize: true, watchSlides: true }} className="w-full" suppressHydrationWarning>
                   <CarouselContent>
                     {brandContent.brands.map((brand: any, index: number) => (
                       <CarouselItem key={index} className="basis-1/2 md:basis-1/4 lg:basis-1/5">
@@ -1605,7 +1606,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   ))}
                 </div>
               ) : (
-                <Carousel className="w-full">
+                  <Carousel opts={{ loop: true, dragFree: false, align: 'start', watchDrag: true, watchResize: true, watchSlides: true }} className="w-full" suppressHydrationWarning>
                   <CarouselContent>
                     {filteredProducts.map((product) => (
                       <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
@@ -1814,13 +1815,14 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 <h2 className="text-xl md:text-2xl font-bold mb-3">Opening Hours & Details</h2>
                 <div className="space-y-4 flex justify-between">
                   <div>
-                    <Label className="block  text-gray-600 mb-1">Opening Hours</Label>
+                    <Label className="flex flex-2  text-gray-600 mb-1">Opening Hours</Label>
                     {business.openingHours && business.openingHours.length > 0 ? (
                       <ul className="text-sm flex-1 text-gray-800">
                         {business.openingHours.map((item: any, idx: number) => (
                           <li key={idx} className="flex flex-1 gap-5 justify-between items-center py-0.5">
                             <span className="font-medium">{item.day}</span>
-                            <span>::</span>
+                            <span></span>
+                            <span></span>
                             <span>
                               {item.open && item.close
                                 ? `${item.open} - ${item.close}`
@@ -1984,7 +1986,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             <div className="space-y-6">
               {/* Product Image */}
               <div className="flex justify-center">
-                <div className="relative w-full max-w-md h-64 md:h-80 rounded-lg overflow-hidden shadow-lg">
+                <div className="relative w-full max-w-md h-64 md:h-80 rounded-lg overflow-hidden border border-gray-200 shadow-sm ">
                   {selectedProductModal.image && selectedProductModal.image.trim() !== '' ? (
                     <img
                       src={getOptimizedImageUrl(selectedProductModal.image, {
@@ -1998,7 +2000,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       srcSet={generateSrcSet(selectedProductModal.image)}
                       sizes="(max-width: 768px) 100vw, 600px"
                       alt={selectedProductModal.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       loading="lazy"
                     />
                   ) : (
@@ -2008,8 +2010,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   )}
                   <Badge
                     className={`absolute top-3 right-3 ${selectedProductModal.inStock
-                      ? 'bg-green-500 hover:bg-green-600'
-                      : 'bg-red-500 hover:bg-red-600'
+                      ? 'bg-linear-to-l from-gray-900 to-lime-900'
+                      : 'bg-linear-to-l from-gray-900 to-red-900'
                       } text-white border-0`}
                   >
                     {selectedProductModal.inStock ? (
@@ -2057,6 +2059,33 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                     {selectedProductModal.description || "No description available"}
                   </p>
                 </div>
+
+                {/* Additional Information Section */}
+                {(selectedProductModal.additionalInfo && Object.keys(selectedProductModal.additionalInfo).length > 0) && (
+                  <div className="space-y-2">
+                    <h4 className="text-lg font-semibold text-gray-900">Additional Information</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Property</th>
+                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {Object.entries(selectedProductModal.additionalInfo).map(([key, value], index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-4 py-2 text-sm font-medium text-gray-900 capitalize">
+                                {key.replace(/([A-Z])/g, ' $1').trim()}
+                              </td>
+                              <td className="px-4 py-2 text-sm text-gray-700">{value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Related Products */}
@@ -2080,7 +2109,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               srcSet={generateSrcSet(product.image)}
                               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                               alt={product.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                               loading="lazy"
                             />
                           ) : (

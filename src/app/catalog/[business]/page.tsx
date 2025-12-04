@@ -58,6 +58,7 @@ export default async function BusinessPage({ params }: PageProps) {
           image: true,
           inStock: true,
           isActive: true,
+          additionalInfo: true,
           createdAt: true,
           updatedAt: true,
           businessId: true,
@@ -107,7 +108,7 @@ export default async function BusinessPage({ params }: PageProps) {
   })
 
   console.log('Business ID:', business.id)
-  console.log('Products count:', business.products.length)
+  console.log('Products count:', (business as any).products?.length || 0)
   console.log('Categories fetched:', categories.length, categories.map(c => ({ id: c.id, name: c.name, type: 'PRODUCT', _count: c._count })))
 
   const mappedCategories = categories.map(cat => ({

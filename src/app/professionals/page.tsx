@@ -26,37 +26,30 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import {
   Search,
-  Building2,
+  User,
   MapPin,
   Phone,
   Mail,
   Globe,
-  Package,
   Eye,
   ArrowRight
 } from 'lucide-react'
 
-interface Business {
+interface Professional {
   id: string
   name: string
   slug: string
-  description: string | null
-  logo: string | null
-  address: string | null
+  professionalHeadline: string | null
+  profilePicture: string | null
+  location: string | null
   phone: string | null
   email: string | null
   website: string | null
-  category: {
-    name: string
-  } | null
-  products: {
-    id: string
-  }[]
 }
 
-export default function BusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([])
-  const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([])
+export default function ProfessionalsPage() {
+  const [professionals, setProfessionals] = useState<Professional[]>([])
+  const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -73,44 +66,48 @@ export default function BusinessesPage() {
       link: "/businesses",
     },
     {
+      name: "Professionals",
+      link: "/professionals",
+    },
+    {
       name: "Contact Us",
       link: "/contact",
     },
   ]
 
   useEffect(() => {
-    fetchBusinesses()
+    fetchProfessionals()
   }, [])
 
   useEffect(() => {
-    const filtered = businesses.filter(business =>
-      business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      business.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      business.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = professionals.filter(professional =>
+      professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      professional.professionalHeadline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      professional.location?.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    setFilteredBusinesses(filtered)
-  }, [businesses, searchTerm])
+    setFilteredProfessionals(filtered)
+  }, [professionals, searchTerm])
 
-  const fetchBusinesses = async () => {
+  const fetchProfessionals = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/businesses')
+      const response = await fetch('/api/professionals')
       if (response.ok) {
         const data = await response.json()
-        setBusinesses(data.businesses)
-        setFilteredBusinesses(data.businesses)
+        setProfessionals(data.professionals)
+        setFilteredProfessionals(data.professionals)
       } else {
-        console.error('Failed to fetch businesses')
+        console.error('Failed to fetch professionals')
       }
     } catch (error) {
-      console.error('Error fetching businesses:', error)
+      console.error('Error fetching professionals:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleViewBusiness = (slug: string) => {
-    router.push(`/catalog/${slug}`)
+  const handleViewProfessional = (slug: string) => {
+    router.push(`/pcard/${slug}`)
   }
 
   return (
@@ -185,11 +182,11 @@ export default function BusinessesPage() {
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-6">
-              Discover Amazing Businesses
+              Discover Amazing Professionals
             </h1>
             <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-              Explore our curated collection of businesses offering quality products and services.
-              Find the perfect business for your needs.
+              Explore our curated collection of professionals offering quality services.
+              Find the perfect professional for your needs.
             </p>
 
             {/* Search Bar */}
@@ -197,7 +194,7 @@ export default function BusinessesPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 type="text"
-                placeholder="Search businesses..."
+                placeholder="Search professionals..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-3 text-lg rounded-full border-2 border-border focus:border-primary bg-background"
@@ -233,16 +230,16 @@ export default function BusinessesPage() {
                   </Card>
                 ))}
               </div>
-            ) : filteredBusinesses.length === 0 ? (
+            ) : filteredProfessionals.length === 0 ? (
               <div className="text-center py-16">
-                <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-primary mb-2">
-                  {searchTerm ? 'No businesses found' : 'No businesses available'}
+                  {searchTerm ? 'No professionals found' : 'No professionals available'}
                 </h3>
                 <p className="text-muted-foreground">
                   {searchTerm
                     ? 'Try adjusting your search terms'
-                    : 'Check back later for new businesses'
+                    : 'Check back later for new professionals'
                   }
                 </p>
               </div>
@@ -250,22 +247,22 @@ export default function BusinessesPage() {
               <>
                 <div className="flex justify-between items-center mb-12">
                   <h2 className="text-2xl font-bold text-primary">
-                    {searchTerm ? `Search Results (${filteredBusinesses.length})` : `All Businesses (${filteredBusinesses.length})`}
+                    {searchTerm ? `Search Results (${filteredProfessionals.length})` : `All Professionals (${filteredProfessionals.length})`}
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredBusinesses.map((business) => (
+                  {filteredProfessionals.map((professional) => (
                     <Card
-                      key={business.id}
+                      key={professional.id}
                       className="overflow-hidden hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:bg-white/90"
                     >
                       <CardHeader className="pb-4">
                         <div className="flex items-center space-x-4">
                           <div className="shrink-0">
-                            {business.logo ? (
+                            {professional.profilePicture ? (
                               <img
-                                src={getOptimizedImageUrl(business.logo, {
+                                src={getOptimizedImageUrl(professional.profilePicture, {
                                   width: 64,
                                   height: 64,
                                   quality: 85,
@@ -273,23 +270,23 @@ export default function BusinessesPage() {
                                   crop: 'fill',
                                   gravity: 'center'
                                 })}
-                                alt={business.name}
+                                alt={professional.name}
                                 className="h-16 w-16 rounded-full object-cover border-2 border-border"
                                 loading="lazy"
                               />
                             ) : (
                               <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                                <Building2 className="h-8 w-8 text-muted-foreground" />
+                                <User className="h-8 w-8 text-muted-foreground" />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <CardTitle className="text-xl font-bold text-primary truncate">
-                              {business.name}
+                              {professional.name}
                             </CardTitle>
-                            {business.category && (
+                            {professional.professionalHeadline && (
                               <Badge variant="secondary" className="mt-1">
-                                {business.category.name}
+                                {professional.professionalHeadline}
                               </Badge>
                             )}
                           </div>
@@ -297,37 +294,31 @@ export default function BusinessesPage() {
                       </CardHeader>
 
                       <CardContent className="space-y-4">
-                        {business.description && (
-                          <CardDescription className="text-muted-foreground line-clamp-3">
-                            {business.description}
-                          </CardDescription>
-                        )}
-
                         {/* Contact Info */}
                         <div className="space-y-2">
-                          {business.address && (
+                          {professional.location && (
                             <div className="flex items-center text-sm text-muted-foreground">
                               <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                              <span className="truncate">{business.address}</span>
+                              <span className="truncate">{professional.location}</span>
                             </div>
                           )}
-                          {business.phone && (
+                          {professional.phone && (
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                              <span>{business.phone}</span>
+                              <span>{professional.phone}</span>
                             </div>
                           )}
-                          {business.email && (
+                          {professional.email && (
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                              <span className="truncate">{business.email}</span>
+                              <span className="truncate">{professional.email}</span>
                             </div>
                           )}
-                          {business.website && (
+                          {professional.website && (
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
                               <a
-                                href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
+                                href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline truncate"
@@ -341,11 +332,11 @@ export default function BusinessesPage() {
                         {/* Stats */}
                         <div className="flex items-center justify-between pt-4 border-t border-border">
                           <div className="flex items-center text-sm text-muted-foreground">
-                            <Package className="h-4 w-4 mr-1" />
-                            <span>{business.products.length} products</span>
+                            <User className="h-4 w-4 mr-1" />
+                            <span>Professional</span>
                           </div>
                           <Button
-                            onClick={() => handleViewBusiness(business.slug)}
+                            onClick={() => handleViewProfessional(professional.slug)}
                             className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
                           >
                             <Eye className="h-4 w-4 mr-2" />

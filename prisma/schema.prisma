@@ -24,6 +24,7 @@ model User {
 
   // Relations
   business  Business?
+  professional Professional?
   inquiries Inquiry[]
   assignedBusinessListingInquiries BusinessListingInquiry[]
 
@@ -31,42 +32,79 @@ model User {
 }
 
 model Business {
-  id          String   @id @default(cuid()) @map("_id")
-  name        String
-  slug        String   @unique
-  description String?
-  about       String?  // About section content
-  logo        String?
-  address     String?
-  phone       String?
-  email       String?
-  website     String?
-  facebook    String?
-  twitter     String?
-  instagram   String?
-  linkedin    String?
-  catalogPdf  String?  // Catalog PDF URL
-  openingHours Json?   // Opening hours data
-  gstNumber   String?  // GST number
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+   id          String   @id @default(cuid()) @map("_id")
+   name        String
+   slug        String   @unique
+   description String?
+   about       String?  // About section content
+   logo        String?
+   address     String?
+   phone       String?
+   email       String?
+   website     String?
+   facebook    String?
+   twitter     String?
+   instagram   String?
+   linkedin    String?
+   catalogPdf  String?  // Catalog PDF URL
+   openingHours Json?   // Opening hours data
+   gstNumber   String?  // GST number
+   isActive    Boolean  @default(true)
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-  // Relations
-  adminId     String   @unique
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  categoryId  String?
-  category    Category? @relation("BusinessCategory", fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  categories  Category[] @relation("BusinessProductCategories")
-  products    Product[]
-  inquiries   Inquiry[]
+   // Relations
+   adminId     String   @unique
+   admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+   categoryId  String?
+   category    Category? @relation("BusinessCategory", fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+   categories  Category[] @relation("BusinessProductCategories")
+   products    Product[]
+   inquiries   Inquiry[]
 
-  // Content sections (stored as JSON for flexibility)
-  heroContent Json?      // Hero slider data
-  brandContent Json?     // Brand slider data
-  portfolioContent Json? // Portfolio images data
+   // Content sections (stored as JSON for flexibility)
+   heroContent Json?      // Hero slider data
+   brandContent Json?     // Brand slider data
+   portfolioContent Json? // Portfolio images data
 
-  @@map("businesses")
+   @@map("businesses")
+}
+
+model Professional {
+   id                    String   @id @default(cuid()) @map("_id")
+   name                  String
+   slug                  String   @unique
+   professionalHeadline String?
+   aboutMe               String?  // About me section
+   profilePicture        String?
+   banner                String?
+   location              String?
+   phone                 String?
+   email                 String?
+   website               String?
+   facebook              String?
+   twitter               String?
+   instagram             String?
+   linkedin              String?
+   isActive              Boolean  @default(true)
+   createdAt             DateTime @default(now())
+   updatedAt             DateTime @updatedAt
+
+   // Relations
+   adminId               String   @unique
+   admin                 User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+   // Professional background (stored as JSON for flexibility)
+   workExperience        Json?   // Work experience data
+   education             Json?   // Education data
+   skills                Json?   // Skills data
+   servicesOffered       Json?   // Services offered data
+   contactInfo           Json?   // Additional contact information
+   portfolio             Json?   // Portfolio data
+   contactDetails        Json?   // Contact details
+   ctaButton             Json?   // Call-to-action button data
+
+   @@map("professionals")
 }
 
 model Category {
@@ -149,6 +187,7 @@ model Inquiry {
 enum UserRole {
   SUPER_ADMIN
   BUSINESS_ADMIN
+  PROFESSIONAL_ADMIN
 }
 
 enum InquiryStatus {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -37,6 +37,14 @@ import {
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DialogFooter } from '@/components/ui/dialog'
+import {
+  ArrayFieldManager,
+  WorkExperienceForm,
+  EducationForm,
+  SkillForm,
+  ServiceForm,
+  PortfolioItemForm
+} from '@/components/ui/array-field-manager'
 import {
   Sidebar,
   SidebarContent,
@@ -81,7 +89,17 @@ import {
   LineChart,
   Cog,
   MoreHorizontal,
-  LogOut
+  LogOut,
+  User,
+  Briefcase,
+  GraduationCap,
+  Award,
+  Wrench,
+  Image,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -131,6 +149,40 @@ interface AdminStats {
   activeBusinesses: number
   totalProducts: number
   totalActiveProducts: number
+  totalProfessionals: number
+  activeProfessionals: number
+}
+
+interface Professional {
+  id: string
+  name: string
+  slug: string
+  professionalHeadline: string | null
+  aboutMe: string | null
+  profilePicture: string | null
+  banner: string | null
+  location: string | null
+  phone: string | null
+  email: string | null
+  website: string | null
+  facebook: string | null
+  twitter: string | null
+  instagram: string | null
+  linkedin: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  adminId: string
+  workExperience?: any[]
+  education?: any[]
+  skills?: string[]
+  servicesOffered?: any[]
+  portfolio?: any[]
+  admin: {
+    id: string
+    email: string
+    name?: string
+  }
 }
 
 export default function SuperAdminDashboard() {
@@ -138,6 +190,7 @@ export default function SuperAdminDashboard() {
   const router = useRouter()
   const { toast } = useToast()
   const [businesses, setBusinesses] = useState<Business[]>([])
+  const [professionals, setProfessionals] = useState<Professional[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
   const [businessListingInquiries, setBusinessListingInquiries] = useState<any[]>([])
@@ -148,14 +201,17 @@ export default function SuperAdminDashboard() {
     activeBusinesses: 0,
     totalProducts: 0,
     totalActiveProducts: 0,
+    totalProfessionals: 0,
+    activeProfessionals: 0,
   })
   const [showAddBusiness, setShowAddBusiness] = useState(false)
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null)
   const [showEditBusiness, setShowEditBusiness] = useState(false)
+  const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [showRightPanel, setShowRightPanel] = useState(false)
-  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-category' | 'edit-category' | null>(null)
+  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-professional' | 'edit-professional' | 'add-category' | 'edit-category' | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -168,6 +224,19 @@ export default function SuperAdminDashboard() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [selectedBusinessListingInquiry, setSelectedBusinessListingInquiry] = useState<any>(null)
   const [showBusinessListingInquiryDialog, setShowBusinessListingInquiryDialog] = useState(false)
+
+  // Professional form state
+  const [professionalWorkExperience, setProfessionalWorkExperience] = useState<any[]>([])
+  const [professionalEducation, setProfessionalEducation] = useState<any[]>([])
+  const [professionalSkills, setProfessionalSkills] = useState<string[]>([])
+  const [professionalServices, setProfessionalServices] = useState<any[]>([])
+  const [professionalPortfolio, setProfessionalPortfolio] = useState<any[]>([])
+  const [professionalSocialMedia, setProfessionalSocialMedia] = useState({
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: ''
+  })
 
   useEffect(() => {
     // Check if mobile on initial load and on resize
@@ -220,6 +289,8 @@ export default function SuperAdminDashboard() {
           activeBusinesses,
           totalProducts,
           totalActiveProducts,
+          totalProfessionals: professionals.length,
+          activeProfessionals: professionals.filter(p => p.isActive).length,
         })
       }
 
@@ -235,6 +306,16 @@ export default function SuperAdminDashboard() {
       if (inquiriesRes.ok) {
         const data = await inquiriesRes.json()
         setInquiries(data.inquiries)
+      }
+
+      // Fetch professionals
+      const professionalsRes = await fetch('/api/professionals')
+      if (professionalsRes.ok) {
+        const data = await professionalsRes.json()
+        setProfessionals(data.professionals)
+
+        // Calculate professional stats
+        const activeProfessionals = data.professionals.filter((p: Professional) => p.isActive).length
       }
 
       // Fetch business listing inquiries
@@ -464,6 +545,187 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const handleEditProfessional = (professional: Professional) => {
+    setEditingProfessional(professional)
+    setRightPanelContent('edit-professional')
+    setShowRightPanel(true)
+  }
+
+  const handleDeleteProfessional = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this professional profile? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/professionals/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await fetchData()
+        toast({
+          title: "Success",
+          description: "Professional deleted successfully",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to delete professional: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete professional. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleAddProfessional = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+
+    const manualUsername = formData.get('username') as string
+    const manualPassword = formData.get('password') as string
+
+    const professionalData = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      password: manualPassword || generatedPassword || generatePassword(),
+      adminName: formData.get('adminName') as string,
+      professionalHeadline: formData.get('professionalHeadline') as string,
+      aboutMe: formData.get('aboutMe') as string,
+      profilePicture: formData.get('profilePicture') as string,
+      banner: formData.get('banner') as string,
+      location: formData.get('location') as string,
+      phone: formData.get('phone') as string,
+      website: formData.get('website') as string,
+      facebook: professionalSocialMedia.facebook,
+      twitter: professionalSocialMedia.twitter,
+      instagram: professionalSocialMedia.instagram,
+      linkedin: professionalSocialMedia.linkedin,
+      workExperience: professionalWorkExperience,
+      education: professionalEducation,
+      skills: professionalSkills,
+      servicesOffered: professionalServices,
+      portfolio: professionalPortfolio,
+    }
+
+    console.log('Creating professional:', professionalData)
+
+    try {
+      const response = await fetch('/api/admin/professionals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(professionalData),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Professional creation successful')
+        toast({
+          title: "Success",
+          description: `Professional created successfully! Login credentials: Email: ${professionalData.email}, Password: ${professionalData.password}`,
+        })
+        setShowRightPanel(false)
+        setRightPanelContent(null)
+        setGeneratedPassword('')
+        setGeneratedUsername('')
+        fetchData()
+        e.currentTarget.reset()
+      } else {
+        const error = await response.json()
+        console.error('Professional creation failed:', error)
+        toast({
+          title: "Error",
+          description: `Failed to create professional: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Professional creation error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create professional. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateProfessional = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingProfessional) return
+
+    setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
+
+    const updateData = {
+      name: formData.get('name') as string,
+      professionalHeadline: formData.get('professionalHeadline') as string,
+      aboutMe: formData.get('aboutMe') as string,
+      profilePicture: formData.get('profilePicture') as string,
+      banner: formData.get('banner') as string,
+      location: formData.get('location') as string,
+      phone: formData.get('phone') as string,
+      website: formData.get('website') as string,
+      email: formData.get('email') as string,
+      facebook: professionalSocialMedia.facebook,
+      twitter: professionalSocialMedia.twitter,
+      instagram: professionalSocialMedia.instagram,
+      linkedin: professionalSocialMedia.linkedin,
+      workExperience: professionalWorkExperience,
+      education: professionalEducation,
+      skills: professionalSkills,
+      servicesOffered: professionalServices,
+      portfolio: professionalPortfolio,
+    }
+
+    console.log('Updating professional:', editingProfessional.id, updateData)
+
+    try {
+      const response = await fetch(`/api/professionals/${editingProfessional.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      })
+
+      if (response.ok) {
+        console.log('Update successful')
+        await fetchData()
+        setShowRightPanel(false)
+        setRightPanelContent(null)
+        toast({
+          title: "Success",
+          description: "Professional updated successfully!",
+        })
+      } else {
+        const error = await response.json()
+        console.error('Update failed:', error)
+        toast({
+          title: "Error",
+          description: `Failed to update professional: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update professional. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -663,6 +925,13 @@ export default function SuperAdminDashboard() {
       mobileIcon: Grid3X3,
       value: 'businesses',
       mobileTitle: 'Business'
+    },
+    {
+      title: 'Professionals',
+      icon: User,
+      mobileIcon: User,
+      value: 'professionals',
+      mobileTitle: 'Professional'
     },
     {
       title: 'Categories',
@@ -887,12 +1156,22 @@ export default function SuperAdminDashboard() {
               </Card>
               <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">Total Professionals</CardTitle>
+                  <User className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{stats.totalProfessionals}</div>
+                  <p className="text-xs text-gray-500">Registered professionals</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">Platform Health</CardTitle>
                   <Activity className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
-                    {stats.activeBusinesses > 0 ? 'Excellent' : 'Growing'}
+                    {(stats.activeBusinesses > 0 || stats.activeProfessionals > 0) ? 'Excellent' : 'Growing'}
                   </div>
                   <p className="text-xs text-gray-500">System status</p>
                 </CardContent>
@@ -963,6 +1242,92 @@ export default function SuperAdminDashboard() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteBusiness(business)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'professionals':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Add Professionals</h1>
+              <p className="text-xl text-gray-600">Manage and monitor your professionals from this dashboard section.</p>
+            </div>
+            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
+
+              <div className="p-4 sm:p-6">
+                {/* Search and Filters */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Button onClick={() => { setRightPanelContent('add-professional'); setShowRightPanel(true); }} className="bg-black hover:bg-gray-800 text-white rounded-2xl">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New
+                  </Button>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
+                      <SelectValue placeholder="Filter by Status: Active" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All ({professionals.length})</SelectItem>
+                      <SelectItem value="active">Active ({professionals.filter(p => p.isActive).length})</SelectItem>
+                      <SelectItem value="inactive">Inactive ({professionals.filter(p => !p.isActive).length})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" className="rounded-2xl">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Data
+                  </Button>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <Table>
+                    <TableHeader className='bg-amber-100'>
+                      <TableRow>
+                        <TableHead className="text-gray-900">Professional Name</TableHead>
+                        <TableHead className="text-gray-900">Admin Email</TableHead>
+                        <TableHead className="text-gray-900">Headline</TableHead>
+                        <TableHead className="text-gray-900">Location</TableHead>
+                        <TableHead className="text-gray-900">Status</TableHead>
+                        <TableHead className="text-gray-900">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {professionals.filter(professional => {
+                        const matchesSearch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          professional.admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          professional.professionalHeadline?.toLowerCase().includes(searchTerm.toLowerCase())
+                        const matchesStatus = filterStatus === 'all' ||
+                          (filterStatus === 'active' && professional.isActive) ||
+                          (filterStatus === 'inactive' && !professional.isActive)
+                        return matchesSearch && matchesStatus
+                      }).map((professional) => (
+                        <TableRow key={professional.id}>
+                          <TableCell className="text-gray-900 font-medium">{professional.name}</TableCell>
+                          <TableCell className="text-gray-900">{professional.admin.email}</TableCell>
+                          <TableCell className="text-gray-900 max-w-xs truncate">{professional.professionalHeadline || 'No headline'}</TableCell>
+                          <TableCell className="text-gray-900">{professional.location || 'Not specified'}</TableCell>
+                          <TableCell>
+                            <Badge variant={professional.isActive ? "default" : "secondary"} className="rounded-full">
+                              {professional.isActive ? 'Active' : 'Suspended'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.open(`/pcard/${professional.slug}`, '_blank')}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditProfessional(professional)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteProfessional(professional.id)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -1450,13 +1815,544 @@ export default function SuperAdminDashboard() {
       )
     }
 
+    if (rightPanelContent === 'add-professional') {
+      return (
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">ADD PROFESSIONAL</h3>
+            <form onSubmit={handleAddProfessional} className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label>Professional Name</Label>
+                    <Input name="name" required className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Professional Headline</Label>
+                    <Input name="professionalHeadline" placeholder="e.g., Senior Software Developer" className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>About Me</Label>
+                    <Textarea name="aboutMe" placeholder="Brief description about the professional..." className="rounded-2xl" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Profile Picture URL</Label>
+                      <Input name="profilePicture" placeholder="https://..." className="rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Banner Image URL</Label>
+                      <Input name="banner" placeholder="https://..." className="rounded-2xl" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input name="location" placeholder="City, Country" className="rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input name="phone" placeholder="+1 234 567 8900" className="rounded-2xl" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Website</Label>
+                    <Input name="website" placeholder="https://..." className="rounded-2xl" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Globe className="h-4 w-4 mr-2" />
+                  Social Media Links
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Facebook className="h-4 w-4 mr-2 text-blue-600" />
+                      Facebook
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.facebook}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, facebook: e.target.value }))}
+                      placeholder="https://facebook.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Twitter className="h-4 w-4 mr-2 text-blue-400" />
+                      Twitter
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.twitter}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, twitter: e.target.value }))}
+                      placeholder="https://twitter.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Instagram className="h-4 w-4 mr-2 text-pink-600" />
+                      Instagram
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.instagram}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, instagram: e.target.value }))}
+                      placeholder="https://instagram.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Linkedin className="h-4 w-4 mr-2 text-blue-700" />
+                      LinkedIn
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.linkedin}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, linkedin: e.target.value }))}
+                      placeholder="https://linkedin.com/in/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Work Experience */}
+              <ArrayFieldManager
+                title="Work Experience"
+                items={professionalWorkExperience}
+                onChange={setProfessionalWorkExperience}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.position}</h4>
+                    <p className="text-cyan-600">{item.company}</p>
+                    <p className="text-sm text-gray-600">{item.duration}</p>
+                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Work Experience"
+              />
+
+              {/* Education */}
+              <ArrayFieldManager
+                title="Education"
+                items={professionalEducation}
+                onChange={setProfessionalEducation}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.degree}</h4>
+                    <p className="text-cyan-600">{item.institution}</p>
+                    <p className="text-sm text-gray-600">{item.year}</p>
+                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Education"
+              />
+
+              {/* Skills */}
+              <ArrayFieldManager
+                title="Skills & Expertise"
+                items={professionalSkills}
+                onChange={setProfessionalSkills}
+                renderItem={(skill: string, index: number) => (
+                  <div>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-sm font-medium">
+                      {skill}
+                    </span>
+                  </div>
+                )}
+                createNewItem={() => ''}
+                renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
+                  <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Skill"
+              />
+
+              {/* Services Offered */}
+              <ArrayFieldManager
+                title="Services Offered"
+                items={professionalServices}
+                onChange={setProfessionalServices}
+                renderItem={(service: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{service.name}</h4>
+                    <p className="text-sm text-gray-600">{service.description}</p>
+                    {service.price && <p className="text-cyan-600 font-medium">{service.price}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ name: '', description: '', price: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Service"
+              />
+
+              {/* Portfolio */}
+              <ArrayFieldManager
+                title="Portfolio"
+                items={professionalPortfolio}
+                onChange={setProfessionalPortfolio}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.title}</h4>
+                    {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
+                    <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
+                  </div>
+                )}
+                createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Portfolio Item"
+              />
+
+              {/* Admin Account */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin Account
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label>Admin Name</Label>
+                    <Input name="adminName" required className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Admin Email</Label>
+                    <Input name="email" type="email" required className="rounded-2xl" />
+                  </div>
+                  <Button type="button" onClick={(e) => {
+                    e.preventDefault()
+                    const form = e.currentTarget.closest('form') as HTMLFormElement
+                    const professionalName = (form.querySelector('input[name="name"]') as HTMLInputElement)?.value || ''
+                    const adminName = (form.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || ''
+                    handleGenerateCredentials(professionalName, adminName)
+                  }} className="rounded-2xl">Generate Credentials</Button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Username</Label>
+                      <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Password</Label>
+                      <div className="relative">
+                        <Input name="password" type={showPassword ? 'text' : 'password'} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">(Leave empty to use generated or enter manually)</p>
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowRightPanel(false);
+                  setRightPanelContent(null);
+                  setGeneratedPassword('');
+                  setGeneratedUsername('');
+                  setProfessionalWorkExperience([]);
+                  setProfessionalEducation([]);
+                  setProfessionalSkills([]);
+                  setProfessionalServices([]);
+                  setProfessionalPortfolio([]);
+                  setProfessionalSocialMedia({ facebook: '', twitter: '', instagram: '', linkedin: '' });
+                }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Create Professional</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
+    if (rightPanelContent === 'edit-professional' && editingProfessional) {
+      // Initialize form data when editing
+      React.useEffect(() => {
+        if (editingProfessional) {
+          // Load existing data into form state
+          setProfessionalWorkExperience(editingProfessional.workExperience || [])
+          setProfessionalEducation(editingProfessional.education || [])
+          setProfessionalSkills(editingProfessional.skills || [])
+          setProfessionalServices(editingProfessional.servicesOffered || [])
+          setProfessionalPortfolio(editingProfessional.portfolio || [])
+          setProfessionalSocialMedia({
+            facebook: editingProfessional.facebook || '',
+            twitter: editingProfessional.twitter || '',
+            instagram: editingProfessional.instagram || '',
+            linkedin: editingProfessional.linkedin || ''
+          })
+        }
+      }, [editingProfessional])
+
+      return (
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">EDIT PROFESSIONAL</h3>
+            <form onSubmit={handleUpdateProfessional} className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label>Professional Name</Label>
+                    <Input name="name" defaultValue={editingProfessional.name} required className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Professional Headline</Label>
+                    <Input name="professionalHeadline" defaultValue={editingProfessional.professionalHeadline || ''} className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>About Me</Label>
+                    <Textarea name="aboutMe" defaultValue={editingProfessional.aboutMe || ''} className="rounded-2xl" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Profile Picture URL</Label>
+                      <Input name="profilePicture" defaultValue={editingProfessional.profilePicture || ''} className="rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Banner Image URL</Label>
+                      <Input name="banner" defaultValue={editingProfessional.banner || ''} className="rounded-2xl" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input name="location" defaultValue={editingProfessional.location || ''} className="rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input name="phone" defaultValue={editingProfessional.phone || ''} className="rounded-2xl" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Website</Label>
+                    <Input name="website" defaultValue={editingProfessional.website || ''} className="rounded-2xl" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Globe className="h-4 w-4 mr-2" />
+                  Social Media Links
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Facebook className="h-4 w-4 mr-2 text-blue-600" />
+                      Facebook
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.facebook}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, facebook: e.target.value }))}
+                      placeholder="https://facebook.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Twitter className="h-4 w-4 mr-2 text-blue-400" />
+                      Twitter
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.twitter}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, twitter: e.target.value }))}
+                      placeholder="https://twitter.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Instagram className="h-4 w-4 mr-2 text-pink-600" />
+                      Instagram
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.instagram}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, instagram: e.target.value }))}
+                      placeholder="https://instagram.com/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center">
+                      <Linkedin className="h-4 w-4 mr-2 text-blue-700" />
+                      LinkedIn
+                    </Label>
+                    <Input
+                      value={professionalSocialMedia.linkedin}
+                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, linkedin: e.target.value }))}
+                      placeholder="https://linkedin.com/in/username"
+                      className="rounded-2xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Work Experience */}
+              <ArrayFieldManager
+                title="Work Experience"
+                items={professionalWorkExperience}
+                onChange={setProfessionalWorkExperience}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.position}</h4>
+                    <p className="text-cyan-600">{item.company}</p>
+                    <p className="text-sm text-gray-600">{item.duration}</p>
+                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Work Experience"
+              />
+
+              {/* Education */}
+              <ArrayFieldManager
+                title="Education"
+                items={professionalEducation}
+                onChange={setProfessionalEducation}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.degree}</h4>
+                    <p className="text-cyan-600">{item.institution}</p>
+                    <p className="text-sm text-gray-600">{item.year}</p>
+                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Education"
+              />
+
+              {/* Skills */}
+              <ArrayFieldManager
+                title="Skills & Expertise"
+                items={professionalSkills}
+                onChange={setProfessionalSkills}
+                renderItem={(skill: string, index: number) => (
+                  <div>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-sm font-medium">
+                      {skill}
+                    </span>
+                  </div>
+                )}
+                createNewItem={() => ''}
+                renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
+                  <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Skill"
+              />
+
+              {/* Services Offered */}
+              <ArrayFieldManager
+                title="Services Offered"
+                items={professionalServices}
+                onChange={setProfessionalServices}
+                renderItem={(service: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{service.name}</h4>
+                    <p className="text-sm text-gray-600">{service.description}</p>
+                    {service.price && <p className="text-cyan-600 font-medium">{service.price}</p>}
+                  </div>
+                )}
+                createNewItem={() => ({ name: '', description: '', price: '' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Service"
+              />
+
+              {/* Portfolio */}
+              <ArrayFieldManager
+                title="Portfolio"
+                items={professionalPortfolio}
+                onChange={setProfessionalPortfolio}
+                renderItem={(item: any, index: number) => (
+                  <div>
+                    <h4 className="font-semibold">{item.title}</h4>
+                    {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
+                    <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
+                  </div>
+                )}
+                createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
+                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                  <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
+                )}
+                itemName="Portfolio Item"
+              />
+
+              {/* Admin Email */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Admin Account
+                </h4>
+                <div className="space-y-2">
+                  <Label>Admin Email</Label>
+                  <Input name="email" defaultValue={editingProfessional.admin.email} type="email" className="rounded-2xl" />
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowRightPanel(false);
+                  setRightPanelContent(null);
+                  setProfessionalWorkExperience([]);
+                  setProfessionalEducation([]);
+                  setProfessionalSkills([]);
+                  setProfessionalServices([]);
+                  setProfessionalPortfolio([]);
+                  setProfessionalSocialMedia({ facebook: '', twitter: '', instagram: '', linkedin: '' });
+                }} className="rounded-2xl">Cancel</Button>
+                <Button type="submit" className="rounded-2xl">Save Changes</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
     return null
   }
 
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-gradient-to-b from-blue-400 to-white bg-center blur-sm  -z-10"></div>
+        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -1543,7 +2439,7 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="max-h-screen min-h-screen relative flex flex-col">
-      <div className="fixed inset-0  bg-gradient-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
+      <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-3 sm:px-4 py-2">
@@ -1594,7 +2490,7 @@ export default function SuperAdminDashboard() {
                     <button
                       onClick={() => setCurrentView(item.value)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                        ? ' bg-gradient-to-r from-orange-400 to-amber-500 text-white'
+                        ? ' bg-linear-to-r from-orange-400 to-amber-500 text-white'
                         : 'text-gray-700 hover:bg-orange-50'
                         }`}
                     >

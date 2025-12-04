@@ -70,7 +70,7 @@ export default async function BusinessPage({ params }: PageProps) {
               name: true,
             },
           },
-        },
+        } as any,
         orderBy: { createdAt: 'desc' },
       },
     },

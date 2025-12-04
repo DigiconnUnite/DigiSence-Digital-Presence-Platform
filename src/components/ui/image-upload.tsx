@@ -202,93 +202,96 @@ export default function ImageUpload({
         <div className="flex flex-col md:flex-row gap-6">
           {/* Left side: Upload controls */}
           <div className="flex-1">
-            <div
-              className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors cursor-pointer ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
-                }`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onClick={openFileDialog}
-            >
-              {uploading ? (
-                <div className="space-y-4">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                  <p className="text-sm text-gray-600">{uploadStatus || 'Uploading...'}</p>
-                  <Progress value={uploadProgress} className="w-full" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                  <p className="text-sm text-gray-600 mb-4">
-                      Drag and drop {mediaTypeText} here
-                  </p>
-                  <div className="flex items-center justify-center">
-                      <Button
-                        onClick={openFileDialog}
-                        variant="secondary"
-                      >
-                      Select {allowVideo ? 'Media' : isPdf ? 'File' : 'Image'}
-                    </Button>
-                    <Input
-                      ref={fileInputRef}
-                      id="file-upload"
-                      type="file"
-                      accept={mediaAccept}
-                      multiple={maxFiles > 1}
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right side: Preview */}
-          <div className="shrink-0">
-            <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-              {mediaUrl ? (
-                <div className="relative w-full h-full">
-                  {isVideo ? (
-                    <video
-                      src={mediaUrl}
-                      className="w-full h-full object-cover"
-                      controls={false}
-                    />
+            <div className="flex gap-4 items-center">
+              {/* Upload logo/avatar/preview */}
+              <div
+                className={`w-20 h-20 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-100 transition-colors ${dragActive ? 'border-blue-400 bg-blue-50' : ''
+                  } cursor-pointer`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={openFileDialog}
+                role="button"
+                tabIndex={0}
+              >
+                {uploading ? (
+                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                ) : mediaUrl ? (
+                  isVideo ? (
+                    <video src={mediaUrl} className="w-full h-full object-cover rounded-full" controls={false} />
                   ) : isPdfFile ? (
-                    <div className="flex items-center justify-center h-full">
-                      <File className="w-12 h-12 text-gray-400" />
-                    </div>
+                    <File className="w-8 h-8 text-gray-400" />
                   ) : (
-                    <img
-                      src={mediaUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                    <img src={mediaUrl} alt="Preview" className="w-full h-full object-cover rounded-full" />
+                  )
+                ) : (
+                  allowVideo ? (
+                    <FileVideo className="w-8 h-8 text-gray-400" />
+                  ) : isPdf ? (
+                    <File className="w-8 h-8 text-gray-400" />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-gray-400" />
+                  )
+                )}
+                {mediaUrl && (
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="destructive"
-                    className="absolute top-0 right-0 rounded-full p-1 h-6 w-6"
-                    onClick={clearMedia}
+                    className="absolute top-0 right-0 rounded-full p-1 h-6 w-6 translate-x-2 -translate-y-2"
+                    onClick={e => {
+                      e.stopPropagation();
+                      clearMedia();
+                    }}
                   >
                     <X className="h-3 w-3" />
                   </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-gray-400">
-                  {allowVideo ? (
-                    <FileVideo className="w-10 h-10" />
-                  ) : isPdf ? (
-                    <File className="w-10 h-10" />
-                  ) : (
-                    <ImageIcon className="w-10 h-10" />
+                )}
+              </div>
+              {/* Upload Button + Label */}
+              <div>
+                <div className="mb-2 flex items-center justify-between min-w-[230px]">
+                  <span className="text-xs text-gray-600">
+                    {uploading
+                      ? uploadStatus || 'Uploading...'
+                      : (
+                        <>
+                          Drag {mediaTypeText} here
+                        </>
+                      )
+                    }
+                  </span>
+                  {!uploading && (
+                    <Button
+                      onClick={openFileDialog}
+                      variant="secondary"
+                      size="sm"
+                      className="align-middle ml-3"
+                      disabled={uploading}
+                    >
+                      Select {allowVideo ? 'Media' : isPdf ? 'File' : 'Image'}
+                    </Button>
                   )}
-                  <span className="text-xs mt-2">No media</span>
                 </div>
-              )}
+                {uploading && <Progress value={uploadProgress} className="w-40" />}
+                <Input
+                  ref={fileInputRef}
+                  id="file-upload"
+                  type="file"
+                  accept={mediaAccept}
+                  multiple={maxFiles > 1}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={uploading}
+                />
+                {!uploading && (
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Supported: {mediaTypeText}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
+
         </div>
       </CardContent>
     </Card>

@@ -3458,7 +3458,7 @@ export default function BusinessAdminDashboard() {
                         onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Enter product name"
                         required
-                        className="rounded-2xl"
+                        className="rounded-xl"
                       />
                     </div>
 
@@ -3470,30 +3470,30 @@ export default function BusinessAdminDashboard() {
                         onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
                         placeholder="Describe your product or service"
                         rows={4}
-                        className="rounded-2xl"
+                        className="rounded-xl"
                       />
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price</Label>
-                      <Input
-                        id="price"
-                        value={productFormData.price}
-                        onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
-                        placeholder="e.g., ₹50, Starting at ₹100, Free consultation"
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="image">Image URL</Label>
-                      <Input
-                        id="image"
-                        value={productFormData.image}
-                        onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
-                        placeholder="https://..."
-                        className="rounded-2xl"
-                      />
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="w-full md:w-1/2 space-y-2">
+                        <Label htmlFor="price">Price</Label>
+                        <Input
+                          id="price"
+                          value={productFormData.price}
+                          onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
+                          placeholder="e.g., ₹50, Starting at ₹100, Free consultation"
+                          className="rounded-xl"
+                        />
+                      </div>
+                      <div className="w-full md:w-1/2 space-y-2">
+                        <Label htmlFor="image">Image URL</Label>
+                        <Input
+                          id="image"
+                          value={productFormData.image}
+                          onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
+                          placeholder="https://..."
+                          className="rounded-xl"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -3501,144 +3501,153 @@ export default function BusinessAdminDashboard() {
                       <Select
                         key={images.length}
                         value={productFormData.image || "no-image"}
-                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, image: value === "no-image" ? "" : value }))}
+                        onValueChange={(value) =>
+                          setProductFormData(prev => ({
+                            ...prev,
+                            image: value === "no-image" ? "" : value
+                          }))
+                        }
                       >
-                        <SelectTrigger className="rounded-2xl">
+                        <SelectTrigger className="rounded-xl w-full">
                           <SelectValue placeholder="Choose an existing image" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="no-image">No image</SelectItem>
-                          {images.map((image) => (
-                            <SelectItem key={image} value={image}>
-                              {image}
-                            </SelectItem>
-                          ))}
+                          {images.map((image) => {
+                            // Display with image and ellipsized URL
+                            const MAX_URL_LENGTH = 32;
+                            let displayUrl = image;
+                            if (image.length > MAX_URL_LENGTH) {
+                              displayUrl = image.slice(0, MAX_URL_LENGTH) + "...";
+                            }
+                            return (
+                              <SelectItem className=" flex items-center gap-2" key={image} value={image}>
+                                <img
+                                  src={image}
+                                  alt={displayUrl}
+                                  className="inline-block h-8 w-8  rounded-full object-cover border pr-2"
+                                  style={{ minWidth: "2rem" }}
+                                />
+                                <span className="truncate border-l px-2 border-l-gray-300 " title={image}>
+                                  {displayUrl}
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Upload New Image</Label>
                       {mounted && (
                         <ImageUpload
                           onUpload={(url) => setProductFormData(prev => ({ ...prev, image: url }))}
                         />
                       )}
                     </div>
-
-                    <div className="space-y-2">
-                      <Label>Category</Label>
-                      <Select
-                        key={categories.length}
-                        value={productFormData.categoryId}
-                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
-                      >
-                        <SelectTrigger className="rounded-2xl">
-                          <SelectValue placeholder="Choose a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Brand</Label>
-                      <div className="relative">
-                        <div className="flex space-x-2 mb-2">
-                          <Input
-                            placeholder="Search brands..."
-                            value={brandFilterText}
-                            onChange={(e) => setBrandFilterText(e.target.value)}
-                            className="flex-1 rounded-2xl"
-                          />
-                        </div>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Category Selection */}
+                      <div className="w-full md:w-1/2 space-y-2">
+                        <Label>Category</Label>
                         <Select
-                          value={productFormData.brandName}
-                          onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandName: value }))}
+                          key={categories.length}
+                          value={productFormData.categoryId}
+                          onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
                         >
-                          <SelectTrigger className="rounded-2xl">
-                            <SelectValue placeholder="Choose a brand" />
+                          <SelectTrigger className="rounded-xl w-full">
+                            <SelectValue placeholder="Choose a category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <div className="sticky top-0 bg-white border-b pb-2 mb-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Manage brands flow
-                                  setActiveSection('profile')
-                                  setSelectedProfileSection('brands')
-                                  setShowProductRightbar(false)
-                                }}
-                                className="w-full rounded-2xl"
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Manage Brands
-                              </Button>
-                            </div>
-                            <div className="max-h-48 overflow-y-auto">
-                              {(brandContent.brands || []).filter(brand =>
-                                typeof brand.name === 'string' &&
-                                brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
-                              ).map((brand) => (
-                                <SelectItem key={brand.name} value={brand.name}>
-                                  {brand.name}
-                                </SelectItem>
-                              ))}
-                              {((brandContent.brands || []).filter(brand =>
-                                typeof brand.name === 'string' &&
-                                brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
-                              ).length === 0) && (
-                                  <div className="p-3 text-center text-sm text-gray-500">
-                                    No brands found matching "{brandFilterText}"
-                                  </div>
-                                )}
-                            </div>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      {productFormData.brandName && (
-                        <div className="text-xs text-gray-500">
-                          Selected: {productFormData.brandName}
+                      {/* Brand Selection */}
+                      <div className="w-full md:w-1/2 space-y-2">
+                        <Label>Brand</Label>
+                        <div className="relative">
+                          <Select
+                            value={productFormData.brandName}
+                            onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandName: value }))}
+                          >
+                            <SelectTrigger className="rounded-xl w-full">
+                              <SelectValue placeholder="Choose a brand" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <div className="sticky top-0 bg-white border-b pb-2 mb-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Manage brands flow
+                                    setActiveSection('profile')
+                                    setSelectedProfileSection('brands')
+                                    setShowProductRightbar(false)
+                                  }}
+                                  className="w-full rounded-xl"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Manage Brands
+                                </Button>
+                              </div>
+                              <div className="max-h-48 overflow-y-auto">
+                                {(brandContent.brands || []).filter(brand =>
+                                  typeof brand.name === 'string' &&
+                                  brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                                ).map((brand) => (
+                                  <SelectItem key={brand.name} value={brand.name}>
+                                    {brand.name}
+                                  </SelectItem>
+                                ))}
+                                {((brandContent.brands || []).filter(brand =>
+                                  typeof brand.name === 'string' &&
+                                  brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                                ).length === 0) && (
+                                    <div className="p-3 text-center text-sm text-gray-500">
+                                      No brands found matching "{brandFilterText}"
+                                    </div>
+                                  )}
+                              </div>
+                            </SelectContent>
+                          </Select>
                         </div>
-                      )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="inStock"
-                        checked={productFormData.inStock}
-                        onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
-                      />
-                      <Label htmlFor="inStock">In Stock</Label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="isActive"
-                        checked={productFormData.isActive}
-                        onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
-                      />
-                      <Label htmlFor="isActive">Visible on public page</Label>
+                    <div className="flex border-t border-b py-2 items-center space-x-6">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="inStock"
+                          checked={productFormData.inStock}
+                          onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
+                        />
+                        <Label htmlFor="inStock">In Stock</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isActive"
+                          checked={productFormData.isActive}
+                          onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
+                        />
+                        <Label htmlFor="isActive">Visible </Label>
+                      </div>
                     </div>
 
                     {/* Additional Information Section */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Additional Information</h3>
                       <div className="space-y-2">
-                        <Label>Add key-value pairs for additional product details</Label>
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             placeholder="Key (e.g., Material)"
                             value={newInfoKey || ''}
                             onChange={(e) => setNewInfoKey(e.target.value)}
-                            className="rounded-2xl"
+                            className="rounded-xl"
                           />
                           <div className="flex gap-2">
                             <Input
@@ -3651,7 +3660,7 @@ export default function BusinessAdminDashboard() {
                                   handleAddInfo()
                                 }
                               }}
-                              className="flex-1 rounded-2xl"
+                              className="flex-1 rounded-xl"
                             />
                             <Button
                               type="button"
@@ -3665,22 +3674,30 @@ export default function BusinessAdminDashboard() {
                           </div>
                         </div>
                         {productFormData.additionalInfo && Object.keys(productFormData.additionalInfo).length > 0 && (
-                          <div className="space-y-2 mt-4">
-                            {Object.entries(productFormData.additionalInfo).map(([key, value], index) => (
-                              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
-                                <span className="font-medium text-sm">{key}:</span>
-                                <span className="text-sm flex-1">{value}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveInfo(key)}
-                                  className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
+                          <div className="overflow-x-auto mt-4">
+                            <table className="min-w-full bg-gray-50 rounded-xl">
+                              <tbody>
+                                {Object.entries(productFormData.additionalInfo).map(([key, value], index) => (
+                                  <tr key={index} className="border-b last:border-b-0">
+                                    <td className="px-3 py-2 font-medium text-sm">{key}</td>
+                                    <td className="px-3 py-2 text-sm">{value}</td>
+                                    <td className="py-2 text-right pr-4">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveInfo(key)}
+                                        className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full flex items-center justify-center ml-auto"
+                                        title="Remove field"
+                                      >
+                                        <span className="sr-only">Remove</span>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         )}
                       </div>

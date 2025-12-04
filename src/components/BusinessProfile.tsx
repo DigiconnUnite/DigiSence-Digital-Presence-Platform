@@ -1166,7 +1166,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                           <MapPin className="h-4 w-4 text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
                         </span>
                         <span
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
+                          className="text-xs xs:text-sm md:text-base text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                         >
                           {business.address}
                         </span>
@@ -1179,7 +1179,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         </span>
                         <a
                           href={`tel:${business.phone}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
+                          className="text-xs xs:text-sm md:text-base text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Call this number"
                         >
                           {business.phone}
@@ -1193,7 +1193,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         </span>
                         <a
                           href={`mailto:${business.email}`}
-                          className="text-[15px] sm:text-base md:text-lg text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
+                          className="text-xs xs:text-sm md:text-base text-white hover:text-cyan-300 hover:underline font-semibold wrap-break-words transition-colors"
                           title="Send email"
                         >
                           {business.email}

@@ -22,7 +22,7 @@ interface Professional {
   linkedin: string | null
   isActive: boolean
   createdAt: Date
-  updatedAt: Date
+  updatedAt: Date 
   adminId: string
   workExperience: any
   education: any
@@ -89,7 +89,6 @@ import { FaWhatsapp, FaWhatsappSquare } from "react-icons/fa";
 import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
 import { LampContainer } from './ui/lamp'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { profile } from 'console'
 
 interface ProfessionalProfileProps {
   professional: Professional & {
@@ -282,7 +281,8 @@ export default function ProfessionalProfile({ professional: initialProfessional 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>, sectionName: string) => {
     setActiveSection(sectionName)
     if (ref.current) {
-      const offset = 80; // Offset for the fixed header
+      const isDesktop = window.innerWidth >= 768; // md breakpoint
+      const offset = isDesktop ? 64 : 80; // 64px for desktop nav (h-16), 80px for mobile
       const elementPosition = ref.current.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
 
@@ -326,7 +326,92 @@ export default function ProfessionalProfile({ professional: initialProfessional 
 
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
+      {/* Desktop Navigation */}
+      <nav className="hidden md:block sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <span className="text-xl font-bold text-gray-900">{professional.name}</span>
+            </div>
+            <div className="flex space-x-8">
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'home'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                Home
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'about'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(aboutRef as React.RefObject<HTMLDivElement>, 'about')}
+              >
+                About
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'experience'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(experienceRef as React.RefObject<HTMLDivElement>, 'experience')}
+              >
+                Experience
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'skills'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(skillsRef as React.RefObject<HTMLDivElement>, 'skills')}
+              >
+                Skills
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'services'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(servicesRef as React.RefObject<HTMLDivElement>, 'services')}
+              >
+                Services
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'portfolio'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(portfolioRef as React.RefObject<HTMLDivElement>, 'portfolio')}
+              >
+                Portfolio
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors ${activeSection === 'contact'
+                  ? 'text-cyan-600'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                onClick={() => scrollToSection(contactRef as React.RefObject<HTMLDivElement>, 'contact')}
+              >
+                Contact
+              </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleShare}
+                className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                title="Share Profile"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Mobile Menu - Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
         <div className="flex justify-around items-center h-16 px-2">
@@ -384,258 +469,285 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       </div>
 
       {/* Hero Section with Banner */}
-      <section className="relative mx-auto px-4 pt-4 pb-20 md:pb-0">
-        <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-3xl mt-0 sm:mt-3 overflow-hidden shadow-lg">
-          <div className="relative w-full h-[50vw] min-h-[200px] max-h-[300px] md:h-[400px] md:min-h-[350px] bg-linear-to-br from-cyan-400 via-cyan-500 to-cyan-600 rounded-2xl overflow-hidden shadow-lg">
+      <section className="relative mx-auto   md:pb-0">
+        <div className="max-w-7xl mx-auto">
+          <div
+            className="
+              relative w-full 
+              overflow-hidden shadow-lg 
+              bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600
+              aspect-[3/1]       
+              sm:aspect-[3/1] 
+              md:aspect-[3/1]
+              lg:aspect-[3/1]
+              xl:aspect-[3/1]
+              aspect-[3/1]
+              xs:aspect-[4/3]   
+              sm:aspect-[16/6]  
+            "
+          >
             {professional.banner && professional.banner.trim() !== '' ? (
               <>
                 <img
                   src={getOptimizedImageUrl(professional.banner, {
                     width: 1200,
-                    height: 600,
+                    height: 400,
                     quality: 85,
                     format: 'auto',
                     crop: 'fill',
                     gravity: 'auto'
                   })}
                   alt={`${professional.name} banner`}
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="w-full h-full object-cover"
                   loading="eager"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-[5%] bg-linear-to-t from-black/30 to-transparent"></div>
+                <div className="absolute inset-x-0 bottom-0 h-[5%] bg-gradient-to-t from-black/30 to-transparent"></div>
               </>
             ) : null}
+          </div>
 
-            {/* Profile Picture and Info Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 px-4 md:px-8">
-              <div className="flex flex-col md:flex-row items-center md:items-end gap-4">
+          {/* Profile Picture, Name, Headline, Location in one group */}
+          <div className="px-2 sm:px-4 md:px-8 border py-6">
+            <div className="flex flex-col md:flex-row md:items-center md:gap-6 gap-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6 w-full">
                 {/* Profile Picture */}
-                <div className="shrink-0">
+                <div className="shrink-0 -mt-12 md:-mt-16 relative z-10 flex justify-center sm:justify-start">
                   {professional.profilePicture && professional.profilePicture.trim() !== '' ? (
                     <img
                       src={getOptimizedImageUrl(professional.profilePicture, {
-                        width: 280,
-                        height: 280,
+                        width: 350,
+                        height: 350,
                         quality: 90,
                         format: 'auto',
                         crop: 'fill',
                         gravity: 'center',
                       })}
                       alt={professional.name}
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                      className="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 rounded-full object-cover border-4 border-white shadow-lg"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-50 flex items-center justify-center border-4 border-white shadow-lg">
-                      <User className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
+                      <div className="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 rounded-full bg-gray-50 flex items-center justify-center border-4 border-white shadow-lg">
+                        <User className="w-12 h-12 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-20 md:h-20 text-gray-400" />
                     </div>
                   )}
                 </div>
-
-                {/* Name and Professional Info */}
-                <div className="flex-1 text-center md:text-left mb-4 md:mb-0">
-                  <h1 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">
+                {/* All Info in one container */}
+                <div className="flex flex-col flex-1 items-center sm:items-start text-center sm:text-left">
+                  <h1 className="text-2xl xs:text-3xl md:text-4xl font-bold text-gray-900 break-words">
                     {professional.name}
                   </h1>
                   {professional.professionalHeadline && (
-                    <p className="text-sm md:text-lg text-white/90 drop-shadow-md mt-1">
+                    <p className="text-base xs:text-lg md:text-xl text-gray-700 mt-1 xs:mt-2 break-words">
                       {professional.professionalHeadline}
                     </p>
                   )}
                   {professional.location && (
-                    <div className="flex items-center justify-center md:justify-start mt-2">
-                      <MapPin className="h-4 w-4 text-white/80 mr-1" />
-                      <span className="text-sm text-white/80">{professional.location}</span>
+                    <div className="flex items-center justify-center sm:justify-start mt-2 xs:mt-3">
+                      <MapPin className="h-5 w-5 text-gray-600 mr-2" />
+                      <span className="text-base text-gray-600">{professional.location}</span>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="flex justify-center gap-4 mt-16 md:mt-8 px-4">
-          {professional.phone && (
-            <a
-              href={`tel:${professional.phone}`}
-              className="flex items-center justify-center gap-2 bg-white rounded-full px-4 py-2 shadow-md hover:shadow-lg transition-shadow"
-            >
-              <Phone className="h-5 w-5 text-cyan-600" />
-              <span className="text-sm font-medium">Call</span>
-            </a>
-          )}
-          {professional.email && (
-            <a
-              href={`mailto:${professional.email}`}
-              className="flex items-center justify-center gap-2 bg-white rounded-full px-4 py-2 shadow-md hover:shadow-lg transition-shadow"
-            >
-              <Mail className="h-5 w-5 text-cyan-600" />
-              <span className="text-sm font-medium">Email</span>
-            </a>
-          )}
-          <button
-            onClick={() => setInquiryModal(true)}
-            className="flex items-center justify-center gap-2 bg-cyan-600 text-white rounded-full px-4 py-2 shadow-md hover:bg-cyan-700 transition-colors"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Message</span>
-          </button>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section
-        id="about"
-        ref={aboutRef}
-        className="py-8 md:py-16 px-4 md:px-8"
-      >
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">About Me</h2>
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <p className="text-gray-700 leading-relaxed">
-              {professional.aboutMe || "I'm a passionate professional with expertise in my field. I strive to deliver exceptional results and continuously improve my skills to stay at the forefront of industry trends."}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Skills Section */}
-      <section id="skills" ref={skillsRef} className="py-8 md:py-16 px-4 md:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Skills & Expertise</h2>
-            <button className="text-cyan-600 font-medium flex items-center gap-1">
-              View All
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="overflow-hidden">
-            <div className="flex gap-3 pb-4 overflow-x-auto scrollbar-hide">
-              {professional.skills.map((skill: string, index: number) => (
-                <div
-                  key={index}
-                  className="shrink-0 bg-white rounded-xl p-4 shadow-sm min-w-[120px] text-center"
-                >
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Award className="h-6 w-6 text-cyan-600" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-800">{skill}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Experience, Education, Certification Tabs */}
-      <section className="py-8 md:py-16 px-4 md:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex border-b border-gray-200 mb-6">
-            <button
-              className={`pb-3 px-4 font-medium ${activeTab === 'experience' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('experience')}
-            >
-              Experience
-            </button>
-            <button
-              className={`pb-3 px-4 font-medium ${activeTab === 'education' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('education')}
-            >
-              Education
-            </button>
-            <button
-              className={`pb-3 px-4 font-medium ${activeTab === 'certification' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('certification')}
-            >
-              Certification
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {activeTab === 'experience' && (
-              <div id="experience" ref={experienceRef}>
-                {professional.workExperience.map((exp: any, index: number) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-sm mb-4">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0">
-                        <Building2 className="h-8 w-8 text-cyan-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-800">{exp.position}</h3>
-                        <p className="text-cyan-600 font-medium">{exp.company}</p>
-                        <p className="text-sm text-gray-600 mb-2">{exp.duration}</p>
-                        {exp.description && (
-                          <p className="text-gray-700">{exp.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'education' && (
-              <div id="education" ref={educationRef}>
-                {professional.education.map((edu: any, index: number) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-sm mb-4">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0">
-                        <GraduationCap className="h-8 w-8 text-cyan-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-800">{edu.degree}</h3>
-                        <p className="text-cyan-600 font-medium">{edu.institution}</p>
-                        <p className="text-sm text-gray-600 mb-2">{edu.year}</p>
-                        {edu.description && (
-                          <p className="text-gray-700">{edu.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'certification' && (
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="shrink-0">
-                    <Award className="h-8 w-8 text-cyan-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-800">Professional Certification</h3>
-                    <p className="text-cyan-600 font-medium">Certification Body</p>
-                    <p className="text-sm text-gray-600 mb-2">2022 - 2025</p>
-                    <p className="text-gray-700">Advanced certification in professional skills and industry best practices.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" ref={servicesRef} className="py-8 md:py-16 px-4 md:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Services Offered</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {professional.servicesOffered.map((service: any, index: number) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
-                  <Users className="h-6 w-6 text-cyan-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-800">{service.name}</h3>
-                <p className="text-gray-700 mb-3">{service.description}</p>
-                {service.price && (
-                  <p className="text-cyan-600 font-semibold">{service.price}</p>
+              {/* CTA Buttons */}
+              <div className="flex flex-row md:flex-col gap-2 md:gap-4 justify-center items-center w-full md:w-auto mt-4 md:mt-0">
+                {professional.phone && (
+                  <a
+                    href={`tel:${professional.phone}`}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white rounded-full px-3 py-2 shadow-md hover:shadow-lg transition-shadow text-xs xs:text-sm"
+                  >
+                    <Phone className="h-5 w-5 text-cyan-600" />
+                    <span className="font-medium">Call</span>
+                  </a>
                 )}
+                {professional.email && (
+                  <a
+                    href={`mailto:${professional.email}`}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white rounded-full px-3 py-2 shadow-md hover:shadow-lg transition-shadow text-xs xs:text-sm"
+                  >
+                    <Mail className="h-5 w-5 text-cyan-600" />
+                    <span className="font-medium">Email</span>
+                  </a>
+                )}
+                <button
+                  onClick={() => setInquiryModal(true)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 text-white rounded-full px-3 py-2 shadow-md hover:bg-cyan-700 transition-colors text-xs xs:text-sm"
+                >
+                  <SiWhatsapp className="h-5 w-5" />
+                  <span className="font-medium">Message</span>
+                </button>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
+
+      {/* About and Skills Grid Section */}
+      <section className=" " >
+        <div className="max-w-7xl mx-auto">
+          <div className="border-l border-r border-b border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+              {/* About Section */}
+              <div
+                id="about"
+                ref={aboutRef}
+                className="p-6"
+              >
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">About Me</h2>
+
+                <div className="   mb-6">
+                  <p className="text-gray-700 leading-relaxed">
+                    {professional.aboutMe || "I'm a passionate professional with expertise in my field. I strive to deliver exceptional results and continuously improve my skills to stay at the forefront of industry trends."}
+                  </p>
+                </div>
+
+                {/* Experience, Education, Certification Tabs */}
+                <div className="">
+                  <div className=" shadow-sm">
+                    <div className="flex bg-white pt-1 border-y border-gray-200 mb-4">
+                      <button
+                        className={`pb-2 px-3 font-medium text-sm ${activeTab === 'experience' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('experience')}
+                      >
+                        Experience
+                      </button>
+                      <button
+                        className={`pb-2 px-3 font-medium text-sm ml-4 ${activeTab === 'education' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('education')}
+                      >
+                        Education
+                      </button>
+                      <button
+                        className={`pb-2 px-3 font-medium text-sm ml-4 ${activeTab === 'certification' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('certification')}
+                      >
+                        Certification
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {activeTab === 'experience' && (
+                        <div id="experience" ref={experienceRef}>
+                          {professional.workExperience.map((exp: any, index: number) => (
+                            <div key={index} className="bg-gray-50 ">
+                              <div className="flex items-start gap-3">
+                                <div className="shrink-0">
+                                  <Building2 className="h-5 w-5 text-cyan-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-800">{exp.position}</h4>
+                                  <p className="text-cyan-600 font-medium text-sm">{exp.company}</p>
+                                  <p className="text-sm text-gray-600 mb-1">{exp.duration}</p>
+                                  {exp.description && (
+                                    <p className="text-gray-700 text-sm">{exp.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {activeTab === 'education' && (
+                        <div id="education" ref={educationRef}>
+                          {professional.education.map((edu: any, index: number) => (
+                            <div key={index} className="bg-gray-50 rounded-lg p-3">
+                              <div className="flex items-start gap-3">
+                                <div className="shrink-0">
+                                  <GraduationCap className="h-5 w-5 text-cyan-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-800">{edu.degree}</h4>
+                                  <p className="text-cyan-600 font-medium text-sm">{edu.institution}</p>
+                                  <p className="text-sm text-gray-600 mb-1">{edu.year}</p>
+                                  {edu.description && (
+                                    <p className="text-gray-700 text-sm">{edu.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {activeTab === 'certification' && (
+                        <div className="bg-gray-50 rounded-lg p-3 ">
+                          <div className="flex items-start gap-3">
+                            <div className="shrink-0">
+                              <Award className="h-5 w-5 text-cyan-600" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800">Professional Certification</h4>
+                              <p className="text-cyan-600 font-medium text-sm">Certification Body</p>
+                              <p className="text-sm text-gray-600 mb-1">2022 - 2025</p>
+                              <p className="text-gray-700 text-sm">Advanced certification in professional skills and industry best practices.</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+              {/* Skills Section */}
+              <div id="skills" ref={skillsRef} className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">Skills & Expertise</h2>
+                  <button className="text-cyan-600 font-medium flex items-center gap-1">
+                    View All
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {professional.skills.map((skill: string, index: number) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg p-3 shadow-sm text-center border border-gray-100"
+                      >
+                        <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <Award className="h-5 w-5 text-cyan-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-800">{skill}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Services Section */}
+                <div id="services" ref={servicesRef} className="border-t border-gray-200 pt-6">
+                  <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">Services Offered</h3>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="grid grid-cols-1 gap-3">
+                      {professional.servicesOffered.map((service: any, index: number) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-start gap-3">
+                            <div className="shrink-0">
+                              <Users className="h-5 w-5 text-cyan-600 mt-1" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800">{service.name}</h4>
+                              <p className="text-gray-700 text-sm mt-1">{service.description}</p>
+                              {service.price && (
+                                <p className="text-cyan-600 font-semibold text-sm mt-2">{service.price}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
 
       {/* Portfolio Section */}
       <section id="portfolio" ref={portfolioRef} className="py-8 md:py-16 px-4 md:px-8">

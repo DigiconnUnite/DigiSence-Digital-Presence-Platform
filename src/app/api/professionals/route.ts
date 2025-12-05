@@ -67,6 +67,18 @@ export async function GET(request: NextRequest) {
           location: true,
           email: true,
           website: true,
+          adminId: true,
+          workExperience: true,
+          education: true,
+          skills: true,
+          servicesOffered: true,
+          portfolio: true,
+          admin: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -80,6 +92,16 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+async function generateUniqueSlug(baseSlug: string): Promise<string> {
+  let slug = baseSlug
+  let counter = 1
+  while (await db.professional.findFirst({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`
+    counter++
+  }
+  return slug
 }
 
 export async function POST(request: NextRequest) {
@@ -110,8 +132,22 @@ export async function POST(request: NextRequest) {
       adminId,
     } = body
 
-    // Generate slug from name
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    // Check if professional already exists for this adminId
+    const existingProfessional = await db.professional.findFirst({
+      where: { adminId },
+    })
+    if (existingProfessional) {
+      return NextResponse.json(
+        { error: 'A professional profile already exists for this user' },
+        { status: 400 }
+      )
+    }
+
+    // Generate base slug from name
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+    // Generate unique slug
+    const slug = await generateUniqueSlug(baseSlug)
 
     const professional = await db.professional.create({
       data: {

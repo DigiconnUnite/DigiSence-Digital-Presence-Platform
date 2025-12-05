@@ -64,10 +64,33 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+async function generateUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+  let slug = baseSlug
+  let counter = 1
+  while (true) {
+    const existing = await db.professional.findFirst({
+      where: {
+        slug,
+        id: excludeId ? { not: excludeId } : undefined
+      }
+    })
+    if (!existing) break
+    slug = `${baseSlug}-${counter}`
+    counter++
+  }
+  return slug
+}
+
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
+
+    // If name is being updated, generate a new unique slug
+    if (body.name) {
+      const baseSlug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      body.slug = await generateUniqueSlug(baseSlug, id)
+    }
 
     const professional = await db.professional.update({
       where: { id },

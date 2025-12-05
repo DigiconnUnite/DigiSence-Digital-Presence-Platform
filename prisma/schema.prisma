@@ -26,6 +26,7 @@ model User {
   business  Business?
   professional Professional?
   inquiries Inquiry[]
+  professionalInquiries ProfessionalInquiry[]
   assignedBusinessListingInquiries BusinessListingInquiry[]
 
   @@map("users")
@@ -93,6 +94,7 @@ model Professional {
    // Relations
    adminId               String   @unique
    admin                 User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+   inquiries             ProfessionalInquiry[]
 
    // Professional background (stored as JSON for flexibility)
    workExperience        Json?   // Work experience data
@@ -182,6 +184,26 @@ model Inquiry {
   user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("inquiries")
+}
+
+model ProfessionalInquiry {
+  id            String             @id @default(cuid()) @map("_id")
+  name          String
+  email         String
+  phone         String?
+  message       String
+  status        InquiryStatus      @default(NEW)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  serviceId      String?
+  userId         String?
+  user           User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("professional_inquiries")
 }
 
 enum UserRole {

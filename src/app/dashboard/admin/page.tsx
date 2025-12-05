@@ -584,11 +584,43 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const handleToggleProfessionalStatus = async (professional: Professional) => {
+    console.log('Toggling professional status for:', professional.id, 'current isActive:', professional.isActive)
+    try {
+      const response = await fetch(`/api/professionals/${professional.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: !professional.isActive }),
+      })
+
+      if (response.ok) {
+        console.log('Toggle successful')
+        await fetchData()
+      } else {
+        const error = await response.json()
+        console.error('Toggle failed:', error)
+        toast({
+          title: "Error",
+          description: `Failed to update professional status: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Toggle error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to toggle professional status. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleAddProfessional = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
 
-    const manualUsername = formData.get('username') as string
     const manualPassword = formData.get('password') as string
 
     const professionalData = {
@@ -596,25 +628,10 @@ export default function SuperAdminDashboard() {
       email: formData.get('email') as string,
       password: manualPassword || generatedPassword || generatePassword(),
       adminName: formData.get('adminName') as string,
-      professionalHeadline: formData.get('professionalHeadline') as string,
-      aboutMe: formData.get('aboutMe') as string,
-      profilePicture: formData.get('profilePicture') as string,
-      banner: formData.get('banner') as string,
-      location: formData.get('location') as string,
       phone: formData.get('phone') as string,
-      website: formData.get('website') as string,
-      facebook: professionalSocialMedia.facebook,
-      twitter: professionalSocialMedia.twitter,
-      instagram: professionalSocialMedia.instagram,
-      linkedin: professionalSocialMedia.linkedin,
-      workExperience: professionalWorkExperience,
-      education: professionalEducation,
-      skills: professionalSkills,
-      servicesOffered: professionalServices,
-      portfolio: professionalPortfolio,
     }
 
-    console.log('Creating professional:', professionalData)
+    console.log('Creating professional account:', professionalData)
 
     try {
       const response = await fetch('/api/admin/professionals', {
@@ -627,10 +644,10 @@ export default function SuperAdminDashboard() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('Professional creation successful')
+        console.log('Professional account creation successful')
         toast({
           title: "Success",
-          description: `Professional created successfully! Login credentials: Email: ${professionalData.email}, Password: ${professionalData.password}`,
+          description: `Professional account created successfully! Login credentials: Email: ${professionalData.email}, Password: ${professionalData.password}`,
         })
         setShowRightPanel(false)
         setRightPanelContent(null)
@@ -643,7 +660,7 @@ export default function SuperAdminDashboard() {
         console.error('Professional creation failed:', error)
         toast({
           title: "Error",
-          description: `Failed to create professional: ${error.error}`,
+          description: `Failed to create professional account: ${error.error}`,
           variant: "destructive",
         })
       }
@@ -651,7 +668,7 @@ export default function SuperAdminDashboard() {
       console.error('Professional creation error:', error)
       toast({
         title: "Error",
-        description: "Failed to create professional. Please try again.",
+        description: "Failed to create professional account. Please try again.",
         variant: "destructive",
       })
     }
@@ -666,26 +683,11 @@ export default function SuperAdminDashboard() {
 
     const updateData = {
       name: formData.get('name') as string,
-      professionalHeadline: formData.get('professionalHeadline') as string,
-      aboutMe: formData.get('aboutMe') as string,
-      profilePicture: formData.get('profilePicture') as string,
-      banner: formData.get('banner') as string,
-      location: formData.get('location') as string,
       phone: formData.get('phone') as string,
-      website: formData.get('website') as string,
       email: formData.get('email') as string,
-      facebook: professionalSocialMedia.facebook,
-      twitter: professionalSocialMedia.twitter,
-      instagram: professionalSocialMedia.instagram,
-      linkedin: professionalSocialMedia.linkedin,
-      workExperience: professionalWorkExperience,
-      education: professionalEducation,
-      skills: professionalSkills,
-      servicesOffered: professionalServices,
-      portfolio: professionalPortfolio,
     }
 
-    console.log('Updating professional:', editingProfessional.id, updateData)
+    console.log('Updating professional account:', editingProfessional.id, updateData)
 
     try {
       const response = await fetch(`/api/professionals/${editingProfessional.id}`, {
@@ -697,20 +699,20 @@ export default function SuperAdminDashboard() {
       })
 
       if (response.ok) {
-        console.log('Update successful')
+        console.log('Account update successful')
         await fetchData()
         setShowRightPanel(false)
         setRightPanelContent(null)
         toast({
           title: "Success",
-          description: "Professional updated successfully!",
+          description: "Professional account updated successfully!",
         })
       } else {
         const error = await response.json()
         console.error('Update failed:', error)
         toast({
           title: "Error",
-          description: `Failed to update professional: ${error.error}`,
+          description: `Failed to update professional account: ${error.error}`,
           variant: "destructive",
         })
       }
@@ -718,7 +720,7 @@ export default function SuperAdminDashboard() {
       console.error('Update error:', error)
       toast({
         title: "Error",
-        description: "Failed to update professional. Please try again.",
+        description: "Failed to update professional account. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -1292,7 +1294,7 @@ export default function SuperAdminDashboard() {
                     <TableHeader className='bg-amber-100'>
                       <TableRow>
                         <TableHead className="text-gray-900">Professional Name</TableHead>
-                        <TableHead className="text-gray-900">Admin Email</TableHead>
+                        <TableHead className="text-gray-900">Email</TableHead>
                         <TableHead className="text-gray-900">Headline</TableHead>
                         <TableHead className="text-gray-900">Location</TableHead>
                         <TableHead className="text-gray-900">Status</TableHead>
@@ -1302,7 +1304,7 @@ export default function SuperAdminDashboard() {
                     <TableBody>
                       {professionals.filter(professional => {
                         const matchesSearch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          professional.admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          professional.admin?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           professional.professionalHeadline?.toLowerCase().includes(searchTerm.toLowerCase())
                         const matchesStatus = filterStatus === 'all' ||
                           (filterStatus === 'active' && professional.isActive) ||
@@ -1311,18 +1313,21 @@ export default function SuperAdminDashboard() {
                       }).map((professional) => (
                         <TableRow key={professional.id}>
                           <TableCell className="text-gray-900 font-medium">{professional.name}</TableCell>
-                          <TableCell className="text-gray-900">{professional.admin.email}</TableCell>
+                          <TableCell className="text-gray-900">{professional.email || 'N/A'}</TableCell>
                           <TableCell className="text-gray-900 max-w-xs truncate">{professional.professionalHeadline || 'No headline'}</TableCell>
                           <TableCell className="text-gray-900">{professional.location || 'Not specified'}</TableCell>
                           <TableCell>
                             <Badge variant={professional.isActive ? "default" : "secondary"} className="rounded-full">
-                              {professional.isActive ? 'Active' : 'Suspended'}
+                              {professional.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.open(`/pcard/${professional.slug}`, '_blank')}>
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleToggleProfessionalStatus(professional)}>
+                                {professional.isActive ? <EyeOff className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                               </Button>
                               <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditProfessional(professional)}>
                                 <Edit className="h-4 w-4" />
@@ -1819,13 +1824,14 @@ export default function SuperAdminDashboard() {
       return (
         <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold">ADD PROFESSIONAL</h3>
+            <h3 className="text-lg font-semibold">ADD PROFESSIONAL ACCOUNT</h3>
+            <p className="text-sm text-gray-600">Create basic account details. The professional will manage their profile content through their admin panel.</p>
             <form onSubmit={handleAddProfessional} className="space-y-6">
-              {/* Basic Information */}
+              {/* Basic Account Information */}
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900 flex items-center">
                   <User className="h-4 w-4 mr-2" />
-                  Basic Information
+                  Account Details
                 </h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
@@ -1833,200 +1839,17 @@ export default function SuperAdminDashboard() {
                     <Input name="name" required className="rounded-2xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Professional Headline</Label>
-                    <Input name="professionalHeadline" placeholder="e.g., Senior Software Developer" className="rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>About Me</Label>
-                    <Textarea name="aboutMe" placeholder="Brief description about the professional..." className="rounded-2xl" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Profile Picture URL</Label>
-                      <Input name="profilePicture" placeholder="https://..." className="rounded-2xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Banner Image URL</Label>
-                      <Input name="banner" placeholder="https://..." className="rounded-2xl" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <Input name="location" placeholder="City, Country" className="rounded-2xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
-                      <Input name="phone" placeholder="+1 234 567 8900" className="rounded-2xl" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Website</Label>
-                    <Input name="website" placeholder="https://..." className="rounded-2xl" />
+                    <Label>Phone</Label>
+                    <Input name="phone" placeholder="+1 234 567 8900" className="rounded-2xl" />
                   </div>
                 </div>
               </div>
-
-              {/* Social Media */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Globe className="h-4 w-4 mr-2" />
-                  Social Media Links
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Facebook className="h-4 w-4 mr-2 text-blue-600" />
-                      Facebook
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.facebook}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, facebook: e.target.value }))}
-                      placeholder="https://facebook.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Twitter className="h-4 w-4 mr-2 text-blue-400" />
-                      Twitter
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.twitter}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, twitter: e.target.value }))}
-                      placeholder="https://twitter.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Instagram className="h-4 w-4 mr-2 text-pink-600" />
-                      Instagram
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.instagram}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, instagram: e.target.value }))}
-                      placeholder="https://instagram.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Linkedin className="h-4 w-4 mr-2 text-blue-700" />
-                      LinkedIn
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.linkedin}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, linkedin: e.target.value }))}
-                      placeholder="https://linkedin.com/in/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Work Experience */}
-              <ArrayFieldManager
-                title="Work Experience"
-                items={professionalWorkExperience}
-                onChange={setProfessionalWorkExperience}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.position}</h4>
-                    <p className="text-cyan-600">{item.company}</p>
-                    <p className="text-sm text-gray-600">{item.duration}</p>
-                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Work Experience"
-              />
-
-              {/* Education */}
-              <ArrayFieldManager
-                title="Education"
-                items={professionalEducation}
-                onChange={setProfessionalEducation}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.degree}</h4>
-                    <p className="text-cyan-600">{item.institution}</p>
-                    <p className="text-sm text-gray-600">{item.year}</p>
-                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Education"
-              />
-
-              {/* Skills */}
-              <ArrayFieldManager
-                title="Skills & Expertise"
-                items={professionalSkills}
-                onChange={setProfessionalSkills}
-                renderItem={(skill: string, index: number) => (
-                  <div>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-sm font-medium">
-                      {skill}
-                    </span>
-                  </div>
-                )}
-                createNewItem={() => ''}
-                renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
-                  <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Skill"
-              />
-
-              {/* Services Offered */}
-              <ArrayFieldManager
-                title="Services Offered"
-                items={professionalServices}
-                onChange={setProfessionalServices}
-                renderItem={(service: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{service.name}</h4>
-                    <p className="text-sm text-gray-600">{service.description}</p>
-                    {service.price && <p className="text-cyan-600 font-medium">{service.price}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ name: '', description: '', price: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Service"
-              />
-
-              {/* Portfolio */}
-              <ArrayFieldManager
-                title="Portfolio"
-                items={professionalPortfolio}
-                onChange={setProfessionalPortfolio}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.title}</h4>
-                    {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
-                    <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
-                  </div>
-                )}
-                createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Portfolio Item"
-              />
 
               {/* Admin Account */}
               <div className="space-y-4 border-t pt-4">
                 <h4 className="font-medium text-gray-900 flex items-center">
                   <Shield className="h-4 w-4 mr-2" />
-                  Admin Account
+                  Login Credentials
                 </h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
@@ -2034,7 +1857,7 @@ export default function SuperAdminDashboard() {
                     <Input name="adminName" required className="rounded-2xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Admin Email</Label>
+                    <Label>Admin Email (Login Email)</Label>
                     <Input name="email" type="email" required className="rounded-2xl" />
                   </div>
                   <Button type="button" onClick={(e) => {
@@ -2075,14 +1898,8 @@ export default function SuperAdminDashboard() {
                   setRightPanelContent(null);
                   setGeneratedPassword('');
                   setGeneratedUsername('');
-                  setProfessionalWorkExperience([]);
-                  setProfessionalEducation([]);
-                  setProfessionalSkills([]);
-                  setProfessionalServices([]);
-                  setProfessionalPortfolio([]);
-                  setProfessionalSocialMedia({ facebook: '', twitter: '', instagram: '', linkedin: '' });
                 }} className="rounded-2xl">Cancel</Button>
-                <Button type="submit" className="rounded-2xl">Create Professional</Button>
+                <Button type="submit" className="rounded-2xl">Create Professional Account</Button>
               </div>
             </form>
           </div>
@@ -2091,34 +1908,17 @@ export default function SuperAdminDashboard() {
     }
 
     if (rightPanelContent === 'edit-professional' && editingProfessional) {
-      // Initialize form data when editing
-      React.useEffect(() => {
-        if (editingProfessional) {
-          // Load existing data into form state
-          setProfessionalWorkExperience(editingProfessional.workExperience || [])
-          setProfessionalEducation(editingProfessional.education || [])
-          setProfessionalSkills(editingProfessional.skills || [])
-          setProfessionalServices(editingProfessional.servicesOffered || [])
-          setProfessionalPortfolio(editingProfessional.portfolio || [])
-          setProfessionalSocialMedia({
-            facebook: editingProfessional.facebook || '',
-            twitter: editingProfessional.twitter || '',
-            instagram: editingProfessional.instagram || '',
-            linkedin: editingProfessional.linkedin || ''
-          })
-        }
-      }, [editingProfessional])
-
       return (
         <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold">EDIT PROFESSIONAL</h3>
+            <h3 className="text-lg font-semibold">EDIT PROFESSIONAL ACCOUNT</h3>
+            <p className="text-sm text-gray-600">Edit basic account details. Profile content is managed by the professional through their admin panel.</p>
             <form onSubmit={handleUpdateProfessional} className="space-y-6">
-              {/* Basic Information */}
+              {/* Basic Account Information */}
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900 flex items-center">
                   <User className="h-4 w-4 mr-2" />
-                  Basic Information
+                  Account Details
                 </h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
@@ -2126,204 +1926,13 @@ export default function SuperAdminDashboard() {
                     <Input name="name" defaultValue={editingProfessional.name} required className="rounded-2xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Professional Headline</Label>
-                    <Input name="professionalHeadline" defaultValue={editingProfessional.professionalHeadline || ''} className="rounded-2xl" />
+                    <Label>Phone</Label>
+                    <Input name="phone" defaultValue={editingProfessional.phone || ''} className="rounded-2xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label>About Me</Label>
-                    <Textarea name="aboutMe" defaultValue={editingProfessional.aboutMe || ''} className="rounded-2xl" />
+                    <Label>Contact Email</Label>
+                    <Input name="email" defaultValue={editingProfessional.email || ''} type="email" className="rounded-2xl" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Profile Picture URL</Label>
-                      <Input name="profilePicture" defaultValue={editingProfessional.profilePicture || ''} className="rounded-2xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Banner Image URL</Label>
-                      <Input name="banner" defaultValue={editingProfessional.banner || ''} className="rounded-2xl" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <Input name="location" defaultValue={editingProfessional.location || ''} className="rounded-2xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
-                      <Input name="phone" defaultValue={editingProfessional.phone || ''} className="rounded-2xl" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Website</Label>
-                    <Input name="website" defaultValue={editingProfessional.website || ''} className="rounded-2xl" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Media */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Globe className="h-4 w-4 mr-2" />
-                  Social Media Links
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Facebook className="h-4 w-4 mr-2 text-blue-600" />
-                      Facebook
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.facebook}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, facebook: e.target.value }))}
-                      placeholder="https://facebook.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Twitter className="h-4 w-4 mr-2 text-blue-400" />
-                      Twitter
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.twitter}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, twitter: e.target.value }))}
-                      placeholder="https://twitter.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Instagram className="h-4 w-4 mr-2 text-pink-600" />
-                      Instagram
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.instagram}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, instagram: e.target.value }))}
-                      placeholder="https://instagram.com/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center">
-                      <Linkedin className="h-4 w-4 mr-2 text-blue-700" />
-                      LinkedIn
-                    </Label>
-                    <Input
-                      value={professionalSocialMedia.linkedin}
-                      onChange={(e) => setProfessionalSocialMedia(prev => ({ ...prev, linkedin: e.target.value }))}
-                      placeholder="https://linkedin.com/in/username"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Work Experience */}
-              <ArrayFieldManager
-                title="Work Experience"
-                items={professionalWorkExperience}
-                onChange={setProfessionalWorkExperience}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.position}</h4>
-                    <p className="text-cyan-600">{item.company}</p>
-                    <p className="text-sm text-gray-600">{item.duration}</p>
-                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Work Experience"
-              />
-
-              {/* Education */}
-              <ArrayFieldManager
-                title="Education"
-                items={professionalEducation}
-                onChange={setProfessionalEducation}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.degree}</h4>
-                    <p className="text-cyan-600">{item.institution}</p>
-                    <p className="text-sm text-gray-600">{item.year}</p>
-                    {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Education"
-              />
-
-              {/* Skills */}
-              <ArrayFieldManager
-                title="Skills & Expertise"
-                items={professionalSkills}
-                onChange={setProfessionalSkills}
-                renderItem={(skill: string, index: number) => (
-                  <div>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-sm font-medium">
-                      {skill}
-                    </span>
-                  </div>
-                )}
-                createNewItem={() => ''}
-                renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
-                  <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Skill"
-              />
-
-              {/* Services Offered */}
-              <ArrayFieldManager
-                title="Services Offered"
-                items={professionalServices}
-                onChange={setProfessionalServices}
-                renderItem={(service: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{service.name}</h4>
-                    <p className="text-sm text-gray-600">{service.description}</p>
-                    {service.price && <p className="text-cyan-600 font-medium">{service.price}</p>}
-                  </div>
-                )}
-                createNewItem={() => ({ name: '', description: '', price: '' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Service"
-              />
-
-              {/* Portfolio */}
-              <ArrayFieldManager
-                title="Portfolio"
-                items={professionalPortfolio}
-                onChange={setProfessionalPortfolio}
-                renderItem={(item: any, index: number) => (
-                  <div>
-                    <h4 className="font-semibold">{item.title}</h4>
-                    {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
-                    <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
-                  </div>
-                )}
-                createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
-                renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                  <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
-                )}
-                itemName="Portfolio Item"
-              />
-
-              {/* Admin Email */}
-              <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Admin Account
-                </h4>
-                <div className="space-y-2">
-                  <Label>Admin Email</Label>
-                  <Input name="email" defaultValue={editingProfessional.admin.email} type="email" className="rounded-2xl" />
                 </div>
               </div>
 
@@ -2331,12 +1940,6 @@ export default function SuperAdminDashboard() {
                 <Button type="button" variant="outline" onClick={() => {
                   setShowRightPanel(false);
                   setRightPanelContent(null);
-                  setProfessionalWorkExperience([]);
-                  setProfessionalEducation([]);
-                  setProfessionalSkills([]);
-                  setProfessionalServices([]);
-                  setProfessionalPortfolio([]);
-                  setProfessionalSocialMedia({ facebook: '', twitter: '', instagram: '', linkedin: '' });
                 }} className="rounded-2xl">Cancel</Button>
                 <Button type="submit" className="rounded-2xl">Save Changes</Button>
               </div>

@@ -598,7 +598,8 @@ export default function ProfessionalProfile({ professional: initialProfessional 
         <div className="max-w-7xl mx-auto">
           <div className="border-l border-r border-b border-gray-200 overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
-              {/* About Section */}gpr
+              {/* About Section */}
+
               <div
                 id="about"
                 ref={aboutRef}

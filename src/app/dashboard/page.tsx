@@ -21,6 +21,8 @@ export default function DashboardRouter() {
       router.push('/dashboard/admin')
     } else if (user.role === 'BUSINESS_ADMIN') {
       router.push('/dashboard/business')
+    } else if (user.role === 'PROFESSIONAL_ADMIN') {
+      router.push('/dashboard/professional')
     } else {
       router.push('/login')
     }

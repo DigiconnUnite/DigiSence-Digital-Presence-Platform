@@ -1,48 +1,43 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
-import { AuroraBackground } from '@/components/ui/aurora-background'
 import Footer from '@/components/Footer'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import {
   Search,
-  Building2,
+  User,
   MapPin,
   Phone,
   Mail,
   Globe,
-  Package,
   Eye,
   ArrowRight,
   X,
   Menu,
+  Network,
+  BookOpen,
+  TrendingUp,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
 
-interface Business {
+interface Professional {
   id: string
   name: string
   slug: string
-  description: string | null
-  logo: string | null
-  address: string | null
+  professionalHeadline: string | null
+  profilePicture: string | null
+  location: string | null
   phone: string | null
   email: string | null
   website: string | null
-  category: {
-    name: string
-  } | null
-  products: {
-    id: string
-  }[]
 }
 
 interface Category {
@@ -51,76 +46,102 @@ interface Category {
   slug: string
 }
 
-export default function BusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([])
-  const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([])
+export default function ProfessionalsPage() {
+  const [professionals, setProfessionals] = useState<Professional[]>([])
+  const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const categoryScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetchBusinesses()
+    fetchProfessionals()
     fetchCategories()
   }, [])
 
   useEffect(() => {
-    const filtered = businesses.filter(business => {
-      const matchesSearch = business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = !selectedCategory || business.category?.name === selectedCategory
+    const filtered = professionals.filter(professional => {
+      const matchesSearch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        professional.professionalHeadline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        professional.location?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = !selectedCategory || professional.professionalHeadline === selectedCategory
       return matchesSearch && matchesCategory
     })
-    setFilteredBusinesses(filtered)
-  }, [businesses, searchTerm, selectedCategory])
+    setFilteredProfessionals(filtered)
+  }, [professionals, searchTerm, selectedCategory])
 
-  const fetchBusinesses = async () => {
+  const fetchProfessionals = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/businesses')
+      const response = await fetch('/api/professionals')
       if (response.ok) {
         const data = await response.json()
-        setBusinesses(data.businesses)
-        setFilteredBusinesses(data.businesses)
+        setProfessionals(data.professionals)
+        setFilteredProfessionals(data.professionals)
       } else {
-        console.error('Failed to fetch businesses')
+        console.error('Failed to fetch professionals')
       }
     } catch (error) {
-      console.error('Error fetching businesses:', error)
+      console.error('Error fetching professionals:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data.categories)
-      } else {
-        console.error('Failed to fetch categories')
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-    }
+    // Placeholder categories for professionals
+    setCategories([
+      { id: '1', name: 'All', slug: 'all' },
+      { id: '2', name: 'Developers', slug: 'developers' },
+      { id: '3', name: 'Designers', slug: 'designers' },
+      { id: '4', name: 'Marketers', slug: 'marketers' },
+      { id: '5', name: 'Consultants', slug: 'consultants' }
+    ])
   }
 
   const scrollCategories = (direction: 'left' | 'right') => {
-    if (categoryScrollRef.current) {
-      const scrollAmount = 200
-      const currentScroll = categoryScrollRef.current.scrollLeft
-      const newScroll = direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount
-      categoryScrollRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      })
-    }
+    // Placeholder for scrolling
   }
 
+  const features = [
+    {
+      icon: <Network className="h-8 w-8 text-primary" />,
+      title: "Networking Opportunities",
+      description: "Connect with industry leaders and build valuable professional relationships that can open doors to new opportunities."
+    },
+    {
+      icon: <BookOpen className="h-8 w-8 text-primary" />,
+      title: "Skill Development",
+      description: "Access cutting-edge training programs and workshops to enhance your skills and stay ahead in your field."
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8 text-primary" />,
+      title: "Career Advancement",
+      description: "Get personalized career guidance and mentorship to accelerate your professional growth and achieve your goals."
+    }
+  ]
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Software Engineer",
+      quote: "DigiSence helped me connect with amazing professionals in my field. The networking opportunities led to my dream job!",
+      rating: 5
+    },
+    {
+      name: "Michael Chen",
+      role: "Marketing Director",
+      quote: "The skill development programs are top-notch. I've learned so much and advanced my career significantly.",
+      rating: 5
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Project Manager",
+      quote: "The career advancement support and mentorship I received were invaluable. Highly recommend to any professional.",
+      rating: 5
+    }
+  ]
 
   return (
     <>
@@ -155,7 +176,7 @@ export default function BusinessesPage() {
               </div>
               <div className="flex items-center space-x-4">
                 <Button variant="outline" className="bg-gray-800 text-white hover:bg-gray-700 border-gray-800" asChild>
-                  <Link href="/dashboard/business">Register</Link>
+                  <Link href="/dashboard/professional">Register</Link>
                 </Button>
                 <Button variant="outline" className="bg-gray-800 text-white hover:bg-gray-700 border-gray-800" asChild>
                   <Link href="/login">Login</Link>
@@ -174,11 +195,7 @@ export default function BusinessesPage() {
           {/* Category Slider - Full Width */}
           <div className="bg-gray-50 py-2 border-t border-gray-200">
             <div className="max-w-7xl mx-auto ">
-              <div
-                ref={categoryScrollRef}
-                className="flex items-center overflow-x-auto scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
+              <div className="flex items-center overflow-x-auto scrollbar-hide px-4">
                 {categories.map((category) => (
                   <button
                     key={category.id}
@@ -213,7 +230,7 @@ export default function BusinessesPage() {
                 <Link href="/contact" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
                   Contact Us
                 </Link>
-                <Link href="/dashboard/business" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link href="/dashboard/professional" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
                   Register
                 </Link>
                 <Link href="/login" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
@@ -242,7 +259,7 @@ export default function BusinessesPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   type="text"
-                  placeholder="Search businesses..."
+                  placeholder="Search professionals..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:border-primary bg-background"
@@ -252,7 +269,7 @@ export default function BusinessesPage() {
           </div>
 
 
-          {/* Business Cards Section */}
+          {/* Professional Cards Section */}
           <section className="pb-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               {isLoading ? (
@@ -279,16 +296,16 @@ export default function BusinessesPage() {
                     </Card>
                   ))}
                 </div>
-              ) : filteredBusinesses.length === 0 ? (
+              ) : filteredProfessionals.length === 0 ? (
                 <div className="text-center py-16">
-                  <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-primary mb-2">
-                    {searchTerm ? 'No businesses found' : 'No businesses available'}
+                    {searchTerm ? 'No professionals found' : 'No professionals available'}
                   </h3>
                   <p className="text-muted-foreground">
                     {searchTerm
                       ? 'Try adjusting your search terms'
-                      : 'Check back later for new businesses'
+                      : 'Check back later for new professionals'
                     }
                   </p>
                 </div>
@@ -296,22 +313,22 @@ export default function BusinessesPage() {
                 <>
                   <div className="flex justify-between items-center mb-12">
                     <h2 className="text-2xl font-bold text-primary">
-                      {searchTerm ? `Search Results (${filteredBusinesses.length})` : `All Businesses (${filteredBusinesses.length})`}
+                      {searchTerm ? `Search Results (${filteredProfessionals.length})` : `All Professionals (${filteredProfessionals.length})`}
                     </h2>
                   </div>
 
                       <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredBusinesses.map((business) => (
+                        {filteredProfessionals.map((professional) => (
                           <Card
-                            key={business.id}
+                            key={professional.id}
                             className="overflow-hidden border  bg-white/80 backdrop-blur-sm"
                           >
                             <CardHeader className="pb-2 md:pb-4">
                               <div className="flex items-center space-x-2 md:space-x-4">
                                 <div className="shrink-0">
-                                  {business.logo ? (
+                                  {professional.profilePicture ? (
                                     <img
-                                      src={getOptimizedImageUrl(business.logo, {
+                                      src={getOptimizedImageUrl(professional.profilePicture, {
                                         width: 48,
                                         height: 48,
                                         quality: 85,
@@ -319,23 +336,23 @@ export default function BusinessesPage() {
                                         crop: 'fill',
                                         gravity: 'center'
                                       })}
-                                      alt={business.name}
+                                      alt={professional.name}
                                       className="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover border-2 border-border"
                                       loading="lazy"
                                     />
                                   ) : (
                                     <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                                      <Building2 className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
+                                      <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
-                                    {business.name}
+                                    {professional.name}
                                   </CardTitle>
-                                  {business.category && (
+                                  {professional.professionalHeadline && (
                                     <Badge variant="secondary" className="mt-1 text-xs">
-                                      {business.category.name}
+                                      {professional.professionalHeadline}
                                     </Badge>
                                   )}
                                 </div>
@@ -343,37 +360,31 @@ export default function BusinessesPage() {
                             </CardHeader>
 
                             <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
-                              {business.description && (
-                                <CardDescription className="text-muted-foreground line-clamp-2 md:line-clamp-3 text-sm md:text-base">
-                                  {business.description}
-                                </CardDescription>
-                              )}
-
                               {/* Contact Info */}
                               <div className="space-y-2">
-                                {business.address && (
+                                {professional.location && (
                                   <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{business.address}</span>
+                                    <span className="truncate">{professional.location}</span>
                                   </div>
                                 )}
-                                {business.phone && (
+                                {professional.phone && (
                                   <div className="flex items-center text-sm text-muted-foreground">
                                     <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span>{business.phone}</span>
+                                    <span>{professional.phone}</span>
                                   </div>
                                 )}
-                                {business.email && (
+                                {professional.email && (
                                   <div className="flex items-center text-sm text-muted-foreground">
                                     <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{business.email}</span>
+                                    <span className="truncate">{professional.email}</span>
                                   </div>
                                 )}
-                                {business.website && (
+                                {professional.website && (
                                   <div className="flex items-center text-sm text-muted-foreground">
                                     <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
                                     <a
-                                      href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
+                                      href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-primary hover:underline truncate"
@@ -387,15 +398,15 @@ export default function BusinessesPage() {
                               {/* Stats */}
                               <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border">
                                 <div className="flex items-center text-xs md:text-sm text-muted-foreground">
-                                  <Package className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                  <span>{business.products.length} products</span>
+                                  <User className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                  <span>Professional</span>
                                 </div>
                                 <Button
                                   asChild
                                   size="sm"
                                   className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs md:text-sm"
                                 >
-                                  <Link href={`/catalog/${business.slug}`}>
+                                  <Link href={`/pcard/${professional.slug}`}>
                                     <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                                     <span className="hidden sm:inline">View Profile</span>
                                     <ArrowRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />

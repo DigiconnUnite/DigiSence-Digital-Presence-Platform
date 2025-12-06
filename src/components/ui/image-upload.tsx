@@ -235,6 +235,7 @@ export default function ImageUpload({
                 )}
                 {mediaUrl && (
                   <Button
+                    type="button"
                     size="icon"
                     variant="destructive"
                     className="absolute top-0 right-0 rounded-full p-1 h-6 w-6 translate-x-2 -translate-y-2"
@@ -262,6 +263,7 @@ export default function ImageUpload({
                   </span>
                   {!uploading && (
                     <Button
+                      type="button"
                       onClick={openFileDialog}
                       variant="secondary"
                       size="sm"

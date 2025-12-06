@@ -183,7 +183,7 @@ export default function HeroSectionOne() {
 
             // Cards in front are more visible
             const isFront = Math.cos(angle) > 0;
-            // const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
+            const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
             const scale = isFront ? 1 + Math.cos(angle) * 0.8 : 0.2;
             const zIndex = Math.round(Math.cos(angle) * 100) + 100;
 
@@ -197,7 +197,7 @@ export default function HeroSectionOne() {
                   z: translateZ,
                   rotateY: rotateY,
                   scale: scale,
-                  // opacity: opacity,
+                  opacity: opacity,
                 }}
                 transition={{
                   duration: isDragging ? 0.18 : 0.5,

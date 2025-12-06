@@ -3908,7 +3908,7 @@ export default function BusinessAdminDashboard() {
         <>
           {/* More Menu Overlay */}
           {showMoreMenu && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
+            <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
               <div className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="space-y-2">
                   {(() => {

@@ -17,6 +17,7 @@ export interface AuthUser {
   name?: string
   role: UserRole
   businessId?: string
+  createdAt?: string
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -48,6 +49,7 @@ export async function createUser(email: string, password: string, name?: string,
     name: user.name || undefined,
     role: user.role as UserRole,
     businessId: user.business?.id,
+    createdAt: user.createdAt.toISOString(),
   }
 }
 
@@ -75,6 +77,7 @@ export async function authenticateUser(email: string, password: string): Promise
     name: user.name || undefined,
     role: user.role as UserRole,
     businessId: user.business?.id,
+    createdAt: user.createdAt.toISOString(),
   }
 }
 

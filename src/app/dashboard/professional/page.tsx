@@ -21,6 +21,7 @@ import {
   PortfolioItemForm
 } from '@/components/ui/array-field-manager'
 import { Skeleton } from '@/components/ui/skeleton'
+import ImageUpload from '@/components/ui/image-upload'
 import {
   Dialog,
   DialogContent,
@@ -84,7 +85,9 @@ import {
   Twitter,
   Instagram,
   Linkedin,
-  Image
+  Image,
+  Building2,
+  GraduationCap
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -132,7 +135,6 @@ export default function ProfessionalDashboard() {
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<any[]>([])
   const [professionalEducation, setProfessionalEducation] = useState<any[]>([])
-  const [professionalSkills, setProfessionalSkills] = useState<string[]>([])
   const [professionalServices, setProfessionalServices] = useState<any[]>([])
   const [professionalPortfolio, setProfessionalPortfolio] = useState<any[]>([])
   const [professionalSocialMedia, setProfessionalSocialMedia] = useState({
@@ -141,6 +143,8 @@ export default function ProfessionalDashboard() {
     instagram: '',
     linkedin: ''
   })
+  const [profilePictureUrl, setProfilePictureUrl] = useState('')
+  const [bannerUrl, setBannerUrl] = useState('')
   const [isEditing, setIsEditing] = useState(false)
 
   // Services state
@@ -150,6 +154,18 @@ export default function ProfessionalDashboard() {
   // Portfolio state
   const [portfolio, setPortfolio] = useState<any[]>([])
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false)
+
+  // Skills state
+  const [skills, setSkills] = useState<string[]>([])
+  const [isEditingSkills, setIsEditingSkills] = useState(false)
+
+  // Work Experience state
+  const [workExperience, setWorkExperience] = useState<any[]>([])
+  const [isEditingExperience, setIsEditingExperience] = useState(false)
+
+  // Education state
+  const [education, setEducation] = useState<any[]>([])
+  const [isEditingEducation, setIsEditingEducation] = useState(false)
 
   // Inquiries state
   const [inquiries, setInquiries] = useState<any[]>([])
@@ -196,37 +212,52 @@ export default function ProfessionalDashboard() {
     try {
       setIsLoading(true)
 
-      // Fetch professional profile
-      const response = await fetch('/api/professionals')
+      // Fetch basic professional profile
+      const response = await fetch('/api/professionals', { cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
         // Find the professional associated with this user
         const userProfessional = data.professionals.find((p: Professional) => p.adminId === user?.id)
         if (userProfessional) {
           setProfessional(userProfessional)
-
-          // Load structured data into form state
-          setProfessionalWorkExperience(userProfessional.workExperience || [])
-          setProfessionalEducation(userProfessional.education || [])
-          setProfessionalSkills(userProfessional.skills || [])
-          setProfessionalServices(userProfessional.servicesOffered || [])
-          setProfessionalPortfolio(userProfessional.portfolio || [])
           setProfessionalSocialMedia({
             facebook: userProfessional.facebook || '',
             twitter: userProfessional.twitter || '',
             instagram: userProfessional.instagram || '',
             linkedin: userProfessional.linkedin || ''
           })
-
-          // Load services and portfolio
-          setServices(userProfessional.servicesOffered || [])
-          setPortfolio(userProfessional.portfolio || [])
+          setProfilePictureUrl(userProfessional.profilePicture || '')
+          setBannerUrl(userProfessional.banner || '')
         }
       }
 
+      // Fetch individual data sections
+      const fetchPromises = [
+        fetch('/api/professionals/experience', { cache: 'no-store' }).then(r => r.ok ? r.json() : { workExperience: [] }),
+        fetch('/api/professionals/education', { cache: 'no-store' }).then(r => r.ok ? r.json() : { education: [] }),
+        fetch('/api/professionals/skills', { cache: 'no-store' }).then(r => r.ok ? r.json() : { skills: [] }),
+        fetch('/api/professionals/services', { cache: 'no-store' }).then(r => r.ok ? r.json() : { services: [] }),
+        fetch('/api/professionals/portfolio', { cache: 'no-store' }).then(r => r.ok ? r.json() : { portfolio: [] }),
+      ]
+
+      const [experienceData, educationData, skillsData, servicesData, portfolioData] = await Promise.all(fetchPromises)
+
+      // Load structured data into form state
+      setProfessionalWorkExperience(experienceData.workExperience || [])
+      setProfessionalEducation(educationData.education || [])
+      setSkills(skillsData.skills || [])
+      setWorkExperience(experienceData.workExperience || [])
+      setEducation(educationData.education || [])
+      setProfessionalServices(servicesData.services || [])
+      setProfessionalPortfolio(portfolioData.portfolio || [])
+
+      // Load services and portfolio
+      setServices(servicesData.services || [])
+      setPortfolio(portfolioData.portfolio || [])
+
       // Fetch inquiries
       try {
-        const inquiriesResponse = await fetch('/api/professionals/inquiries')
+        const inquiriesResponse = await fetch('/api/professionals/inquiries', { cache: 'no-store' })
         if (inquiriesResponse.ok) {
           const inquiriesData = await inquiriesResponse.json()
           setInquiries(inquiriesData.inquiries)
@@ -262,8 +293,8 @@ export default function ProfessionalDashboard() {
       name: formData.get('name') as string,
       professionalHeadline: formData.get('professionalHeadline') as string,
       aboutMe: formData.get('aboutMe') as string,
-      profilePicture: formData.get('profilePicture') as string,
-      banner: formData.get('banner') as string,
+      profilePicture: profilePictureUrl,
+      banner: bannerUrl,
       location: formData.get('location') as string,
       phone: formData.get('phone') as string,
       website: formData.get('website') as string,
@@ -272,9 +303,6 @@ export default function ProfessionalDashboard() {
       twitter: professionalSocialMedia.twitter,
       instagram: professionalSocialMedia.instagram,
       linkedin: professionalSocialMedia.linkedin,
-      workExperience: professionalWorkExperience,
-      education: professionalEducation,
-      skills: professionalSkills,
       servicesOffered: professionalServices,
       portfolio: professionalPortfolio,
       adminId: user.id,
@@ -296,7 +324,9 @@ export default function ProfessionalDashboard() {
         // Load structured data into form state
         setProfessionalWorkExperience(data.professional.workExperience || [])
         setProfessionalEducation(data.professional.education || [])
-        setProfessionalSkills(data.professional.skills || [])
+        setSkills(data.professional.skills || [])
+        setWorkExperience(data.professional.workExperience || [])
+        setEducation(data.professional.education || [])
         setProfessionalServices(data.professional.servicesOffered || [])
         setProfessionalPortfolio(data.professional.portfolio || [])
         setProfessionalSocialMedia({
@@ -305,6 +335,8 @@ export default function ProfessionalDashboard() {
           instagram: data.professional.instagram || '',
           linkedin: data.professional.linkedin || ''
         })
+        setProfilePictureUrl(data.professional.profilePicture || '')
+        setBannerUrl(data.professional.banner || '')
 
         setIsCreatingProfile(false)
         toast({
@@ -342,8 +374,8 @@ export default function ProfessionalDashboard() {
       name: formData.get('name') as string,
       professionalHeadline: formData.get('professionalHeadline') as string,
       aboutMe: formData.get('aboutMe') as string,
-      profilePicture: formData.get('profilePicture') as string,
-      banner: formData.get('banner') as string,
+      profilePicture: profilePictureUrl,
+      banner: bannerUrl,
       location: formData.get('location') as string,
       phone: formData.get('phone') as string,
       website: formData.get('website') as string,
@@ -352,11 +384,6 @@ export default function ProfessionalDashboard() {
       twitter: professionalSocialMedia.twitter,
       instagram: professionalSocialMedia.instagram,
       linkedin: professionalSocialMedia.linkedin,
-      workExperience: professionalWorkExperience,
-      education: professionalEducation,
-      skills: professionalSkills,
-      servicesOffered: professionalServices,
-      portfolio: professionalPortfolio,
     }
 
     try {
@@ -375,15 +402,17 @@ export default function ProfessionalDashboard() {
         // Update structured data in form state
         setProfessionalWorkExperience(data.professional.workExperience || [])
         setProfessionalEducation(data.professional.education || [])
-        setProfessionalSkills(data.professional.skills || [])
-        setProfessionalServices(data.professional.servicesOffered || [])
-        setProfessionalPortfolio(data.professional.portfolio || [])
+        setSkills(data.professional.skills || [])
+        setWorkExperience(data.professional.workExperience || [])
+        setEducation(data.professional.education || [])
         setProfessionalSocialMedia({
           facebook: data.professional.facebook || '',
           twitter: data.professional.twitter || '',
           instagram: data.professional.instagram || '',
           linkedin: data.professional.linkedin || ''
         })
+        setProfilePictureUrl(data.professional.profilePicture || '')
+        setBannerUrl(data.professional.banner || '')
 
         setIsEditing(false)
         toast({
@@ -418,6 +447,7 @@ export default function ProfessionalDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ services }),
+        cache: 'no-store',
       })
 
       if (response.ok) {
@@ -453,6 +483,7 @@ export default function ProfessionalDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ portfolio }),
+        cache: 'no-store',
       })
 
       if (response.ok) {
@@ -480,6 +511,114 @@ export default function ProfessionalDashboard() {
     }
   }
 
+  const handleUpdateSkills = async () => {
+    try {
+      const response = await fetch('/api/professionals/skills', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ skills }),
+        cache: 'no-store',
+      })
+
+      if (response.ok) {
+        await fetchProfessionalData()
+        setIsEditingSkills(false)
+        toast({
+          title: "Success",
+          description: "Skills updated successfully!",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to update skills: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Skills update error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update skills. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateExperience = async () => {
+    try {
+      const response = await fetch('/api/professionals/experience', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ workExperience }),
+        cache: 'no-store',
+      })
+
+      if (response.ok) {
+        await fetchProfessionalData()
+        setIsEditingExperience(false)
+        toast({
+          title: "Success",
+          description: "Work experience updated successfully!",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to update work experience: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Work experience update error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update work experience. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateEducation = async () => {
+    try {
+      const response = await fetch('/api/professionals/education', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ education }),
+        cache: 'no-store',
+      })
+
+      if (response.ok) {
+        await fetchProfessionalData()
+        setIsEditingEducation(false)
+        toast({
+          title: "Success",
+          description: "Education updated successfully!",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to update education: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Education update error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update education. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleInquiryStatusUpdate = async (inquiryId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/professionals/inquiries/${inquiryId}`, {
@@ -488,6 +627,7 @@ export default function ProfessionalDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status: newStatus }),
+        cache: 'no-store',
       })
 
       if (response.ok) {
@@ -737,14 +877,20 @@ export default function ProfessionalDashboard() {
                             <Label>About Me</Label>
                             <Textarea name="aboutMe" className="rounded-2xl" />
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label>Profile Picture URL</Label>
-                              <Input name="profilePicture" className="rounded-2xl" />
+                              <Label>Profile Picture</Label>
+                              <ImageUpload
+                                onUpload={setProfilePictureUrl}
+                                className="max-w-md"
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label>Banner Image URL</Label>
-                              <Input name="banner" className="rounded-2xl" />
+                              <Label>Banner Image</Label>
+                              <ImageUpload
+                                onUpload={setBannerUrl}
+                                className="max-w-md"
+                              />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
@@ -833,122 +979,8 @@ export default function ProfessionalDashboard() {
                       </CardContent>
                     </Card>
 
-                    {/* Work Experience */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Work Experience"
-                          items={professionalWorkExperience}
-                          onChange={setProfessionalWorkExperience}
-                          renderItem={(item: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{item.position}</h4>
-                              <p className="text-amber-600">{item.company}</p>
-                              <p className="text-sm text-gray-600">{item.duration}</p>
-                              {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                            </div>
-                          )}
-                          createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Work Experience"
-                        />
-                      </CardContent>
-                    </Card>
 
-                    {/* Education */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Education"
-                          items={professionalEducation}
-                          onChange={setProfessionalEducation}
-                          renderItem={(item: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{item.degree}</h4>
-                              <p className="text-amber-600">{item.institution}</p>
-                              <p className="text-sm text-gray-600">{item.year}</p>
-                              {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                            </div>
-                          )}
-                          createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Education"
-                        />
-                      </CardContent>
-                    </Card>
 
-                    {/* Skills */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Skills & Expertise"
-                          items={professionalSkills}
-                          onChange={setProfessionalSkills}
-                          renderItem={(skill: string, index: number) => (
-                            <div>
-                              <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium">
-                                {skill}
-                              </span>
-                            </div>
-                          )}
-                          createNewItem={() => ''}
-                          renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
-                            <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Skill"
-                        />
-                      </CardContent>
-                    </Card>
-
-                    {/* Services Offered */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Services Offered"
-                          items={professionalServices}
-                          onChange={setProfessionalServices}
-                          renderItem={(service: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{service.name}</h4>
-                              <p className="text-sm text-gray-600">{service.description}</p>
-                              {service.price && <p className="text-amber-600 font-medium">{service.price}</p>}
-                            </div>
-                          )}
-                          createNewItem={() => ({ name: '', description: '', price: '' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Service"
-                        />
-                      </CardContent>
-                    </Card>
-
-                    {/* Portfolio */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Portfolio"
-                          items={professionalPortfolio}
-                          onChange={setProfessionalPortfolio}
-                          renderItem={(item: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{item.title}</h4>
-                              {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
-                              <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
-                            </div>
-                          )}
-                          createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Portfolio Item"
-                        />
-                      </CardContent>
-                    </Card>
 
                     {/* Form Actions */}
                     <div className="flex gap-4">
@@ -1018,16 +1050,28 @@ export default function ProfessionalDashboard() {
                             <Label>About Me</Label>
                             <Textarea name="aboutMe" defaultValue={professional.aboutMe || ''} className="rounded-2xl" />
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Profile Picture URL</Label>
-                              <Input name="profilePicture" defaultValue={professional.profilePicture || ''} className="rounded-2xl" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Profile Picture</Label>
+                                <ImageUpload
+                                  onUpload={setProfilePictureUrl}
+                                  className="max-w-md"
+                                />
+                                {profilePictureUrl && (
+                                  <p className="text-sm text-gray-600">Current: {profilePictureUrl}</p>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Banner Image</Label>
+                                <ImageUpload
+                                  onUpload={setBannerUrl}
+                                  className="max-w-md"
+                                />
+                                {bannerUrl && (
+                                  <p className="text-sm text-gray-600">Current: {bannerUrl}</p>
+                                )}
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              <Label>Banner Image URL</Label>
-                              <Input name="banner" defaultValue={professional.banner || ''} className="rounded-2xl" />
-                            </div>
-                          </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label>Location</Label>
@@ -1114,76 +1158,7 @@ export default function ProfessionalDashboard() {
                       </CardContent>
                     </Card>
 
-                    {/* Work Experience */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Work Experience"
-                          items={professionalWorkExperience}
-                          onChange={setProfessionalWorkExperience}
-                          renderItem={(item: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{item.position}</h4>
-                              <p className="text-amber-600">{item.company}</p>
-                              <p className="text-sm text-gray-600">{item.duration}</p>
-                              {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                            </div>
-                          )}
-                          createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Work Experience"
-                        />
-                      </CardContent>
-                    </Card>
 
-                    {/* Education */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Education"
-                          items={professionalEducation}
-                          onChange={setProfessionalEducation}
-                          renderItem={(item: any, index: number) => (
-                            <div>
-                              <h4 className="font-semibold">{item.degree}</h4>
-                              <p className="text-amber-600">{item.institution}</p>
-                              <p className="text-sm text-gray-600">{item.year}</p>
-                              {item.description && <p className="text-sm mt-1">{item.description}</p>}
-                            </div>
-                          )}
-                          createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
-                          renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
-                            <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Education"
-                        />
-                      </CardContent>
-                    </Card>
-
-                    {/* Skills */}
-                    <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-                      <CardContent className="p-6">
-                        <ArrayFieldManager
-                          title="Skills & Expertise"
-                          items={professionalSkills}
-                          onChange={setProfessionalSkills}
-                          renderItem={(skill: string, index: number) => (
-                            <div>
-                              <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium">
-                                {skill}
-                              </span>
-                            </div>
-                          )}
-                          createNewItem={() => ''}
-                          renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
-                            <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
-                          )}
-                          itemName="Skill"
-                        />
-                      </CardContent>
-                    </Card>
 
                     {/* Services Offered */}
                     <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
@@ -1284,6 +1259,347 @@ export default function ProfessionalDashboard() {
                     </CardContent>
                   </Card>
                 )}
+
+                  {/* Skills Section */}
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Skills & Expertise</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingSkills(!isEditingSkills)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isEditingSkills ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditingSkills ? (
+                        <div className="space-y-4">
+                          <ArrayFieldManager
+                            title=""
+                            items={skills}
+                            onChange={setSkills}
+                            renderItem={(skill: string, index: number) => (
+                              <div>
+                                <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium">
+                                  {skill}
+                                </span>
+                              </div>
+                            )}
+                            createNewItem={() => ''}
+                            renderForm={(item: string | null, onSave: (item: string) => void, onCancel: () => void) => (
+                              <SkillForm item={item} onSave={onSave} onCancel={onCancel} />
+                            )}
+                            itemName="Skill"
+                          />
+                          <div className="flex gap-4">
+                            <Button onClick={handleUpdateSkills} className="flex-1">
+                              Save Skills
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsEditingSkills(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {skills.length > 0 ? (
+                            skills.map((skill, index) => (
+                              <span key={index} className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium">
+                                {skill}
+                              </span>
+                            ))
+                          ) : (
+                            <p className="text-gray-500">No skills added yet.</p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Work Experience Section */}
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Work Experience</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingExperience(!isEditingExperience)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isEditingExperience ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditingExperience ? (
+                        <div className="space-y-4">
+                          <ArrayFieldManager
+                            title=""
+                            items={workExperience}
+                            onChange={setWorkExperience}
+                            renderItem={(item: any, index: number) => (
+                              <div>
+                                <h4 className="font-semibold">{item.position}</h4>
+                                <p className="text-amber-600">{item.company}</p>
+                                <p className="text-sm text-gray-600">{item.duration}</p>
+                                {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                              </div>
+                            )}
+                            createNewItem={() => ({ position: '', company: '', duration: '', description: '' })}
+                            renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                              <WorkExperienceForm item={item} onSave={onSave} onCancel={onCancel} />
+                            )}
+                            itemName="Work Experience"
+                          />
+                          <div className="flex gap-4">
+                            <Button onClick={handleUpdateExperience} className="flex-1">
+                              Save Experience
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsEditingExperience(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {workExperience.length > 0 ? (
+                            workExperience.map((item: any, index: number) => (
+                              <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="shrink-0">
+                                    <Building2 className="h-5 w-5 text-cyan-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-800">{item.position}</h4>
+                                    <p className="text-cyan-600 font-medium text-sm">{item.company}</p>
+                                    <p className="text-sm text-gray-600 mb-1">{item.duration}</p>
+                                    {item.description && (
+                                      <p className="text-gray-700 text-sm">{item.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500">No work experience added yet.</p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Education Section */}
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Education</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingEducation(!isEditingEducation)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isEditingEducation ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditingEducation ? (
+                        <div className="space-y-4">
+                          <ArrayFieldManager
+                            title=""
+                            items={education}
+                            onChange={setEducation}
+                            renderItem={(item: any, index: number) => (
+                              <div>
+                                <h4 className="font-semibold">{item.degree}</h4>
+                                <p className="text-amber-600">{item.institution}</p>
+                                <p className="text-sm text-gray-600">{item.year}</p>
+                                {item.description && <p className="text-sm mt-1">{item.description}</p>}
+                              </div>
+                            )}
+                            createNewItem={() => ({ degree: '', institution: '', year: '', description: '' })}
+                            renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                              <EducationForm item={item} onSave={onSave} onCancel={onCancel} />
+                            )}
+                            itemName="Education"
+                          />
+                          <div className="flex gap-4">
+                            <Button onClick={handleUpdateEducation} className="flex-1">
+                              Save Education
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsEditingEducation(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {education.length > 0 ? (
+                            education.map((item: any, index: number) => (
+                              <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="shrink-0">
+                                    <GraduationCap className="h-5 w-5 text-cyan-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-800">{item.degree}</h4>
+                                    <p className="text-cyan-600 font-medium text-sm">{item.institution}</p>
+                                    <p className="text-sm text-gray-600 mb-1">{item.year}</p>
+                                    {item.description && (
+                                      <p className="text-gray-700 text-sm">{item.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500">No education added yet.</p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Services Section */}
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Services Offered</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingServices(!isEditingServices)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isEditingServices ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditingServices ? (
+                        <div className="space-y-4">
+                          <ArrayFieldManager
+                            title=""
+                            items={services}
+                            onChange={setServices}
+                            renderItem={(service: any, index: number) => (
+                              <div>
+                                <h4 className="font-semibold">{service.name}</h4>
+                                <p className="text-sm text-gray-600">{service.description}</p>
+                                {service.price && <p className="text-amber-600 font-medium">{service.price}</p>}
+                              </div>
+                            )}
+                            createNewItem={() => ({ name: '', description: '', price: '' })}
+                            renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                              <ServiceForm item={item} onSave={onSave} onCancel={onCancel} />
+                            )}
+                            itemName="Service"
+                          />
+                          <div className="flex gap-4">
+                            <Button onClick={handleUpdateServices} className="flex-1">
+                              Save Services
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsEditingServices(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {services.length > 0 ? (
+                            services.map((service: any, index: number) => (
+                              <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="shrink-0">
+                                    <Users className="h-5 w-5 text-cyan-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-800">{service.name}</h4>
+                                    <p className="text-gray-700 text-sm mt-1">{service.description}</p>
+                                    {service.price && (
+                                      <p className="text-cyan-600 font-semibold text-sm mt-2">{service.price}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500">No services added yet.</p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Portfolio Section */}
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Portfolio</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingPortfolio(!isEditingPortfolio)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isEditingPortfolio ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditingPortfolio ? (
+                        <div className="space-y-4">
+                          <ArrayFieldManager
+                            title=""
+                            items={portfolio}
+                            onChange={setPortfolio}
+                            renderItem={(item: any, index: number) => (
+                              <div>
+                                <h4 className="font-semibold">{item.title}</h4>
+                                {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
+                                <p className="text-xs text-gray-500">{item.type === 'video' ? 'Video' : 'Image'}</p>
+                              </div>
+                            )}
+                            createNewItem={() => ({ title: '', description: '', url: '', type: 'image' })}
+                            renderForm={(item: any, onSave: (item: any) => void, onCancel: () => void) => (
+                              <PortfolioItemForm item={item} onSave={onSave} onCancel={onCancel} />
+                            )}
+                            itemName="Portfolio Item"
+                          />
+                          <div className="flex gap-4">
+                            <Button onClick={handleUpdatePortfolio} className="flex-1">
+                              Save Portfolio
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsEditingPortfolio(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {portfolio.length > 0 ? (
+                            portfolio.map((item: any, index: number) => (
+                              <div key={index} className="rounded-xl overflow-hidden shadow-sm aspect-square">
+                                <img
+                                  src={item.url}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500 col-span-full">No portfolio items added yet.</p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
               </div>
             )}
           </div>
@@ -1637,7 +1953,7 @@ export default function ProfessionalDashboard() {
   }
 
   return (
-    <div className="max-h-screen min-h-screen relative flex flex-col">
+    <div className="max-h-screen min-h-screen ratio-16x9   relative flex flex-col">
       <div className="fixed inset-0 bg-linear-to-b from-amber-300 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
@@ -1721,8 +2037,8 @@ export default function ProfessionalDashboard() {
         <>
           {/* More Menu Overlay */}
           {showMoreMenu && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
-              <div className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/10 backdrop-blur-sm  bg-opacity-50 z-40" onClick={() => setShowMoreMenu(false)}>
+              <div className="absolute bottom-20 left-0 right-0 bg-white  rounded-3xl  p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="space-y-2">
                   {menuItems.slice(3).map((item) => {
                     const MobileIcon = item.mobileIcon

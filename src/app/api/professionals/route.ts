@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +56,61 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ professional })
     } else {
-      // List all active professionals
+      // Check for authentication - if authenticated, return only the user's professional
+      const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+
+      if (token) {
+        const payload = verifyToken(token)
+        if (payload && payload.role === 'PROFESSIONAL_ADMIN') {
+          // Return only the professional for the authenticated user
+          const professional = await db.professional.findFirst({
+            where: { adminId: payload.userId },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              professionalHeadline: true,
+              aboutMe: true,
+              profilePicture: true,
+              banner: true,
+              location: true,
+              phone: true,
+              email: true,
+              website: true,
+              facebook: true,
+              twitter: true,
+              instagram: true,
+              linkedin: true,
+              isActive: true,
+              createdAt: true,
+              updatedAt: true,
+              adminId: true,
+              workExperience: true,
+              education: true,
+              skills: true,
+              servicesOffered: true,
+              contactInfo: true,
+              portfolio: true,
+              contactDetails: true,
+              ctaButton: true,
+              admin: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          })
+
+          if (professional) {
+            return NextResponse.json({ professionals: [professional] })
+          } else {
+            return NextResponse.json({ professionals: [] })
+          }
+        }
+      }
+
+      // List all active professionals (fallback for non-authenticated requests)
       const professionals = await db.professional.findMany({
         where: { isActive: true },
         select: {

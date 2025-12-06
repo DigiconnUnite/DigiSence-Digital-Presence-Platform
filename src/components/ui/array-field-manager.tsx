@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Trash2, Edit, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import ImageUpload from '@/components/ui/image-upload'
 
 interface ArrayFieldManagerProps<T> {
   title: string
@@ -383,6 +384,10 @@ export function PortfolioItemForm({ item, onSave, onCancel }: {
     onSave(formData)
   }
 
+  const handleImageUpload = (url: string) => {
+    setFormData({ ...formData, url })
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -404,15 +409,6 @@ export function PortfolioItemForm({ item, onSave, onCancel }: {
         />
       </div>
       <div className="space-y-2">
-        <Label>Media URL</Label>
-        <Input
-          value={formData.url}
-          onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-          placeholder="Image or video URL"
-          required
-        />
-      </div>
-      <div className="space-y-2">
         <Label>Media Type</Label>
         <select
           value={formData.type}
@@ -423,6 +419,28 @@ export function PortfolioItemForm({ item, onSave, onCancel }: {
           <option value="video">Video</option>
         </select>
       </div>
+      {formData.type === 'image' ? (
+        <div className="space-y-2">
+          <Label>Portfolio Image</Label>
+          <ImageUpload
+            onUpload={handleImageUpload}
+            className="max-w-md"
+          />
+          {formData.url && (
+            <p className="text-sm text-gray-600">Image uploaded successfully</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Label>Video URL</Label>
+          <Input
+            value={formData.url}
+            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+            placeholder="Video URL (YouTube, Vimeo, etc.)"
+            required
+          />
+        </div>
+      )}
       <div className="flex space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancel

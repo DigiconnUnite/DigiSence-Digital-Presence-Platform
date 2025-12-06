@@ -331,7 +331,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
       {/* Desktop Navigation */}
       <nav className="hidden md:block sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -481,10 +481,10 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               relative w-full 
               overflow-hidden shadow-lg 
               bg-linear-to-br from-amber-400 via-amber-500 to-amber-600
-              aspect-[3/1]       
+              aspect-3/1       
               xs:aspect-[4/3] 
-              sm:aspect-[16/6] 
-              md:aspect-[3/1]
+              sm:aspect-16/6 
+              md:aspect-3/1
             "
           >
             {professional.banner && professional.banner.trim() !== '' ? (
@@ -502,7 +502,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   className="w-full h-full object-cover"
                   loading="eager"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-[5%] bg-gradient-to-t from-black/30 to-transparent"></div>
+                <div className="absolute inset-x-0 bottom-0 h-[5%] bg-linear-to-t from-black/30 to-transparent"></div>
               </>
             ) : null}
           </div>
@@ -535,11 +535,11 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 </div>
                 {/* All Info in one container */}
                 <div className="flex flex-col flex-1 items-center sm:items-start text-center sm:text-left">
-                  <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 break-words">
+                  <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 wrap-break-words">
                     {professional.name}
                   </h1>
                   {professional.professionalHeadline && (
-                    <p className="text-sm xs:text-base md:text-lg text-gray-700 mt-1 xs:mt-2 break-words">
+                    <p className="text-sm xs:text-base md:text-lg text-gray-700 mt-1 xs:mt-2 wrap-break-words">
                       {professional.professionalHeadline}
                     </p>
                   )}
@@ -617,7 +617,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 {/* Experience, Education, Certification Tabs */}
                 <div className="">
                   <div className="h-full bg-white">
-                    <div className="flex px-3 sm:px-4 md:px-6 bg-gradient-to-r from-amber-50 to-white border-y border-gray-100 shadow-sm overflow-x-auto">
+                    <div className="flex px-3 sm:px-4 md:px-6 bg-linear-to-r from-amber-50 to-white border-y border-gray-100 shadow-sm overflow-x-auto">
                       <button
                         className={`px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap ${activeTab === 'experience'
                           ? 'text-white bg-amber-600 shadow-md transform'
@@ -783,7 +783,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
             {professional.portfolio.map((item: any, index: number) => (
               <div
                 key={index}
-                className="relative rounded-xl overflow-hidden shadow-sm aspect-[3/2] group"
+                className="relative rounded-xl overflow-hidden shadow-sm aspect-3/2 group"
               >
                 <img
                   src={getOptimizedImageUrl(item.url, {
@@ -829,7 +829,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
         <div className="max-w-7xl mx-auto">
 
           {/* Maintain aspect ratio (3:2) at ALL breakpoints */}
-          <div className="relative rounded-2xl sm:rounded-4xl shadow-2xl overflow-hidden bg-gradient-to-br from-[#ff8a06] to-[#ff6b08] aspect-2/1 sm:aspect-3/1"
+          <div className="relative rounded-2xl sm:rounded-4xl shadow-2xl overflow-hidden bg-linear-to-br from-[#ff8a06] to-[#ff6b08] aspect-2/1 sm:aspect-3/1"
             style={{
               backgroundImage: 'url(/card-bg.png)',
               backgroundSize: 'cover',
@@ -837,7 +837,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
             }}
           >
             {/* Dark Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent rounded-[24px] sm:rounded-[32px]"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-black/60 via-black/40 to-transparent rounded-[24px] sm:rounded-[32px]"></div>
 
             {/* Content absolutely centered (with max width for responsiveness) */}
             <div className="absolute inset-0 flex items-center justify-start">

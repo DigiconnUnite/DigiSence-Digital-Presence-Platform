@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import ProfessionalProfile from '../../../components/ProfessionalProfile'
 
 
@@ -11,8 +12,13 @@ interface PageProps {
 export default async function ProfessionalPage({ params }: PageProps) {
   const { professional: professionalSlug } = await params
 
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = headersList.get('x-forwarded-proto') || 'http'
+  const baseUrl = `${protocol}://${host}`
+
   // Fetch data from API instead of direct Prisma access
-  const response = await fetch(`/api/professionals?slug=${professionalSlug}`, {
+  const response = await fetch(`${baseUrl}/api/professionals?slug=${professionalSlug}`, {
     cache: 'no-store'
   })
 
@@ -33,8 +39,13 @@ export default async function ProfessionalPage({ params }: PageProps) {
 export async function generateMetadata({ params }: PageProps) {
   const { professional: professionalSlug } = await params
 
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = headersList.get('x-forwarded-proto') || 'http'
+  const baseUrl = `${protocol}://${host}`
+
   // Fetch data from API instead of direct Prisma access
-  const response = await fetch(`/api/professionals?slug=${professionalSlug}`, {
+  const response = await fetch(`${baseUrl}/api/professionals?slug=${professionalSlug}`, {
     cache: 'no-store'
   })
 
@@ -53,7 +64,6 @@ export async function generateMetadata({ params }: PageProps) {
     }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const pageUrl = `${baseUrl}/pcard/${professionalSlug}`
   const imageUrl = professional.profilePicture ? `${baseUrl}/api/placeholder/1200/630?text=${encodeURIComponent(professional.name)}` : `${baseUrl}/placeholder.png`
 

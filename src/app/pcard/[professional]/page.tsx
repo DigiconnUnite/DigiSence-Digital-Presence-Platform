@@ -12,7 +12,7 @@ export default async function ProfessionalPage({ params }: PageProps) {
   const { professional: professionalSlug } = await params
 
   // Fetch data from API instead of direct Prisma access
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/professionals?slug=${professionalSlug}`, {
+  const response = await fetch(`/api/professionals?slug=${professionalSlug}`, {
     cache: 'no-store'
   })
 
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { professional: professionalSlug } = await params
 
   // Fetch data from API instead of direct Prisma access
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/professionals?slug=${professionalSlug}`, {
+  const response = await fetch(`/api/professionals?slug=${professionalSlug}`, {
     cache: 'no-store'
   })
 

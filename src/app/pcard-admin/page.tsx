@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { getOptimizedImageUrl } from '@/lib/cloudinary'
+import { getOptimizedImageUrl } from '@/lib/image-utils'
 import {
   Plus,
   Edit,

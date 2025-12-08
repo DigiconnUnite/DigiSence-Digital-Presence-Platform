@@ -194,6 +194,7 @@ export default function SuperAdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
   const [businessListingInquiries, setBusinessListingInquiries] = useState<any[]>([])
+  const [registrationInquiries, setRegistrationInquiries] = useState<any[]>([])
   const [stats, setStats] = useState<AdminStats>({
     totalBusinesses: 0,
     totalInquiries: 0,
@@ -323,6 +324,13 @@ export default function SuperAdminDashboard() {
       if (businessListingInquiriesRes.ok) {
         const data = await businessListingInquiriesRes.json()
         setBusinessListingInquiries(data.inquiries)
+      }
+
+      // Fetch registration inquiries
+      const registrationInquiriesRes = await fetch('/api/registration-inquiries')
+      if (registrationInquiriesRes.ok) {
+        const data = await registrationInquiriesRes.json()
+        setRegistrationInquiries(data.inquiries)
       }
     } catch (error) {
       console.error('Failed to fetch admin data:', error)
@@ -913,6 +921,125 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const handleCreateAccountFromInquiry = async (inquiry: any) => {
+    if (!confirm(`Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}?`)) {
+      return
+    }
+
+    try {
+      let response
+      if (inquiry.type === 'BUSINESS') {
+        response = await fetch('/api/admin/businesses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: inquiry.businessName,
+            email: inquiry.email,
+            adminName: inquiry.name,
+            phone: inquiry.phone,
+            address: inquiry.location,
+          }),
+        })
+      } else {
+        response = await fetch('/api/admin/professionals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: inquiry.name,
+            email: inquiry.email,
+            adminName: inquiry.name,
+            phone: inquiry.phone,
+          }),
+        })
+      }
+
+      if (response.ok) {
+        // Update inquiry status to COMPLETED
+        await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'COMPLETED' }),
+        })
+
+        // Update the inquiry in the list
+        setRegistrationInquiries(prev =>
+          prev.map(regInquiry =>
+            regInquiry.id === inquiry.id ? { ...regInquiry, status: 'COMPLETED' } : regInquiry
+          )
+        )
+
+        toast({
+          title: "Success",
+          description: `${inquiry.type} account created successfully!`,
+        })
+        fetchData() // Refresh data
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to create account: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Failed to create account:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create account. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleRejectInquiry = async (inquiryId: string) => {
+    if (!confirm('Reject this registration request?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/registration-inquiries/${inquiryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'REJECTED' }),
+      })
+
+      if (response.ok) {
+        // Update the inquiry in the list
+        setRegistrationInquiries(prev =>
+          prev.map(inquiry =>
+            inquiry.id === inquiryId ? { ...inquiry, status: 'REJECTED' } : inquiry
+          )
+        )
+        toast({
+          title: "Success",
+          description: "Registration request rejected.",
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to reject inquiry: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Failed to reject inquiry:', error)
+      toast({
+        title: "Error",
+        description: "Failed to reject inquiry. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const menuItems = [
     {
       title: 'Dashboard',
@@ -948,6 +1075,13 @@ export default function SuperAdminDashboard() {
       mobileIcon: MessageCircle,
       value: 'inquiries',
       mobileTitle: 'Inquiry'
+    },
+    {
+      title: 'Registration Requests',
+      icon: UserCheck,
+      mobileIcon: UserCheck,
+      value: 'registration-requests',
+      mobileTitle: 'Registrations'
     },
     {
       title: 'Business Listings',
@@ -1432,6 +1566,88 @@ export default function SuperAdminDashboard() {
                             <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
                           </TableCell>
                           <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'registration-requests':
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <h1 className="text-xl font-bold text-gray-900 mb-2">REGISTRATION REQUESTS</h1>
+              <p className="text-xl text-gray-600">Review and approve business and professional registration requests</p>
+            </div>
+            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <div className="p-4 sm:p-6">
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-900">Type</TableHead>
+                        <TableHead className="text-gray-900">Name</TableHead>
+                        <TableHead className="text-gray-900">Business Name</TableHead>
+                        <TableHead className="text-gray-900">Contact</TableHead>
+                        <TableHead className="text-gray-900">Location</TableHead>
+                        <TableHead className="text-gray-900">Status</TableHead>
+                        <TableHead className="text-gray-900">Date</TableHead>
+                        <TableHead className="text-gray-900">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {registrationInquiries.map((inquiry) => (
+                        <TableRow key={inquiry.id}>
+                          <TableCell>
+                            <Badge variant={inquiry.type === 'BUSINESS' ? 'default' : 'secondary'} className="rounded-full">
+                              {inquiry.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-900 font-medium">{inquiry.name}</TableCell>
+                          <TableCell className="text-gray-900">{inquiry.businessName || 'N/A'}</TableCell>
+                          <TableCell className="text-gray-900">
+                            <div>
+                              <div className="text-sm">{inquiry.email}</div>
+                              {inquiry.phone && (
+                                <div className="text-sm text-gray-500">{inquiry.phone}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-900">{inquiry.location || 'Not specified'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {inquiry.status === 'PENDING' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    className="rounded-xl bg-green-600 hover:bg-green-700"
+                                    onClick={() => handleCreateAccountFromInquiry(inquiry)}
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-1" />
+                                    Create Account
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="rounded-xl"
+                                    onClick={() => handleRejectInquiry(inquiry.id)}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              {inquiry.status === 'COMPLETED' && (
+                                <Badge variant="default" className="rounded-full">Account Created</Badge>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -2079,7 +2295,7 @@ export default function SuperAdminDashboard() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
-          <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+          <div className="w-64 m-4 border  bg-white border-r  rounded-out-r-4xl border-gray-200 flex flex-col shadow-sm">
             <div className="p-4 border-b border-gray-200 rounded-t-3xl">
               <div className="flex items-center space-x-2">
                 <Crown className="h-6 w-6" />

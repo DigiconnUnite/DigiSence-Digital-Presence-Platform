@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
 import BusinessProfile from '@/components/BusinessProfile'
-import { getOptimizedImageUrl } from '@/lib/cloudinary'
+import { getOptimizedImageUrl } from '@/lib/image-utils'
 import { headers } from 'next/headers'
 
 interface PageProps {

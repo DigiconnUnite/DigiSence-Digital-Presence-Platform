@@ -92,6 +92,12 @@ export default function LoginPage() {
             <div className="text-center">
               <h1 className="text-2xl font-bold text-foreground">Welcome to DigiSence</h1>
               <p className="text-muted-foreground mt-2">Sign in to your account</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                New to DigiSence?{' '}
+                <Link href="/register" className="text-primary hover:underline">
+                  Register your business or professional profile
+                </Link>
+              </p>
             </div>
 
             {/* Toggle Switcher */}

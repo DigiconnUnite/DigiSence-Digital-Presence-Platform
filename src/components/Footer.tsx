@@ -16,7 +16,7 @@ export default function Footer() {
           className="flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 border-b border-gray-700 mb-8"
         >
           <div className="mb-6 lg:mb-0 lg:mr-8">
-            <Link href="/" className="flex items-center space-x-3 text-3xl font-bold text-white hover:text-cyan-50 transition-colors duration-300 block mb-3">
+            <Link href="/" className="flex items-center space-x-3 text-3xl font-bold text-white hover:text-cyan-50 transition-colors duration-300  mb-3">
               <img src="/logo.svg" alt="DigiSence Logo" className="h-10 filter invert hue-rotate-180  w-10" />
               <span>DigiSence</span>
             </Link>

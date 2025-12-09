@@ -274,30 +274,89 @@ export function EducationForm({ item, onSave, onCancel }: {
 }
 
 export function SkillForm({ item, onSave, onCancel }: {
-  item: string | null
-  onSave: (item: string) => void
+  item: {name: string, level: 'beginner' | 'intermediate' | 'expert' | 'master'} | null
+  onSave: (item: {name: string, level: 'beginner' | 'intermediate' | 'expert' | 'master'}) => void
   onCancel: () => void
 }) {
-  const [skill, setSkill] = useState(item || '')
+  const [formData, setFormData] = useState(item || {
+    name: '',
+    level: 'intermediate' as const
+  })
+
+  const skillSuggestions = [
+    'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'Java', 'C++', 'C#',
+    'Project Management', 'Agile', 'Scrum', 'Digital Marketing', 'SEO', 'Content Writing',
+    'UI/UX Design', 'Graphic Design', 'Photography', 'Video Editing', 'Data Analysis',
+    'Machine Learning', 'DevOps', 'AWS', 'Docker', 'Kubernetes', 'SQL', 'MongoDB',
+    'Communication', 'Leadership', 'Problem Solving', 'Team Collaboration'
+  ]
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (skill.trim()) {
-      onSave(skill.trim())
+    if (formData.name.trim()) {
+      onSave(formData)
     }
   }
 
+  const proficiencyLevels = [
+    { value: 'beginner', label: 'Beginner', color: 'bg-gray-100 text-gray-800' },
+    { value: 'intermediate', label: 'Intermediate', color: 'bg-blue-100 text-blue-800' },
+    { value: 'expert', label: 'Expert', color: 'bg-purple-100 text-purple-800' },
+    { value: 'master', label: 'Master', color: 'bg-amber-100 text-amber-800' }
+  ]
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label>Skill Name</Label>
         <Input
-          value={skill}
-          onChange={(e) => setSkill(e.target.value)}
-          placeholder="e.g., JavaScript, Project Management, Digital Marketing"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="e.g., JavaScript, Project Management"
           required
         />
+        <div className="flex flex-wrap gap-2 mt-2">
+          {skillSuggestions.slice(0, 8).map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setFormData({ ...formData, name: suggestion })}
+              className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
       </div>
+
+      <div className="space-y-3">
+        <Label>Proficiency Level</Label>
+        <div className="grid grid-cols-2 gap-3">
+          {proficiencyLevels.map((level) => (
+            <button
+              key={level.value}
+              type="button"
+              onClick={() => setFormData({ ...formData, level: level.value as any })}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                formData.level === level.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${level.color}`}>
+                {level.label}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                {level.value === 'beginner' && 'Basic understanding'}
+                {level.value === 'intermediate' && 'Working knowledge'}
+                {level.value === 'expert' && 'Advanced skills'}
+                {level.value === 'master' && 'Expert level'}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancel

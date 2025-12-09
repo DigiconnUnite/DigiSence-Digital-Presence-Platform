@@ -56,7 +56,8 @@ const config: Config = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			'4xl': '2rem'
   		}
   	}
   },
@@ -73,6 +74,9 @@ const config: Config = {
         '.dashboard-bg': {
           'background': 'linear-gradient(to bottom, #fef3c7, #ffffff)',
           'backdrop-filter': 'blur(10px)',
+        },
+        '.rounded-out-r-4xl': {
+          'border-radius': '0 2rem 2rem 0',
         },
       });
     }),

@@ -533,11 +533,11 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 </div>
                 {/* All Info in one container */}
                 <div className="flex flex-col flex-1 items-center sm:items-start text-center sm:text-left">
-                  <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 break-words">
+                  <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 wrap-break-words">
                     {professional.name}
                   </h1>
                   {professional.professionalHeadline && (
-                    <p className="text-sm xs:text-base md:text-lg text-gray-700 mt-1 xs:mt-2 break-words">
+                    <p className="text-sm xs:text-base md:text-lg text-gray-700 mt-1 xs:mt-2 wrap-break-words">
                       {professional.professionalHeadline}
                     </p>
                   )}
@@ -781,7 +781,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
             {professional.portfolio.map((item: any, index: number) => (
               <div
                 key={index}
-                className="relative rounded-xl overflow-hidden shadow-sm aspect-[3/2] group"
+                className="relative rounded-xl overflow-hidden shadow-sm aspect-3/2 group"
               >
                 <img
                   src={getOptimizedImageUrl(item.url, {

@@ -2078,65 +2078,85 @@ export default function ProfessionalDashboard() {
       </div>
     </form>
   );
+  const ProfileInfoCard = ({ professional }) => {
+    // Add state variables for tracking editing state
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editingName, setEditingName] = useState('');
+    const nameInputRef = useRef(null);
 
-  const ProfileInfoCard = ({ professional }) => (
-    <Card className="bg-white border border-gray-200 shadow-lg rounded-3xl overflow-hidden hover:shadow-xl p-0 transition-shadow duration-300">
-      <CardHeader className="bg-linear-to-r from-blue-50 pt-5 to-indigo-50 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <User className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <CardTitle className="text-xl text-gray-900">Basic Profile Information</CardTitle>
-            <CardDescription className="text-gray-600">
-              Your professional details and contact information
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        {/* Two-column layout on desktop, single column on mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Banner, Profile Picture, Name, Headline, About */}
-          <div className="space-y-6">
-            {/* Banner Image - First */}
-            <div className="space-y-4">
-              <Label className="text-sm font-semibold text-gray-700">Banner Image</Label>
-              <div className="relative group cursor-pointer" onClick={() => setShowBannerModal(true)}>
-                <div className="w-full aspect-3/1 rounded-xl overflow-hidden border-4 border-white shadow-lg">
-                  {professional.banner ? (
-                    <img
-                      src={professional.banner}
-                      alt="Profile banner"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-                      <Image className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                {/* Small edit icon in top corner */}
-                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Edit className="h-3 w-3 text-gray-700" />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 text-center">Recommended dimensions: 1200x300px • Click to edit</p>
+    const [isEditingHeadline, setIsEditingHeadline] = useState(false);
+    const [editingHeadline, setEditingHeadline] = useState('');
+    const headlineInputRef = useRef(null);
+
+    const [isEditingAboutMe, setIsEditingAboutMe] = useState(false);
+    const [editingAboutMe, setEditingAboutMe] = useState('');
+    const aboutMeInputRef = useRef(null);
+
+    const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [editingEmail, setEditingEmail] = useState('');
+    const emailInputRef = useRef(null);
+
+    const [isEditingPhone, setIsEditingPhone] = useState(false);
+    const [editingPhone, setEditingPhone] = useState('');
+    const phoneInputRef = useRef(null);
+
+    const [isEditingLocation, setIsEditingLocation] = useState(false);
+    const [editingLocation, setEditingLocation] = useState('');
+    const locationInputRef = useRef(null);
+
+    const [isEditingWebsite, setIsEditingWebsite] = useState(false);
+    const [editingWebsite, setEditingWebsite] = useState('');
+    const websiteInputRef = useRef(null);
+
+    const [isEditingFacebook, setIsEditingFacebook] = useState(false);
+    const [editingFacebook, setEditingFacebook] = useState('');
+    const facebookInputRef = useRef(null);
+
+    const [isEditingTwitter, setIsEditingTwitter] = useState(false);
+    const [editingTwitter, setEditingTwitter] = useState('');
+    const twitterInputRef = useRef(null);
+
+    const [isEditingInstagram, setIsEditingInstagram] = useState(false);
+    const [editingInstagram, setEditingInstagram] = useState('');
+    const instagramInputRef = useRef(null);
+
+    const [isEditingLinkedin, setIsEditingLinkedin] = useState(false);
+    const [editingLinkedin, setEditingLinkedin] = useState('');
+    const linkedinInputRef = useRef(null);
+
+
+    return (
+      <Card className="bg-white border border-gray-200 shadow-lg rounded-3xl overflow-hidden hover:shadow-xl p-0 transition-shadow duration-300">
+        <CardHeader className="bg-linear-to-r from-blue-50 pt-5 to-indigo-50 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <User className="h-5 w-5 text-blue-600" />
             </div>
+            <div>
+              <CardTitle className="text-xl text-gray-900">Basic Profile Information</CardTitle>
+              <CardDescription className="text-gray-600">
+                Your professional details and contact information
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
 
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-              <div className="shrink-0 flex flex-col items-center space-y-2 mt-6 md:mt-0">
-                <div className="relative group cursor-pointer" onClick={() => setShowProfilePictureModal(true)}>
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                    {professional.profilePicture ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Label className="text-sm font-semibold text-gray-700">Banner Image</Label>
+                <div className="relative group cursor-pointer" onClick={() => setShowBannerModal(true)}>
+                  <div className="w-full aspect-3/1 rounded-xl overflow-hidden border-4 border-white shadow-lg">
+                    {professional.banner ? (
                       <img
-                        src={professional.profilePicture}
-                        alt={professional.name}
+                        src={professional.banner}
+                        alt="Profile banner"
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <User className="h-10 w-10 text-gray-400" />
+                      <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                        <Image className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
                   </div>
@@ -2145,436 +2165,483 @@ export default function ProfessionalDashboard() {
                     <Edit className="h-3 w-3 text-gray-700" />
                   </div>
                 </div>
+                <p className="text-xs text-gray-500 text-center">Recommended dimensions: 1200x300px • Click to edit</p>
               </div>
 
-              <div className="flex-1 space-y-4">
-                {/* Professional Name */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <User className="h-5 w-5 text-gray-400 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">Name</p>
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div className="shrink-0 flex flex-col items-center space-y-2 mt-6 md:mt-0">
+                  <div className="relative group cursor-pointer" onClick={() => setShowProfilePictureModal(true)}>
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                      {professional.profilePicture ? (
+                        <img
+                          src={professional.profilePicture}
+                          alt={professional.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                          <User className="h-10 w-10 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Small edit icon in top corner */}
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Edit className="h-3 w-3 text-gray-700" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-4">
+                  {/* Professional Name */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                      <User className="h-5 w-5 text-gray-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Name</p>
+                        {isEditingName ? (
+                          <Input
+                            key="name-input"
+                            ref={nameInputRef}
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            className="mt-1"
+                            autoFocus
+                          />
+                        ) : (
+                          <p className="text-md text-gray-900 font-medium ">{professional.name || 'Not provided'}</p>
+                        )}
+                      </div>
                       {isEditingName ? (
-                        <Input
-                          ref={nameInputRef}
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          className="mt-1"
-                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => { handleFieldUpdate('name', editingName); setIsEditingName(false); }}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setIsEditingName(false)}>
+                            Cancel
+                          </Button>
+                        </div>
                       ) : (
-                        <p className="text-md text-gray-900 font-medium ">{professional.name || 'Not provided'}</p>
-                      )}
-                    </div>
-                    {isEditingName ? (
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => { handleFieldUpdate('name', editingName); setIsEditingName(false); }}>
-                          Save
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setIsEditingName(false)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
                         <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingName(professional.name || ''); setIsEditingName(true); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {/* Professional Headline */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Edit className="h-5 w-5 text-gray-400 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">Headline</p>
-                      {isEditingHeadline ? (
-                        <Input
-                          ref={headlineInputRef}
-                          value={editingHeadline}
-                          onChange={(e) => setEditingHeadline(e.target.value)}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="text-md text-amber-600 font-medium">{professional.professionalHeadline || 'Not provided'}</p>
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
-                    {isEditingHeadline ? (
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => { handleFieldUpdate('professionalHeadline', editingHeadline); setIsEditingHeadline(false); }}>
-                          Save
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setIsEditingHeadline(false)}>
-                          Cancel
-                        </Button>
+                  </div>
+                  {/* Professional Headline */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                      <Edit className="h-5 w-5 text-gray-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Headline</p>
+                        {isEditingHeadline ? (
+                          <Input
+                            key="headline-input"
+                            ref={headlineInputRef}
+                            value={editingHeadline}
+                            onChange={(e) => setEditingHeadline(e.target.value)}
+                            className="mt-1"
+                            autoFocus
+                          />
+                        ) : (
+                          <p className="text-md text-amber-600 font-medium">{professional.professionalHeadline || 'Not provided'}</p>
+                        )}
                       </div>
-                    ) : (
+                      {isEditingHeadline ? (
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => { handleFieldUpdate('professionalHeadline', editingHeadline); setIsEditingHeadline(false); }}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setIsEditingHeadline(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
                         <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingHeadline(professional.professionalHeadline || ''); setIsEditingHeadline(true); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
+
               </div>
 
-            </div>
-
-            {/* About Me - Fifth */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">About Me</Label>
-              {isEditingAboutMe ? (
-                <Textarea
-                  ref={aboutMeInputRef}
-                  value={editingAboutMe}
-                  onChange={(e) => setEditingAboutMe(e.target.value)}
-                  placeholder="Tell clients about yourself, your experience, and what makes you unique..."
-                  className="rounded-xl border-gray-200 min-h-[120px] leading-relaxed"
-                />
-              ) : (
+              {/* About Me - Fifth */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700">About Me</Label>
+                {isEditingAboutMe ? (
+                  <Textarea
+                    key="aboutme-input"
+                    ref={aboutMeInputRef}
+                    value={editingAboutMe}
+                    onChange={(e) => setEditingAboutMe(e.target.value)}
+                    placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+                    className="rounded-xl border-gray-200 min-h-[120px] leading-relaxed"
+                    autoFocus
+                  />
+                ) : (
                   <Textarea
                     value={professional.aboutMe || ''}
                     readOnly
                     placeholder="Tell clients about yourself, your experience, and what makes you unique..."
                     className="rounded-xl bg-gray-50 border-gray-200 min-h-[120px] leading-relaxed"
                   />
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">
-                  {professional.aboutMe ? `${professional.aboutMe.length} characters` : '0 characters'}
-                </span>
-                {isEditingAboutMe ? (
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => { handleFieldUpdate('aboutMe', editingAboutMe); setIsEditingAboutMe(false); }}>
-                      Save
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setIsEditingAboutMe(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                    <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { setEditingAboutMe(professional.aboutMe || ''); setIsEditingAboutMe(true); }}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
                 )}
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    {professional.aboutMe ? `${professional.aboutMe.length} characters` : '0 characters'}
+                  </span>
+                  {isEditingAboutMe ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('aboutMe', editingAboutMe); setIsEditingAboutMe(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingAboutMe(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { setEditingAboutMe(professional.aboutMe || ''); setIsEditingAboutMe(true); }}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Contact Information and Social Links */}
-          <div className="space-y-6">
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <Label className="text-sm font-semibold text-gray-700">Contact Information</Label>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Mail className="h-5 w-5 text-gray-400 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
-                    {isEditingEmail ? (
-                      <Input
-                        ref={emailInputRef}
-                        type="email"
-                        value={editingEmail}
-                        onChange={(e) => setEditingEmail(e.target.value)}
-                        className="mt-1"
-                      />
-                    ) : (
+            {/* Right Column - Contact Information and Social Links */}
+            <div className="space-y-6">
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <Label className="text-sm font-semibold text-gray-700">Contact Information</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Mail className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+                      {isEditingEmail ? (
+                        <Input
+                          key="email-input"
+                          ref={emailInputRef}
+                          type="email"
+                          value={editingEmail}
+                          onChange={(e) => setEditingEmail(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
                         <p className="text-sm text-gray-900">{professional.email || 'Not provided'}</p>
-                    )}
-                  </div>
-                  {isEditingEmail ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('email', editingEmail); setIsEditingEmail(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingEmail(false)}>
-                        Cancel
-                      </Button>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingEmail ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('email', editingEmail); setIsEditingEmail(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingEmail(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingEmail(professional.email || ''); setIsEditingEmail(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Phone className="h-5 w-5 text-gray-400 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
-                    <Input
-                      ref={phoneInputRef}
-                      value={isEditingPhone ? editingPhone : ''}
-                      onChange={(e) => isEditingPhone && setEditingPhone(e.target.value)}
-                      readOnly={!isEditingPhone}
-                      className={`mt-1 ${isEditingPhone ? '' : 'hidden'}`}
-                    />
-                    {!isEditingPhone && (
-                      <p className="text-sm text-gray-900">{professional.phone || 'Not provided'}</p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingPhone ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('phone', editingPhone); setIsEditingPhone(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingPhone(false)}>
-                        Cancel
-                      </Button>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Phone className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
+                      {isEditingPhone ? (
+                        <Input
+                          key="phone-input"
+                          ref={phoneInputRef}
+                          value={editingPhone}
+                          onChange={(e) => setEditingPhone(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{professional.phone || 'Not provided'}</p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingPhone ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('phone', editingPhone); setIsEditingPhone(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingPhone(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingPhone(professional.phone || ''); setIsEditingPhone(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                    <Input
-                      ref={locationInputRef}
-                      value={isEditingLocation ? editingLocation : ''}
-                      onChange={(e) => isEditingLocation && setEditingLocation(e.target.value)}
-                      readOnly={!isEditingLocation}
-                      className={`mt-1 ${isEditingLocation ? '' : 'hidden'}`}
-                    />
-                    {!isEditingLocation && (
-                      <p className="text-sm text-gray-900">{professional.location || 'Not provided'}</p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingLocation ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('location', editingLocation); setIsEditingLocation(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingLocation(false)}>
-                        Cancel
-                      </Button>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                      {isEditingLocation ? (
+                        <Input
+                          key="location-input"
+                          ref={locationInputRef}
+                          value={editingLocation}
+                          onChange={(e) => setEditingLocation(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{professional.location || 'Not provided'}</p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingLocation ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('location', editingLocation); setIsEditingLocation(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingLocation(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingLocation(professional.location || ''); setIsEditingLocation(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Globe className="h-5 w-5 text-gray-400 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
-                    <Input
-                      ref={websiteInputRef}
-                      value={isEditingWebsite ? editingWebsite : ''}
-                      onChange={(e) => isEditingWebsite && setEditingWebsite(e.target.value)}
-                      readOnly={!isEditingWebsite}
-                      className={`mt-1 ${isEditingWebsite ? '' : 'hidden'}`}
-                    />
-                    {!isEditingWebsite && (
-                      <p className="text-sm text-gray-900">
-                        {professional.website ? (
-                          <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            {professional.website}
-                          </a>
-                        ) : (
-                          'Not provided'
-                        )}
-                      </p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingWebsite ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('website', editingWebsite); setIsEditingWebsite(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingWebsite(false)}>
-                        Cancel
-                      </Button>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Globe className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
+                      {isEditingWebsite ? (
+                        <Input
+                          key="website-input"
+                          ref={websiteInputRef}
+                          value={editingWebsite}
+                          onChange={(e) => setEditingWebsite(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.website ? (
+                            <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              {professional.website}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingWebsite ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('website', editingWebsite); setIsEditingWebsite(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingWebsite(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingWebsite(professional.website || ''); setIsEditingWebsite(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Social Media Links */}
-            <div className="space-y-4">
-              <Label className="text-sm font-semibold text-gray-700">Social Media Links</Label>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Facebook className="h-5 w-5 text-blue-600 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Facebook</p>
-                    <Input
-                      ref={facebookInputRef}
-                      value={isEditingFacebook ? editingFacebook : ''}
-                      onChange={(e) => isEditingFacebook && setEditingFacebook(e.target.value)}
-                      placeholder="https://facebook.com/username"
-                      readOnly={!isEditingFacebook}
-                      className={`mt-1 ${isEditingFacebook ? '' : 'hidden'}`}
-                    />
-                    {!isEditingFacebook && (
-                      <p className="text-sm text-gray-900">
-                        {professional.facebook ? (
-                          <a href={professional.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            Connected
-                          </a>
-                        ) : (
-                          'Not connected'
-                        )}
-                      </p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingFacebook ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('facebook', editingFacebook); setIsEditingFacebook(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingFacebook(false)}>
-                        Cancel
-                      </Button>
+                </div>
+              </div>
+
+              {/* Social Media Links */}
+              <div className="space-y-4">
+                <Label className="text-sm font-semibold text-gray-700">Social Media Links</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Facebook className="h-5 w-5 text-blue-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Facebook</p>
+                      {isEditingFacebook ? (
+                        <Input
+                          key="facebook-input"
+                          ref={facebookInputRef}
+                          value={editingFacebook}
+                          onChange={(e) => setEditingFacebook(e.target.value)}
+                          placeholder="https://facebook.com/username"
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.facebook ? (
+                            <a href={professional.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingFacebook ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('facebook', editingFacebook); setIsEditingFacebook(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingFacebook(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingFacebook(professional.facebook || ''); setIsEditingFacebook(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Twitter className="h-5 w-5 text-sky-500 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Twitter</p>
-                    <Input
-                      ref={twitterInputRef}
-                      value={isEditingTwitter ? editingTwitter : ''}
-                      onChange={(e) => isEditingTwitter && setEditingTwitter(e.target.value)}
-                      placeholder="https://twitter.com/username"
-                      readOnly={!isEditingTwitter}
-                      className={`mt-1 ${isEditingTwitter ? '' : 'hidden'}`}
-                    />
-                    {!isEditingTwitter && (
-                      <p className="text-sm text-gray-900">
-                        {professional.twitter ? (
-                          <a href={professional.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">
-                            Connected
-                          </a>
-                        ) : (
-                          'Not connected'
-                        )}
-                      </p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingTwitter ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('twitter', editingTwitter); setIsEditingTwitter(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingTwitter(false)}>
-                        Cancel
-                      </Button>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Twitter className="h-5 w-5 text-sky-500 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Twitter</p>
+                      {isEditingTwitter ? (
+                        <Input
+                          key="twitter-input"
+                          ref={twitterInputRef}
+                          value={editingTwitter}
+                          onChange={(e) => setEditingTwitter(e.target.value)}
+                          placeholder="https://twitter.com/username"
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.twitter ? (
+                            <a href={professional.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingTwitter ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('twitter', editingTwitter); setIsEditingTwitter(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingTwitter(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingTwitter(professional.twitter || ''); setIsEditingTwitter(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Instagram className="h-5 w-5 text-pink-600 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Instagram</p>
-                    <Input
-                      ref={instagramInputRef}
-                      value={isEditingInstagram ? editingInstagram : ''}
-                      onChange={(e) => isEditingInstagram && setEditingInstagram(e.target.value)}
-                      placeholder="https://instagram.com/username"
-                      readOnly={!isEditingInstagram}
-                      className={`mt-1 ${isEditingInstagram ? '' : 'hidden'}`}
-                    />
-                    {!isEditingInstagram && (
-                      <p className="text-sm text-gray-900">
-                        {professional.instagram ? (
-                          <a href={professional.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
-                            Connected
-                          </a>
-                        ) : (
-                          'Not connected'
-                        )}
-                      </p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingInstagram ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('instagram', editingInstagram); setIsEditingInstagram(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingInstagram(false)}>
-                        Cancel
-                      </Button>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Instagram className="h-5 w-5 text-pink-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Instagram</p>
+                      {isEditingInstagram ? (
+                        <Input
+                          key="instagram-input"
+                          ref={instagramInputRef}
+                          value={editingInstagram}
+                          onChange={(e) => setEditingInstagram(e.target.value)}
+                          placeholder="https://instagram.com/username"
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.instagram ? (
+                            <a href={professional.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                      )}
                     </div>
-                  ) : (
+                    {isEditingInstagram ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('instagram', editingInstagram); setIsEditingInstagram(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingInstagram(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
                       <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingInstagram(professional.instagram || ''); setIsEditingInstagram(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <Linkedin className="h-5 w-5 text-blue-700 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">LinkedIn</p>
-                    <Input
-                      ref={linkedinInputRef}
-                      value={isEditingLinkedin ? editingLinkedin : ''}
-                      onChange={(e) => isEditingLinkedin && setEditingLinkedin(e.target.value)}
-                      placeholder="https://linkedin.com/in/username"
-                      readOnly={!isEditingLinkedin}
-                      className={`mt-1 ${isEditingLinkedin ? '' : 'hidden'}`}
-                    />
-                    {!isEditingLinkedin && (
-                      <p className="text-sm text-gray-900">
-                        {professional.linkedin ? (
-                          <a href={professional.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
-                            Connected
-                          </a>
-                        ) : (
-                          'Not connected'
-                        )}
-                      </p>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {isEditingLinkedin ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => { handleFieldUpdate('linkedin', editingLinkedin); setIsEditingLinkedin(false); }}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditingLinkedin(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                      <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingLinkedin(professional.linkedin || ''); setIsEditingLinkedin(true); }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
 
-              <Button variant="outline" className="w-full rounded-xl mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Add More Social Links
-              </Button>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Linkedin className="h-5 w-5 text-blue-700 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">LinkedIn</p>
+                      {isEditingLinkedin ? (
+                        <Input
+                          key="linkedin-input"
+                          ref={linkedinInputRef}
+                          value={editingLinkedin}
+                          onChange={(e) => setEditingLinkedin(e.target.value)}
+                          placeholder="https://linkedin.com/in/username"
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.linkedin ? (
+                            <a href={professional.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    {isEditingLinkedin ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('linkedin', editingLinkedin); setIsEditingLinkedin(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingLinkedin(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => { setEditingLinkedin(professional.linkedin || ''); setIsEditingLinkedin(true); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full rounded-xl mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add More Social Links
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   const ProfileSectionCard = ({
     title,

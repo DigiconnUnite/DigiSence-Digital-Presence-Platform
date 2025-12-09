@@ -89,10 +89,18 @@ export default function HeroSectionOne() {
   };
 
   return (
-    <>
-      <div className="relative mx-auto   flex max-w-7xl flex-col items-center justify-center px-4">
+    <div className="relative py-30 h-fit overflow-hidden bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900  ">
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 z-0 flex items-center justify-center -translate-x-1/2"
+      >
+        <div className="h-[600px] w-[600px] sm:h-[700px] sm:w-[700px] lg:h-[700px] lg:w-[1200px] rounded-full bg-cyan-700 opacity-20 blur-3xl shadow-2xl " />
+      </div>
+
+      <div className="relative mx-auto    flex max-w-7xl flex-col items-center justify-center px-4">
         <div className="py-8 md:py-16 lg:py-20 w-full">
-          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-700 dark:text-slate-300">
+          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
             {"Launch your website in hours, not days"
               .split(" ")
               .map((word, index) => (
@@ -146,7 +154,7 @@ export default function HeroSectionOne() {
       </div>
 
       <div
-        className="relative h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px] flex w-full items-center justify-center overflow-hidden select-none"
+        className="relative h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px] flex max-w-screen mx-auto items-center justify-center overflow-hidden select-none"
         style={{
           perspective: "12000px",
           cursor: isDragging ? "grabbing" : "grab",
@@ -183,7 +191,7 @@ export default function HeroSectionOne() {
 
             // Cards in front are more visible
             const isFront = Math.cos(angle) > 0;
-            const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
+            // const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
             const scale = isFront ? 1 + Math.cos(angle) * 0.8 : 0.2;
             const zIndex = Math.round(Math.cos(angle) * 100) + 100;
 
@@ -197,7 +205,7 @@ export default function HeroSectionOne() {
                   z: translateZ,
                   rotateY: rotateY,
                   scale: scale,
-                  opacity: opacity,
+                  // opacity: opacity,
                 }}
                 transition={{
                   duration: isDragging ? 0.18 : 0.5,
@@ -219,6 +227,6 @@ export default function HeroSectionOne() {
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }

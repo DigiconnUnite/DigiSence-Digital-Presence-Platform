@@ -331,7 +331,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100" suppressHydrationWarning>
       {/* Desktop Navigation */}
       <nav className="hidden md:block sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -474,17 +474,15 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       </div>
 
       {/* Hero Section with Banner */}
-      <section className="relative mx-auto md:pb-0">
+      <section className="relative  mx-auto md:pb-0">
         <div className="max-w-7xl mx-auto">
           <div
             className="
               relative w-full 
-              overflow-hidden shadow-lg 
+              overflow-hidden shadow-none
               bg-linear-to-br from-amber-400 via-amber-500 to-amber-600
-              aspect-[3/1]       
-              xs:aspect-[4/3] 
-              sm:aspect-[16/6] 
-              md:aspect-[3/1]
+              aspect-3/1 
+              md:aspect-4/1
             "
           >
             {professional.banner && professional.banner.trim() !== '' ? (
@@ -502,14 +500,14 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   className="w-full h-full object-cover"
                   loading="eager"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-[5%] bg-gradient-to-t from-black/30 to-transparent"></div>
+
               </>
             ) : null}
           </div>
 
           {/* Profile Picture, Name, Headline, Location in one group */}
           <div className="px-2 sm:px-4 md:px-8 border py-4 sm:py-6">
-            <div className="flex flex-col md:flex-row md:items-center md:gap-6 gap-4">
+            <div className="flex flex-col md:flex-row  justify-content-between md:items-center md:gap-6 gap-4">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6 w-full">
                 {/* Profile Picture */}
                 <div className="shrink-0 -mt-12 md:-mt-16 relative z-10 flex justify-center sm:justify-start">
@@ -551,13 +549,13 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   )}
                 </div>
               </div>
-              {/* Tag-style Contact Buttons */}
-              <div className="flex flex-row md:flex-col w-full md:w-52 mt-2 md:mt-0 gap-2 md:gap-0">
+              {/*  Contact Buttons */}
+              <div className="flex   flex-row md:flex-col flex-wrap w-full md:w-52 mt-2 md:mt-0 gap-2 md:gap-0">
                 {professional.phone && (
                   <button
                     type="button"
                     onClick={() => window.open(`tel:${professional.phone}`, "_self")}
-                    className="flex w-full items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-amber-200 text-left text-xs sm:text-sm"
+                    className="flex w-fit items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-amber-200 text-left text-xs sm:text-sm"
                   >
                     <span className="flex items-center justify-center border-r border-gray-200 pr-1.5 sm:pr-2 mr-1.5 sm:mr-2">
                       <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
@@ -569,7 +567,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   <button
                     type="button"
                     onClick={() => window.open(`mailto:${professional.email}`, "_self")}
-                    className="flex w-full items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-amber-200 text-left text-xs sm:text-sm md:mt-2"
+                    className="flex w-fit items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-amber-200 text-left text-xs sm:text-sm md:mt-2"
                   >
                     <span className="flex items-center justify-center border-r border-gray-200 pr-1.5 sm:pr-2 mr-1.5 sm:mr-2">
                       <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
@@ -580,7 +578,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 <button
                   type="button"
                   onClick={() => setInquiryModal(true)}
-                  className="flex w-full items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-green-400 text-left text-xs sm:text-sm md:mt-2"
+                  className="flex w-fit items-center px-1.5 sm:px-2 py-1.5 sm:py-2 bg-white rounded-full border border-green-400 text-left text-xs sm:text-sm md:mt-2"
                 >
                   <span className="flex items-center justify-center border-r border-gray-200 pr-1.5 sm:pr-2 mr-1.5 sm:mr-2">
                     <SiWhatsapp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
@@ -617,7 +615,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 {/* Experience, Education, Certification Tabs */}
                 <div className="">
                   <div className="h-full bg-white">
-                    <div className="flex px-3 sm:px-4 md:px-6 bg-gradient-to-r from-amber-50 to-white border-y border-gray-100 shadow-sm overflow-x-auto">
+                    <div className="flex px-3 sm:px-4 md:px-6 bg-linear-to-r from-amber-50 to-white border-y border-gray-100 shadow-sm overflow-x-auto">
                       <button
                         className={`px-3 sm:px-4 py-2 font-semibold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap ${activeTab === 'experience'
                           ? 'text-white bg-amber-600 shadow-md transform'
@@ -829,7 +827,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
         <div className="max-w-7xl mx-auto">
 
           {/* Maintain aspect ratio (3:2) at ALL breakpoints */}
-          <div className="relative rounded-2xl sm:rounded-4xl shadow-2xl overflow-hidden bg-gradient-to-br from-[#ff8a06] to-[#ff6b08] aspect-2/1 sm:aspect-3/1"
+          <div className="relative rounded-2xl sm:rounded-4xl shadow-2xl overflow-hidden bg-linear-to-br from-[#ff8a06] to-[#ff6b08] aspect-2/1 sm:aspect-3/1"
             style={{
               backgroundImage: 'url(/card-bg.png)',
               backgroundSize: 'cover',
@@ -837,7 +835,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
             }}
           >
             {/* Dark Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent rounded-[24px] sm:rounded-[32px]"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-black/60 via-black/40 to-transparent rounded-[24px] sm:rounded-[32px]"></div>
 
             {/* Content absolutely centered (with max width for responsiveness) */}
             <div className="absolute inset-0 flex items-center justify-start">

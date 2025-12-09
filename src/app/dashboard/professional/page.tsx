@@ -158,6 +158,19 @@ export default function ProfessionalDashboard() {
   const [bannerUrl, setBannerUrl] = useState('')
   const [isEditing, setIsEditing] = useState(false)
 
+  // Inline editing states for profile fields
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [isEditingHeadline, setIsEditingHeadline] = useState(false)
+  const [isEditingAboutMe, setIsEditingAboutMe] = useState(false)
+  const [isEditingEmail, setIsEditingEmail] = useState(false)
+  const [isEditingPhone, setIsEditingPhone] = useState(false)
+  const [isEditingLocation, setIsEditingLocation] = useState(false)
+  const [isEditingWebsite, setIsEditingWebsite] = useState(false)
+  const [isEditingFacebook, setIsEditingFacebook] = useState(false)
+  const [isEditingTwitter, setIsEditingTwitter] = useState(false)
+  const [isEditingInstagram, setIsEditingInstagram] = useState(false)
+  const [isEditingLinkedin, setIsEditingLinkedin] = useState(false)
+
   // Services state
   const [services, setServices] = useState<any[]>([])
   const [isEditingServices, setIsEditingServices] = useState(false)
@@ -467,6 +480,49 @@ export default function ProfessionalDashboard() {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleFieldUpdate = async (field: string, value: string) => {
+    if (!professional) return
+
+    setIsLoading(true)
+    const updateData = { [field]: value }
+
+    try {
+      const response = await fetch(`/api/professionals/${professional.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfessional(data.professional)
+
+        toast({
+          title: "Success",
+          description: `${field} updated successfully!`,
+        })
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to update ${field}: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+      toast({
+        title: "Error",
+        description: `Failed to update ${field}. Please try again.`,
         variant: "destructive",
       })
     } finally {
@@ -2023,31 +2079,78 @@ export default function ProfessionalDashboard() {
               <div className="flex-1 space-y-4">
                 {/* Professional Name */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Professional Name</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={professional.name}
-                      readOnly
-                      className="rounded-xl bg-gray-50 border-gray-200 text-lg font-semibold"
-                    />
-                    <Button size="sm" variant="ghost" className="rounded-xl">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <User className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Name</p>
+                      {isEditingName ? (
+                        <Input
+                          value={professional.name}
+                          onChange={(e) =>
+                            setProfessional(prev =>
+                              prev
+                                ? { ...prev, name: e.target.value }
+                                : prev
+                            )
+                          }
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-md text-gray-900 font-medium ">{professional.name || 'Not provided'}</p>
+                      )}
+                    </div>
+                    {isEditingName ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('name', professional.name); setIsEditingName(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingName(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingName(true)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 {/* Professional Headline */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Professional Headline</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={professional.professionalHeadline || ''}
-                      readOnly
-                      placeholder="e.g., Senior Software Developer"
-                      className="rounded-xl bg-gray-50 border-gray-200 text-amber-600 font-medium"
-                    />
-                    <Button size="sm" variant="ghost" className="rounded-xl">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Edit className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Headline</p>
+                      {isEditingHeadline ? (
+                        <Input
+                          value={professional.professionalHeadline || ''}
+                          onChange={(e) =>
+                            setProfessional(prev =>
+                              prev
+                                ? { ...prev, professionalHeadline: e.target.value }
+                                : prev
+                            )
+                          }
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-md text-amber-600 font-medium">{professional.professionalHeadline || 'Not provided'}</p>
+                      )}
+                    </div>
+                    {isEditingHeadline ? (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { handleFieldUpdate('professionalHeadline', professional.professionalHeadline || ''); setIsEditingHeadline(false); }}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditingHeadline(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingHeadline(true)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2057,19 +2160,45 @@ export default function ProfessionalDashboard() {
             {/* About Me - Fifth */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-gray-700">About Me</Label>
-              <Textarea
-                value={professional.aboutMe || ''}
-                readOnly
-                placeholder="Tell clients about yourself, your experience, and what makes you unique..."
-                className="rounded-xl bg-gray-50 border-gray-200 min-h-[120px] leading-relaxed"
-              />
+              {isEditingAboutMe ? (
+                <Textarea
+                  value={professional.aboutMe || ''}
+                  onChange={(e) =>
+                    setProfessional(prev =>
+                      prev
+                        ? { ...prev, aboutMe: e.target.value }
+                        : prev
+                    )
+                  }
+                  placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+                  className="rounded-xl border-gray-200 min-h-[120px] leading-relaxed"
+                />
+              ) : (
+                  <Textarea
+                    value={professional.aboutMe || ''}
+                    readOnly
+                    placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+                    className="rounded-xl bg-gray-50 border-gray-200 min-h-[120px] leading-relaxed"
+                  />
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-500">
                   {professional.aboutMe ? `${professional.aboutMe.length} characters` : '0 characters'}
                 </span>
-                <Button size="sm" variant="ghost" className="rounded-xl">
-                  <Edit className="h-4 w-4" />
-                </Button>
+                {isEditingAboutMe ? (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => { handleFieldUpdate('aboutMe', professional.aboutMe || ''); setIsEditingAboutMe(false); }}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setIsEditingAboutMe(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => setIsEditingAboutMe(true)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -2084,52 +2213,147 @@ export default function ProfessionalDashboard() {
                   <Mail className="h-5 w-5 text-gray-400 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
-                    <p className="text-sm text-gray-900">{professional.email || 'Not provided'}</p>
+                    {isEditingEmail ? (
+                      <Input
+                        type="email"
+                        value={professional.email || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev
+                              ? { ...prev, email: e.target.value }
+                              : prev
+                          )
+                        }
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">{professional.email || 'Not provided'}</p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingEmail ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('email', professional.email || ''); setIsEditingEmail(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingEmail(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingEmail(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <Phone className="h-5 w-5 text-gray-400 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
-                    <p className="text-sm text-gray-900">{professional.phone || 'Not provided'}</p>
+                    {isEditingPhone ? (
+                      <Input
+                        value={professional.phone || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, phone: e.target.value } : prev
+                          )
+                        }
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">{professional.phone || 'Not provided'}</p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingPhone ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('phone', professional.phone || ''); setIsEditingPhone(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingPhone(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingPhone(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                    <p className="text-sm text-gray-900">{professional.location || 'Not provided'}</p>
+                    {isEditingLocation ? (
+                      <Input
+                        value={professional.location || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, location: e.target.value } : prev
+                          )
+                        }
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">{professional.location || 'Not provided'}</p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingLocation ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('location', professional.location || ''); setIsEditingLocation(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingLocation(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingLocation(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <Globe className="h-5 w-5 text-gray-400 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
-                    <p className="text-sm text-gray-900">
-                      {professional.website ? (
-                        <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          {professional.website}
-                        </a>
-                      ) : (
-                        'Not provided'
-                      )}
-                    </p>
+                    {isEditingWebsite ? (
+                      <Input
+                        value={professional.website || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, website: e.target.value } : prev
+                          )
+                        }
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.website ? (
+                            <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              {professional.website}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingWebsite ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('website', professional.website || ''); setIsEditingWebsite(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingWebsite(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingWebsite(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -2142,76 +2366,172 @@ export default function ProfessionalDashboard() {
                   <Facebook className="h-5 w-5 text-blue-600 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Facebook</p>
-                    <p className="text-sm text-gray-900">
-                      {professional.facebook ? (
-                        <a href={professional.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          Connected
-                        </a>
-                      ) : (
-                        'Not connected'
-                      )}
-                    </p>
+                    {isEditingFacebook ? (
+                      <Input
+                        value={professional.facebook || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, facebook: e.target.value } : prev
+                          )
+                        }
+                        placeholder="https://facebook.com/username"
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.facebook ? (
+                            <a href={professional.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingFacebook ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('facebook', professional.facebook || ''); setIsEditingFacebook(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingFacebook(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingFacebook(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <Twitter className="h-5 w-5 text-sky-500 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Twitter</p>
-                    <p className="text-sm text-gray-900">
-                      {professional.twitter ? (
-                        <a href={professional.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">
-                          Connected
-                        </a>
-                      ) : (
-                        'Not connected'
-                      )}
-                    </p>
+                    {isEditingTwitter ? (
+                      <Input
+                        value={professional.twitter || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, twitter: e.target.value } : prev
+                          )
+                        }
+                        placeholder="https://twitter.com/username"
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.twitter ? (
+                            <a href={professional.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingTwitter ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('twitter', professional.twitter || ''); setIsEditingTwitter(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingTwitter(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingTwitter(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <Instagram className="h-5 w-5 text-pink-600 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Instagram</p>
-                    <p className="text-sm text-gray-900">
-                      {professional.instagram ? (
-                        <a href={professional.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
-                          Connected
-                        </a>
-                      ) : (
-                        'Not connected'
-                      )}
-                    </p>
+                    {isEditingInstagram ? (
+                      <Input
+                        value={professional.instagram || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, instagram: e.target.value } : prev
+                          )
+                        }
+                        placeholder="https://instagram.com/username"
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.instagram ? (
+                            <a href={professional.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingInstagram ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('instagram', professional.instagram || ''); setIsEditingInstagram(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingInstagram(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingInstagram(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <Linkedin className="h-5 w-5 text-blue-700 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">LinkedIn</p>
-                    <p className="text-sm text-gray-900">
-                      {professional.linkedin ? (
-                        <a href={professional.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
-                          Connected
-                        </a>
-                      ) : (
-                        'Not connected'
-                      )}
-                    </p>
+                    {isEditingLinkedin ? (
+                      <Input
+                        value={professional.linkedin || ''}
+                        onChange={(e) =>
+                          setProfessional((prev) =>
+                            prev ? { ...prev, linkedin: e.target.value } : prev
+                          )
+                        }
+                        placeholder="https://linkedin.com/in/username"
+                        className="mt-1"
+                      />
+                    ) : (
+                        <p className="text-sm text-gray-900">
+                          {professional.linkedin ? (
+                            <a href={professional.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
+                              Connected
+                            </a>
+                          ) : (
+                            'Not connected'
+                          )}
+                        </p>
+                    )}
                   </div>
-                  <Button size="sm" variant="ghost" className="rounded-xl shrink-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {isEditingLinkedin ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => { handleFieldUpdate('linkedin', professional.linkedin || ''); setIsEditingLinkedin(false); }}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingLinkedin(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="rounded-xl shrink-0" onClick={() => setIsEditingLinkedin(true)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 

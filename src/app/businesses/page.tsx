@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getOptimizedImageUrl } from '@/lib/image-utils'
-import { AuroraBackground } from '@/components/ui/aurora-background'
+import Aurora from '@/components/Aurora'
 import Footer from '@/components/Footer'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -124,7 +124,10 @@ export default function BusinessesPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-linear-0 pb-16 md:pb-0">
+      <div className="min-h-screen bg-linear-0 pb-16 md:pb-0 relative">
+        <div className="absolute inset-0 -z-10">
+          <Aurora colorStops={['#93c5fd', '#a5b4fc', '#ddd6fe']} amplitude={0.5} blend={0.3} />
+        </div>
         {/* Navigation Bar - Fixed at Top */}
         <nav className="fixed inset-x-0 top-0 z-40 bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">

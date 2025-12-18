@@ -7,18 +7,8 @@ import Link from "next/link";
 import HeroSectionOne from "@/components/ui/hero";
 import MarqueeSection from "@/components/ui/marquee";
 import Footer from "@/components/Footer";
-import { AuroraBackground } from "@/components/ui/aurora-background";
-import {
-    Navbar,
-    NavBody,
-    NavItems,
-    MobileNav,
-    NavbarLogo,
-    NavbarButton,
-    MobileNavHeader,
-    MobileNavToggle,
-    MobileNavMenu,
-} from "@/components/ui/resizable-navbar";
+import { Android } from "@/components/ui/android";
+
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -140,37 +130,74 @@ export default function HomePage() {
               <section className="py-20 bg-gray-50">
                   <div className="max-w-7xl mx-auto ">
                       <div className="text-center mb-8">
-                          <Badge variant="secondary" className="text-md px-4 py-2 bg-primary text-primary-foreground">
-                              Who Is It For?
-                          </Badge>
+                          <div className="flex items-center w-fit mx-auto rounded-full px-4 py-2 border border-slate-900 shadow-sm mb-2  text-slate-800">
+                              <CheckCircle className="h-4 w-4 mr-2 text-slate-900" />
+                              Who Is It For
+                          </div>
                       </div>
                       <h2 className="text-4xl font-bold text-center mb-20 text-gray-900">
                           Discover Your Digital Presence
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div
-                              className="aspect-square bg-linear-30 from-cyan-950 via-55% via-slate-950 to-cyan-950 rounded-4xl shadow-lg p-8 flex flex-col justify-center items-center text-center bg-cover bg-center"
+                              className="aspect-square overflow-hidden relative bg-linear-30 from-cyan-950 via-55% via-slate-950 to-cyan-950 rounded-4xl shadow-lg p-8 flex flex-col justify-between items-center text-center bg-cover bg-center"
                               style={{
                                   backgroundImage: "url('square-bg.svg')",
                               }}
                           >
-                              <Users className="h-16 w-16 text-primary mb-4" />
-                              <h3 className="text-2xl font-semibold mb-4">For Businesses</h3>
-                              <p className="text-gray-600">
-                                  Showcase your products and services to a wider audience. Manage inquiries and build your online reputation.
-                              </p>
+
+                              {/* Top content area */}
+                              <div className="z-10 w-full pb-10 flex flex-col items-center justify-start pt-4">
+                                  <h3 className="text-4xl font-bold text-white mb-3">For Businesses</h3>
+                                  <p className="text-md mb-6 text-gray-200 max-w-xs">
+                                      Boost your business online.
+                                  </p>
+                                  <Link href="/professionals">
+                                      <Button
+                                          size="lg"
+                                          variant="secondary"
+                                          className="rounded-full bg-white text-slate-900 border-2 border-cyan-400  hover:border-cyan-300 px-8 shadow-lg font-semibold"
+                                      >
+                                          Get Started
+                                          <ArrowRight className="ml-2 h-5 w-5" />
+                                      </Button>
+                                  </Link>
+                              </div>
+                              <Android
+                                  src={'square-bg.svg'}
+                                  className="h-full scale-200 w-fit mx-5  object-cover pointer-events-none relative   -bottom-1/3"
+                              />
+                              <div className="absolute"></div>
                           </div>
                           <div
-                              className="aspect-square bg-linear-30 from-cyan-950 via-55% via-slate-950 to-cyan-950 rounded-4xl shadow-lg p-8 flex flex-col justify-center items-center text-center bg-cover bg-center"
+                              className="aspect-square overflow-hidden relative bg-linear-30 from-cyan-950 via-55% via-slate-950 to-cyan-950 rounded-4xl shadow-lg p-8 flex flex-col justify-between items-center text-center bg-cover bg-center"
                               style={{
                                   backgroundImage: "url('square-bg.svg')",
                               }}
                           >
-                              <Shield className="h-16 w-16 text-primary mb-4" />
-                              <h3 className="text-2xl font-semibold mb-4">For Professionals</h3>
-                              <p className="text-gray-600">
-                                  Create your professional profile, showcase your portfolio, and connect with potential clients.
-                              </p>
+                              {/* Top content area */}
+                              <div className="z-10 pb-10 w-full flex flex-col items-center justify-start pt-4">
+                                  <h3 className="text-4xl font-bold text-white mb-3">For Professionals</h3>
+                                  <p className="text-md mb-6 text-gray-200 max-w-xs">
+                                      Grow your presence online.
+                                  </p>
+                                  <Link href="/professionals">
+                                      <Button
+                                          size="lg"
+                                          variant="secondary"
+                                          className="rounded-full bg-white text-slate-900 border-2 border-cyan-400  hover:border-cyan-300 px-8 shadow-lg font-semibold"
+                                      >
+                                          Get Started
+                                          <ArrowRight className="ml-2 h-5 w-5" />
+                                      </Button>
+                                  </Link>
+                              </div>
+
+                              <Android
+                                  src={'square-bg.svg'}
+                                  className="h-full scale-200 mx-auto object-cover pointer-events-none relative -bottom-1/3"
+                              />
+
                           </div>
                       </div>
                   </div>

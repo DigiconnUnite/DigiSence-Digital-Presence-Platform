@@ -187,12 +187,12 @@ export default function HeroSectionOne() {
             // Calculate 3D position on cylinder
             const translateX = Math.sin(angle) * radius;
             const translateZ = Math.cos(angle) * radius - radius;
-            const rotateY = (angle * -0) / Math.PI;
+            const rotateY = (angle * 0) / Math.PI;
 
             // Cards in front are more visible
             const isFront = Math.cos(angle) > 0;
             // const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
-            const scale = isFront ? 1 + Math.cos(angle) * 0.8 : 0.2;
+            const scale = isFront ? 0.9 + Math.cos(angle) * 0.9 : 0.2;
             const zIndex = Math.round(Math.cos(angle) * 100) + 100;
 
             return (
@@ -220,7 +220,7 @@ export default function HeroSectionOne() {
               >
                 <Android
                   src={image}
-                  className="h-full w-full object-contain pointer-events-none"
+                  className="h-full w-full  object-contain pointer-events-none"
                 />
               </motion.div>
             );

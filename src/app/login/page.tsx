@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import Aurora from '@/components/Aurora'
 
 export default function LoginPage() {
   const [loginType, setLoginType] = useState<'business' | 'professional'>('business')
@@ -61,6 +62,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
+
       {/* Left Column - Form */}
       <div className="flex-1 flex flex-col p-8 bg-background">
         {/* Top Header with Logo and Back Button */}

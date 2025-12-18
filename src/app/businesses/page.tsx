@@ -126,7 +126,7 @@ export default function BusinessesPage() {
     <>
       <div className="min-h-screen bg-linear-0 pb-16 md:pb-0 relative">
         <div className="absolute inset-0 -z-10">
-          <Aurora colorStops={['#93c5fd', '#a5b4fc', '#ddd6fe']} amplitude={0.5} blend={0.3} />
+          <Aurora />
         </div>
         {/* Navigation Bar - Fixed at Top */}
         <nav className="fixed inset-x-0 top-0 z-40 bg-white border-b border-gray-200">

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Footer from "@/components/Footer";
-import { AuroraBackground } from "@/components/ui/aurora-background";
+
 import {
     Navbar,
     NavBody,
@@ -109,7 +109,7 @@ export default function ContactPage() {
                 </MobileNav>
             </Navbar>
 
-            <AuroraBackground className="pt-24">
+
                 {/* Header Section */}
                 <section className="py-20 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto text-center">
@@ -206,8 +206,7 @@ export default function ContactPage() {
                             </div>
                         </div>
                     </div>
-                </section>
-            </AuroraBackground>
+            </section>
             <Footer />
         </>
     );

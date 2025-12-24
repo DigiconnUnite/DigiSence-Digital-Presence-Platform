@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,14 +53,15 @@ interface Category {
 }
 
 export default function BusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([])
-  const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const categoryScrollRef = useRef<HTMLDivElement>(null)
+   const [businesses, setBusinesses] = useState<Business[]>([])
+   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([])
+   const [categories, setCategories] = useState<Category[]>([])
+   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+   const [isLoading, setIsLoading] = useState(true)
+   const [searchTerm, setSearchTerm] = useState('')
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+   const categoryScrollRef = useRef<HTMLDivElement>(null)
+   const pathname = usePathname()
 
   useEffect(() => {
     fetchBusinesses()
@@ -142,25 +144,28 @@ export default function BusinessesPage() {
                   <span className="font-bold text-xl text-primary">DigiSence</span>
                 </Link>
               </div>
-              <div className="hidden md:flex space-x-8">
-                <Link href="/" className="text-gray-700 hover:text-primary transition-colors">
+              <div className="hidden md:flex space-x-8 flex-1 justify-center">
+                <Link href="/" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
                   Home
                 </Link>
-                <Link href="/businesses" className="text-gray-700 hover:text-primary transition-colors">
+                <Link href="/businesses" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/businesses" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
                   Businesses
                 </Link>
-                <Link href="/professionals" className="text-gray-700 hover:text-primary transition-colors">
+                <Link href="/professionals" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/professionals" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
                   Professionals
                 </Link>
-                <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
+                <Link href="/pricing" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/pricing" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                  Pricing
+                </Link>
+                <Link href="/contact" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/contact" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
                   Contact Us
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="outline" className="bg-gray-800 text-white hover:bg-gray-700 border-gray-800" asChild>
-                  <Link href="/dashboard/business">Register</Link>
+                <Button variant="outline" className="bg-cyan-600 text-white hover:bg-cyan-500 border-gray-800" asChild>
+                  <Link href="/register">Make Your Profile</Link>
                 </Button>
-                <Button variant="outline" className="bg-gray-800 text-white hover:bg-gray-700 border-gray-800" asChild>
+                <Button variant="outline" className="bg-white text-gray-900 hover:bg-gray-700 border-gray-800" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
                 {/* Mobile menu button */}
@@ -213,11 +218,14 @@ export default function BusinessesPage() {
                 <Link href="/professionals" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
                   Professionals
                 </Link>
+                <Link href="/pricing" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                  Pricing
+                </Link>
                 <Link href="/contact" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
                   Contact Us
                 </Link>
-                <Link href="/dashboard/business" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
-                  Register
+                <Link href="/register" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                  Make Your Profile
                 </Link>
                 <Link href="/login" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
                   Login

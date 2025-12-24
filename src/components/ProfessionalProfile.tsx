@@ -66,7 +66,8 @@ import {
   Users,
   Image as ImageIcon,
   Download,
-  FileText
+  FileText,
+  Share2
 } from 'lucide-react'
 import { FaWhatsapp } from "react-icons/fa";
 import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
@@ -282,12 +283,19 @@ export default function ProfessionalProfile({ professional: initialProfessional 
   }, [currentView]);
 
   const ProfileCard = () => (
-    <Card className="bg-white h-[700px] rounded-xl p-4 shadow-lg border-0 overflow-hidden">
+    <Card className="bg-white h-[700px] bg-linear-to-t from-amber-100 via-white  to-white  rounded-xl p-4 shadow-lg border-0 overflow-hidden">
       {/* Banner */}
-      <div className="relative  bg-linear-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
+      <div className="relative h-auto  bg-linear-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
         {professional.banner && (
           <img
-            src={getOptimizedImageUrl(professional.banner, { width: 400, height: 200, quality: 85, format: 'auto', crop: 'fill', gravity: 'auto' })}
+            src={getOptimizedImageUrl(professional.banner, {
+              width: 400,
+              height: 200,
+              quality: 85,
+              format: "auto",
+              crop: "fill",
+              gravity: "auto",
+            })}
             alt="Banner"
             className="w-full h-full object-cover"
           />
@@ -298,35 +306,49 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       <div className="relative -mt-8 flex justify-center">
         {professional.profilePicture ? (
           <img
-            src={getOptimizedImageUrl(professional.profilePicture, { width: 128, height: 128, quality: 90, format: 'auto', crop: 'fill', gravity: 'center' })}
+            src={getOptimizedImageUrl(professional.profilePicture, {
+              width: 128,
+              height: 128,
+              quality: 90,
+              format: "auto",
+              crop: "fill",
+              gravity: "center",
+            })}
             alt={professional.name}
             className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
           />
         ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
-              <User className="w-16 h-16 text-gray-600" />
+          <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
+            <User className="w-16 h-16 text-gray-600" />
           </div>
         )}
       </div>
 
-      <CardContent className="text-center px-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{professional.name}</h1>
-        {professional.professionalHeadline && (
-          <p className="text-gray-600 mb-4">{professional.professionalHeadline}</p>
-        )}
-        {professional.location && (
-          <div className="flex items-center justify-center mb-6">
-            <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-            <span className="text-sm text-gray-600">{professional.location}</span>
-          </div>
-        )}
-
+      <CardContent className="text-center flex flex-col px-0">
+        <div className=" pb-10">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {professional.name}
+          </h1>
+          {professional.professionalHeadline && (
+            <p className="text-gray-600 mb-4">
+              {professional.professionalHeadline}
+            </p>
+          )}
+          {professional.location && (
+            <div className="flex items-center justify-center mb-6">
+              <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+              <span className="text-sm text-gray-600">
+                {professional.location}
+              </span>
+            </div>
+          )}
+        </div>
         {/* Action Buttons */}
-        <div className="flex justify-center space-x-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {professional.phone && (
             <Button
               onClick={() => window.open(`tel:${professional.phone}`, "_self")}
-              className="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full px-4 py-2"
+              className="flex items-center w-auto bg-gray-100 hover:bg-gray-200 shadow-sm text-gray-900 rounded-lg px-4 py-2"
             >
               <Phone className="w-4 h-4 mr-2" />
               Make Call
@@ -334,8 +356,13 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           )}
           {professional.phone && (
             <Button
-              onClick={() => window.open(`https://wa.me/${professional.phone!.replace(/\D/g, '')}`, "_blank")}
-              className="flex items-center bg-green-100 hover:bg-green-200 text-green-900 rounded-full px-4 py-2"
+              onClick={() =>
+                window.open(
+                  `https://wa.me/${professional.phone!.replace(/\D/g, "")}`,
+                  "_blank"
+                )
+              }
+              className="flex items-center w-auto bg-green-100 hover:bg-green-200 shadow-sm text-green-900 rounded-lg px-4 py-2"
             >
               <FaWhatsapp className="w-4 h-4 mr-2" />
               WhatsApp
@@ -343,8 +370,10 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           )}
           {professional.email && (
             <Button
-              onClick={() => window.open(`mailto:${professional.email}`, "_self")}
-              className="flex items-center bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-full px-4 py-2"
+              onClick={() =>
+                window.open(`mailto:${professional.email}`, "_self")
+              }
+              className="flex items-center  bg-blue-100 hover:bg-blue-200 text-blue-900 shadow-sm rounded-lg px-4 py-2"
             >
               <Mail className="w-4 h-4 mr-2" />
               Email
@@ -353,60 +382,87 @@ export default function ProfessionalProfile({ professional: initialProfessional 
         </div>
 
         {/* Additional Buttons */}
-        <div className="flex flex-row space-y-3 mb-6">
-          <Button className="w-50  flex items-center bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-full  py-2">
-            <Download className="w-4 h-4 mr-2" />
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Button className="flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+            <FileText className="w-4 h-4 mr-2" />
             Resume
           </Button>
-          <Button className="w-50   flex items-center bg-green-100 hover:bg-green-200 text-green-900 rounded-full  py-2">
-            <FileText className="w-4 h-4 mr-2" />
+          <Button className="flex flex-row gap-2 items-center  text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+            <Download className="w-4 h-4 mr-2" />
             Download Card
           </Button>
         </div>
 
         {/* Social Links */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="flex gap-5 mb-6">
           {professional.facebook && (
-            <a href={professional.facebook} target="_blank" rel="noopener noreferrer" className="flex flex-row gap-2 items-center space-y-1 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a
+              href={professional.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors"
+            >
               <SiFacebook className="w-6 h-6 text-blue-600" />
-              <div className='text-start'>
-                <span className="text-sm font-medium text-gray-900">Facebook</span>
-                <p className="text-xs text-gray-600">@{professional.facebook.split('/').pop()}</p>
-              </div>
             </a>
           )}
           {professional.twitter && (
-            <a href={professional.twitter} target="_blank" rel="noopener noreferrer" className="flex flex-row gap-2 items-center space-y-1 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a
+              href={professional.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+            >
               <SiX className="w-6 h-6 text-black" />
-              <div className='text-start'>
-                <span className="text-sm font-medium text-gray-900">Twitter</span>
-                <p className="text-xs text-gray-600">@{professional.twitter.split('/').pop()}</p>
-              </div>
-
             </a>
           )}
           {professional.instagram && (
-            <a href={professional.instagram} target="_blank" rel="noopener noreferrer" className="flex flex-row gap-2 items-center space-y-1 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <SiInstagram className="w-8 h-8 text-pink-600" />
-              <div className='text-start'>
-                <span className="text-sm font-medium text-gray-900">Instagram</span>
-                <p className="text-xs text-gray-600">@{professional.instagram.split('/').pop()}</p>
-              </div>
+            <a
+              href={professional.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+            >
+              <SiInstagram className="w-6 h-6 text-pink-600" />
             </a>
           )}
           {professional.linkedin && (
-            <a href={professional.linkedin} target="_blank" rel="noopener noreferrer" className="flex flex-row gap-2 items-center space-y-1 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a
+              href={professional.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+            >
               <SiLinkedin className="w-6 h-6 text-blue-700" />
-              <div className='text-start'>
-                <span className="text-sm font-medium text-gray-900">LinkedIn</span>
-                <p className="text-xs text-gray-600">@{professional.linkedin.split('/').pop()}</p>
-              </div>
             </a>
           )}
         </div>
 
+        {/* Share Button */}
+        <Button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: `${professional.name} - Professional Profile`,
+                text: `Check out ${professional.name}'s professional profile`,
+                url: window.location.href,
+              });
+            } else {
+              // Fallback: copy to clipboard
+              navigator.clipboard.writeText(window.location.href).then(() => {
+                alert("Profile link copied to clipboard!");
+              });
+            }
+          }}
+          className="w-full mb-5 flex items-center justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 rounded-full p-3 transition-colors"
+        >
+          <Share2 className="w-4 h-4 mr-2" />
+          Share Profile
+        </Button>
+
         {/* Footer Note */}
-        <p className="text-xs text-gray-500">Profile Created By @DigiSence.io</p>
+        <p className="text-xs text-gray-500">
+          Profile Created By @DigiSence.io
+        </p>
       </CardContent>
     </Card>
   );
@@ -629,78 +685,143 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           ) : (
             <>
               {/* Main Grid */}
-              <div className="grid  grid-cols-1 relative  md:grid-cols-3 gap-6 mb-12">
+              <div className="grid   grid-cols-1 relative  md:grid-cols-3 gap-6 mb-12">
                 {/* Left Column - Profile Card */}
                 <div ref={aboutRef} id="about" className="md:col-span-1">
                   <ProfileCard />
                 </div>
                 {/* Middle Column */}
                 <div className="md:col-span-1  space-y-6">
-                  <div className="h-full flex gap-5 flex-col ">
+                  <div className="h-[700px] flex gap-5 flex-col ">
                     {/* Work Experience */}
-                    <Card className="bg-white rounded-2xl flex p-6 h-full  shadow-lg border-0">
-                      <CardContent className=" p-0">
-                        <div className="flex  justify-between items-center mb-6">
+                    <Card className="bg-white rounded-2xl p-6 h-[50%] shadow-lg border-0">
+                      <CardContent className="p-0 overflow-hidden h-full">
+                        <div className="flex justify-between items-center mb-5">
                           <h2 className="text-xl font-bold text-gray-900">Work Experience</h2>
-                          <button className="text-sm  text-gray-600 hover:text-gray-800 flex items-center">
+                          <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="space-y-4">
-                          {professional.workExperience?.slice(0, 3).map((exp: any, index: number) => {
-                            // Calculate total time roughly
-                            const calculateTotalTime = (duration: string) => {
-                              const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
-                              if (match) {
-                                const start = parseInt(match[1]);
-                                const end = parseInt(match[2]);
-                                const years = end - start;
-                                return `${years} year${years !== 1 ? 's' : ''}`;
-                              }
-                              return duration;
-                            };
+                        <div className="overflow-hidden  ">
+                          <div className={`flex flex-col space-y-4 ${professional.workExperience && professional.workExperience.length > 3 ? 'animate-marquee' : ''}`}>
+                            {professional.workExperience?.map((exp: any, index: number) => {
+                              // Calculate total time roughly
+                              const calculateTotalTime = (duration: string) => {
+                                const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
+                                if (match) {
+                                  const start = parseInt(match[1]);
+                                  const end = parseInt(match[2]);
+                                  const years = end - start;
+                                  return `${years} year${years !== 1 ? 's' : ''}`;
+                                }
+                                return duration;
+                              };
 
-                            return (
-                              <div key={index} className="flex items-start space-x-4   rounded-lg">
-                                <div className="w-15 h-15 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
-                                  <Building2 className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div className="flex-1 flex  justify-items-end gap-1 w-full">
-                                  <div className="grid grid-cols-1 gap-1">
-                                    <p className="text-gray-900 font-medium text-sm">{exp.company}</p>
-                                    <p className="text-gray-700 text-xs">{exp.position}</p>
-                                    <p className="text-gray-600 text-xs">{exp.location}</p>
+                              return (
+                                <div
+                                  key={`exp-${index}`}
+                                  className="flex items-start space-x-4 rounded-lg"
+                                >
+                                  <div className="w-15 h-15 bg-linear-to-b from-amber-50   to-white  rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
+                                    <Building2 className="w-5 h-5 text-amber-600" />
                                   </div>
-                                  <div className="flex items-end flex-col ml-auto justify-between mt-2">
-                                    <span className="text-gray-500 text-xs">{exp.duration}</span>
-                                    <span className="text-gray-400 text-xs">Total: {calculateTotalTime(exp.duration)}</span>
+                                  <div className="flex-1 flex justify-items-end gap-1 w-full">
+                                    <div className="grid grid-cols-1 gap-1">
+                                      <p className="text-gray-900 font-medium text-sm">
+                                        {exp.company}
+                                      </p>
+                                      <p className="text-gray-700 text-xs">
+                                        {exp.position}
+                                      </p>
+                                      <p className="text-gray-600 text-xs">
+                                        {exp.location}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                                      <span className="text-gray-500 text-xs">
+                                        {exp.duration}
+                                      </span>
+                                      <span className="text-gray-400 text-xs">
+                                        Total:{" "}
+                                        {calculateTotalTime(exp.duration)}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                            {professional.workExperience && professional.workExperience.length > 3 && professional.workExperience.map((exp: any, index: number) => {
+                              // Calculate total time roughly
+                              const calculateTotalTime = (duration: string) => {
+                                const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
+                                if (match) {
+                                  const start = parseInt(match[1]);
+                                  const end = parseInt(match[2]);
+                                  const years = end - start;
+                                  return `${years} year${years !== 1 ? 's' : ''}`;
+                                }
+                                return duration;
+                              };
+
+                              return (
+                                <div
+                                  key={`exp-dup-${index}`}
+                                  className="flex items-start space-x-4 rounded-lg"
+                                >
+                                  <div className="w-15 h-15 bg-linear-to-b from-amber-50   to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                                    <Building2 className="w-5 h-5 text-amber-600" />
+                                  </div>
+                                  <div className="flex-1 flex justify-items-end gap-1 w-full">
+                                    <div className="grid grid-cols-1 gap-1">
+                                      <p className="text-gray-900 font-medium text-sm">
+                                        {exp.company}
+                                      </p>
+                                      <p className="text-gray-700 text-xs">
+                                        {exp.position}
+                                      </p>
+                                      <p className="text-gray-600 text-xs">
+                                        {exp.location}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                                      <span className="text-gray-500 text-xs">
+                                        {exp.duration}
+                                      </span>
+                                      <span className="text-gray-400 text-xs">
+                                        Total:{" "}
+                                        {calculateTotalTime(exp.duration)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
 
                     {/* Skills */}
-                    <Card className="bg-white rounded-2xl  h-full p-6 shadow-lg border-0">
+                    <Card className="bg-white rounded-2xl h-full p-6 shadow-lg border-0">
                       <CardContent className="p-0">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-5">
                           <h2 className="text-xl font-bold text-gray-900">Expert Area</h2>
                           <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="grid grid-cols-4 gap-4">
-                          {professional.skills?.slice(0, 8).map((skill: string, index: number) => (
-                            <div key={index} className="flex flex-col items-center">
-                              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-2">
-                                <Award className="w-6 h-6 text-gray-600" />
-                              </div>
-                              <span className="text-xs text-gray-700 text-center">{skill}</span>
+                        <div className="flex flex-wrap gap-3  overflow-hidden">
+                          {professional.skills?.slice(0, 12).map((skill: string, index: number) => (
+                            <div key={index} className="flex items-center bg-white rounded-full px-4 py-1 border border-gray-200">
+                              <Award className="w-5 h-5 text-amber-600 mr-2" />
+                              <span className="text-sm text-gray-700">{skill}</span>
                             </div>
                           ))}
+                          {professional.skills && professional.skills.length > 12 && (
+                            <div className="flex items-center bg-white rounded-full px-4 py-2 border border-gray-200">
+                              <span className="text-sm text-gray-700">...</span>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -798,6 +919,18 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           <p className="text-xs text-gray-400 mt-2">© 2025 All rights reserved.</p>
         </div>
       </footer>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes marquee {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+          }
+          .animate-marquee {
+            animation: marquee 20s linear infinite;
+          }
+        `
+      }} />
 
       {/* Inquiry Modal */}
       <Dialog open={inquiryModal} onOpenChange={setInquiryModal}>

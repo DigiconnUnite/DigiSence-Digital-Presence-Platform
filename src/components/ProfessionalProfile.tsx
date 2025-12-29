@@ -35,7 +35,7 @@ interface Professional {
 }
 
 import { Button } from '@/components/ui/button'
-import { getOptimizedImageUrl } from '@/lib/image-utils'
+import { useOptimizedImage } from '@/lib/image-optimization'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -282,47 +282,43 @@ export default function ProfessionalProfile({ professional: initialProfessional 
     }
   }, [currentView]);
 
-  const ProfileCard = () => (
-    <Card className="bg-white h-[700px] bg-linear-to-t from-amber-100 via-white  to-white  rounded-xl p-4 shadow-lg border-0 overflow-hidden">
-      {/* Banner */}
-      <div className="relative h-auto  bg-linear-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
-        {professional.banner && (
-          <img
-            src={getOptimizedImageUrl(professional.banner, {
-              width: 400,
-              height: 200,
-              quality: 85,
-              format: "auto",
-              crop: "fill",
-              gravity: "auto",
-            })}
-            alt="Banner"
-            className="w-full h-full object-cover"
-          />
-        )}
-      </div>
+  const ProfileCard = () => {
+    const bannerImage = useOptimizedImage(professional.banner, 400, 200)
+    const profileImage = useOptimizedImage(professional.profilePicture, 128, 128)
 
-      {/* Profile Image */}
-      <div className="relative -mt-8 flex justify-center">
-        {professional.profilePicture ? (
-          <img
-            src={getOptimizedImageUrl(professional.profilePicture, {
-              width: 128,
-              height: 128,
-              quality: 90,
-              format: "auto",
-              crop: "fill",
-              gravity: "center",
-            })}
-            alt={professional.name}
-            className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
-          />
-        ) : (
-          <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
-            <User className="w-16 h-16 text-gray-600" />
-          </div>
-        )}
-      </div>
+    return (
+      <Card className="bg-white h-[700px] bg-gradient-to-t from-amber-100 via-white  to-white  rounded-xl p-4 shadow-lg border-0 overflow-hidden">
+        {/* Banner */}
+        <div className="relative h-auto  bg-gradient-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
+          {professional.banner && (
+            <img
+              src={bannerImage.src}
+              srcSet={bannerImage.srcSet}
+              sizes={bannerImage.sizes}
+              alt="Banner"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )}
+        </div>
+
+        {/* Profile Image */}
+        <div className="relative -mt-8 flex justify-center">
+          {professional.profilePicture ? (
+            <img
+              src={profileImage.src}
+              srcSet={profileImage.srcSet}
+              sizes={profileImage.sizes}
+              alt={professional.name}
+              className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
+              <User className="w-16 h-16 text-gray-600" />
+            </div>
+          )}
+        </div>
 
       <CardContent className="text-center flex flex-col px-0">
         <div className=" pb-10">
@@ -649,9 +645,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                         <div key={index} className="relative p-7 px-10 bg-linear-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden">
                           <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
                             <img
-                              src={getOptimizedImageUrl(item.url, { width: 400, height: 225, quality: 85, format: 'auto', crop: 'fill', gravity: 'center' })}
+                              src={getOptimizedImageUrl(item.url, { width: 400, height: 250, quality: 85, format: 'auto', crop: 'fill', gravity: 'center' })}
                               alt={item.title}
-                              className=" h-full  object-cover absolute -bottom-2"
+                              className=" h-full p-0  object-cover absolute -bottom-2"
                             />
 
 

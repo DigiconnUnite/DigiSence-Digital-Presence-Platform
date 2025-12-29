@@ -20,6 +20,8 @@ interface ImageUploadProps {
   accept?: string
   className?: string
   allowVideo?: boolean
+  uploadUrl?: string
+  uploadType?: string
 }
 
 export default function ImageUpload({
@@ -28,7 +30,9 @@ export default function ImageUpload({
   maxFiles = 1,
   accept = 'image/*',
   className = '',
-  allowVideo = false
+  allowVideo = false,
+  uploadUrl,
+  uploadType
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -94,15 +98,28 @@ export default function ImageUpload({
       const formData = new FormData()
       formData.append('file', file)
 
-      // Use business-specific upload API if available, fallback to general upload
-      const uploadUrl = '/api/business/upload'
-      let response = await fetch(uploadUrl, {
+      // Add upload type if provided
+      if (uploadType) {
+        formData.append('type', uploadType)
+      }
+
+      // Use custom upload URL if provided, otherwise fallback to business/general upload
+      let uploadUrlToUse = uploadUrl || '/api/business/upload'
+      let response = await fetch(uploadUrlToUse, {
         method: 'POST',
         body: formData,
       })
 
+      // If custom upload URL fails or not provided, try business upload
+      if (!response.ok && !uploadUrl) {
+        response = await fetch('/api/business/upload', {
+          method: 'POST',
+          body: formData,
+        })
+      }
+
       // If business upload fails, try general upload
-      if (!response.ok) {
+      if (!response.ok && !uploadUrl) {
         response = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
@@ -145,7 +162,7 @@ export default function ImageUpload({
         setTimeout(() => setUploadStatus(''), 3000)
       }
     }
-  }, [onUpload, maxFiles, allowVideo])
+  }, [onUpload, maxFiles, allowVideo, uploadUrl, uploadType])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()

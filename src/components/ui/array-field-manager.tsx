@@ -484,6 +484,8 @@ export function PortfolioItemForm({ item, onSave, onCancel }: {
           <ImageUpload
             onUpload={handleImageUpload}
             className="max-w-md"
+            uploadUrl="/api/professionals/upload"
+            uploadType="portfolio"
           />
           {formData.url && (
             <p className="text-sm text-gray-600">Image uploaded successfully</p>

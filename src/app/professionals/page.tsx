@@ -185,10 +185,10 @@ export default function ProfessionalsPage() {
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="outline" className="bg-cyan-600 text-white hover:bg-cyan-500 border-gray-800" asChild>
+                <Button variant="outline" className=" text-white bg-slate-800  border-gray-800" asChild>
                   <Link href="/register">Make Your Profile</Link>
                 </Button>
-                <Button variant="outline" className="bg-white text-gray-900 hover:bg-gray-700 border-gray-800" asChild>
+                <Button variant="outline" className="bg-white text-gray-900 hover:bg-slate-800 hover:text-white border-gray-800" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
                 {/* Mobile menu button */}

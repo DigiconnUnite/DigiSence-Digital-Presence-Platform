@@ -903,7 +903,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r   py-6 px-4">
+      <footer className="bg-linear-to-r   py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm font-medium">
             Developed By{' '}

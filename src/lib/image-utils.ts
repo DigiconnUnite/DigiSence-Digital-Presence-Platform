@@ -1,6 +1,6 @@
 // Utility functions for image optimization (client-safe)
 
-// Function to generate optimized image URLs
+// Function to generate optimized image URLs for CloudFront/S3
 export const getOptimizedImageUrl = (url: string, options?: {
   width?: number
   height?: number
@@ -13,46 +13,34 @@ export const getOptimizedImageUrl = (url: string, options?: {
   brightness?: number
   contrast?: number
 }) => {
-  if (!url || !url.includes('cloudinary.com')) return url
+  // Check if it's a CloudFront URL (our new system)
+  if (url && url.includes('cloudfront.net')) {
+    // Build CloudFront transformation string
+    const transformations: string[] = []
 
-  // Extract the base URL and public ID from Cloudinary URL
-  const urlParts = url.split('/upload/')
-  if (urlParts.length !== 2) return url
-
-  const baseUrl = urlParts[0] + '/upload/'
-  const imagePath = urlParts[1]
-
-  // Build transformation string
-  const transformations: string[] = []
-
-  // Basic transformations
-  if (options?.width) transformations.push(`w_${options.width}`)
-  if (options?.height) transformations.push(`h_${options.height}`)
-  if (options?.crop) transformations.push(`c_${options.crop}`)
-  if (options?.gravity) transformations.push(`g_${options.gravity}`)
-  if (options?.quality) transformations.push(`q_${options.quality}`)
-  if (options?.format) {
-    if (options.format === 'auto') {
-      transformations.push('f_auto')
-    } else {
-      transformations.push(`f_${options.format}`)
+    // Basic transformations for CloudFront
+    if (options?.width) transformations.push(`w_${options.width}`)
+    if (options?.height) transformations.push(`h_${options.height}`)
+    if (options?.quality) transformations.push(`q_${options.quality}`)
+    if (options?.format) {
+      if (options.format === 'auto') {
+        transformations.push('f_auto')
+      } else {
+        transformations.push(`f_${options.format}`)
+      }
     }
+
+    // Add transformations if any are specified
+    if (transformations.length > 0) {
+      const transformationString = transformations.join(',')
+      return `${url}?${transformationString}`
+    }
+
+    return url
   }
 
-  // Advanced transformations
-  if (options?.effect) transformations.push(`e_${options.effect}`)
-  if (options?.blur) transformations.push(`e_blur:${options.blur}`)
-  if (options?.brightness) transformations.push(`e_brightness:${options.brightness}`)
-  if (options?.contrast) transformations.push(`e_contrast:${options.contrast}`)
-
-  // Add default optimizations if no specific options provided
-  if (transformations.length === 0) {
-    transformations.push('f_auto', 'q_auto')
-  }
-
-  const transformationString = transformations.join(',')
-
-  return `${baseUrl}${transformationString}/${imagePath}`
+  // Return original URL if not a CloudFront URL
+  return url
 }
 
 // Function to generate responsive image URLs

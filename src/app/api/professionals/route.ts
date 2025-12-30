@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
           slug: true,
           professionalHeadline: true,
           profilePicture: true,
+          banner: true,
           location: true,
           email: true,
           website: true,

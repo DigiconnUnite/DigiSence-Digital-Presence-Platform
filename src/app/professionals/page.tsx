@@ -36,6 +36,7 @@ interface Professional {
   slug: string
   professionalHeadline: string | null
   profilePicture: string | null
+  banner: string | null
   location: string | null
   phone: string | null
   email: string | null
@@ -369,18 +370,21 @@ export default function ProfessionalsPage() {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <Card
                       key={i}
-                      className="overflow-hidden border-0  bg-white/80 backdrop-blur-sm"
+                      className="overflow-hidden bg-white/80 backdrop-blur-sm relative"
                     >
-                      <CardHeader className="pb-2 md:pb-4">
+                      <div className="relative h-24 md:h-32 bg-muted rounded-t-lg">
+                      </div>
+                      <Skeleton className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full" />
+                      <CardHeader className="pt-8 pb-2 md:pb-4">
                         <div className="flex items-center space-x-2 md:space-x-4">
-                          <Skeleton className="h-12 w-12 md:h-16 md:w-16 rounded-full" />
+                          <div className="w-18 md:w-22"></div>
                           <div className="flex-1">
                             <Skeleton className="h-5 md:h-6 w-24 md:w-32 mb-2" />
                             <Skeleton className="h-3 md:h-4 w-16 md:w-24" />
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
+                      <CardContent className="space-y-1 md:space-y-2 px-2 md:px-3">
                         <Skeleton className="h-3 md:h-4 w-full mb-1 md:mb-2" />
                         <Skeleton className="h-3 md:h-4 w-3/4 mb-2 md:mb-4" />
                         <div className="flex justify-between items-center pt-2 md:pt-4 border-t border-border">
@@ -419,34 +423,35 @@ export default function ProfessionalsPage() {
                     {filteredProfessionals.map((professional) => (
                       <Card
                         key={professional.id}
-                        className="overflow-hidden border  bg-white/80 backdrop-blur-sm"
+                        className="overflow-hidden  pt-0 backdrop-blur-sm relative"
                       >
-                        <CardHeader className="pb-2 md:pb-4">
+                        <div className="relative h-24 md:h-32 m-1.5 bg-cover bg-center rounded-lg" style={{backgroundImage: `url(${professional.banner ? getOptimizedImageUrl(professional.banner, {width: 400, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center"}) : '/card-bg.png'})`}}>
+                        </div>
+                        {professional.profilePicture ? (
+                          <img
+                            src={getOptimizedImageUrl(
+                              professional.profilePicture,
+                              {
+                                width: 88,
+                                height: 88,
+                                quality: 85,
+                                format: "auto",
+                                crop: "fill",
+                                gravity: "center",
+                              }
+                            )}
+                            alt={professional.name}
+                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-2 border-white shadow-md"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-muted flex items-center justify-center border-2 border-white shadow-md">
+                            <User className="h-9 w-9 md:h-11 md:w-11 text-muted-foreground" />
+                          </div>
+                        )}
+                        <CardHeader className="pt-2 pb-2 md:pb-4">
                           <div className="flex items-center space-x-2 md:space-x-4">
-                            <div className="shrink-0">
-                              {professional.profilePicture ? (
-                                <img
-                                  src={getOptimizedImageUrl(
-                                    professional.profilePicture,
-                                    {
-                                      width: 48,
-                                      height: 48,
-                                      quality: 85,
-                                      format: "auto",
-                                      crop: "fill",
-                                      gravity: "center",
-                                    }
-                                  )}
-                                  alt={professional.name}
-                                  className="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover border-2 border-border"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                                  <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
-                                </div>
-                              )}
-                            </div>
+                            <div className="w-18 md:w-22"></div>
                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
                                 {professional.name}
@@ -454,7 +459,7 @@ export default function ProfessionalsPage() {
                               {professional.professionalHeadline && (
                                 <Badge
                                   variant="secondary"
-                                  className="mt-1 text-xs"
+                                  className="mt-1 text-xs truncate"
                                 >
                                   {professional.professionalHeadline}
                                 </Badge>
@@ -463,7 +468,7 @@ export default function ProfessionalsPage() {
                           </div>
                         </CardHeader>
 
-                        <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
+                        <CardContent className="space-y-1 md:space-y-2 px-2 md:px-3">
                           {/* Contact Info */}
                           <div className="space-y-2">
                             {professional.location && (
@@ -477,7 +482,7 @@ export default function ProfessionalsPage() {
                             {professional.phone && (
                               <div className="flex items-center text-sm text-muted-foreground">
                                 <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span>{professional.phone}</span>
+                                <span className="truncate">{professional.phone}</span>
                               </div>
                             )}
                             {professional.email && (

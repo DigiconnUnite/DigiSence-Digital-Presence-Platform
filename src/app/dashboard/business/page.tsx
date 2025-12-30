@@ -2481,6 +2481,7 @@ export default function BusinessAdminDashboard() {
                                       />
                                       <ImageUpload
                                         allowVideo={true}
+                                        aspectRatio={16/9}
                                         onUpload={(url) => {
                                           const newSlides = [...heroContent.slides]
                                           newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: url }
@@ -2962,9 +2963,7 @@ export default function BusinessAdminDashboard() {
                                     variant: "destructive",
                                   })}
                                 />
-                                {businessInfoFormData.logo && (
-                                  <img src={getOptimizedImageUrl(businessInfoFormData.logo, { width: 64, height: 64, quality: 85, format: 'auto' })} alt="Logo preview" className="h-16 w-16 object-cover rounded-2xl border-2 border-gray-200" loading="lazy" />
-                                )}
+
                               </div>
                             </div>
                           </div>

@@ -1,52 +1,52 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 
 // Define Professional type since Prisma doesn't export it for MongoDB
 interface Professional {
-  id: string
-  name: string
-  slug: string
-  professionalHeadline: string | null
-  aboutMe: string | null
-  profilePicture: string | null
-  banner: string | null
-  location: string | null
-  phone: string | null
-  email: string | null
-  website: string | null
-  facebook: string | null
-  twitter: string | null
-  instagram: string | null
-  linkedin: string | null
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
-  adminId: string
-  workExperience: any
-  education: any
-  skills: any
-  servicesOffered: any
-  contactInfo: any
-  portfolio: any
-  contactDetails: any
-  ctaButton: any
+  id: string;
+  name: string;
+  slug: string;
+  professionalHeadline: string | null;
+  aboutMe: string | null;
+  profilePicture: string | null;
+  banner: string | null;
+  location: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  adminId: string;
+  workExperience: any;
+  education: any;
+  skills: any;
+  servicesOffered: any;
+  contactInfo: any;
+  portfolio: any;
+  contactDetails: any;
+  ctaButton: any;
 }
 
-import { Button } from '@/components/ui/button'
-import { useOptimizedImage } from '@/lib/image-optimization'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+import { Button } from "@/components/ui/button";
+import { useOptimizedImage } from "@/lib/image-optimization";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   MapPin,
   Phone,
@@ -67,66 +67,85 @@ import {
   Image as ImageIcon,
   Download,
   FileText,
-  Share2
-} from 'lucide-react'
+  Share2,
+} from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-import { SiFacebook, SiX, SiInstagram, SiLinkedin, SiWhatsapp } from "react-icons/si";
+import {
+  SiFacebook,
+  SiX,
+  SiInstagram,
+  SiLinkedin,
+  SiWhatsapp,
+} from "react-icons/si";
 
 interface ProfessionalProfileProps {
   professional: Professional & {
-    admin: { name?: string | null; email: string }
-  }
+    admin: { name?: string | null; email: string };
+  };
 }
 
 interface InquiryFormData {
-  name: string
-  email: string
-  phone: string
-  message: string
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
 }
 
-export default function ProfessionalProfile({ professional: initialProfessional }: ProfessionalProfileProps) {
-  const searchParams = useSearchParams()
-  const [professional, setProfessional] = useState(initialProfessional)
-  const [inquiryModal, setInquiryModal] = useState(false)
+export default function ProfessionalProfile({
+  professional: initialProfessional,
+}: ProfessionalProfileProps) {
+  const searchParams = useSearchParams();
+  const [professional, setProfessional] = useState(initialProfessional);
+  const [inquiryModal, setInquiryModal] = useState(false);
   const [inquiryData, setInquiryData] = useState<InquiryFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [activeSection, setActiveSection] = useState('home')
-  const [currentView, setCurrentView] = useState<'home' | 'about' | 'services' | 'portfolio' | 'contact'>('home')
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+  const [currentView, setCurrentView] = useState<
+    "home" | "about" | "services" | "portfolio" | "contact"
+  >("home");
 
   // Refs for smooth scrolling
-  const aboutRef = useRef<HTMLDivElement>(null)
-  const servicesRef = useRef<HTMLDivElement>(null)
-  const portfolioRef = useRef<HTMLDivElement>(null)
-  const contactRef = useRef<HTMLDivElement>(null)
+  const aboutRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
+  const portfolioRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Real-time synchronization
   useEffect(() => {
-    if (!mounted || !professional?.id) return
+    if (!mounted || !professional?.id) return;
 
     const checkForUpdates = async () => {
       try {
-        const response = await fetch(`/api/professionals?${professional.slug ? `slug=${professional.slug}` : `id=${professional.id}`}`, { cache: 'no-store' })
+        const response = await fetch(
+          `/api/professionals?${
+            professional.slug
+              ? `slug=${professional.slug}`
+              : `id=${professional.id}`
+          }`,
+          { cache: "no-store" }
+        );
         if (response.ok) {
-          const data = await response.json()
-          const updatedProfessional = data.professional
+          const data = await response.json();
+          const updatedProfessional = data.professional;
 
           const hasChanged =
             updatedProfessional.updatedAt !== professional.updatedAt ||
             updatedProfessional.name !== professional.name ||
-            updatedProfessional.professionalHeadline !== professional.professionalHeadline ||
+            updatedProfessional.professionalHeadline !==
+              professional.professionalHeadline ||
             updatedProfessional.aboutMe !== professional.aboutMe ||
-            updatedProfessional.profilePicture !== professional.profilePicture ||
+            updatedProfessional.profilePicture !==
+              professional.profilePicture ||
             updatedProfessional.banner !== professional.banner ||
             updatedProfessional.location !== professional.location ||
             updatedProfessional.phone !== professional.phone ||
@@ -136,77 +155,82 @@ export default function ProfessionalProfile({ professional: initialProfessional 
             updatedProfessional.twitter !== professional.twitter ||
             updatedProfessional.instagram !== professional.instagram ||
             updatedProfessional.linkedin !== professional.linkedin ||
-            JSON.stringify(updatedProfessional.workExperience) !== JSON.stringify(professional.workExperience) ||
-            JSON.stringify(updatedProfessional.education) !== JSON.stringify(professional.education) ||
-            JSON.stringify(updatedProfessional.skills) !== JSON.stringify(professional.skills) ||
-            JSON.stringify(updatedProfessional.servicesOffered) !== JSON.stringify(professional.servicesOffered) ||
-            JSON.stringify(updatedProfessional.portfolio) !== JSON.stringify(professional.portfolio)
+            JSON.stringify(updatedProfessional.workExperience) !==
+              JSON.stringify(professional.workExperience) ||
+            JSON.stringify(updatedProfessional.education) !==
+              JSON.stringify(professional.education) ||
+            JSON.stringify(updatedProfessional.skills) !==
+              JSON.stringify(professional.skills) ||
+            JSON.stringify(updatedProfessional.servicesOffered) !==
+              JSON.stringify(professional.servicesOffered) ||
+            JSON.stringify(updatedProfessional.portfolio) !==
+              JSON.stringify(professional.portfolio);
 
           if (hasChanged) {
-            setProfessional(updatedProfessional)
-            console.log('Professional data updated from server')
+            setProfessional(updatedProfessional);
+            console.log("Professional data updated from server");
           }
         }
       } catch (error) {
-        console.warn('Failed to check for professional updates:', error)
+        console.warn("Failed to check for professional updates:", error);
       }
-    }
+    };
 
-    checkForUpdates()
-    const interval = setInterval(checkForUpdates, 30000)
+    checkForUpdates();
+    const interval = setInterval(checkForUpdates, 30000);
 
-    return () => clearInterval(interval)
-  }, [mounted, professional?.id, professional?.slug])
+    return () => clearInterval(interval);
+  }, [mounted, professional?.id, professional?.slug]);
 
   const handleInquiry = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!inquiryData.name.trim()) {
-        errors.push('Name is required')
+        errors.push("Name is required");
       } else if (inquiryData.name.trim().length < 2) {
-        errors.push('Name must be at least 2 characters long')
+        errors.push("Name must be at least 2 characters long");
       } else if (inquiryData.name.trim().length > 100) {
-        errors.push('Name must be less than 100 characters')
+        errors.push("Name must be less than 100 characters");
       }
 
       if (!inquiryData.email.trim()) {
-        errors.push('Email is required')
+        errors.push("Email is required");
       } else {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(inquiryData.email.trim())) {
-          errors.push('Please enter a valid email address')
+          errors.push("Please enter a valid email address");
         }
       }
 
       if (inquiryData.phone.trim()) {
-        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
-        if (!phoneRegex.test(inquiryData.phone.replace(/[\s\-\(\)]/g, ''))) {
-          errors.push('Please enter a valid phone number')
+        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        if (!phoneRegex.test(inquiryData.phone.replace(/[\s\-\(\)]/g, ""))) {
+          errors.push("Please enter a valid phone number");
         }
       }
 
       if (!inquiryData.message.trim()) {
-        errors.push('Message is required')
+        errors.push("Message is required");
       } else if (inquiryData.message.trim().length < 10) {
-        errors.push('Message must be at least 10 characters long')
+        errors.push("Message must be at least 10 characters long");
       } else if (inquiryData.message.trim().length > 2000) {
-        errors.push('Message must be less than 2000 characters')
+        errors.push("Message must be less than 2000 characters");
       }
 
       if (errors.length > 0) {
-        alert(`Please fix the following errors:\n${errors.join('\n')}`)
-        setIsSubmitting(false)
-        return
+        alert(`Please fix the following errors:\n${errors.join("\n")}`);
+        setIsSubmitting(false);
+        return;
       }
 
-      const response = await fetch('/api/inquiries', {
-        method: 'POST',
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: inquiryData.name.trim(),
@@ -216,75 +240,91 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           businessId: null,
           userId: null,
         }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.ok) {
-        alert('Inquiry submitted successfully! We will get back to you soon.')
-        setInquiryModal(false)
-        setInquiryData({ name: '', email: '', phone: '', message: '' })
+        alert("Inquiry submitted successfully! We will get back to you soon.");
+        setInquiryModal(false);
+        setInquiryData({ name: "", email: "", phone: "", message: "" });
       } else {
-        alert(`Failed to submit inquiry: ${result.error || 'Please try again.'}`)
+        alert(
+          `Failed to submit inquiry: ${result.error || "Please try again."}`
+        );
       }
     } catch (error) {
-      console.error('Inquiry submission error:', error)
-      alert('An error occurred while submitting your inquiry. Please check your connection and try again.')
+      console.error("Inquiry submission error:", error);
+      alert(
+        "An error occurred while submitting your inquiry. Please check your connection and try again."
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>, sectionName: string) => {
-    setActiveSection(sectionName)
+  const scrollToSection = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    sectionName: string
+  ) => {
+    setActiveSection(sectionName);
     if (ref.current) {
-      const offset = 80
-      const elementPosition = ref.current.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - offset
+      const offset = 80;
+      const elementPosition = ref.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: "smooth"
-      })
+        behavior: "smooth",
+      });
     }
-  }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const sectionName = entry.target.id
+            const sectionName = entry.target.id;
             if (sectionName) {
-              setActiveSection(sectionName)
+              setActiveSection(sectionName);
             }
           }
-        })
+        });
       },
       { threshold: 0.3 }
-    )
+    );
 
-    const sections = [aboutRef.current, servicesRef.current, portfolioRef.current, contactRef.current]
-    sections.forEach(section => {
-      if (section) observer.observe(section)
-    })
+    const sections = [
+      aboutRef.current,
+      servicesRef.current,
+      portfolioRef.current,
+      contactRef.current,
+    ];
+    sections.forEach((section) => {
+      if (section) observer.observe(section);
+    });
 
     return () => {
-      sections.forEach(section => {
-        if (section) observer.unobserve(section)
-      })
-    }
-  }, [])
+      sections.forEach((section) => {
+        if (section) observer.unobserve(section);
+      });
+    };
+  }, []);
 
   useEffect(() => {
-    if (currentView !== 'home') {
+    if (currentView !== "home") {
       setActiveSection(currentView);
     }
   }, [currentView]);
 
   const ProfileCard = () => {
-    const bannerImage = useOptimizedImage(professional.banner, 400, 200)
-    const profileImage = useOptimizedImage(professional.profilePicture, 128, 128)
+    const bannerImage = useOptimizedImage(professional.banner, 400, 200);
+    const profileImage = useOptimizedImage(
+      professional.profilePicture,
+      128,
+      128
+    );
 
     return (
       <Card className="bg-white h-[700px] bg-gradient-to-t from-amber-100 via-white  to-white  rounded-xl p-4 shadow-lg border-0 overflow-hidden">
@@ -320,148 +360,151 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           )}
         </div>
 
-      <CardContent className="text-center flex flex-col px-0">
-        <div className=" pb-10">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {professional.name}
-          </h1>
-          {professional.professionalHeadline && (
-            <p className="text-gray-600 mb-4">
-              {professional.professionalHeadline}
-            </p>
-          )}
-          {professional.location && (
-            <div className="flex items-center justify-center mb-6">
-              <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm text-gray-600">
-                {professional.location}
-              </span>
-            </div>
-          )}
-        </div>
-        {/* Action Buttons */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {professional.phone && (
-            <Button
-              onClick={() => window.open(`tel:${professional.phone}`, "_self")}
-              className="flex items-center w-auto bg-gray-100 hover:bg-gray-200 shadow-sm text-gray-900 rounded-lg px-4 py-2"
-            >
-              <Phone className="w-4 h-4 mr-2" />
-              Make Call
+        <CardContent className="text-center flex flex-col px-0">
+          <div className=" pb-10">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {professional.name}
+            </h1>
+            {professional.professionalHeadline && (
+              <p className="text-gray-600 mb-4">
+                {professional.professionalHeadline}
+              </p>
+            )}
+            {professional.location && (
+              <div className="flex items-center justify-center mb-6">
+                <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                <span className="text-sm text-gray-600">
+                  {professional.location}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {professional.phone && (
+              <Button
+                onClick={() =>
+                  window.open(`tel:${professional.phone}`, "_self")
+                }
+                className="flex items-center w-auto bg-gray-100 hover:bg-gray-200 shadow-sm text-gray-900 rounded-lg px-4 py-2"
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Make Call
+              </Button>
+            )}
+            {professional.phone && (
+              <Button
+                onClick={() =>
+                  window.open(
+                    `https://wa.me/${professional.phone!.replace(/\D/g, "")}`,
+                    "_blank"
+                  )
+                }
+                className="flex items-center w-auto bg-green-100 hover:bg-green-200 shadow-sm text-green-900 rounded-lg px-4 py-2"
+              >
+                <FaWhatsapp className="w-4 h-4 mr-2" />
+                WhatsApp
+              </Button>
+            )}
+            {professional.email && (
+              <Button
+                onClick={() =>
+                  window.open(`mailto:${professional.email}`, "_self")
+                }
+                className="flex items-center  bg-blue-100 hover:bg-blue-200 text-blue-900 shadow-sm rounded-lg px-4 py-2"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Email
+              </Button>
+            )}
+          </div>
+
+          {/* Additional Buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Button className="flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+              <FileText className="w-4 h-4 mr-2" />
+              Resume
             </Button>
-          )}
-          {professional.phone && (
-            <Button
-              onClick={() =>
-                window.open(
-                  `https://wa.me/${professional.phone!.replace(/\D/g, "")}`,
-                  "_blank"
-                )
+            <Button className="flex flex-row gap-2 items-center  text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+              <Download className="w-4 h-4 mr-2" />
+              Download Card
+            </Button>
+          </div>
+
+          {/* Social Links */}
+          <div className="flex gap-5 mb-6">
+            {professional.facebook && (
+              <a
+                href={professional.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors"
+              >
+                <SiFacebook className="w-6 h-6 text-blue-600" />
+              </a>
+            )}
+            {professional.twitter && (
+              <a
+                href={professional.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+              >
+                <SiX className="w-6 h-6 text-black" />
+              </a>
+            )}
+            {professional.instagram && (
+              <a
+                href={professional.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+              >
+                <SiInstagram className="w-6 h-6 text-pink-600" />
+              </a>
+            )}
+            {professional.linkedin && (
+              <a
+                href={professional.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+              >
+                <SiLinkedin className="w-6 h-6 text-blue-700" />
+              </a>
+            )}
+          </div>
+
+          {/* Share Button */}
+          <Button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: `${professional.name} - Professional Profile`,
+                  text: `Check out ${professional.name}'s professional profile`,
+                  url: window.location.href,
+                });
+              } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                  alert("Profile link copied to clipboard!");
+                });
               }
-              className="flex items-center w-auto bg-green-100 hover:bg-green-200 shadow-sm text-green-900 rounded-lg px-4 py-2"
-            >
-              <FaWhatsapp className="w-4 h-4 mr-2" />
-              WhatsApp
-            </Button>
-          )}
-          {professional.email && (
-            <Button
-              onClick={() =>
-                window.open(`mailto:${professional.email}`, "_self")
-              }
-              className="flex items-center  bg-blue-100 hover:bg-blue-200 text-blue-900 shadow-sm rounded-lg px-4 py-2"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              Email
-            </Button>
-          )}
-        </div>
-
-        {/* Additional Buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Button className="flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
-            <FileText className="w-4 h-4 mr-2" />
-            Resume
+            }}
+            className="w-full mb-5 flex items-center justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 rounded-full p-3 transition-colors"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share Profile
           </Button>
-          <Button className="flex flex-row gap-2 items-center  text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
-            <Download className="w-4 h-4 mr-2" />
-            Download Card
-          </Button>
-        </div>
 
-        {/* Social Links */}
-        <div className="flex gap-5 mb-6">
-          {professional.facebook && (
-            <a
-              href={professional.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors"
-            >
-              <SiFacebook className="w-6 h-6 text-blue-600" />
-            </a>
-          )}
-          {professional.twitter && (
-            <a
-              href={professional.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
-            >
-              <SiX className="w-6 h-6 text-black" />
-            </a>
-          )}
-          {professional.instagram && (
-            <a
-              href={professional.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
-            >
-              <SiInstagram className="w-6 h-6 text-pink-600" />
-            </a>
-          )}
-          {professional.linkedin && (
-            <a
-              href={professional.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-linear-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
-            >
-              <SiLinkedin className="w-6 h-6 text-blue-700" />
-            </a>
-          )}
-        </div>
-
-        {/* Share Button */}
-        <Button
-          onClick={() => {
-            if (navigator.share) {
-              navigator.share({
-                title: `${professional.name} - Professional Profile`,
-                text: `Check out ${professional.name}'s professional profile`,
-                url: window.location.href,
-              });
-            } else {
-              // Fallback: copy to clipboard
-              navigator.clipboard.writeText(window.location.href).then(() => {
-                alert("Profile link copied to clipboard!");
-              });
-            }
-          }}
-          className="w-full mb-5 flex items-center justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 rounded-full p-3 transition-colors"
-        >
-          <Share2 className="w-4 h-4 mr-2" />
-          Share Profile
-        </Button>
-
-        {/* Footer Note */}
-        <p className="text-xs text-gray-500">
-          Profile Created By @DigiSence.io
-        </p>
-      </CardContent>
-    </Card>
-  );
+          {/* Footer Note */}
+          <p className="text-xs text-gray-500">
+            Profile Created By @DigiSence.io
+          </p>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#fef7ed]" suppressHydrationWarning>
@@ -474,35 +517,40 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               <User className="w-5 h-5 text-gray-600" />
             </div>
             <div className="h-6 w-px bg-gray-300"></div>
-            <span className="text-lg font-bold text-gray-900">{professional.name}</span>
+            <span className="text-lg font-bold text-gray-900">
+              {professional.name}
+            </span>
           </div>
 
           {/* Center Navigation */}
           <div className="flex space-x-8">
             <button
               className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
-              onClick={() => { setCurrentView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              onClick={() => {
+                setCurrentView("home");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
             >
               <Home className="w-4 h-4 mr-2" />
               Home
             </button>
             <button
               className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
-              onClick={() => setCurrentView('about')}
+              onClick={() => setCurrentView("about")}
             >
               <User className="w-4 h-4 mr-2" />
               About
             </button>
             <button
               className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
-              onClick={() => setCurrentView('services')}
+              onClick={() => setCurrentView("services")}
             >
               <Users className="w-4 h-4 mr-2" />
               Services
             </button>
             <button
               className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
-              onClick={() => setCurrentView('portfolio')}
+              onClick={() => setCurrentView("portfolio")}
             >
               <ImageIcon className="w-4 h-4 mr-2" />
               Portfolio
@@ -511,7 +559,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
 
           {/* Right Side */}
           <Button
-            onClick={() => setCurrentView('contact')}
+            onClick={() => setCurrentView("contact")}
             className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-4 py-2 shadow-md"
           >
             Let's Talk
@@ -523,51 +571,59 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       <div className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
         <div className="flex justify-around items-center h-16 px-2">
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'home'
-              ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            onClick={() => { setCurrentView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
+              activeSection === "home"
+                ? "text-amber-600 bg-amber-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+            onClick={() => {
+              setCurrentView("home");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           >
             <Home className="h-5 w-5" />
             <span className="text-xs mt-1 font-medium">Home</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'about'
-              ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            onClick={() => setCurrentView('about')}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
+              activeSection === "about"
+                ? "text-amber-600 bg-amber-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+            onClick={() => setCurrentView("about")}
           >
             <User className="h-5 w-5" />
             <span className="text-xs mt-1 font-medium">About</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'services'
-              ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            onClick={() => setCurrentView('services')}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
+              activeSection === "services"
+                ? "text-amber-600 bg-amber-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+            onClick={() => setCurrentView("services")}
           >
             <Users className="h-5 w-5" />
             <span className="text-xs mt-1 font-medium">Services</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'portfolio'
-              ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            onClick={() => setCurrentView('portfolio')}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
+              activeSection === "portfolio"
+                ? "text-amber-600 bg-amber-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+            onClick={() => setCurrentView("portfolio")}
           >
             <ImageIcon className="h-5 w-5" />
             <span className="text-xs mt-1 font-medium">Portfolio</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${activeSection === 'contact'
-              ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            onClick={() => setCurrentView('contact')}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
+              activeSection === "contact"
+                ? "text-amber-600 bg-amber-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+            onClick={() => setCurrentView("contact")}
           >
             <MessageCircle className="h-5 w-5" />
             <span className="text-xs mt-1 font-medium">Contact</span>
@@ -578,7 +634,7 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       {/* Main Content */}
       <div className="pt-8 md:pt-24 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          {currentView === 'about' ? (
+          {currentView === "about" ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Profile Card */}
               <div className="md:col-span-1">
@@ -588,13 +644,18 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               <div className="md:col-span-2">
                 <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
                   <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
-                    <p className="text-gray-700">{professional.aboutMe || 'No about information available.'}</p>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                      About
+                    </h2>
+                    <p className="text-gray-700">
+                      {professional.aboutMe ||
+                        "No about information available."}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
             </div>
-          ) : currentView === 'services' ? (
+          ) : currentView === "services" ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Profile Card */}
               <div className="md:col-span-1">
@@ -605,26 +666,35 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900">Services</h2>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Services
+                      </h2>
                       <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                         View All <ChevronRight className="w-4 h-4 ml-1" />
                       </button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {professional.servicesOffered?.slice(0, 5).map((service: any, index: number) => (
-                        <div key={index} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                          <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
-                            <Award className="w-6 h-6 text-amber-600" />
+                      {professional.servicesOffered
+                        ?.slice(0, 5)
+                        .map((service: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
+                              <Award className="w-6 h-6 text-amber-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900 text-center">
+                              {service.name}
+                            </span>
                           </div>
-                          <span className="text-sm font-semibold text-gray-900 text-center">{service.name}</span>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </CardContent>
                 </Card>
               </div>
             </div>
-          ) : currentView === 'portfolio' ? (
+          ) : currentView === "portfolio" ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Profile Card */}
               <div className="md:col-span-1">
@@ -635,34 +705,50 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-900">Portfolio</h2>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Portfolio
+                      </h2>
                       <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                         View All <ChevronRight className="w-4 h-4 ml-1" />
                       </button>
                     </div>
                     <div className="space-y-4">
-                      {professional.portfolio?.slice(0, 2).map((item: any, index: number) => (
-                        <div key={index} className="relative p-7 px-10 bg-linear-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden">
-                          <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                            <img
-                              src={getOptimizedImageUrl(item.url, { width: 400, height: 250, quality: 85, format: 'auto', crop: 'fill', gravity: 'center' })}
-                              alt={item.title}
-                              className=" h-full p-0  object-cover absolute -bottom-2"
-                            />
-
-
-                          </div>
-                          <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
-                            <span className="text-sm font-semibold text-gray-900">{item.title}</span>
-                          </div>
-                        </div>
-                      ))}
+                      {professional.portfolio
+                        ?.slice(0, 2)
+                        .map((item: any, index: number) => {
+                          const optimizedImage = useOptimizedImage(
+                            item.url,
+                            400,
+                            250
+                          );
+                          return (
+                            <div
+                              key={index}
+                              className="relative p-7 px-10 bg-gradient-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden"
+                            >
+                              <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
+                                <img
+                                  src={optimizedImage.src}
+                                  srcSet={optimizedImage.srcSet}
+                                  sizes={optimizedImage.sizes}
+                                  alt={item.title}
+                                  className=" h-full p-0  object-cover absolute -bottom-2"
+                                />
+                              </div>
+                              <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
+                                <span className="text-sm font-semibold text-gray-900">
+                                  {item.title}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
                   </CardContent>
                 </Card>
               </div>
             </div>
-          ) : currentView === 'contact' ? (
+          ) : currentView === "contact" ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Profile Card */}
               <div className="md:col-span-1">
@@ -672,7 +758,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               <div className="md:col-span-2">
                 <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
                   <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Let's Talk</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                      Let's Talk
+                    </h2>
                     <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>
                   </CardContent>
                 </Card>
@@ -693,105 +781,132 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                     <Card className="bg-white rounded-2xl p-6 h-[50%] shadow-lg border-0">
                       <CardContent className="p-0 overflow-hidden h-full">
                         <div className="flex justify-between items-center mb-5">
-                          <h2 className="text-xl font-bold text-gray-900">Work Experience</h2>
+                          <h2 className="text-xl font-bold text-gray-900">
+                            Work Experience
+                          </h2>
                           <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
                         <div className="overflow-hidden  ">
-                          <div className={`flex flex-col space-y-4 ${professional.workExperience && professional.workExperience.length > 3 ? 'animate-marquee' : ''}`}>
-                            {professional.workExperience?.map((exp: any, index: number) => {
-                              // Calculate total time roughly
-                              const calculateTotalTime = (duration: string) => {
-                                const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
-                                if (match) {
-                                  const start = parseInt(match[1]);
-                                  const end = parseInt(match[2]);
-                                  const years = end - start;
-                                  return `${years} year${years !== 1 ? 's' : ''}`;
-                                }
-                                return duration;
-                              };
+                          <div
+                            className={`flex flex-col space-y-4 ${
+                              professional.workExperience &&
+                              professional.workExperience.length > 3
+                                ? "animate-marquee"
+                                : ""
+                            }`}
+                          >
+                            {professional.workExperience?.map(
+                              (exp: any, index: number) => {
+                                // Calculate total time roughly
+                                const calculateTotalTime = (
+                                  duration: string
+                                ) => {
+                                  const match = duration.match(
+                                    /(\d{4})\s*-\s*(\d{4})/
+                                  );
+                                  if (match) {
+                                    const start = parseInt(match[1]);
+                                    const end = parseInt(match[2]);
+                                    const years = end - start;
+                                    return `${years} year${
+                                      years !== 1 ? "s" : ""
+                                    }`;
+                                  }
+                                  return duration;
+                                };
 
-                              return (
-                                <div
-                                  key={`exp-${index}`}
-                                  className="flex items-start space-x-4 rounded-lg"
-                                >
-                                  <div className="w-15 h-15 bg-linear-to-b from-amber-50   to-white  rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
-                                    <Building2 className="w-5 h-5 text-amber-600" />
-                                  </div>
-                                  <div className="flex-1 flex justify-items-end gap-1 w-full">
-                                    <div className="grid grid-cols-1 gap-1">
-                                      <p className="text-gray-900 font-medium text-sm">
-                                        {exp.company}
-                                      </p>
-                                      <p className="text-gray-700 text-xs">
-                                        {exp.position}
-                                      </p>
-                                      <p className="text-gray-600 text-xs">
-                                        {exp.location}
-                                      </p>
+                                return (
+                                  <div
+                                    key={`exp-${index}`}
+                                    className="flex items-start space-x-4 rounded-lg"
+                                  >
+                                    <div className="w-15 h-15 bg-gradient-to-b from-amber-50   to-white  rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
+                                      <Building2 className="w-5 h-5 text-amber-600" />
                                     </div>
-                                    <div className="flex items-end flex-col ml-auto justify-between mt-2">
-                                      <span className="text-gray-500 text-xs">
-                                        {exp.duration}
-                                      </span>
-                                      <span className="text-gray-400 text-xs">
-                                        Total:{" "}
-                                        {calculateTotalTime(exp.duration)}
-                                      </span>
+                                    <div className="flex-1 flex justify-items-end gap-1 w-full">
+                                      <div className="grid grid-cols-1 gap-1">
+                                        <p className="text-gray-900 font-medium text-sm">
+                                          {exp.company}
+                                        </p>
+                                        <p className="text-gray-700 text-xs">
+                                          {exp.position}
+                                        </p>
+                                        <p className="text-gray-600 text-xs">
+                                          {exp.location}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                                        <span className="text-gray-500 text-xs">
+                                          {exp.duration}
+                                        </span>
+                                        <span className="text-gray-400 text-xs">
+                                          Total:{" "}
+                                          {calculateTotalTime(exp.duration)}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            })}
-                            {professional.workExperience && professional.workExperience.length > 3 && professional.workExperience.map((exp: any, index: number) => {
-                              // Calculate total time roughly
-                              const calculateTotalTime = (duration: string) => {
-                                const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
-                                if (match) {
-                                  const start = parseInt(match[1]);
-                                  const end = parseInt(match[2]);
-                                  const years = end - start;
-                                  return `${years} year${years !== 1 ? 's' : ''}`;
-                                }
-                                return duration;
-                              };
+                                );
+                              }
+                            )}
+                            {professional.workExperience &&
+                              professional.workExperience.length > 3 &&
+                              professional.workExperience.map(
+                                (exp: any, index: number) => {
+                                  // Calculate total time roughly
+                                  const calculateTotalTime = (
+                                    duration: string
+                                  ) => {
+                                    const match = duration.match(
+                                      /(\d{4})\s*-\s*(\d{4})/
+                                    );
+                                    if (match) {
+                                      const start = parseInt(match[1]);
+                                      const end = parseInt(match[2]);
+                                      const years = end - start;
+                                      return `${years} year${
+                                        years !== 1 ? "s" : ""
+                                      }`;
+                                    }
+                                    return duration;
+                                  };
 
-                              return (
-                                <div
-                                  key={`exp-dup-${index}`}
-                                  className="flex items-start space-x-4 rounded-lg"
-                                >
-                                  <div className="w-15 h-15 bg-linear-to-b from-amber-50   to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
-                                    <Building2 className="w-5 h-5 text-amber-600" />
-                                  </div>
-                                  <div className="flex-1 flex justify-items-end gap-1 w-full">
-                                    <div className="grid grid-cols-1 gap-1">
-                                      <p className="text-gray-900 font-medium text-sm">
-                                        {exp.company}
-                                      </p>
-                                      <p className="text-gray-700 text-xs">
-                                        {exp.position}
-                                      </p>
-                                      <p className="text-gray-600 text-xs">
-                                        {exp.location}
-                                      </p>
+                                  return (
+                                    <div
+                                      key={`exp-dup-${index}`}
+                                      className="flex items-start space-x-4 rounded-lg"
+                                    >
+                                      <div className="w-15 h-15 bg-gradient-to-b from-amber-50   to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                                        <Building2 className="w-5 h-5 text-amber-600" />
+                                      </div>
+                                      <div className="flex-1 flex justify-items-end gap-1 w-full">
+                                        <div className="grid grid-cols-1 gap-1">
+                                          <p className="text-gray-900 font-medium text-sm">
+                                            {exp.company}
+                                          </p>
+                                          <p className="text-gray-700 text-xs">
+                                            {exp.position}
+                                          </p>
+                                          <p className="text-gray-600 text-xs">
+                                            {exp.location}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                                          <span className="text-gray-500 text-xs">
+                                            {exp.duration}
+                                          </span>
+                                          <span className="text-gray-400 text-xs">
+                                            Total:{" "}
+                                            {calculateTotalTime(exp.duration)}
+                                          </span>
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div className="flex items-end flex-col ml-auto justify-between mt-2">
-                                      <span className="text-gray-500 text-xs">
-                                        {exp.duration}
-                                      </span>
-                                      <span className="text-gray-400 text-xs">
-                                        Total:{" "}
-                                        {calculateTotalTime(exp.duration)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                  );
+                                }
+                              )}
                           </div>
                         </div>
                       </CardContent>
@@ -801,23 +916,35 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                     <Card className="bg-white rounded-2xl h-full p-6 shadow-lg border-0">
                       <CardContent className="p-0">
                         <div className="flex justify-between items-center mb-5">
-                          <h2 className="text-xl font-bold text-gray-900">Expert Area</h2>
+                          <h2 className="text-xl font-bold text-gray-900">
+                            Expert Area
+                          </h2>
                           <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-3  overflow-hidden">
-                          {professional.skills?.slice(0, 12).map((skill: string, index: number) => (
-                            <div key={index} className="flex items-center bg-white rounded-full px-4 py-1 border border-gray-200">
-                              <Award className="w-5 h-5 text-amber-600 mr-2" />
-                              <span className="text-sm text-gray-700">{skill}</span>
-                            </div>
-                          ))}
-                          {professional.skills && professional.skills.length > 12 && (
-                            <div className="flex items-center bg-white rounded-full px-4 py-2 border border-gray-200">
-                              <span className="text-sm text-gray-700">...</span>
-                            </div>
-                          )}
+                          {professional.skills
+                            ?.slice(0, 12)
+                            .map((skill: string, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center bg-white rounded-full px-4 py-1 border border-gray-200"
+                              >
+                                <Award className="w-5 h-5 text-amber-600 mr-2" />
+                                <span className="text-sm text-gray-700">
+                                  {skill}
+                                </span>
+                              </div>
+                            ))}
+                          {professional.skills &&
+                            professional.skills.length > 12 && (
+                              <div className="flex items-center bg-white rounded-full px-4 py-2 border border-gray-200">
+                                <span className="text-sm text-gray-700">
+                                  ...
+                                </span>
+                              </div>
+                            )}
                         </div>
                       </CardContent>
                     </Card>
@@ -829,28 +956,44 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Portfolio</h2>
+                        <h2 className="text-xl font-bold text-gray-900">
+                          Portfolio
+                        </h2>
                         <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                           View All <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                       </div>
                       <div className="space-y-4">
-                        {professional.portfolio?.slice(0, 2).map((item: any, index: number) => (
-                          <div key={index} className="relative p-7 px-10 bg-linear-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden">
-                            <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                              <img
-                                src={getOptimizedImageUrl(item.url, { width: 400, height: 225, quality: 85, format: 'auto', crop: 'fill', gravity: 'center' })}
-                                alt={item.title}
-                                className=" h-full  object-cover absolute -bottom-2"
-                              />
-
-
-                            </div>
-                            <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
-                              <span className="text-sm font-semibold text-gray-900">{item.title}</span>
-                            </div>
-                          </div>
-                        ))}
+                        {professional.portfolio
+                          ?.slice(0, 2)
+                          .map((item: any, index: number) => {
+                            const optimizedImage = useOptimizedImage(
+                              item.url,
+                              400,
+                              250
+                            );
+                            return (
+                              <div
+                                key={index}
+                                className="relative p-7 px-10 bg-gradient-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden"
+                              >
+                                <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
+                                  <img
+                                    src={optimizedImage.src}
+                                    srcSet={optimizedImage.srcSet}
+                                    sizes={optimizedImage.sizes}
+                                    alt={item.title}
+                                    className=" h-full  object-cover absolute -bottom-2"
+                                  />
+                                </div>
+                                <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {item.title}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
                       </div>
                     </CardContent>
                   </Card>
@@ -864,20 +1007,29 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                   <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Services</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                          Services
+                        </h2>
                         <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
                           View All <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {professional.servicesOffered?.slice(0, 5).map((service: any, index: number) => (
-                          <div key={index} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
-                              <Award className="w-6 h-6 text-amber-600" />
+                        {professional.servicesOffered
+                          ?.slice(0, 5)
+                          .map((service: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
+                                <Award className="w-6 h-6 text-amber-600" />
+                              </div>
+                              <span className="text-sm font-semibold text-gray-900 text-center">
+                                {service.name}
+                              </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900 text-center">{service.name}</span>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </CardContent>
                   </Card>
@@ -887,7 +1039,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 <div ref={contactRef} id="contact">
                   <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
                     <CardContent className="p-0">
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">Let's Talk</h2>
+                      <h2 className="text-xl font-bold text-gray-900 mb-4">
+                        Let's Talk
+                      </h2>
                       <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>
                     </CardContent>
                   </Card>
@@ -899,10 +1053,10 @@ export default function ProfessionalProfile({ professional: initialProfessional 
       </div>
 
       {/* Footer */}
-      <footer className="bg-linear-to-r   py-6 px-4">
+      <footer className="bg-gradient-to-r   py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm font-medium">
-            Developed By{' '}
+            Developed By{" "}
             <a
               href="https://digiconnunite.com"
               target="_blank"
@@ -912,12 +1066,15 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               Digiconn Unite Pvt. Ltd.
             </a>
           </p>
-          <p className="text-xs text-gray-400 mt-2">© 2025 All rights reserved.</p>
+          <p className="text-xs text-gray-400 mt-2">
+            © 2025 All rights reserved.
+          </p>
         </div>
       </footer>
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
           @keyframes marquee {
             0% { transform: translateY(0); }
             100% { transform: translateY(-50%); }
@@ -925,15 +1082,18 @@ export default function ProfessionalProfile({ professional: initialProfessional 
           .animate-marquee {
             animation: marquee 20s linear infinite;
           }
-        `
-      }} />
+        `,
+        }}
+      />
 
       {/* Inquiry Modal */}
       <Dialog open={inquiryModal} onOpenChange={setInquiryModal}>
         <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Contact {professional.name}</DialogTitle>
-            <DialogDescription>Send a message and we'll get back to you soon.</DialogDescription>
+            <DialogDescription>
+              Send a message and we'll get back to you soon.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleInquiry} className="space-y-4">
             <div className="space-y-2">
@@ -941,7 +1101,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               <Input
                 id="name"
                 value={inquiryData.name}
-                onChange={(e) => setInquiryData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setInquiryData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 required
               />
             </div>
@@ -951,7 +1113,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 id="email"
                 type="email"
                 value={inquiryData.email}
-                onChange={(e) => setInquiryData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setInquiryData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 required
               />
             </div>
@@ -961,7 +1125,9 @@ export default function ProfessionalProfile({ professional: initialProfessional 
                 id="phone"
                 type="tel"
                 value={inquiryData.phone}
-                onChange={(e) => setInquiryData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) =>
+                  setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -969,21 +1135,36 @@ export default function ProfessionalProfile({ professional: initialProfessional 
               <Textarea
                 id="message"
                 value={inquiryData.message}
-                onChange={(e) => setInquiryData(prev => ({ ...prev, message: e.target.value }))}
+                onChange={(e) =>
+                  setInquiryData((prev) => ({
+                    ...prev,
+                    message: e.target.value,
+                  }))
+                }
                 rows={4}
                 required
               />
             </div>
             <div className="flex space-x-3">
-              <Button type="submit" disabled={isSubmitting} className="flex-1 bg-amber-600 hover:bg-amber-700">
-                {isSubmitting ? 'Sending...' : (
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+              >
+                {isSubmitting ? (
+                  "Sending..."
+                ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
                     Send Message
                   </>
                 )}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setInquiryModal(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setInquiryModal(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -991,5 +1172,5 @@ export default function ProfessionalProfile({ professional: initialProfessional 
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

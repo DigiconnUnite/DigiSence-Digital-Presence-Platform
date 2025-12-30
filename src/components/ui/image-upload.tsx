@@ -5,6 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Cropper, CropperImage, CropperArea, type CropperAreaData } from './cropper'
+
+import {
   Upload,
   X,
   Image as ImageIcon,
@@ -22,6 +31,7 @@ interface ImageUploadProps {
   allowVideo?: boolean
   uploadUrl?: string
   uploadType?: string
+  aspectRatio?: number
 }
 
 export default function ImageUpload({
@@ -32,7 +42,8 @@ export default function ImageUpload({
   className = '',
   allowVideo = false,
   uploadUrl,
-  uploadType
+  uploadType,
+  aspectRatio = 1
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -40,13 +51,16 @@ export default function ImageUpload({
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [mediaUrl, setMediaUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [croppedArea, setCroppedArea] = useState<CropperAreaData | null>(null)
 
   const isPdf = accept.includes('pdf') || accept.includes('application/pdf')
   const mediaAccept = allowVideo ? 'image/*,video/*' : isPdf ? accept : accept
   const mediaTypeText = allowVideo ? 'images and videos' : isPdf ? 'images or PDFs' : 'images'
 
-  const handleFileUpload = useCallback(async (files: FileList) => {
-    const fileArray = Array.from(files).slice(0, maxFiles)
+  const handleFileUpload = useCallback(async (files: File[]) => {
+    const fileArray = files.slice(0, maxFiles)
 
     if (fileArray.length === 0) return
 
@@ -169,8 +183,8 @@ export default function ImageUpload({
     setDragActive(false)
 
     const files = e.dataTransfer.files
-    handleFileUpload(files)
-  }, [handleFileUpload, maxFiles])
+    handleFileUpload(Array.from(files))
+  }, [handleFileUpload])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -185,9 +199,15 @@ export default function ImageUpload({
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      handleFileUpload(files)
+      const fileArray = Array.from(files)
+      if (fileArray.length > 0 && fileArray[0].type.startsWith('image/')) {
+        setSelectedFile(fileArray[0])
+        setCropModalOpen(true)
+      } else {
+        handleFileUpload(fileArray)
+      }
     }
-  }, [handleFileUpload, maxFiles])
+  }, [handleFileUpload])
 
   // New function to handle opening the file dialog
   const openFileDialog = useCallback((e: React.MouseEvent) => {
@@ -202,117 +222,196 @@ export default function ImageUpload({
     // onClear();
   }, []);
 
+  const cropImage = useCallback(async (file: File, croppedArea: CropperAreaData): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      const img = new Image()
+
+      img.onload = () => {
+        canvas.width = croppedArea.width
+        canvas.height = croppedArea.height
+        ctx.drawImage(
+          img,
+          croppedArea.x,
+          croppedArea.y,
+          croppedArea.width,
+          croppedArea.height,
+          0,
+          0,
+          croppedArea.width,
+          croppedArea.height
+        )
+        canvas.toBlob((blob) => {
+          resolve(blob!)
+        }, file.type)
+      }
+      img.src = URL.createObjectURL(file)
+    })
+  }, [])
+
+  const handleConfirmCrop = useCallback(async () => {
+    if (!selectedFile || !croppedArea) return;
+    setCropModalOpen(false);
+    const croppedBlob = await cropImage(selectedFile, croppedArea);
+    if (!croppedBlob) return;
+    const croppedFile = new window.File([croppedBlob], selectedFile.name, { type: selectedFile.type });
+    handleFileUpload([croppedFile]);
+    setSelectedFile(null);
+    setCroppedArea(null);
+  }, [selectedFile, croppedArea, cropImage, handleFileUpload]);
+
   // Determine if the uploaded media is a video
   const isVideo = mediaUrl && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg'));
   // Determine if the uploaded media is a PDF
   const isPdfFile = mediaUrl && mediaUrl.includes('.pdf');
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="w-5 h-5" />
-          Upload {allowVideo ? 'Media' : isPdf ? 'Files' : 'Images'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left side: Upload controls */}
-          <div className="flex-1">
-            <div className="flex gap-4 items-center">
-              {/* Upload logo/avatar/preview */}
-              <div
-                className={`w-20 h-20 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-100 transition-colors ${dragActive ? 'border-blue-400 bg-blue-50' : ''
+    <>
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5" />
+            Upload {allowVideo ? "Media" : isPdf ? "Files" : "Images"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Left side: Upload controls */}
+            <div className="flex-1">
+              <div className="flex gap-4 items-center">
+                {/* Upload logo/avatar/preview */}
+                <div
+                  className={`w-20 h-20 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-100 transition-colors ${dragActive ? "border-blue-400 bg-blue-50" : ""
                   } cursor-pointer`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={openFileDialog}
-                role="button"
-                tabIndex={0}
-              >
-                {uploading ? (
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                ) : mediaUrl ? (
-                  isVideo ? (
-                    <video src={mediaUrl} className="w-full h-full object-cover rounded-full" controls={false} />
-                  ) : isPdfFile ? (
-                    <File className="w-8 h-8 text-gray-400" />
-                  ) : (
-                    <img src={mediaUrl} alt="Preview" className="w-full h-full object-cover rounded-full" />
-                  )
-                ) : (
-                  allowVideo ? (
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={openFileDialog}
+                  role="button"
+                  tabIndex={0}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                  ) : mediaUrl ? (
+                    isVideo ? (
+                        <video
+                          src={mediaUrl}
+                          className="w-full h-full object-cover rounded-full"
+                          controls={false}
+                        />
+                      ) : isPdfFile ? (
+                        <File className="w-8 h-8 text-gray-400" />
+                      ) : (
+                        <img
+                          src={mediaUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      )
+                    ) : allowVideo ? (
                     <FileVideo className="w-8 h-8 text-gray-400" />
                   ) : isPdf ? (
                     <File className="w-8 h-8 text-gray-400" />
                   ) : (
-                    <ImageIcon className="w-8 h-8 text-gray-400" />
-                  )
-                )}
-                {mediaUrl && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="destructive"
-                    className="absolute top-0 right-0 rounded-full p-1 h-6 w-6 translate-x-2 -translate-y-2"
-                    onClick={e => {
-                      e.stopPropagation();
-                      clearMedia();
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-              {/* Upload Button + Label */}
-              <div>
-                <div className="mb-2 flex items-center justify-between min-w-[230px]">
-                  <span className="text-xs text-gray-600">
-                    {uploading
-                      ? uploadStatus || 'Uploading...'
-                      : (
-                        <>
-                          Drag {mediaTypeText} here
-                        </>
-                      )
-                    }
-                  </span>
-                  {!uploading && (
+                            <ImageIcon className="w-8 h-8 text-gray-400" />
+                  )}
+                  {mediaUrl && (
                     <Button
                       type="button"
-                      onClick={openFileDialog}
-                      variant="secondary"
-                      size="sm"
-                      className="align-middle ml-3"
-                      disabled={uploading}
+                      size="icon"
+                      variant="destructive"
+                      className="absolute top-0 right-0 rounded-full p-1 h-6 w-6 translate-x-2 -translate-y-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearMedia();
+                      }}
                     >
-                      Select {allowVideo ? 'Media' : isPdf ? 'File' : 'Image'}
+                      <X className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
-                {uploading && <Progress value={uploadProgress} className="w-40" />}
-                <Input
-                  ref={fileInputRef}
-                  id="file-upload"
-                  type="file"
-                  accept={mediaAccept}
-                  multiple={maxFiles > 1}
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                {!uploading && (
-                  <p className="text-[11px] text-gray-400 mt-1">
-                    Supported: {mediaTypeText}
-                  </p>
-                )}
+                {/* Upload Button + Label */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between min-w-[230px]">
+                    <span className="text-xs text-gray-600">
+                      {uploading ? (
+                        uploadStatus || "Uploading..."
+                      ) : (
+                        <>Drag {mediaTypeText} here</>
+                      )}
+                    </span>
+                    {!uploading && (
+                      <Button
+                        type="button"
+                        onClick={openFileDialog}
+                        variant="secondary"
+                        size="sm"
+                        className="align-middle ml-3"
+                        disabled={uploading}
+                      >
+                        Select {allowVideo ? "Media" : isPdf ? "File" : "Image"}
+                      </Button>
+                    )}
+                  </div>
+                  {uploading && (
+                    <Progress value={uploadProgress} className="w-40" />
+                  )}
+                  <Input
+                    ref={fileInputRef}
+                    id="file-upload"
+                    type="file"
+                    accept={mediaAccept}
+                    multiple={maxFiles > 1}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  {!uploading && (
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Supported: {mediaTypeText}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-        </div>
-      </CardContent>
-    </Card>
-  )
+        </CardContent>
+      </Card>
+      <Dialog open={cropModalOpen} onOpenChange={setCropModalOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Crop Image</DialogTitle>
+          </DialogHeader>
+          {selectedFile && (
+            <div className="h-96 w-full relative">
+              <Cropper
+                key={selectedFile.name}
+                aspectRatio={aspectRatio}
+                onCropComplete={(area, areaPixels) => setCroppedArea(areaPixels)}
+              >
+                <CropperImage src={URL.createObjectURL(selectedFile)} />
+                <CropperArea />
+              </Cropper>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCropModalOpen(false);
+                setSelectedFile(null);
+                setCroppedArea(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmCrop} disabled={!croppedArea}>
+              Confirm Crop
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }

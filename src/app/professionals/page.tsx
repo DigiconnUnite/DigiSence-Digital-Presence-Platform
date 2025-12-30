@@ -27,7 +27,25 @@ import {
   BookOpen,
   TrendingUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Code,
+  Stethoscope,
+  Scale,
+  Wrench,
+  GraduationCap,
+  Calculator,
+  Palette,
+  Megaphone,
+  Users,
+  Camera,
+  ChefHat,
+  Briefcase,
+  Building,
+  Heart,
+  Pill,
+  Zap,
+  Droplets,
+  Truck
 } from 'lucide-react'
 
 interface Professional {
@@ -103,6 +121,27 @@ export default function ProfessionalsPage() {
       { id: '5', name: 'Consultants', slug: 'consultants' }
     ])
   }
+
+  const professions = [
+    { name: 'Developer', icon: Code },
+    { name: 'Doctor', icon: Stethoscope },
+    { name: 'Lawyer', icon: Scale },
+    { name: 'Engineer', icon: Wrench },
+    { name: 'Teacher', icon: GraduationCap },
+    { name: 'Accountant', icon: Calculator },
+    { name: 'Designer', icon: Palette },
+    { name: 'Marketer', icon: Megaphone },
+    { name: 'Consultant', icon: Users },
+    { name: 'Photographer', icon: Camera },
+    { name: 'Chef', icon: ChefHat },
+    { name: 'Manager', icon: Briefcase },
+    { name: 'Architect', icon: Building },
+    { name: 'Nurse', icon: Heart },
+    { name: 'Pharmacist', icon: Pill },
+    { name: 'Electrician', icon: Zap },
+    { name: 'Plumber', icon: Droplets },
+    { name: 'Driver', icon: Truck }
+  ]
 
   const scrollCategories = (direction: 'left' | 'right') => {
     // Placeholder for scrolling
@@ -257,29 +296,36 @@ export default function ProfessionalsPage() {
           </div>
 
           {/* Category Slider - Full Width */}
-          <div className="bg-gray-50 py-2 border-t border-gray-200">
+          <div className="bg-gray-50 py-0.5 border-t border-gray-200">
             <div className="max-w-7xl mx-auto ">
-              <div className="flex items-center overflow-x-auto scrollbar-hide px-4">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() =>
-                      setSelectedCategory(
-                        selectedCategory === category.name
-                          ? null
-                          : category.name
-                      )
-                    }
-                    className={cn(
-                      "px-4  text-xs font-medium whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0",
-                      selectedCategory === category.name
-                        ? "bg-primary text-primary-foreground"
-                        : " text-gray-500 "
-                    )}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+              <div
+                className="flex items-center overflow-x-auto scrollbar-hide px-4"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {professions.map((profession) => {
+                  const IconComponent = profession.icon
+                  return (
+                    <button
+                      key={profession.name}
+                      onClick={() =>
+                        setSelectedCategory(
+                          selectedCategory === profession.name
+                            ? null
+                            : profession.name
+                        )
+                      }
+                      className={cn(
+                        "px-4 py-2 text-sm font-semibold whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0 flex items-center space-x-2",
+                        selectedCategory === profession.name
+                          ? "bg-primary text-primary-foreground"
+                          : " text-gray-500 "
+                      )}
+                    >
+                      <IconComponent className="h-5 w-5" />
+                      <span>{profession.name}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -340,8 +386,12 @@ export default function ProfessionalsPage() {
           {/* Hero Banner - 16:9 Ratio */}
           <section className=" px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-              <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-600 aspect-3/1 md:aspect-4/1 flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/20"></div>
+              <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-3/1 md:aspect-4/1 flex items-center justify-start pl-4 md:pl-16">
+                <div className="relative z-10 text-white max-w-md">
+                  <h1 className="text-xl md:text-5xl lg:text-6xl font-bold mb-4">Find Top <br /> Professionals</h1>
+                  <p className="text-xs md:text-lg lg:text-xl mb-6">Connect with skilled professionals in your area.</p>
+                </div>
+                <img src="/pr-banner-shape.png" alt="" className="absolute bottom-0 right-0 w-auto h-full" />
               </div>
             </div>
           </section>

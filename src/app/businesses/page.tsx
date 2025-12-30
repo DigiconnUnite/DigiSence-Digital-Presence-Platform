@@ -321,8 +321,13 @@ export default function BusinessesPage() {
           {/* Hero Banner - 16:9 Ratio */}
           <section className=" px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-              <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-600 aspect-3/1 md:aspect-4/1 flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/20"></div>
+              <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-3/1 md:aspect-4/1 flex items-center justify-start pl-4 md:pl-16">
+
+                <div className="relative z-10 text-white max-w-md">
+                  <h1 className="text-xl md:text-5xl lg:text-6xl font-bold mb-4">Find Top <br /> Businesses</h1>
+                  <p className="text-xs md:text-lg lg:text-xl mb-6">Discover amazing businesses and explore their products.</p>
+                </div>
+                <img src="/pr-banner-shape.png" alt="" className="absolute bottom-0 right-0 w-auto h-full" />
               </div>
             </div>
           </section>

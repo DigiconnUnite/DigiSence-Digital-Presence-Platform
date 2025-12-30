@@ -795,13 +795,40 @@ export default function ProfessionalDashboard() {
       return
     }
 
-    // Here you would implement the actual upload logic
-    // For now, just show a success message
-    toast({
-      title: "Success",
-      description: "Banner image uploaded successfully!",
-    })
-    setShowBannerModal(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'banner')
+
+      const response = await fetch('/api/professionals/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBannerUrl(data.url)
+        toast({
+          title: "Success",
+          description: "Banner image uploaded successfully!",
+        })
+        setShowBannerModal(false)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to upload banner: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Banner upload error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload banner image. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleProfilePictureUpload = async (files: FileList) => {
@@ -818,13 +845,40 @@ export default function ProfessionalDashboard() {
       return
     }
 
-    // Here you would implement the actual upload logic
-    // For now, just show a success message
-    toast({
-      title: "Success",
-      description: "Profile picture uploaded successfully!",
-    })
-    setShowProfilePictureModal(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'profile')
+
+      const response = await fetch('/api/professionals/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfilePictureUrl(data.url)
+        toast({
+          title: "Success",
+          description: "Profile picture uploaded successfully!",
+        })
+        setShowProfilePictureModal(false)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: `Failed to upload profile picture: ${error.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Profile picture upload error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleInquiryStatusUpdate = async (inquiryId: string, newStatus: string) => {
@@ -1765,6 +1819,8 @@ export default function ProfessionalDashboard() {
                     <ImageUpload
                       onUpload={setProfilePictureUrl}
                       className="max-w-md"
+                      uploadUrl="/api/professionals/upload"
+                      uploadType="profile"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1772,6 +1828,8 @@ export default function ProfessionalDashboard() {
                     <ImageUpload
                       onUpload={setBannerUrl}
                       className="max-w-md"
+                      uploadUrl="/api/professionals/upload"
+                      uploadType="banner"
                     />
                   </div>
                 </div>
@@ -1919,6 +1977,8 @@ export default function ProfessionalDashboard() {
                 <ImageUpload
                   onUpload={setProfilePictureUrl}
                   className="max-w-md"
+                  uploadUrl="/api/professionals/upload"
+                  uploadType="profile"
                 />
                 {profilePictureUrl && (
                   <p className="text-sm text-gray-600">Current: {profilePictureUrl}</p>
@@ -1929,6 +1989,8 @@ export default function ProfessionalDashboard() {
                 <ImageUpload
                   onUpload={setBannerUrl}
                   className="max-w-md"
+                  uploadUrl="/api/professionals/upload"
+                  uploadType="banner"
                 />
                 {bannerUrl && (
                   <p className="text-sm text-gray-600">Current: {bannerUrl}</p>

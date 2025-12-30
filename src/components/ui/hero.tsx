@@ -89,7 +89,7 @@ export default function HeroSectionOne() {
   };
 
   return (
-    <div className="relative py-30 h-fit overflow-hidden bg-linear-30 from-cyan-950  via-55%  via-slate-950 to-cyan-900  ">
+    <div className="relative py-30 h-fit overflow-hidden bg-linear-30  from-cyan-950  via-55%  via-slate-900 to-cyan-900  ">
 
       <div
         aria-hidden
@@ -100,7 +100,7 @@ export default function HeroSectionOne() {
 
       <div className="relative mx-auto    flex max-w-7xl flex-col items-center justify-center px-4">
         <div className="py-8 md:py-16 lg:py-20 w-full">
-          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
+          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-3xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
             {"Launch your website in hours, not days"
               .split(" ")
               .map((word, index) => (
@@ -119,20 +119,6 @@ export default function HeroSectionOne() {
                 </motion.span>
               ))}
           </h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.5,
-              delay: 0.8,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
-            className="relative z-10 mx-auto max-w-xl py-4 text-center text-sm sm:text-base lg:text-lg font-normal text-neutral-600 dark:text-neutral-400"
-          >
-            With AI, you can launch your website in hours, not days. Try our best
-            in class, state of the art, cutting edge AI tools to get your website
-            up.
-          </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,7 +129,7 @@ export default function HeroSectionOne() {
             }}
             className="relative z-10 mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
           >
-            <button className="w-full sm:w-48 md:w-60 transform rounded-lg bg-black px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-gray-200">
+            <button className="w-full sm:w-48 md:w-60 transform rounded-lg bg-slate-800 px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200">
               Explore Now
             </button>
             <button className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">

@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, unlink, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { v2 as cloudinary } from 'cloudinary'
-
-// Initialize Cloudinary
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dycm4ujkn',
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '587749428528119',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'QJLOTo9wDxk5MnjtAfS1m5JzPBk',
-})
+import { uploadToS3, getOptimizedImageUrl, getOptimizedVideoUrl } from '@/lib/s3-upload'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,54 +27,47 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Use /tmp directory for serverless environments
-    const tempDir = '/tmp'
-
-    // Create a temporary file
+    // Convert file to buffer
     const bytes = await file.arrayBuffer()
-    const tempFilePath = join(tempDir, `upload_${Date.now()}_${file.name}`)
-    await writeFile(tempFilePath, Buffer.from(bytes))
+    const buffer = Buffer.from(bytes)
 
-    // Determine resource type
+    // Determine if it's video or image for folder organization
     const isVideo = allowedVideoTypes.includes(file.type)
     const isPdf = allowedPdfTypes.includes(file.type)
-    const resourceType = isVideo ? 'video' : isPdf ? 'raw' : 'image'
+    const folder = 'bdpp-uploads'
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(tempFilePath, {
-      resource_type: resourceType,
-      folder: 'bdpp-uploads',
-      use_filename: true,
-      unique_filename: true,
-      // Video-specific options
-      ...(isVideo && {
-        eager: [
-          { width: 720, height: 480, crop: 'fill' },
-          { width: 480, height: 320, crop: 'fill' }
-        ]
-      })
+    // Upload to S3
+    const uploadResult = await uploadToS3(buffer, file.name, {
+      folder,
+      contentType: file.type,
     })
 
-    // Clean up temp file
-    try {
-      await unlink(tempFilePath)
-    } catch (error) {
-      console.warn('Failed to clean up temp file:', error)
+    if (!uploadResult.success) {
+      return NextResponse.json({
+        error: 'Failed to upload media',
+        details: uploadResult.error
+      }, { status: 500 })
     }
 
-    if (result.secure_url) {
-      return NextResponse.json({
-        success: true,
-        url: result.secure_url,
-        filename: result.original_filename,
-        size: file.size,
-        type: file.type,
-        resourceType: result.resource_type,
-        message: `${isVideo ? 'Video' : isPdf ? 'PDF' : 'Image'} uploaded successfully!`
-      })
-    } else {
-      return NextResponse.json({ error: 'Failed to upload media' }, { status: 500 })
+    // Generate optimized URLs for videos
+    let optimizedUrls = {}
+    if (isVideo && uploadResult.url) {
+      optimizedUrls = {
+        optimized_720p: getOptimizedVideoUrl(uploadResult.url, { width: 720, height: 480 }),
+        optimized_480p: getOptimizedVideoUrl(uploadResult.url, { width: 480, height: 320 }),
+      }
     }
+
+    return NextResponse.json({
+      success: true,
+      url: uploadResult.url,
+      filename: file.name,
+      size: file.size,
+      type: file.type,
+      resourceType: isVideo ? 'video' : isPdf ? 'raw' : 'image',
+      optimizedUrls,
+      message: `${isVideo ? 'Video' : isPdf ? 'PDF' : 'Image'} uploaded successfully!`
+    })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json({

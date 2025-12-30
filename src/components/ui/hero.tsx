@@ -89,7 +89,7 @@ export default function HeroSectionOne() {
   };
 
   return (
-    <div className="relative py-30 h-fit overflow-hidden bg-linear-30  from-cyan-950  via-55%  via-slate-900 to-cyan-900  ">
+    <div className="relative py-30 h-fit overflow-hidden primary-gradient">
 
       <div
         aria-hidden

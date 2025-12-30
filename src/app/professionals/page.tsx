@@ -148,9 +148,8 @@ export default function ProfessionalsPage() {
 
   return (
     <>
-
-      <div className="min-h-screen pb-16 md:pb-0 relative">
-        <div className="absolute inset-0 -z-10">
+      <div className="min-h-screen secondary-light-gradient pb-16 md:pb-0 relative">
+        <div className="absolute inset-0 z-0">
           <Aurora />
         </div>
         {/* Navigation Bar - Fixed at Top */}
@@ -164,31 +163,81 @@ export default function ProfessionalsPage() {
                 >
                   <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
 
-                  <span className="font-bold text-xl text-primary">DigiSence</span>
+                  <span className="font-bold text-xl text-primary">
+                    DigiSence
+                  </span>
                 </Link>
               </div>
               <div className="hidden md:flex space-x-8 flex-1 justify-center">
-                <Link href="/" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                <Link
+                  href="/"
+                  className={cn(
+                    "hover:text-cyan-400 transition-colors px-2 py-1 rounded-md",
+                    pathname === "/"
+                      ? "bg-white text-slate-800 font-bold"
+                      : "text-gray-700"
+                  )}
+                >
                   Home
                 </Link>
-                <Link href="/businesses" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/businesses" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                <Link
+                  href="/businesses"
+                  className={cn(
+                    "hover:text-cyan-400 transition-colors px-2 py-1 rounded-md",
+                    pathname === "/businesses"
+                      ? "bg-white text-slate-800 font-bold"
+                      : "text-gray-700"
+                  )}
+                >
                   Businesses
                 </Link>
-                <Link href="/professionals" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/professionals" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                <Link
+                  href="/professionals"
+                  className={cn(
+                    "hover:text-cyan-400 transition-colors px-2 py-1 rounded-md",
+                    pathname === "/professionals"
+                      ? "bg-white text-slate-800 font-bold"
+                      : "text-gray-700"
+                  )}
+                >
                   Professionals
                 </Link>
-                <Link href="/pricing" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/pricing" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                <Link
+                  href="/pricing"
+                  className={cn(
+                    "hover:text-cyan-400 transition-colors px-2 py-1 rounded-md",
+                    pathname === "/pricing"
+                      ? "bg-white text-slate-800 font-bold"
+                      : "text-gray-700"
+                  )}
+                >
                   Pricing
                 </Link>
-                <Link href="/contact" className={cn("hover:text-cyan-400 transition-colors px-2 py-1 rounded-md", pathname === "/contact" ? "bg-white text-slate-800 font-bold" : "text-gray-700")}>
+                <Link
+                  href="/contact"
+                  className={cn(
+                    "hover:text-cyan-400 transition-colors px-2 py-1 rounded-md",
+                    pathname === "/contact"
+                      ? "bg-white text-slate-800 font-bold"
+                      : "text-gray-700"
+                  )}
+                >
                   Contact Us
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="outline" className=" text-white bg-slate-800  border-gray-800" asChild>
+                <Button
+                  variant="outline"
+                  className=" text-white bg-slate-800  border-gray-800"
+                  asChild
+                >
                   <Link href="/register">Make Your Profile</Link>
                 </Button>
-                <Button variant="outline" className="bg-white text-gray-900 hover:bg-slate-800 hover:text-white border-gray-800" asChild>
+                <Button
+                  variant="outline"
+                  className="bg-white text-gray-900 hover:bg-slate-800 hover:text-white border-gray-800"
+                  asChild
+                >
                   <Link href="/login">Login</Link>
                 </Button>
                 {/* Mobile menu button */}
@@ -196,7 +245,11 @@ export default function ProfessionalsPage() {
                   className="md:hidden ml-2 p-2 rounded-md text-gray-700 hover:bg-gray-100"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
-                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  {mobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
                 </button>
               </div>
             </div>
@@ -209,7 +262,13 @@ export default function ProfessionalsPage() {
                 {categories.map((category) => (
                   <button
                     key={category.id}
-                    onClick={() => setSelectedCategory(selectedCategory === category.name ? null : category.name)}
+                    onClick={() =>
+                      setSelectedCategory(
+                        selectedCategory === category.name
+                          ? null
+                          : category.name
+                      )
+                    }
                     className={cn(
                       "px-4  text-xs font-medium whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0",
                       selectedCategory === category.name
@@ -228,25 +287,46 @@ export default function ProfessionalsPage() {
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-gray-200 py-2">
               <div className="px-4 sm:px-6 lg:px-8 space-y-1">
-                <Link href="/" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Home
                 </Link>
-                <Link href="/businesses" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/businesses"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Businesses
                 </Link>
-                <Link href="/professionals" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/professionals"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Professionals
                 </Link>
-                <Link href="/pricing" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/pricing"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Pricing
                 </Link>
-                <Link href="/contact" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/contact"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Contact Us
                 </Link>
-                <Link href="/register" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/register"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Make Your Profile
                 </Link>
-                <Link href="/login" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link
+                  href="/login"
+                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                >
                   Login
                 </Link>
               </div>
@@ -281,14 +361,16 @@ export default function ProfessionalsPage() {
             </div>
           </div>
 
-
           {/* Professional Cards Section */}
           <section className="pb-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               {isLoading ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={i} className="overflow-hidden border-0  bg-white/80 backdrop-blur-sm">
+                    <Card
+                      key={i}
+                      className="overflow-hidden border-0  bg-white/80 backdrop-blur-sm"
+                    >
                       <CardHeader className="pb-2 md:pb-4">
                         <div className="flex items-center space-x-2 md:space-x-4">
                           <Skeleton className="h-12 w-12 md:h-16 md:w-16 rounded-full" />
@@ -313,131 +395,149 @@ export default function ProfessionalsPage() {
                 <div className="text-center py-16">
                   <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-primary mb-2">
-                    {searchTerm ? 'No professionals found' : 'No professionals available'}
+                    {searchTerm
+                      ? "No professionals found"
+                      : "No professionals available"}
                   </h3>
                   <p className="text-muted-foreground">
                     {searchTerm
-                      ? 'Try adjusting your search terms'
-                      : 'Check back later for new professionals'
-                    }
+                      ? "Try adjusting your search terms"
+                      : "Check back later for new professionals"}
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-12">
                     <h2 className="text-2xl font-bold text-primary">
-                      {searchTerm ? `Search Results (${filteredProfessionals.length})` : `All Professionals (${filteredProfessionals.length})`}
+                      {searchTerm
+                        ? `Search Results (${filteredProfessionals.length})`
+                        : `All Professionals (${filteredProfessionals.length})`}
                     </h2>
                   </div>
 
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProfessionals.map((professional) => (
-                          <Card
-                            key={professional.id}
-                            className="overflow-hidden border  bg-white/80 backdrop-blur-sm"
-                          >
-                            <CardHeader className="pb-2 md:pb-4">
-                              <div className="flex items-center space-x-2 md:space-x-4">
-                                <div className="shrink-0">
-                                  {professional.profilePicture ? (
-                                    <img
-                                      src={getOptimizedImageUrl(professional.profilePicture, {
-                                        width: 48,
-                                        height: 48,
-                                        quality: 85,
-                                        format: 'auto',
-                                        crop: 'fill',
-                                        gravity: 'center'
-                                      })}
-                                      alt={professional.name}
-                                      className="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover border-2 border-border"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                                      <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
-                                    </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProfessionals.map((professional) => (
+                      <Card
+                        key={professional.id}
+                        className="overflow-hidden border  bg-white/80 backdrop-blur-sm"
+                      >
+                        <CardHeader className="pb-2 md:pb-4">
+                          <div className="flex items-center space-x-2 md:space-x-4">
+                            <div className="shrink-0">
+                              {professional.profilePicture ? (
+                                <img
+                                  src={getOptimizedImageUrl(
+                                    professional.profilePicture,
+                                    {
+                                      width: 48,
+                                      height: 48,
+                                      quality: 85,
+                                      format: "auto",
+                                      crop: "fill",
+                                      gravity: "center",
+                                    }
                                   )}
+                                  alt={professional.name}
+                                  className="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover border-2 border-border"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                                  <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
-                                    {professional.name}
-                                  </CardTitle>
-                                  {professional.professionalHeadline && (
-                                    <Badge variant="secondary" className="mt-1 text-xs">
-                                      {professional.professionalHeadline}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </CardHeader>
-
-                            <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
-                              {/* Contact Info */}
-                              <div className="space-y-2">
-                                {professional.location && (
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{professional.location}</span>
-                                  </div>
-                                )}
-                                {professional.phone && (
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span>{professional.phone}</span>
-                                  </div>
-                                )}
-                                {professional.email && (
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{professional.email}</span>
-                                  </div>
-                                )}
-                                {professional.website && (
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                    <a
-                                      href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline truncate"
-                                    >
-                                      Visit Website
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Stats */}
-                              <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border">
-                                <div className="flex items-center text-xs md:text-sm text-muted-foreground">
-                                  <User className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                  <span>Professional</span>
-                                </div>
-                                <Button
-                                  asChild
-                                  size="sm"
-                                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs md:text-sm"
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
+                                {professional.name}
+                              </CardTitle>
+                              {professional.professionalHeadline && (
+                                <Badge
+                                  variant="secondary"
+                                  className="mt-1 text-xs"
                                 >
-                                  <Link href={`/pcard/${professional.slug}`}>
-                                    <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                                    <span className="hidden sm:inline">View Profile</span>
-                                    <ArrowRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
-                                  </Link>
-                                </Button>
+                                  {professional.professionalHeadline}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+
+                        <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
+                          {/* Contact Info */}
+                          <div className="space-y-2">
+                            {professional.location && (
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                                <span className="truncate">
+                                  {professional.location}
+                                </span>
                               </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                            )}
+                            {professional.phone && (
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                                <span>{professional.phone}</span>
+                              </div>
+                            )}
+                            {professional.email && (
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                                <span className="truncate">
+                                  {professional.email}
+                                </span>
+                              </div>
+                            )}
+                            {professional.website && (
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                                <a
+                                  href={
+                                    professional.website.startsWith("http")
+                                      ? professional.website
+                                      : `https://${professional.website}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline truncate"
+                                >
+                                  Visit Website
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Stats */}
+                          <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border">
+                            <div className="flex items-center text-xs md:text-sm text-muted-foreground">
+                              <User className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                              <span>Professional</span>
+                            </div>
+                            <Button
+                              asChild
+                              size="sm"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs md:text-sm"
+                            >
+                              <Link href={`/pcard/${professional.slug}`}>
+                                <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                <span className="hidden sm:inline">
+                                  View Profile
+                                </span>
+                                <ArrowRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 </>
               )}
             </div>
           </section>
-
         </main>
       </div>
       <Footer />
     </>
-  )
+  );
 }

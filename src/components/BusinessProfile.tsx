@@ -799,7 +799,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
 
                     return (
                       <div key={index} className="w-full shrink-0">
-                        <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] md:max-h-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
+                        <div className="relative w-full aspect-3/1 md:max-h-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
                           {isVideo && mediaUrl ? (
                             <video
                               src={mediaUrl}
@@ -966,7 +966,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                 </>
               )}
               {heroContent.showDots !== false && heroContent.slides.length > 1 && (
-                <div className="flex justify-center mt-4 space-x-2">
+                <div className="flex absolute bottom-2 mx-auto  w-full justify-center mt-4 space-x-2">
                   {heroContent.slides.map((_: any, index: number) => (
                     <button
                       key={index}

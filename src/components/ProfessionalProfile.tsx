@@ -26,6 +26,7 @@ interface Professional {
   adminId: string;
   workExperience: any;
   education: any;
+  certifications: any;
   skills: any;
   servicesOffered: any;
   contactInfo: any;
@@ -159,6 +160,8 @@ export default function ProfessionalProfile({
               JSON.stringify(professional.workExperience) ||
             JSON.stringify(updatedProfessional.education) !==
               JSON.stringify(professional.education) ||
+            JSON.stringify(updatedProfessional.certifications) !==
+              JSON.stringify(professional.certifications) ||
             JSON.stringify(updatedProfessional.skills) !==
               JSON.stringify(professional.skills) ||
             JSON.stringify(updatedProfessional.servicesOffered) !==
@@ -644,13 +647,74 @@ export default function ProfessionalProfile({
               <div className="md:col-span-2">
                 <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
                   <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">
                       About
                     </h2>
-                    <p className="text-gray-700">
-                      {professional.aboutMe ||
-                        "No about information available."}
-                    </p>
+                    <div className="space-y-6">
+                      {/* About Me Section */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                          <User className="w-5 h-5 mr-2 text-amber-600" />
+                          About Me
+                        </h3>
+                        <p className="text-gray-700 leading-relaxed">
+                          {professional.aboutMe ||
+                            "No about information available."}
+                        </p>
+                      </div>
+
+                      {/* Education Section */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                          <Award className="w-5 h-5 mr-2 text-amber-600" />
+                          Education
+                        </h3>
+                        {professional.education && professional.education.length > 0 ? (
+                          <div className="space-y-4">
+                            {professional.education.map((edu: any, index: number) => (
+                              <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Award className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-gray-900">{edu.degree || edu.title}</p>
+                                  <p className="text-sm text-gray-600">{edu.institution || edu.school}</p>
+                                  <p className="text-sm text-gray-500">{edu.year || edu.duration}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic">No education information available.</p>
+                        )}
+                      </div>
+
+                      {/* Certifications Section */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                          <Award className="w-5 h-5 mr-2 text-amber-600" />
+                          Certifications
+                        </h3>
+                        {professional.certifications && professional.certifications.length > 0 ? (
+                          <div className="space-y-4">
+                            {professional.certifications.map((cert: any, index: number) => (
+                              <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Award className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-gray-900">{cert.name || cert.title}</p>
+                                  <p className="text-sm text-gray-600">{cert.issuer || cert.organization}</p>
+                                  <p className="text-sm text-gray-500">{cert.year || cert.date}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic">No certifications available.</p>
+                        )}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

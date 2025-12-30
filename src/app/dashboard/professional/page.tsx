@@ -210,9 +210,6 @@ export default function ProfessionalDashboard() {
   const [showProfilePictureModal, setShowProfilePictureModal] = useState(false)
   const [showBannerModal, setShowBannerModal] = useState(false)
 
-  // File input refs for image uploads
-  const bannerFileInputRef = useRef<HTMLInputElement>(null)
-  const profileFileInputRef = useRef<HTMLInputElement>(null)
 
   // Input refs for maintaining focus
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -781,105 +778,6 @@ export default function ProfessionalDashboard() {
     }
   }
 
-  const handleBannerImageUpload = async (files: FileList) => {
-    const file = files[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Error",
-        description: "Please select a valid image file.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', 'banner')
-
-      const response = await fetch('/api/professionals/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setBannerUrl(data.url)
-        toast({
-          title: "Success",
-          description: "Banner image uploaded successfully!",
-        })
-        setShowBannerModal(false)
-      } else {
-        const error = await response.json()
-        toast({
-          title: "Error",
-          description: `Failed to upload banner: ${error.error}`,
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Banner upload error:', error)
-      toast({
-        title: "Error",
-        description: "Failed to upload banner image. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleProfilePictureUpload = async (files: FileList) => {
-    const file = files[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Error",
-        description: "Please select a valid image file.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', 'profile')
-
-      const response = await fetch('/api/professionals/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setProfilePictureUrl(data.url)
-        toast({
-          title: "Success",
-          description: "Profile picture uploaded successfully!",
-        })
-        setShowProfilePictureModal(false)
-      } else {
-        const error = await response.json()
-        toast({
-          title: "Error",
-          description: `Failed to upload profile picture: ${error.error}`,
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Profile picture upload error:', error)
-      toast({
-        title: "Error",
-        description: "Failed to upload profile picture. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
 
   const handleInquiryStatusUpdate = async (inquiryId: string, newStatus: string) => {
     try {
@@ -3176,30 +3074,25 @@ export default function ProfessionalDashboard() {
           </DialogHeader>
 
           <div className="space-y-6">
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-              <Image className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Banner Image</h3>
-              <p className="text-gray-600 mb-4">Drag and drop an image here, or click to select</p>
-              <Button
-                variant="outline"
-                className="rounded-xl"
-                onClick={() => bannerFileInputRef.current?.click()}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Select Image
-              </Button>
-              <input
-                ref={bannerFileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleBannerImageUpload(e.target.files)
-                  }
-                }}
-              />
-            </div>
+            <ImageUpload
+              accept="image/*"
+              aspectRatio={4 / 1}
+              uploadUrl="/api/professionals/upload"
+              uploadType="banner"
+              onUpload={(url) => {
+                setBannerUrl(url)
+                setShowBannerModal(false)
+                toast({
+                  title: "Success",
+                  description: "Banner image updated successfully!",
+                })
+              }}
+              onError={(error) => toast({
+                title: "Upload Error",
+                description: error,
+                variant: "destructive",
+              })}
+            />
 
             {professional?.banner && (
               <div className="space-y-4">
@@ -3210,30 +3103,11 @@ export default function ProfessionalDashboard() {
                     alt="Current banner"
                     className="w-full h-32 object-cover rounded-xl border"
                   />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                    <Button size="sm" variant="secondary" className="rounded-xl">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Crop Image
-                    </Button>
-                  </div>
                 </div>
               </div>
             )}
 
             <div className="flex gap-4 pt-4 border-t">
-              <Button
-                onClick={() => {
-                  // Handle save
-                  setShowBannerModal(false)
-                  toast({
-                    title: "Success",
-                    description: "Banner image updated successfully!",
-                  })
-                }}
-                className="flex-1 rounded-xl"
-              >
-                Save Changes
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowBannerModal(false)}
@@ -3257,30 +3131,25 @@ export default function ProfessionalDashboard() {
           </DialogHeader>
 
           <div className="space-y-6">
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-              <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Profile Picture</h3>
-              <p className="text-gray-600 mb-4">Drag and drop an image here, or click to select</p>
-              <Button
-                variant="outline"
-                className="rounded-xl"
-                onClick={() => profileFileInputRef.current?.click()}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Select Image
-              </Button>
-              <input
-                ref={profileFileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleProfilePictureUpload(e.target.files)
-                  }
-                }}
-              />
-            </div>
+            <ImageUpload
+              accept="image/*"
+              aspectRatio={1}
+              uploadUrl="/api/professionals/upload"
+              uploadType="profile"
+              onUpload={(url) => {
+                setProfilePictureUrl(url)
+                setShowProfilePictureModal(false)
+                toast({
+                  title: "Success",
+                  description: "Profile picture updated successfully!",
+                })
+              }}
+              onError={(error) => toast({
+                title: "Upload Error",
+                description: error,
+                variant: "destructive",
+              })}
+            />
 
             {professional?.profilePicture && (
               <div className="space-y-4">
@@ -3292,31 +3161,12 @@ export default function ProfessionalDashboard() {
                       alt="Current profile picture"
                       className="w-32 h-32 object-cover rounded-full border-4 border-white shadow-lg"
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
-                      <Button size="sm" variant="secondary" className="rounded-xl">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Crop Image
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             <div className="flex gap-4 pt-4 border-t">
-              <Button
-                onClick={() => {
-                  // Handle save
-                  setShowProfilePictureModal(false)
-                  toast({
-                    title: "Success",
-                    description: "Profile picture updated successfully!",
-                  })
-                }}
-                className="flex-1 rounded-xl"
-              >
-                Save Changes
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowProfilePictureModal(false)}

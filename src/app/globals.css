@@ -156,3 +156,13 @@ display: none;
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200px 100%;
 }
+
+/* Primary gradient */
+.primary-gradient {
+  @apply bg-gradient-to-r from-sky-800 via-sky-900 to-slate-800;
+}
+
+/* Secondary light gradient */
+.secondary-light-gradient {
+  @apply bg-gradient-to-r from-blue-50 via-sky-50 to-cyan-50;
+}

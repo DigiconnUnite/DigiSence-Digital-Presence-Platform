@@ -25,7 +25,32 @@ import {
   X,
   Menu,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ShoppingBag,
+  Wrench,
+  Cog,
+  Heart,
+  GraduationCap,
+  Code,
+  ChefHat,
+  Truck,
+  Calculator,
+  Building,
+  Hammer,
+  Home,
+  ShoppingCart,
+  Stethoscope,
+  Scale,
+  Palette,
+  Camera,
+  Briefcase,
+  Users,
+  Pill,
+  Zap,
+  Droplets,
+  Plane,
+  Megaphone,
+  Coffee
 } from 'lucide-react'
 
 interface Business {
@@ -51,6 +76,7 @@ interface Category {
   name: string
   slug: string
 }
+
 
 export default function BusinessesPage() {
    const [businesses, setBusinesses] = useState<Business[]>([])
@@ -96,6 +122,27 @@ export default function BusinessesPage() {
       setIsLoading(false)
     }
   }
+
+     const businessCategories = [
+       { name: 'IT Services', icon: Code },
+      { name: 'Restaurant', icon: ChefHat },
+      { name: 'Digital Marketing', icon: Megaphone },
+      { name: 'Travel Agency', icon: Plane },
+      { name: 'Shop', icon: ShoppingBag },
+      { name: 'Hotel', icon: Building },
+      { name: 'Cafe', icon: Coffee },
+      { name: 'Retail', icon: ShoppingCart },
+      { name: 'Healthcare', icon: Heart },
+      { name: 'Education', icon: GraduationCap },
+      { name: 'Automotive', icon: Truck },
+      { name: 'Real Estate', icon: Home },
+      { name: 'Construction', icon: Hammer },
+      { name: 'Consulting', icon: Users },
+      { name: 'Manufacturing', icon: Cog },
+      { name: 'Finance', icon: Calculator },
+      { name: 'Legal', icon: Scale },
+      { name: 'Photography', icon: Camera }
+    ]
 
   const fetchCategories = async () => {
     try {
@@ -234,33 +281,36 @@ export default function BusinessesPage() {
           </div>
 
           {/* Category Slider - Full Width */}
-          <div className="bg-gray-50 py-2 border-t border-gray-200">
+          <div className="bg-gray-50 py-0.5 border-t border-gray-200">
             <div className="max-w-7xl mx-auto ">
               <div
-                ref={categoryScrollRef}
-                className="flex items-center overflow-x-auto scrollbar-hide"
+                className="flex items-center overflow-x-auto scrollbar-hide px-4"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() =>
-                      setSelectedCategory(
+                {businessCategories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <button
+                      key={category.name}
+                      onClick={() =>
+                        setSelectedCategory(
+                          selectedCategory === category.name
+                            ? null
+                            : category.name
+                        )
+                      }
+                      className={cn(
+                        "px-4 py-2 text-sm font-semibold whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0 flex items-center space-x-2",
                         selectedCategory === category.name
-                          ? null
-                          : category.name
-                      )
-                    }
-                    className={cn(
-                      "px-4  text-xs font-medium whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0",
-                      selectedCategory === category.name
-                        ? "bg-primary text-primary-foreground"
-                        : " text-gray-500 "
-                    )}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+                          ? "bg-primary text-primary-foreground"
+                          : " text-gray-500 "
+                      )}
+                    >
+                      <IconComponent className="h-5 w-5" />
+                      <span>{category.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -322,12 +372,19 @@ export default function BusinessesPage() {
           <section className=" px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-3/1 md:aspect-4/1 flex items-center justify-start pl-4 md:pl-16">
-
                 <div className="relative z-10 text-white max-w-md">
-                  <h1 className="text-xl md:text-5xl lg:text-6xl font-bold mb-4">Find Top <br /> Businesses</h1>
-                  <p className="text-xs md:text-lg lg:text-xl mb-6">Discover amazing businesses and explore their products.</p>
+                  <h1 className="text-xl md:text-5xl lg:text-6xl font-bold mb-4">
+                    Find Top <br /> Businesses
+                  </h1>
+                  <p className="text-xs md:text-lg lg:text-xl mb-6">
+                    Discover amazing businesses and explore their products.
+                  </p>
                 </div>
-                <img src="/pr-banner-shape.png" alt="" className="absolute bottom-0 right-0 w-auto h-full" />
+                <img
+                  src="/pr-banner-shape.png"
+                  alt=""
+                  className="absolute bottom-0 right-0 w-auto h-full"
+                />
               </div>
             </div>
           </section>

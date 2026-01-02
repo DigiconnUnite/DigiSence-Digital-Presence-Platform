@@ -1,7 +1,9 @@
+// app/pcard/[slug]/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Define Professional type since Prisma doesn't export it for MongoDB
 interface Professional {
@@ -96,6 +98,14 @@ export default function ProfessionalProfile({
   professional: initialProfessional,
 }: ProfessionalProfileProps) {
   const searchParams = useSearchParams();
+  const {
+    themeSettings,
+    getBackgroundClass,
+    getCardClass,
+    getButtonClass,
+    getPrimaryColor,
+    getBorderRadius,
+  } = useTheme();
   const [professional, setProfessional] = useState(initialProfessional);
   const [inquiryModal, setInquiryModal] = useState(false);
   const [inquiryData, setInquiryData] = useState<InquiryFormData>({
@@ -330,9 +340,11 @@ export default function ProfessionalProfile({
     );
 
     return (
-      <Card className="bg-white h-[700px] bg-gradient-to-t from-amber-100 via-white  to-white  rounded-xl p-4 shadow-lg border-0 overflow-hidden">
+      <Card
+        className={`${getCardClass()} h-[700px] bg-linear-to-t from-amber-100 via-white to-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
+      >
         {/* Banner */}
-        <div className="relative h-auto  bg-gradient-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
+        <div className="relative h-auto bg-linear-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
           {professional.banner && (
             <img
               src={bannerImage.src}
@@ -389,7 +401,7 @@ export default function ProfessionalProfile({
                 onClick={() =>
                   window.open(`tel:${professional.phone}`, "_self")
                 }
-                className="flex items-center w-auto bg-gray-100 hover:bg-gray-200 shadow-sm text-gray-900 rounded-lg px-4 py-2"
+                className={`flex items-center w-auto bg-amber-400 hover:bg-amber-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Make Call
@@ -403,9 +415,9 @@ export default function ProfessionalProfile({
                     "_blank"
                   )
                 }
-                className="flex items-center w-auto bg-green-100 hover:bg-green-200 shadow-sm text-green-900 rounded-lg px-4 py-2"
+                className={`flex items-center w-auto bg-green-400 hover:bg-green-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
               >
-                <FaWhatsapp className="w-4 h-4 mr-2" />
+                <FaWhatsapp className="w-8 h-8 mr-2 font-extrabold" />
                 WhatsApp
               </Button>
             )}
@@ -414,7 +426,7 @@ export default function ProfessionalProfile({
                 onClick={() =>
                   window.open(`mailto:${professional.email}`, "_self")
                 }
-                className="flex items-center  bg-blue-100 hover:bg-blue-200 text-blue-900 shadow-sm rounded-lg px-4 py-2"
+                className={`flex items-center bg-blue-500 hover:bg-blue-600 cursor-pointer text-white shadow-sm ${getBorderRadius()} px-4 py-2`}
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Email
@@ -424,11 +436,15 @@ export default function ProfessionalProfile({
 
           {/* Additional Buttons */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <Button className="flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+            <Button
+              className={`flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-amber-200 cursor-pointer transition-colors`}
+            >
               <FileText className="w-4 h-4 mr-2" />
               Resume
             </Button>
-            <Button className="flex flex-row gap-2 items-center  text-gray-700 space-y-1 p-3 bg-amber-100 rounded-lg hover:bg-amber-200 cursor-pointer transition-colors">
+            <Button
+              className={`flex flex-row gap-2 items-center text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-amber-200 cursor-pointer transition-colors`}
+            >
               <Download className="w-4 h-4 mr-2" />
               Download Card
             </Button>
@@ -441,7 +457,7 @@ export default function ProfessionalProfile({
                 href={professional.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors"
+                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiFacebook className="w-6 h-6 text-blue-600" />
               </a>
@@ -451,7 +467,7 @@ export default function ProfessionalProfile({
                 href={professional.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiX className="w-6 h-6 text-black" />
               </a>
@@ -461,7 +477,7 @@ export default function ProfessionalProfile({
                 href={professional.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiInstagram className="w-6 h-6 text-pink-600" />
               </a>
@@ -471,7 +487,7 @@ export default function ProfessionalProfile({
                 href={professional.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-12 h-12 bg-gradient-to-b from-amber-100 to-white rounded-lg hover:from-amber-200 hover:to-gray-50 border  shadow-sm flex items-center justify-center transition-colors"
+                className={`w-12 h-12 bg-linear-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiLinkedin className="w-6 h-6 text-blue-700" />
               </a>
@@ -494,7 +510,7 @@ export default function ProfessionalProfile({
                 });
               }
             }}
-            className="w-full mb-5 flex items-center justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 rounded-full p-3 transition-colors"
+            className={`w-full mb-5 flex items-center cursor-pointer justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 ${getBorderRadius()} p-3 transition-colors`}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Profile
@@ -510,10 +526,15 @@ export default function ProfessionalProfile({
   };
 
   return (
-    <div className="min-h-screen bg-[#fef7ed]" suppressHydrationWarning>
+    <div
+      className={`min-h-screen ${getBackgroundClass()} ${
+        themeSettings.fontFamily
+      } ${themeSettings.fontSize}`}
+      suppressHydrationWarning
+    >
       {/* Top Navigation Bar - Desktop */}
-      <nav className="hidden md:block fixed top-4 left-1/2 max-w-7xl w-screen  transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3">
-        <div className="flex items-center justify-between  mx-auto">
+      <nav className="hidden md:block fixed top-4 left-1/2 max-w-7xl w-screen transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3">
+        <div className="flex items-center justify-between mx-auto">
           {/* Left Side */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -563,7 +584,7 @@ export default function ProfessionalProfile({
           {/* Right Side */}
           <Button
             onClick={() => setCurrentView("contact")}
-            className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-4 py-2 shadow-md"
+            className={`bg-amber-600 hover:bg-amber-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
           >
             Let's Talk
           </Button>
@@ -576,8 +597,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "home"
-                ? "text-amber-600 bg-amber-50"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                ? "text-amber-500 bg-amber-50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => {
               setCurrentView("home");
@@ -590,8 +611,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "about"
-                ? "text-amber-600 bg-amber-50"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                ? "text-amber-500 bg-amber-50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("about")}
           >
@@ -601,8 +622,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "services"
-                ? "text-amber-600 bg-amber-50"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                ? "text-amber-500 bg-amber-50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("services")}
           >
@@ -612,8 +633,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "portfolio"
-                ? "text-amber-600 bg-amber-50"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                ? "text-amber-500 bg-amber-50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("portfolio")}
           >
@@ -623,8 +644,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "contact"
-                ? "text-amber-600 bg-amber-50"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                ? "text-amber-500 bg-amber-50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("contact")}
           >
@@ -645,7 +666,9 @@ export default function ProfessionalProfile({
               </div>
               {/* About Card */}
               <div className="md:col-span-2">
-                <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
+                <Card
+                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                >
                   <CardContent className="p-0">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">
                       About
@@ -669,23 +692,37 @@ export default function ProfessionalProfile({
                           <Award className="w-5 h-5 mr-2 text-amber-600" />
                           Education
                         </h3>
-                        {professional.education && professional.education.length > 0 ? (
+                        {professional.education &&
+                        professional.education.length > 0 ? (
                           <div className="space-y-4">
-                            {professional.education.map((edu: any, index: number) => (
-                              <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <Award className="w-5 h-5 text-amber-600" />
+                            {professional.education.map(
+                              (edu: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <Award className="w-5 h-5 text-amber-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-900">
+                                      {edu.degree || edu.title}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {edu.institution || edu.school}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      {edu.year || edu.duration}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="flex-1">
-                                  <p className="font-semibold text-gray-900">{edu.degree || edu.title}</p>
-                                  <p className="text-sm text-gray-600">{edu.institution || edu.school}</p>
-                                  <p className="text-sm text-gray-500">{edu.year || edu.duration}</p>
-                                </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </div>
                         ) : (
-                          <p className="text-gray-500 italic">No education information available.</p>
+                          <p className="text-gray-500 italic">
+                            No education information available.
+                          </p>
                         )}
                       </div>
 
@@ -695,23 +732,37 @@ export default function ProfessionalProfile({
                           <Award className="w-5 h-5 mr-2 text-amber-600" />
                           Certifications
                         </h3>
-                        {professional.certifications && professional.certifications.length > 0 ? (
+                        {professional.certifications &&
+                        professional.certifications.length > 0 ? (
                           <div className="space-y-4">
-                            {professional.certifications.map((cert: any, index: number) => (
-                              <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <Award className="w-5 h-5 text-amber-600" />
+                            {professional.certifications.map(
+                              (cert: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <Award className="w-5 h-5 text-amber-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-900">
+                                      {cert.name || cert.title}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {cert.issuer || cert.organization}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      {cert.year || cert.date}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="flex-1">
-                                  <p className="font-semibold text-gray-900">{cert.name || cert.title}</p>
-                                  <p className="text-sm text-gray-600">{cert.issuer || cert.organization}</p>
-                                  <p className="text-sm text-gray-500">{cert.year || cert.date}</p>
-                                </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </div>
                         ) : (
-                          <p className="text-gray-500 italic">No certifications available.</p>
+                          <p className="text-gray-500 italic">
+                            No certifications available.
+                          </p>
                         )}
                       </div>
                     </div>
@@ -727,7 +778,9 @@ export default function ProfessionalProfile({
               </div>
               {/* Services Card */}
               <div className="md:col-span-2">
-                <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
+                <Card
+                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+                >
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
                       <h2 className="text-2xl font-bold text-gray-900">
@@ -743,7 +796,7 @@ export default function ProfessionalProfile({
                         .map((service: any, index: number) => (
                           <div
                             key={index}
-                            className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                            className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
                           >
                             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
                               <Award className="w-6 h-6 text-amber-600" />
@@ -766,7 +819,9 @@ export default function ProfessionalProfile({
               </div>
               {/* Portfolio Card */}
               <div className="md:col-span-2">
-                <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
+                <Card
+                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                >
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
                       <h2 className="text-xl font-bold text-gray-900">
@@ -796,10 +851,10 @@ export default function ProfessionalProfile({
                                   srcSet={optimizedImage.srcSet}
                                   sizes={optimizedImage.sizes}
                                   alt={item.title}
-                                  className=" h-full p-0  object-cover absolute -bottom-2"
+                                  className="h-full p-0 object-cover absolute -bottom-2"
                                 />
                               </div>
-                              <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
+                              <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
                                 <span className="text-sm font-semibold text-gray-900">
                                   {item.title}
                                 </span>
@@ -820,7 +875,9 @@ export default function ProfessionalProfile({
               </div>
               {/* Contact Card */}
               <div className="md:col-span-2">
-                <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
+                <Card
+                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+                >
                   <CardContent className="p-0">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">
                       Let's Talk
@@ -833,16 +890,18 @@ export default function ProfessionalProfile({
           ) : (
             <>
               {/* Main Grid */}
-              <div className="grid   grid-cols-1 relative  md:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-1 relative md:grid-cols-3 gap-6 mb-12">
                 {/* Left Column - Profile Card */}
                 <div ref={aboutRef} id="about" className="md:col-span-1">
                   <ProfileCard />
                 </div>
                 {/* Middle Column */}
-                <div className="md:col-span-1  space-y-6">
-                  <div className="h-[700px] flex gap-5 flex-col ">
+                <div className="md:col-span-1 space-y-6">
+                  <div className="h-[700px] flex gap-5 flex-col">
                     {/* Work Experience */}
-                    <Card className="bg-white rounded-2xl p-6 h-[50%] shadow-lg border-0">
+                    <Card
+                      className={`${getCardClass()} rounded-2xl p-6 h-[50%] shadow-lg border-0`}
+                    >
                       <CardContent className="p-0 overflow-hidden h-full">
                         <div className="flex justify-between items-center mb-5">
                           <h2 className="text-xl font-bold text-gray-900">
@@ -852,7 +911,7 @@ export default function ProfessionalProfile({
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="overflow-hidden  ">
+                        <div className="overflow-hidden">
                           <div
                             className={`flex flex-col space-y-4 ${
                               professional.workExperience &&
@@ -886,7 +945,7 @@ export default function ProfessionalProfile({
                                     key={`exp-${index}`}
                                     className="flex items-start space-x-4 rounded-lg"
                                   >
-                                    <div className="w-15 h-15 bg-gradient-to-b from-amber-50   to-white  rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
+                                    <div className="w-15 h-15 bg-linear-to-b from-amber-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
                                       <Building2 className="w-5 h-5 text-amber-600" />
                                     </div>
                                     <div className="flex-1 flex justify-items-end gap-1 w-full">
@@ -942,7 +1001,7 @@ export default function ProfessionalProfile({
                                       key={`exp-dup-${index}`}
                                       className="flex items-start space-x-4 rounded-lg"
                                     >
-                                      <div className="w-15 h-15 bg-gradient-to-b from-amber-50   to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                                      <div className="w-15 h-15 bg-linear-to-b from-amber-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
                                         <Building2 className="w-5 h-5 text-amber-600" />
                                       </div>
                                       <div className="flex-1 flex justify-items-end gap-1 w-full">
@@ -977,7 +1036,9 @@ export default function ProfessionalProfile({
                     </Card>
 
                     {/* Skills */}
-                    <Card className="bg-white rounded-2xl h-full p-6 shadow-lg border-0">
+                    <Card
+                      className={`${getCardClass()} rounded-2xl h-full p-6 shadow-lg border-0`}
+                    >
                       <CardContent className="p-0">
                         <div className="flex justify-between items-center mb-5">
                           <h2 className="text-xl font-bold text-gray-900">
@@ -987,13 +1048,13 @@ export default function ProfessionalProfile({
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-3  overflow-hidden">
+                        <div className="flex flex-wrap gap-3 overflow-hidden">
                           {professional.skills
                             ?.slice(0, 12)
                             .map((skill: string, index: number) => (
                               <div
                                 key={index}
-                                className="flex items-center bg-white rounded-full px-4 py-1 border border-gray-200"
+                                className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
                               >
                                 <Award className="w-5 h-5 text-amber-600 mr-2" />
                                 <span className="text-sm text-gray-700">
@@ -1003,7 +1064,9 @@ export default function ProfessionalProfile({
                             ))}
                           {professional.skills &&
                             professional.skills.length > 12 && (
-                              <div className="flex items-center bg-white rounded-full px-4 py-2 border border-gray-200">
+                              <div
+                                className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
+                              >
                                 <span className="text-sm text-gray-700">
                                   ...
                                 </span>
@@ -1017,7 +1080,9 @@ export default function ProfessionalProfile({
 
                 {/* Right Column - Portfolio */}
                 <div className="md:col-span-1">
-                  <Card className="bg-white rounded-2xl p-6 shadow-lg border-0 h-full">
+                  <Card
+                    className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                  >
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold text-gray-900">
@@ -1047,10 +1112,10 @@ export default function ProfessionalProfile({
                                     srcSet={optimizedImage.srcSet}
                                     sizes={optimizedImage.sizes}
                                     alt={item.title}
-                                    className=" h-full  object-cover absolute -bottom-2"
+                                    className="h-full object-cover absolute -bottom-2"
                                   />
                                 </div>
-                                <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm  rounded-full px-3 py-1">
+                                <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
                                   <span className="text-sm font-semibold text-gray-900">
                                     {item.title}
                                   </span>
@@ -1068,7 +1133,9 @@ export default function ProfessionalProfile({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 {/* Services Section - 2 cols */}
                 <div ref={servicesRef} id="services" className="md:col-span-2">
-                  <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
+                  <Card
+                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+                  >
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">
@@ -1084,7 +1151,7 @@ export default function ProfessionalProfile({
                           .map((service: any, index: number) => (
                             <div
                               key={index}
-                              className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                              className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
                             >
                               <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
                                 <Award className="w-6 h-6 text-amber-600" />
@@ -1101,7 +1168,9 @@ export default function ProfessionalProfile({
 
                 {/* Let's Talk Section - 1 col */}
                 <div ref={contactRef} id="contact">
-                  <Card className="bg-white p-6 rounded-2xl shadow-lg border-0">
+                  <Card
+                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+                  >
                     <CardContent className="p-0">
                       <h2 className="text-xl font-bold text-gray-900 mb-4">
                         Let's Talk
@@ -1117,7 +1186,7 @@ export default function ProfessionalProfile({
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r   py-6 px-4">
+      <footer className="bg-gradient-to-r py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm font-medium">
             Developed By{" "}
@@ -1169,6 +1238,7 @@ export default function ProfessionalProfile({
                   setInquiryData((prev) => ({ ...prev, name: e.target.value }))
                 }
                 required
+                className={getBorderRadius()}
               />
             </div>
             <div className="space-y-2">
@@ -1181,6 +1251,7 @@ export default function ProfessionalProfile({
                   setInquiryData((prev) => ({ ...prev, email: e.target.value }))
                 }
                 required
+                className={getBorderRadius()}
               />
             </div>
             <div className="space-y-2">
@@ -1192,6 +1263,7 @@ export default function ProfessionalProfile({
                 onChange={(e) =>
                   setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
                 }
+                className={getBorderRadius()}
               />
             </div>
             <div className="space-y-2">
@@ -1207,13 +1279,14 @@ export default function ProfessionalProfile({
                 }
                 rows={4}
                 required
+                className={getBorderRadius()}
               />
             </div>
             <div className="flex space-x-3">
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                className={`flex-1 ${getButtonClass()}`}
               >
                 {isSubmitting ? (
                   "Sending..."
@@ -1228,6 +1301,7 @@ export default function ProfessionalProfile({
                 type="button"
                 variant="outline"
                 onClick={() => setInquiryModal(false)}
+                className={getBorderRadius()}
               >
                 <X className="h-4 w-4" />
               </Button>

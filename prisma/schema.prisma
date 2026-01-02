@@ -75,6 +75,7 @@ model Professional {
    id                    String   @id @default(cuid()) @map("_id")
    name                  String
    slug                  String   @unique
+   professionName        String?  // Profession name (e.g., Software Engineer, Doctor)
    professionalHeadline String?
    aboutMe               String?  // About me section
    profilePicture        String?

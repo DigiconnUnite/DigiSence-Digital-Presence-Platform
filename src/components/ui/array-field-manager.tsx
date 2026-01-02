@@ -149,6 +149,7 @@ export function WorkExperienceForm({ item, onSave, onCancel }: {
   const [formData, setFormData] = useState(item || {
     position: '',
     company: '',
+    location: '',
     duration: '',
     description: ''
   })
@@ -174,6 +175,14 @@ export function WorkExperienceForm({ item, onSave, onCancel }: {
           value={formData.company}
           onChange={(e) => setFormData({ ...formData, company: e.target.value })}
           required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Location</Label>
+        <Input
+          value={formData.location}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          placeholder="e.g., New York, NY or Remote"
         />
       </div>
       <div className="space-y-2">

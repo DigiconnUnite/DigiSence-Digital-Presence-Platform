@@ -475,7 +475,7 @@ export default function ProfessionalsPage() {
                         key={professional.id}
                         className="overflow-hidden  pt-0 backdrop-blur-sm relative"
                       >
-                        <div className="relative h-24 md:h-32 m-1.5 bg-cover bg-center rounded-lg" style={{backgroundImage: `url(${professional.banner ? getOptimizedImageUrl(professional.banner, {width: 400, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center"}) : '/card-bg.png'})`}}>
+                        <div className="relative h-24 md:h-32 m-1.5  mb-0 pb-0 bg-cover bg-center rounded-lg" style={{backgroundImage: `url(${professional.banner ? getOptimizedImageUrl(professional.banner, {width: 400, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center"}) : '/card-bg.png'})`}}>
                         </div>
                         {professional.profilePicture ? (
                           <img
@@ -491,7 +491,7 @@ export default function ProfessionalsPage() {
                               }
                             )}
                             alt={professional.name}
-                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-2 border-white shadow-md"
+                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-3 border-white shadow-md"
                             loading="lazy"
                           />
                         ) : (
@@ -499,7 +499,7 @@ export default function ProfessionalsPage() {
                             <User className="h-9 w-9 md:h-11 md:w-11 text-muted-foreground" />
                           </div>
                         )}
-                        <CardHeader className="pt-2 pb-2 md:pb-4">
+                        <CardHeader className="pt-0  pb-2 md:pb-4">
                           <div className="flex items-center space-x-2 md:space-x-4">
                             <div className="w-18 md:w-22"></div>
                             <div className="flex-1 min-w-0">
@@ -519,48 +519,7 @@ export default function ProfessionalsPage() {
                         </CardHeader>
 
                         <CardContent className="space-y-1 md:space-y-2 px-2 md:px-3">
-                          {/* Contact Info */}
-                          <div className="space-y-2">
-                            {professional.location && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span className="truncate">
-                                  {professional.location}
-                                </span>
-                              </div>
-                            )}
-                            {professional.phone && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span className="truncate">{professional.phone}</span>
-                              </div>
-                            )}
-                            {professional.email && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span className="truncate">
-                                  {professional.email}
-                                </span>
-                              </div>
-                            )}
-                            {professional.website && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <a
-                                  href={
-                                    professional.website.startsWith("http")
-                                      ? professional.website
-                                      : `https://${professional.website}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline truncate"
-                                >
-                                  Visit Website
-                                </a>
-                              </div>
-                            )}
-                          </div>
+                     
 
                           {/* Stats */}
                           <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border">
@@ -571,7 +530,7 @@ export default function ProfessionalsPage() {
                             <Button
                               asChild
                               size="sm"
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs md:text-sm"
+                              className="bg-sky-900 hover:bg-sky-800 text-primary-foreground rounded-full text-xs md:text-sm"
                             >
                               <Link href={`/pcard/${professional.slug}`}>
                                 <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />

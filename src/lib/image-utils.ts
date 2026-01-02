@@ -21,7 +21,7 @@ export const getOptimizedImageUrl = (url: string, options?: {
     // Basic transformations for CloudFront
     if (options?.width) transformations.push(`w_${options.width}`)
     if (options?.height) transformations.push(`h_${options.height}`)
-    if (options?.quality) transformations.push(`q_${options.quality}`)
+    if (options?.quality) transformations.push(`q_${options.quality || 85}`)
     if (options?.format) {
       if (options.format === 'auto') {
         transformations.push('f_auto')
@@ -29,11 +29,15 @@ export const getOptimizedImageUrl = (url: string, options?: {
         transformations.push(`f_${options.format}`)
       }
     }
+    if (options?.crop) transformations.push(`c_${options.crop}`)
+    if (options?.gravity) transformations.push(`g_${options.gravity}`)
 
     // Add transformations if any are specified
     if (transformations.length > 0) {
       const transformationString = transformations.join(',')
-      return `${url}?${transformationString}`
+      // Use 'resize' prefix to match CloudFront behavior configuration
+      const key = url.split('cloudfront.net/')[1]
+      return `${url.split('cloudfront.net/')[0]}cloudfront.net/resize/${transformationString}/${key}`
     }
 
     return url
@@ -57,6 +61,11 @@ export const generateResponsiveImages = (url: string) => {
 export const generateSrcSet = (url: string) => {
   const images = generateResponsiveImages(url)
   return `${images.small} 400w, ${images.medium} 600w, ${images.large} 1200w`
+}
+
+// Function to generate sizes attribute for responsive images
+export const generateSizes = (containerMaxWidth: number = 800): string => {
+  return `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, ${Math.min(containerMaxWidth, 800)}px`
 }
 
 // Function to validate image before upload

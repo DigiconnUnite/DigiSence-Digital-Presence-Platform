@@ -123,26 +123,32 @@ export function getOptimizedImageUrl(
     height?: number
     quality?: number
     format?: 'auto' | 'webp' | 'jpg' | 'png'
+    crop?: string
+    gravity?: string
   } = {}
 ): string {
   if (!S3_CONFIG.cloudFrontUrl || !originalUrl.includes(S3_CONFIG.cloudFrontUrl)) {
     return originalUrl
   }
 
-  const { width, height, quality = 80, format = 'auto' } = options
+  const { width, height, quality = 85, format = 'auto', crop, gravity } = options
   const transforms: string[] = []
 
+  // Build transformation string matching CloudFront behavior patterns
   if (width) transforms.push(`w_${width}`)
   if (height) transforms.push(`h_${height}`)
-  if (quality !== 80) transforms.push(`q_${quality}`)
+  if (quality !== 85) transforms.push(`q_${quality}`)
   if (format !== 'auto') transforms.push(`f_${format}`)
+  if (crop) transforms.push(`c_${crop}`)
+  if (gravity) transforms.push(`g_${gravity}`)
 
   if (transforms.length === 0) return originalUrl
 
   const transformString = transforms.join(',')
   const key = originalUrl.replace(`${S3_CONFIG.cloudFrontUrl}/`, '')
 
-  return `${S3_CONFIG.cloudFrontUrl}/${transformString}/${key}`
+  // Use 'resize' prefix to match CloudFront behavior configuration
+  return `${S3_CONFIG.cloudFrontUrl}/resize/${transformString}/${key}`
 }
 
 /**

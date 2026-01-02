@@ -291,7 +291,7 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <Android
-                  src={"square-bg.svg"}
+                  src={"b-1.png"}
                   className="h-full scale-200 w-fit mx-5  object-cover pointer-events-none relative   -bottom-1/3"
                 />
                 <div className="absolute"></div>
@@ -323,7 +323,7 @@ export default function HomePage() {
                 </div>
 
                 <Android
-                  src={"square-bg.svg"}
+                  src={"p-1.png"}
                   className="h-full scale-200 mx-auto object-cover pointer-events-none relative -bottom-1/3"
                 />
               </div>
@@ -405,7 +405,7 @@ export default function HomePage() {
               <div className="flex flex-col overflow-hidden  h-full ">
                 <div className="aspect-video mt-auto  relative bg-[#E5F6FF] rounded-4xl  p-8 flex flex-col justify-between items-end text-center bg-cover bg-center">
                   <Android
-                    src={"square-bg.svg"}
+                    src={"b-1.png"}
                     className="absolute -bottom-1/3 shadow-lg  left-1/2 transform -translate-x-1/2 h-full w-[80%] scale-300 object-cover pointer-events-none"
                   />
                 </div>
@@ -421,7 +421,7 @@ export default function HomePage() {
               <div className="flex flex-col overflow-hidden  h-full ">
                 <div className="aspect-video mt-auto  relative bg-[#E5F6FF] rounded-4xl  p-8 flex flex-col justify-between items-end text-center bg-cover bg-center">
                   <Android
-                    src={"square-bg.svg"}
+                    src={"p-1.png"}
                     className="absolute -bottom-1/3 shadow-lg  left-1/2 transform -translate-x-1/2 h-full w-[80%] scale-300 object-cover pointer-events-none"
                   />
                 </div>

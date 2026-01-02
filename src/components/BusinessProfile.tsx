@@ -54,7 +54,7 @@ interface Product {
 }
 
 import { Button } from '@/components/ui/button'
-import { getOptimizedImageUrl, generateSrcSet } from '@/lib/image-utils'
+import { getOptimizedImageUrl, generateSrcSet, generateSizes } from '@/lib/image-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -709,7 +709,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   })}
                   alt={business.name}
                   className="h-12 w-auto"
-                  loading="lazy"
+                  loading="eager"
                 />
               )}
               <span className="font-semibold text-lg">{business.name}</span>
@@ -830,10 +830,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               gravity: 'auto'
                             }) : '/placeholder.png'}
                             srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                            sizes={generateSizes(1200)}
                             alt={slide.headline || 'Hero image'}
                             className={`w-full h-full object-cover rounded-2xl ${isVideo ? 'hidden' : ''} absolute top-0 left-0`}
                             loading={index === 0 ? "eager" : "lazy"}
+                            decoding="async"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.src = '/placeholder.png';
@@ -1024,9 +1025,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                           crop: 'fill',
                           gravity: 'center',
                         })}
+                        srcSet={generateSrcSet(business.logo)}
+                        sizes="(max-width: 640px) 80px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                         alt={business.name}
                         className="w-20 h-20 xs:w-24 xs:h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full object-cover border border-gray-200 shadow-sm"
-                        loading="lazy"
+                        loading="eager"
+                        decoding="async"
                       />
                     ) : (
                         <div className="w-20 h-20 xs:w-24 xs:h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full bg-gray-50 flex items-center justify-center border shadow-sm">
@@ -1328,10 +1332,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               gravity: 'center'
                             })}
                             srcSet={generateSrcSet(brand.logo)}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            sizes={generateSizes(400)}
                             alt={brand.name}
                             className="w-full h-full object-contain"
                             loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <Image className="h-full w-full text-gray-400" />
@@ -1510,9 +1515,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         {product.image && product.image.trim() !== '' ? (
                           <img
                             src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
+                            srcSet={generateSrcSet(product.image)}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             alt={product.name}
                             className="w-full h-full object-contain"
                             loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <div className="flex items-center justify-center h-full">
@@ -1615,9 +1623,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             {product.image && product.image.trim() !== '' ? (
                               <img
                                 src={getOptimizedImageUrl(product.image, { width: 400, height: 300, quality: 85, format: 'auto' })}
+                                srcSet={generateSrcSet(product.image)}
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                 alt={product.name}
                                 className="w-full h-full object-contain"
                                 loading="lazy"
+                                decoding="async"
                               />
                             ) : (
                               <div className="flex items-center justify-center h-full">
@@ -1771,9 +1782,12 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                         crop: 'fill',
                         gravity: 'auto'
                       })}
+                      srcSet={generateSrcSet(image.url)}
+                      sizes={index === 0 || index === 3 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"}
                       alt={image.alt || 'Portfolio image'}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                         <span className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 3 ? "w-[60px] h-[60px] md:w-[80px] md:h-[80px]" : "w-[40px] h-[40px] md:w-[56px] md:h-[56px]"}`}>
@@ -2001,7 +2015,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       sizes="(max-width: 768px) 100vw, 600px"
                       alt={selectedProductModal.name}
                       className="w-full h-full object-contain"
-                      loading="lazy"
+                      loading="eager"
+                      decoding="async"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full bg-gray-100">
@@ -2107,10 +2122,11 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                                 gravity: 'center'
                               })}
                               srcSet={generateSrcSet(product.image)}
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
                               alt={product.name}
                               className="w-full h-full object-contain"
                               loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <div className="flex items-center justify-center h-full">

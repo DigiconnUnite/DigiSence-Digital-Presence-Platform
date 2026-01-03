@@ -34,7 +34,7 @@ export default function Navigation({ navItems, joinLink = "/dashboard/profession
           className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
         >
           <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
-          <span className="font-bold text-xl text-primary">DigiSence</span>
+          <span className="font-bold text-xl text-slate-800">DigiSence</span>
         </Link>
         <NavItems items={navItems} />
         <div className="flex items-center gap-4">
@@ -50,7 +50,7 @@ export default function Navigation({ navItems, joinLink = "/dashboard/profession
             className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-gray-900"
           >
             <img src="/logo.svg" alt="DigiSence" className="h-10 w-auto" />
-            <span className="font-bold text-primary">DigiSence</span>
+            <span className="font-bold text-slate-800">DigiSence</span>
           </Link>
           <MobileNavToggle
             isOpen={isMobileMenuOpen}

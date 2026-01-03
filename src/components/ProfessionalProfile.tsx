@@ -122,6 +122,36 @@ export default function ProfessionalProfile({
     "home" | "about" | "services" | "portfolio" | "contact"
   >("home");
 
+  // Ensure skills and servicesOffered are arrays
+  const skills = Array.isArray(professional.skills) ? professional.skills : [];
+  console.log('Skills array:', skills);
+  const servicesOffered = Array.isArray(professional.servicesOffered) ? professional.servicesOffered : [];
+  console.log('Services array:', servicesOffered);
+  const portfolio = Array.isArray(professional.portfolio) ? professional.portfolio : [];
+  const workExperience = Array.isArray(professional.workExperience) ? professional.workExperience : [];
+  const validWorkExperience = workExperience.filter(exp => exp && typeof exp === 'object');
+  console.log('workExperience:', workExperience);
+  console.log('validWorkExperience:', validWorkExperience);
+  const education = Array.isArray(professional.education) ? professional.education : [];
+  const certifications = Array.isArray(professional.certifications) ? professional.certifications : [];
+
+  const calculateTotalTime = (duration: any) => {
+    console.log('calculateTotalTime called with:', duration, typeof duration);
+    if (!duration || typeof duration !== 'string') {
+      console.log('Returning N/A for duration:', duration);
+      return "N/A";
+    }
+    const match = duration.match(/(\d{4})\s*-\s*(\d{4})/);
+    console.log('Match result:', match);
+    if (match) {
+      const start = parseInt(match[1]);
+      const end = parseInt(match[2]);
+      const years = end - start;
+      return `${years} year${years !== 1 ? "s" : ""}`;
+    }
+    return duration;
+  };
+
   // Refs for smooth scrolling
   const aboutRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
@@ -191,7 +221,7 @@ export default function ProfessionalProfile({
     };
 
     checkForUpdates();
-    const interval = setInterval(checkForUpdates, 30000);
+    const interval = setInterval(checkForUpdates, 5000);
 
     return () => clearInterval(interval);
   }, [mounted, professional?.id, professional?.slug]);
@@ -378,7 +408,7 @@ export default function ProfessionalProfile({
 
         <CardContent className="text-center flex flex-col px-0">
           <div className=" pb-10">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">
               {professional.name}
             </h1>
             {professional.professionalHeadline && (
@@ -682,13 +712,13 @@ export default function ProfessionalProfile({
                   className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
                 >
                   <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-xl font-bold text-slate-800 mb-6">
                       About
                     </h2>
                     <div className="space-y-6">
                       {/* About Me Section */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
                           <User className="w-5 h-5 mr-2 text-sky-600" />
                           About Me
                         </h3>
@@ -700,7 +730,7 @@ export default function ProfessionalProfile({
 
                       {/* Education Section */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
                           <Award className="w-5 h-5 mr-2 text-sky-600" />
                           Education
                         </h3>
@@ -740,7 +770,7 @@ export default function ProfessionalProfile({
 
                       {/* Certifications Section */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
                           <Award className="w-5 h-5 mr-2 text-sky-600" />
                           Certifications
                         </h3>
@@ -795,7 +825,7 @@ export default function ProfessionalProfile({
                 >
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-slate-800">
                         Services
                       </h2>
                       <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -803,8 +833,8 @@ export default function ProfessionalProfile({
                       </button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {professional.servicesOffered
-                        ?.slice(0, 5)
+                        {servicesOffered
+                          .slice(0, 5)
                         .map((service: any, index: number) => (
                           <div
                             key={index}
@@ -814,7 +844,7 @@ export default function ProfessionalProfile({
                               <Award className="w-6 h-6 text-sky-600" />
                             </div>
                             <span className="text-sm font-semibold text-gray-900 text-center">
-                              {service.name}
+                              {service.name?.name || service.name}
                             </span>
                           </div>
                         ))}
@@ -836,7 +866,7 @@ export default function ProfessionalProfile({
                 >
                   <CardContent className="p-0">
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-900">
+                          <h2 className="text-xl font-bold text-slate-800">
                         Portfolio
                       </h2>
                       <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -844,27 +874,43 @@ export default function ProfessionalProfile({
                       </button>
                     </div>
                     <div className="space-y-4">
-                      {professional.portfolio
-                        ?.slice(0, 2)
+                          {portfolio
+                            .slice(0, 2)
                         .map((item: any, index: number) => {
-                          const optimizedImage = useOptimizedImage(
-                            item.url,
-                            400,
-                            250
-                          );
+                          const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
                           return (
                             <div
                               key={index}
                               className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
                             >
                               <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                                <img
-                                  src={optimizedImage.src}
-                                  srcSet={optimizedImage.srcSet}
-                                  sizes={optimizedImage.sizes}
-                                  alt={item.title}
-                                  className="h-full p-0 object-cover absolute -bottom-2"
-                                />
+                                {isVideo ? (
+                                  <video
+                                    src={item.url}
+                                    controls
+                                    className="h-full w-full object-cover absolute -bottom-2"
+                                    poster={item.thumbnail || undefined}
+                                  >
+                                    Your browser does not support the video tag.
+                                  </video>
+                                ) : (
+                                  (() => {
+                                    const optimizedImage = useOptimizedImage(
+                                      item.url,
+                                      400,
+                                      250
+                                    );
+                                    return (
+                                      <img
+                                        src={optimizedImage.src}
+                                        srcSet={optimizedImage.srcSet}
+                                        sizes={optimizedImage.sizes}
+                                        alt={item.title}
+                                        className="h-full p-0 object-cover absolute -bottom-2"
+                                      />
+                                    );
+                                  })()
+                                )}
                               </div>
                               <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
                                 <span className="text-sm font-semibold text-gray-900">
@@ -891,7 +937,7 @@ export default function ProfessionalProfile({
                   className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
                 >
                   <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                          <h2 className="text-xl font-bold text-slate-800 mb-4">
                       Let's Talk
                     </h2>
                     <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>
@@ -916,7 +962,7 @@ export default function ProfessionalProfile({
                     >
                       <CardContent className="p-0 overflow-hidden h-full">
                         <div className="flex justify-between items-center mb-5">
-                          <h2 className="text-xl font-bold text-gray-900">
+                                  <h2 className="text-xl font-bold text-slate-800">
                             Work Experience
                           </h2>
                           <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -926,32 +972,14 @@ export default function ProfessionalProfile({
                         <div className="overflow-hidden">
                           <div
                             className={`flex flex-col space-y-4 ${
-                              professional.workExperience &&
-                              professional.workExperience.length > 3
+                                      workExperience.length > 3
                                 ? "animate-marquee"
                                 : ""
                             }`}
                           >
-                            {professional.workExperience?.map(
-                              (exp: any, index: number) => {
-                                // Calculate total time roughly
-                                const calculateTotalTime = (
-                                  duration: string
-                                ) => {
-                                  const match = duration.match(
-                                    /(\d{4})\s*-\s*(\d{4})/
-                                  );
-                                  if (match) {
-                                    const start = parseInt(match[1]);
-                                    const end = parseInt(match[2]);
-                                    const years = end - start;
-                                    return `${years} year${
-                                      years !== 1 ? "s" : ""
-                                    }`;
-                                  }
-                                  return duration;
-                                };
-
+                                    {console.log('workExperience:', workExperience)}
+                                    {validWorkExperience.map(
+                                      (exp: any, index: number) => {
                                 return (
                                   <div
                                     key={`exp-${index}`}
@@ -978,7 +1006,7 @@ export default function ProfessionalProfile({
                                         </span>
                                         <span className="text-gray-400 text-xs">
                                           Total:{" "}
-                                          {calculateTotalTime(exp.duration)}
+                                          {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
                                         </span>
                                       </div>
                                     </div>
@@ -987,27 +1015,9 @@ export default function ProfessionalProfile({
                               }
                             )}
                             {professional.workExperience &&
-                              professional.workExperience.length > 3 &&
-                              professional.workExperience.map(
-                                (exp: any, index: number) => {
-                                  // Calculate total time roughly
-                                  const calculateTotalTime = (
-                                    duration: string
-                                  ) => {
-                                    const match = duration.match(
-                                      /(\d{4})\s*-\s*(\d{4})/
-                                    );
-                                    if (match) {
-                                      const start = parseInt(match[1]);
-                                      const end = parseInt(match[2]);
-                                      const years = end - start;
-                                      return `${years} year${
-                                        years !== 1 ? "s" : ""
-                                      }`;
-                                    }
-                                    return duration;
-                                  };
-
+                                      validWorkExperience.length > 3 &&
+                                      validWorkExperience.map(
+                                        (exp: any, index: number) => {
                                   return (
                                     <div
                                       key={`exp-dup-${index}`}
@@ -1034,7 +1044,7 @@ export default function ProfessionalProfile({
                                           </span>
                                           <span className="text-gray-400 text-xs">
                                             Total:{" "}
-                                            {calculateTotalTime(exp.duration)}
+                                            {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
                                           </span>
                                         </div>
                                       </div>
@@ -1053,7 +1063,7 @@ export default function ProfessionalProfile({
                     >
                       <CardContent className="p-0">
                         <div className="flex justify-between items-center mb-5">
-                          <h2 className="text-xl font-bold text-gray-900">
+                                  <h2 className="text-xl font-bold text-slate-800">
                             Expert Area
                           </h2>
                           <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -1061,29 +1071,28 @@ export default function ProfessionalProfile({
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-3 overflow-hidden">
-                          {professional.skills
-                            ?.slice(0, 12)
-                            .map((skill: string, index: number) => (
+                                  {skills
+                                    .slice(0, 12)
+                                    .map((skill: any, index: number) => (
                               <div
                                 key={index}
                                 className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
                               >
                                 <Award className="w-5 h-5 text-sky-600 mr-2" />
                                 <span className="text-sm text-gray-700">
-                                  {skill}
+                                          {skill.name?.name || skill.name}
                                 </span>
                               </div>
                             ))}
-                          {professional.skills &&
-                            professional.skills.length > 12 && (
-                              <div
-                                className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
-                              >
-                                <span className="text-sm text-gray-700">
-                                  ...
-                                </span>
-                              </div>
-                            )}
+                                  {skills.length > 12 && (
+                                    <div
+                                      className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
+                                    >
+                                      <span className="text-sm text-gray-700">
+                                        ...
+                                      </span>
+                                    </div>
+                                  )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1097,7 +1106,7 @@ export default function ProfessionalProfile({
                   >
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">
+                                <h2 className="text-xl font-bold text-slate-800">
                           Portfolio
                         </h2>
                         <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -1105,27 +1114,43 @@ export default function ProfessionalProfile({
                         </button>
                       </div>
                       <div className="space-y-4">
-                        {professional.portfolio
-                          ?.slice(0, 2)
+                                {portfolio
+                                  .slice(0, 2)
                           .map((item: any, index: number) => {
-                            const optimizedImage = useOptimizedImage(
-                              item.url,
-                              400,
-                              250
-                            );
+                            const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
                             return (
                               <div
                                 key={index}
                                 className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
                               >
                                 <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                                  <img
-                                    src={optimizedImage.src}
-                                    srcSet={optimizedImage.srcSet}
-                                    sizes={optimizedImage.sizes}
-                                    alt={item.title}
-                                    className="h-full object-cover absolute -bottom-2"
-                                  />
+                                  {isVideo ? (
+                                    <video
+                                      src={item.url}
+                                      controls
+                                      className="h-full w-full object-cover absolute -bottom-2"
+                                      poster={item.thumbnail || undefined}
+                                    >
+                                      Your browser does not support the video tag.
+                                    </video>
+                                  ) : (
+                                    (() => {
+                                        const optimizedImage = useOptimizedImage(
+                                          item.url,
+                                          400,
+                                          250
+                                        );
+                                        return (
+                                          <img
+                                            src={optimizedImage.src}
+                                            srcSet={optimizedImage.srcSet}
+                                            sizes={optimizedImage.sizes}
+                                            alt={item.title}
+                                            className="h-full object-cover absolute -bottom-2"
+                                          />
+                                      );
+                                    })()
+                                  )}
                                 </div>
                                 <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
                                   <span className="text-sm font-semibold text-gray-900">
@@ -1150,7 +1175,7 @@ export default function ProfessionalProfile({
                   >
                     <CardContent className="p-0">
                       <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
+                                <h2 className="text-2xl font-bold text-slate-800">
                           Services
                         </h2>
                         <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
@@ -1158,8 +1183,8 @@ export default function ProfessionalProfile({
                         </button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {professional.servicesOffered
-                          ?.slice(0, 5)
+                                {servicesOffered
+                                  .slice(0, 5)
                           .map((service: any, index: number) => (
                             <div
                               key={index}
@@ -1184,7 +1209,7 @@ export default function ProfessionalProfile({
                     className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
                   >
                     <CardContent className="p-0">
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">
+                              <h2 className="text-xl font-bold text-slate-800 mb-4">
                         Let's Talk
                       </h2>
                       <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>

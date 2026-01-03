@@ -452,7 +452,7 @@ export default function BusinessesPage() {
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-12">
-                    <h2 className="text-2xl font-bold text-primary">
+                        <h2 className="text-2xl font-bold text-slate-800">
                       {searchTerm
                         ? `Search Results (${filteredBusinesses.length})`
                         : `All Businesses (${filteredBusinesses.length})`}

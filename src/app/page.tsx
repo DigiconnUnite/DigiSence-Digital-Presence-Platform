@@ -84,7 +84,7 @@ export default function HomePage() {
                 <span
                   className={cn(
                     "font-bold text-xl",
-                    navTransparent ? "text-white" : "text-primary"
+                    navTransparent ? "text-white" : "text-slate-800"
                   )}
                 >
                   DigiSence
@@ -261,7 +261,7 @@ export default function HomePage() {
                 Who Is It For
               </div>
             </div>
-            <h2 className="text-4xl font-bold text-center mb-20 text-gray-900">
+            <h2 className="text-4xl font-bold text-center mb-20 text-slate-800">
               Discover Your Digital Presence
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -348,12 +348,12 @@ export default function HomePage() {
                   offers to enhance your digital presence.
                 </p>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <CheckCircle className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Register Your Business
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -366,7 +366,7 @@ export default function HomePage() {
                       <Users className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Connect with Professionals
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -379,7 +379,7 @@ export default function HomePage() {
                       <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Secure Your Data
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -392,7 +392,7 @@ export default function HomePage() {
                       <Zap className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Boost Your Visibility
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -444,7 +444,7 @@ export default function HomePage() {
                       <CheckCircle className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Register You Professionals Presence
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -457,7 +457,7 @@ export default function HomePage() {
                       <Users className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Connect with Professionals
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -470,7 +470,7 @@ export default function HomePage() {
                       <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Secure Your Data
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -483,7 +483,7 @@ export default function HomePage() {
                       <Zap className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-800">
                         Boost Your Visibility
                       </h3>
                       <p className="text-sm text-gray-600">

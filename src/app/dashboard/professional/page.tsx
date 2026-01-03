@@ -281,7 +281,6 @@ export default function ProfessionalDashboard() {
     return item.duration || '';
   };
 
-
   // Education state
   const [education, setEducation] = useState<any[]>([]);
   const [isEditingEducation, setIsEditingEducation] = useState(false);
@@ -388,7 +387,6 @@ export default function ProfessionalDashboard() {
   useEffect(() => {
     if (isEditingLinkedin) linkedinInputRef.current?.focus();
   }, [isEditingLinkedin]);
-
 
   const fetchProfessionalData = async () => {
     try {
@@ -663,6 +661,85 @@ export default function ProfessionalDashboard() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!professional) return;
+
+    setIsLoading(true);
+    const updateData = {
+      name: professional.name,
+      professionalHeadline: professional.professionalHeadline,
+      aboutMe: professional.aboutMe,
+      profilePicture: profilePictureUrl,
+      banner: bannerUrl,
+      location: professional.location,
+      phone: professional.phone,
+      website: professional.website,
+      email: professional.email,
+      facebook: professionalSocialMedia.facebook,
+      twitter: professionalSocialMedia.twitter,
+      instagram: professionalSocialMedia.instagram,
+      linkedin: professionalSocialMedia.linkedin,
+      workExperience: workExperience,
+      education: education,
+      skills: skills,
+      servicesOffered: services,
+      portfolio: portfolio,
+    };
+
+    try {
+      const response = await fetch(`/api/professionals/${professional.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfessional(data.professional);
+
+        // Update all related data sections
+        setProfessionalWorkExperience(data.professional.workExperience || []);
+        setProfessionalEducation(data.professional.education || []);
+        setSkills(data.professional.skills || []);
+        setWorkExperience(data.professional.workExperience || []);
+        setEducation(data.professional.education || []);
+        setProfessionalServices(data.professional.servicesOffered || []);
+        setProfessionalPortfolio(data.professional.portfolio || []);
+        setProfessionalSocialMedia({
+          facebook: data.professional.facebook || "",
+          twitter: data.professional.twitter || "",
+          instagram: data.professional.instagram || "",
+          linkedin: data.professional.linkedin || "",
+        });
+        setProfilePictureUrl(data.professional.profilePicture || "");
+        setBannerUrl(data.professional.banner || "");
+
+        toast({
+          title: "Success",
+          description: "Profile updated successfully!",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: `Failed to update profile: ${error.error}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleFieldUpdate = async (field: string, value: string) => {
     if (!professional) return;
 
@@ -681,6 +758,43 @@ export default function ProfessionalDashboard() {
       if (response.ok) {
         const data = await response.json();
         setProfessional(data.professional);
+
+        // Update local state to reflect changes
+        switch (field) {
+          case "name":
+            setEditingName(value);
+            break;
+          case "professionalHeadline":
+            setEditingHeadline(value);
+            break;
+          case "aboutMe":
+            setEditingAboutMe(value);
+            break;
+          case "email":
+            setEditingEmail(value);
+            break;
+          case "phone":
+            setEditingPhone(value);
+            break;
+          case "location":
+            setEditingLocation(value);
+            break;
+          case "website":
+            setEditingWebsite(value);
+            break;
+          case "facebook":
+            setEditingFacebook(value);
+            break;
+          case "twitter":
+            setEditingTwitter(value);
+            break;
+          case "instagram":
+            setEditingInstagram(value);
+            break;
+          case "linkedin":
+            setEditingLinkedin(value);
+            break;
+        }
 
         toast({
           title: "Success",
@@ -706,14 +820,15 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  const handleUpdateServices = async () => {
+  const handleUpdateServices = async (servicesToSave?: any[]) => {
+    const servicesData = servicesToSave || services;
     try {
       const response = await fetch("/api/professionals/services", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ services }),
+        body: JSON.stringify({ services: servicesData }),
         cache: "no-store",
       });
 
@@ -742,18 +857,22 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  const handleUpdatePortfolio = async () => {
+  const handleUpdatePortfolio = async (portfolioToSave?: any[]) => {
+    const portfolioData = portfolioToSave || portfolio;
     try {
       const response = await fetch("/api/professionals/portfolio", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ portfolio }),
+        body: JSON.stringify({ portfolio: portfolioData }),
         cache: "no-store",
       });
 
       if (response.ok) {
+        // Update local state immediately for better UX
+        setPortfolio(portfolioData);
+        // Then fetch latest data to ensure consistency
         await fetchProfessionalData();
         setIsEditingPortfolio(false);
         toast({
@@ -814,18 +933,20 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  const handleUpdateExperience = async () => {
+  const handleUpdateExperience = async (experienceToSave?: any[]) => {
+    const experienceData = experienceToSave || workExperience;
     try {
       const response = await fetch("/api/professionals/experience", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ workExperience }),
+        body: JSON.stringify({ workExperience: experienceData }),
         cache: "no-store",
       });
 
       if (response.ok) {
+        await fetchProfessionalData();
         toast({
           title: "Success",
           description: "Work experience updated successfully!",
@@ -1027,7 +1148,7 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-xl font-bold text-slate-800 mb-2">
                 Professional Dashboard Overview
               </h1>
               <p className="text-xl text-gray-600">
@@ -1094,8 +1215,6 @@ export default function ProfessionalDashboard() {
           <div
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
-          
-
             {!professional ? (
               <CreateProfileView
                 isCreatingProfile={isCreatingProfile}
@@ -1111,10 +1230,10 @@ export default function ProfessionalDashboard() {
               />
             ) : (
               <div className="space-y-6">
-                {/* Header Section */}
+                  {/* Header Section - Removed cancel button from top */}
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-xl font-bold text-slate-800 mb-2">
                       {getHeaderTitle()}
                     </h1>
                     <p className="text-xl text-gray-600">
@@ -1122,285 +1241,335 @@ export default function ProfessionalDashboard() {
                     </p>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" className={themeSettings.borderRadius}>
-                      Cancel
-                    </Button>
-                    <Button className={themeSettings.buttonStyle}>
-                      Save Changes
+                      <Button
+                        className={themeSettings.buttonStyle}
+                        onClick={handleSaveProfile}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 </div>
 
                 {/* Tab-based Navigation */}
                   <Tabs
-                     value={activeProfileTab}
-                     onValueChange={setActiveProfileTab}
-                     className="w-full"
-                   >
-                     
+                    value={activeProfileTab}
+                    onValueChange={setActiveProfileTab}
+                    className="w-full"
+                  >
+                    <TabsList className="grid w-full grid-cols-6">
+                      <TabsTrigger value="basic">Basic</TabsTrigger>
+                      <TabsTrigger value="skills">Skills</TabsTrigger>
+                      <TabsTrigger value="experience">Experience</TabsTrigger>
+                      <TabsTrigger value="education">Education</TabsTrigger>
+                      <TabsTrigger value="services">Services</TabsTrigger>
+                      <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                    </TabsList>
+
                   {/* Basic Profile Information Tab */}
                   <TabsContent value="basic" className="mt-4">
-                   <div className="space-y-6">
-                     <ProfileInfoCard professional={professional} />
-                     {/* Resume Upload Section */}
-                     <Card
-                       className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
-                     >
-                       <CardContent className="p-6">
-                         <div className="flex justify-between items-start mb-4">
-                           <div>
-                             <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                               Resume/CV
-                             </h3>
-                             <p className="text-sm text-gray-600">
-                               Upload your professional resume (PDF only, max 5MB)
-                             </p>
-                           </div>
-                         </div>
-                         
-                         <div className="space-y-4">
-                           {/* Current Resume Display */}
-                           {professional?.resume ? (
-                             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                               <div className="flex items-center gap-3">
-                                 <FileText className="h-5 w-5 text-blue-600" />
-                                 <div>
-                                   <p className="font-medium text-gray-900">
-                                     Current Resume
-                                   </p>
-                                   <p className="text-sm text-gray-500">
-                                     {professional.resume.split('/').pop()}
-                                   </p>
-                                 </div>
-                               </div>
-                               <div className="flex gap-2">
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
-                                   className={themeSettings.borderRadius}
-                                   onClick={() => {
-                                     if (professional.resume) {
-                                       const link = document.createElement('a');
-                                       link.href = professional.resume as string;
-                                       link.download = (professional.resume as string).split('/').pop() || 'resume.pdf';
-                                       link.target = '_blank';
-                                       document.body.appendChild(link);
-                                       link.click();
-                                       document.body.removeChild(link);
-                                     }
-                                   }}
-                                 >
-                                   <Download className="h-4 w-4 mr-2" />
-                                   Download
-                                 </Button>
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
-                                   className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
-                                   onClick={async () => {
-                                     try {
-                                       setIsLoading(true);
-                                       const response = await fetch(`/api/professionals/${professional.id}`, {
-                                         method: "PUT",
-                                         headers: {
-                                           "Content-Type": "application/json",
-                                         },
-                                         body: JSON.stringify({ resume: null }),
-                                       });
-                                       
-                                       if (response.ok) {
-                                         const data = await response.json();
-                                         setProfessional(data.professional);
-                                         toast({
-                                           title: "Success",
-                                           description: "Resume removed successfully!",
-                                         });
-                                       } else {
-                                         const error = await response.json();
-                                         toast({
-                                           title: "Error",
-                                           description: `Failed to remove resume: ${error.error}`,
-                                           variant: "destructive",
-                                         });
-                                       }
-                                     } catch (error) {
-                                       console.error("Remove resume error:", error);
-                                       toast({
-                                         title: "Error",
-                                         description: "Failed to remove resume. Please try again.",
-                                         variant: "destructive",
-                                       });
-                                     } finally {
-                                       setIsLoading(false);
-                                     }
-                                   }}
-                                 >
-                                   <X className="h-4 w-4" />
-                                 </Button>
-                               </div>
-                             </div>
-                           ) : (
-                             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
-                               <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                               <p className="text-sm text-gray-500">No resume uploaded yet</p>
-                             </div>
-                           )}
-                           
-                           {/* Resume Upload */}
-                           <div className="space-y-3">
-                             <Label className="text-sm font-medium text-gray-700">
-                               Upload Resume (PDF only, max 5MB)
-                             </Label>
-                             <div className="flex items-center gap-4">
-                               <Input
-                                 type="file"
-                                 accept=".pdf"
-                                 id="resume-upload"
-                                 className="hidden"
-                                 onChange={async (e) => {
-                                   const file = e.target.files?.[0];
-                                   if (!file) return;
-                                   
-                                   // Validate file type
-                                   if (file.type !== 'application/pdf') {
-                                     toast({
-                                       title: "Invalid File Type",
-                                       description: "Please upload a PDF file only.",
-                                       variant: "destructive",
-                                     });
-                                     return;
-                                   }
-                                   
-                                   // Validate file size (5MB max)
-                                   const maxSize = 5 * 1024 * 1024; // 5MB
-                                   if (file.size > maxSize) {
-                                     toast({
-                                       title: "File Too Large",
-                                       description: "Maximum file size is 5MB.",
-                                       variant: "destructive",
-                                     });
-                                     return;
-                                   }
-                                   
-                                   try {
-                                     setIsLoading(true);
-                                     
-                                     const formData = new FormData();
-                                     formData.append('file', file);
-                                     formData.append('type', 'resume');
-                                     
-                                     const response = await fetch('/api/professionals/upload', {
-                                       method: 'POST',
-                                       body: formData,
-                                     });
-                                     
-                                     if (response.ok) {
-                                       const data = await response.json();
-                                       
-                                       // Update professional with new resume URL
-                                       const updateResponse = await fetch(`/api/professionals/${professional.id}`, {
-                                         method: "PUT",
-                                         headers: {
-                                           "Content-Type": "application/json",
-                                         },
-                                         body: JSON.stringify({ resume: data.url }),
-                                       });
-                                       
-                                       if (updateResponse.ok) {
-                                         const updateData = await updateResponse.json();
-                                         setProfessional(updateData.professional);
-                                         
-                                         toast({
-                                           title: "Success",
-                                           description: "Resume uploaded successfully!",
-                                         });
-                                       } else {
-                                         const error = await updateResponse.json();
-                                         toast({
-                                           title: "Error",
-                                           description: `Failed to update profile: ${error.error}`,
-                                           variant: "destructive",
-                                         });
-                                       }
-                                     } else {
-                                       const error = await response.json();
-                                       toast({
-                                         title: "Upload Error",
-                                         description: error.error || "Failed to upload resume.",
-                                         variant: "destructive",
-                                       });
-                                     }
-                                   } catch (error) {
-                                     console.error("Upload error:", error);
-                                     toast({
-                                       title: "Error",
-                                       description: "Failed to upload resume. Please try again.",
-                                       variant: "destructive",
-                                     });
-                                   } finally {
-                                     setIsLoading(false);
-                                     // Reset file input
-                                     const input = document.getElementById('resume-upload') as HTMLInputElement;
-                                     if (input) input.value = '';
-                                   }
-                                 }}
-                               />
-                               <Label
-                                 htmlFor="resume-upload"
-                                 className={`flex-1 cursor-pointer ${themeSettings.borderRadius} border-2 border-dashed border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors flex items-center justify-center py-8`}
-                               >
-                                 <div className="text-center">
-                                   <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-                                   <p className="text-sm text-gray-600 font-medium">
-                                     Click to upload or drag and drop
-                                   </p>
-                                   <p className="text-xs text-gray-500">
-                                     PDF files only (max 5MB)
-                                   </p>
-                                 </div>
-                               </Label>
-                             </div>
-                           </div>
-                           
-                           {/* Upload Instructions */}
-                           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                             <div className="flex items-start gap-3">
-                               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                               <div className="text-sm text-amber-800 space-y-1">
-                                 <p className="font-medium">Upload Guidelines:</p>
-                                 <ul className="list-disc list-inside space-y-1">
-                                   <li>File format: PDF only</li>
-                                   <li>Maximum file size: 5MB</li>
-                                   <li>Content should be professional and up-to-date</li>
-                                   <li>Include your work experience, education, and skills</li>
-                                 </ul>
-                               </div>
-                             </div>
-                           </div>
-                         </div>
-                       </CardContent>
-                     </Card>
-                   </div>
-                 </TabsContent>
+                      <div className="space-y-6">
+                        <ProfileInfoCard
+                          professional={professional}
+                          themeSettings={themeSettings}
+                          isEditingName={isEditingName}
+                          isEditingHeadline={isEditingHeadline}
+                          isEditingAboutMe={isEditingAboutMe}
+                          isEditingFacebook={isEditingFacebook}
+                          isEditingTwitter={isEditingTwitter}
+                          isEditingInstagram={isEditingInstagram}
+                          isEditingLinkedin={isEditingLinkedin}
+                          editingName={editingName}
+                          editingHeadline={editingHeadline}
+                          editingAboutMe={editingAboutMe}
+                          editingFacebook={editingFacebook}
+                          editingTwitter={editingTwitter}
+                          editingInstagram={editingInstagram}
+                          editingLinkedin={editingLinkedin}
+                          nameInputRef={nameInputRef}
+                          headlineInputRef={headlineInputRef}
+                          aboutMeInputRef={aboutMeInputRef}
+                          facebookInputRef={facebookInputRef}
+                          twitterInputRef={twitterInputRef}
+                          instagramInputRef={instagramInputRef}
+                          linkedinInputRef={linkedinInputRef}
+                          setIsEditingName={setIsEditingName}
+                          setIsEditingHeadline={setIsEditingHeadline}
+                          setIsEditingAboutMe={setIsEditingAboutMe}
+                          setIsEditingFacebook={setIsEditingFacebook}
+                          setIsEditingTwitter={setIsEditingTwitter}
+                          setIsEditingInstagram={setIsEditingInstagram}
+                          setIsEditingLinkedin={setIsEditingLinkedin}
+                          setEditingName={setEditingName}
+                          setEditingHeadline={setEditingHeadline}
+                          setEditingAboutMe={setEditingAboutMe}
+                          setEditingFacebook={setEditingFacebook}
+                          setEditingTwitter={setEditingTwitter}
+                          setEditingInstagram={setEditingInstagram}
+                          setEditingLinkedin={setEditingLinkedin}
+                          handleFieldUpdate={handleFieldUpdate}
+                          setShowBannerModal={setShowBannerModal}
+                          setShowProfilePictureModal={setShowProfilePictureModal}
+                        />
+                        {/* Resume Upload Section */}
+                        <Card
+                          className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <h3 className="text-lg font-semibold text-slate-800 mb-1">
+                                  Resume/CV
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Upload your professional resume (PDF only, max 5MB)
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              {/* Current Resume Display */}
+                              {professional?.resume ? (
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                  <div className="flex items-center gap-3">
+                                    <FileText className="h-5 w-5 text-blue-600" />
+                                    <div>
+                                      <p className="font-medium text-gray-900">
+                                        Current Resume
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {professional.resume.split('/').pop()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={themeSettings.borderRadius}
+                                      onClick={() => {
+                                        if (professional.resume) {
+                                          const link = document.createElement('a');
+                                          link.href = professional.resume as string;
+                                          link.download = (professional.resume as string).split('/').pop() || 'resume.pdf';
+                                          link.target = '_blank';
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                        }
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4 mr-2" />
+                                      Download
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
+                                      onClick={async () => {
+                                        try {
+                                          setIsLoading(true);
+                                          const response = await fetch(`/api/professionals/${professional.id}`, {
+                                            method: "PUT",
+                                            headers: {
+                                              "Content-Type": "application/json",
+                                            },
+                                            body: JSON.stringify({ resume: null }),
+                                          });
+
+                                          if (response.ok) {
+                                            const data = await response.json();
+                                            setProfessional(data.professional);
+                                            toast({
+                                              title: "Success",
+                                              description: "Resume removed successfully!",
+                                            });
+                                          } else {
+                                            const error = await response.json();
+                                            toast({
+                                              title: "Error",
+                                              description: `Failed to remove resume: ${error.error}`,
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        } catch (error) {
+                                          console.error("Remove resume error:", error);
+                                          toast({
+                                            title: "Error",
+                                            description: "Failed to remove resume. Please try again.",
+                                            variant: "destructive",
+                                          });
+                                        } finally {
+                                          setIsLoading(false);
+                                        }
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+                                  <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">No resume uploaded yet</p>
+                                </div>
+                              )}
+
+                              {/* Resume Upload */}
+                              <div className="space-y-3">
+                                <Label className="text-sm font-medium text-gray-700">
+                                  Upload Resume (PDF only, max 5MB)
+                                </Label>
+                                <div className="flex items-center gap-4">
+                                  <Input
+                                    type="file"
+                                    accept=".pdf"
+                                    id="resume-upload"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+
+                                      // Validate file type
+                                      if (file.type !== 'application/pdf') {
+                                        toast({
+                                          title: "Invalid File Type",
+                                          description: "Please upload a PDF file only.",
+                                          variant: "destructive",
+                                        });
+                                        return;
+                                      }
+
+                                      // Validate file size (5MB max)
+                                      const maxSize = 5 * 1024 * 1024; // 5MB
+                                      if (file.size > maxSize) {
+                                        toast({
+                                          title: "File Too Large",
+                                          description: "Maximum file size is 5MB.",
+                                          variant: "destructive",
+                                        });
+                                        return;
+                                      }
+
+                                      try {
+                                        setIsLoading(true);
+
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        formData.append('type', 'resume');
+
+                                        const response = await fetch('/api/professionals/upload', {
+                                          method: 'POST',
+                                          body: formData,
+                                        });
+
+                                        if (response.ok) {
+                                          const data = await response.json();
+
+                                          // Update professional with new resume URL
+                                          const updateResponse = await fetch(`/api/professionals/${professional.id}`, {
+                                            method: "PUT",
+                                            headers: {
+                                              "Content-Type": "application/json",
+                                            },
+                                            body: JSON.stringify({ resume: data.url }),
+                                          });
+
+                                          if (updateResponse.ok) {
+                                            const updateData = await updateResponse.json();
+                                            setProfessional(updateData.professional);
+
+                                            toast({
+                                              title: "Success",
+                                              description: "Resume uploaded successfully!",
+                                            });
+                                          } else {
+                                            const error = await updateResponse.json();
+                                            toast({
+                                              title: "Error",
+                                              description: `Failed to update profile: ${error.error}`,
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        } else {
+                                          const error = await response.json();
+                                          toast({
+                                            title: "Upload Error",
+                                            description: error.error || "Failed to upload resume.",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      } catch (error) {
+                                        console.error("Upload error:", error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to upload resume. Please try again.",
+                                          variant: "destructive",
+                                        });
+                                      } finally {
+                                        setIsLoading(false);
+                                        // Reset file input
+                                        const input = document.getElementById('resume-upload') as HTMLInputElement;
+                                        if (input) input.value = '';
+                                      }
+                                    }}
+                                  />
+                                  <Label
+                                    htmlFor="resume-upload"
+                                    className={`flex-1 cursor-pointer ${themeSettings.borderRadius} border-2 border-dashed border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors flex items-center justify-center py-8`}
+                                  >
+                                    <div className="text-center">
+                                      <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                                      <p className="text-sm text-gray-600 font-medium">
+                                        Click to upload or drag and drop
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        PDF files only (max 5MB)
+                                      </p>
+                                    </div>
+                                  </Label>
+                                </div>
+                              </div>
+
+                              {/* Upload Instructions */}
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                <div className="flex items-start gap-3">
+                                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                                  <div className="text-sm text-amber-800 space-y-1">
+                                    <p className="font-medium">Upload Guidelines:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                      <li>File format: PDF only</li>
+                                      <li>Maximum file size: 5MB</li>
+                                      <li>Content should be professional and up-to-date</li>
+                                      <li>Include your work experience, education, and skills</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
 
                   {/* Skills & Expertise Tab */}
                   <TabsContent value="skills" className="mt-6">
-                       <Card
-                         className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
-                       >
-                         <CardContent className="p-6">
-                           <div className="flex justify-end mb-4">
-                             <Button
-                               variant="outline"
-                               size="sm"
-                               onClick={() => setIsEditingSkills(!isEditingSkills)}
-                               className={`${themeSettings.borderRadius} border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors`}
-                             >
-                               <Edit className="h-4 w-4 mr-2" />
-                               {isEditingSkills ? "Cancel" : "Manage Skills"}
-                             </Button>
-                           </div>
-                           {isEditingSkills ? (
+                      <Card
+                        className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex justify-end mb-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsEditingSkills(!isEditingSkills)}
+                              className={`${themeSettings.borderRadius} border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors`}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              {isEditingSkills ? "Cancel" : "Manage Skills"}
+                            </Button>
+                          </div>
+                          {isEditingSkills ? (
                             <div className="space-y-6 animate-fadeIn">
                               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
                                 <p className="text-sm text-amber-800">
@@ -1455,7 +1624,7 @@ export default function ProfessionalDashboard() {
 
                                 {/* Current Skills Grid */}
                                 <div className="space-y-4">
-                                  <h4 className="font-medium text-gray-900">
+                                  <h4 className="font-medium text-slate-800">
                                     Your Skills
                                   </h4>
                                   {skills.length > 0 ? (
@@ -1572,9 +1741,9 @@ export default function ProfessionalDashboard() {
                                 <div className="space-y-6">
                                   {/* Skills Cloud Visualization */}
                                   <div className="space-y-4">
-                                      <h4 className="font-medium text-gray-900">
-                                        Skills Overview
-                                      </h4>
+                                    <h4 className="font-medium text-slate-800">
+                                      Skills Overview
+                                    </h4>
                                       <div className="flex flex-wrap gap-3">
                                         {skills.map((skill, index) => {
                                           const levelColors = {
@@ -1610,7 +1779,7 @@ export default function ProfessionalDashboard() {
 
                                     {/* Skills by Proficiency Level */}
                                     <div className="space-y-4">
-                                      <h4 className="font-medium text-gray-900">
+                                      <h4 className="font-medium text-slate-800">
                                         Skills by Proficiency
                                       </h4>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1672,9 +1841,9 @@ export default function ProfessionalDashboard() {
                                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                                       <Crown className="h-8 w-8 text-gray-400" />
                                     </div>
-                                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                        No skills yet
-                                      </h3>
+                                    <h3 className="text-lg font-medium text-slate-800 mb-2">
+                                      No skills yet
+                                    </h3>
                                       <p className="text-gray-500 mb-4">
                                         Showcase your skills and expertise to attract
                                         clients.
@@ -1721,7 +1890,7 @@ export default function ProfessionalDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-gray-900 text-lg">
+                                  <h4 className="font-semibold text-slate-800 text-lg">
                                     {item.position}
                                   </h4>
                                   <p className="text-blue-600 font-medium text-sm mb-1">
@@ -1775,14 +1944,10 @@ export default function ProfessionalDashboard() {
                           </DialogHeader>
                           <form onSubmit={(e) => {
                             e.preventDefault();
-                            if (editingExperienceItem !== null) {
-                              const newItems = [...workExperience];
-                              newItems[editingExperienceItem] = experienceFormData;
-                              setWorkExperience(newItems);
-                            } else {
-                              setWorkExperience([...workExperience, experienceFormData]);
-                            }
-                            handleUpdateExperience();
+                              const newExperience = editingExperienceItem !== null
+                                ? workExperience.map((item, index) => index === editingExperienceItem ? experienceFormData : item)
+                                : [...workExperience, experienceFormData];
+                              handleUpdateExperience(newExperience);
                             setShowExperienceDialog(false);
                             setEditingExperienceItem(null);
                             setExperienceFormData({ position: '', company: '', location: '', startMonth: '', startYear: '', endMonth: '', endYear: '', isCurrent: false });
@@ -1926,17 +2091,17 @@ export default function ProfessionalDashboard() {
                       </Button>
 
                       <div className="space-y-3">
-                {education.map((item, index) => (
-                  <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="shrink-0">
-                          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                            <GraduationCap className="h-5 w-5 text-green-600" />
-                          </div>
-                        </div>
+                          {education.map((item, index) => (
+                            <Card key={index} className={`${themeSettings.cardClass}  rounded-md ${themeSettings.borderRadius}`}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start gap-4">
+                                  <div className="shrink-0">
+                                    <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                      <GraduationCap className="h-5 w-5 text-green-600" />
+                                    </div>
+                                  </div>
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-gray-900 text-lg">
+                                  <h4 className="font-semibold text-slate-800 text-lg">
                                     {item.degree}
                                   </h4>
                                   <p className="text-green-600 font-medium text-sm mb-1">
@@ -2086,15 +2251,15 @@ export default function ProfessionalDashboard() {
                       </Button>
 
                       <div className="space-y-3">
-                {services.map((service, index) => (
-                  <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="shrink-0">
-                          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                            <Package className="h-5 w-5 text-green-600" />
-                          </div>
-                        </div>
+                          {services.map((service, index) => (
+                            <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start gap-4">
+                                  <div className="shrink-0">
+                                    <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                      <Package className="h-5 w-5 text-green-600" />
+                                    </div>
+                                  </div>
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-gray-900 text-lg">
                                     {service.name}
@@ -2126,8 +2291,7 @@ export default function ProfessionalDashboard() {
                                     size="sm"
                                     onClick={() => {
                                       const newItems = services.filter((_, i) => i !== index);
-                                      setServices(newItems);
-                                      handleUpdateServices();
+                                      handleUpdateServices(newItems);
                                     }}
                                     className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
                                   >
@@ -2152,14 +2316,10 @@ export default function ProfessionalDashboard() {
                           </DialogHeader>
                           <form onSubmit={(e) => {
                             e.preventDefault();
-                            if (editingServicesItem !== null) {
-                              const newItems = [...services];
-                              newItems[editingServicesItem] = servicesFormData;
-                              setServices(newItems);
-                            } else {
-                              setServices([...services, servicesFormData]);
-                            }
-                            handleUpdateServices();
+                              const newServices = editingServicesItem !== null
+                                ? services.map((item, index) => index === editingServicesItem ? servicesFormData : item)
+                                : [...services, servicesFormData];
+                              handleUpdateServices(newServices);
                             setShowServicesDialog(false);
                             setEditingServicesItem(null);
                             setServicesFormData({ name: '', description: '', price: '' });
@@ -2268,8 +2428,7 @@ export default function ProfessionalDashboard() {
                                     size="sm"
                                     onClick={() => {
                                       const newItems = portfolio.filter((_, i) => i !== index);
-                                      setPortfolio(newItems);
-                                      handleUpdatePortfolio();
+                                      handleUpdatePortfolio(newItems);
                                     }}
                                     className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
                                   >
@@ -2294,14 +2453,10 @@ export default function ProfessionalDashboard() {
                           </DialogHeader>
                           <form onSubmit={(e) => {
                             e.preventDefault();
-                            if (editingPortfolioItem !== null) {
-                              const newItems = [...portfolio];
-                              newItems[editingPortfolioItem] = { ...portfolioFormData, type: 'image' };
-                              setPortfolio(newItems);
-                            } else {
-                              setPortfolio([...portfolio, { ...portfolioFormData, type: 'image' }]);
-                            }
-                            handleUpdatePortfolio();
+                              const newPortfolio = editingPortfolioItem !== null
+                                ? portfolio.map((item, index) => index === editingPortfolioItem ? portfolioFormData : item)
+                                : [...portfolio, portfolioFormData];
+                              handleUpdatePortfolio(newPortfolio);
                             setShowPortfolioDialog(false);
                             setEditingPortfolioItem(null);
                             setPortfolioFormData({ title: '', description: '', url: '' });
@@ -3692,84 +3847,100 @@ export default function ProfessionalDashboard() {
       </div>
     </form>
   );
-  const ProfileInfoCard = ({ professional }) => {
-    // Add state variables for tracking editing state
-    const [isEditingName, setIsEditingName] = useState(false);
-    const [editingName, setEditingName] = useState("");
-    const nameInputRef = useRef(null);
 
-
-    const [isEditingHeadline, setIsEditingHeadline] = useState(false);
-    const [editingHeadline, setEditingHeadline] = useState("");
-    const headlineInputRef = useRef(null);
-
-    const [isEditingAboutMe, setIsEditingAboutMe] = useState(false);
-    const [editingAboutMe, setEditingAboutMe] = useState("");
-    const aboutMeInputRef = useRef(null);
-
-    const [isEditingEmail, setIsEditingEmail] = useState(false);
-    const [editingEmail, setEditingEmail] = useState("");
-    const emailInputRef = useRef(null);
-
-    const [isEditingPhone, setIsEditingPhone] = useState(false);
-    const [editingPhone, setEditingPhone] = useState("");
-    const phoneInputRef = useRef(null);
-
-    const [isEditingLocation, setIsEditingLocation] = useState(false);
-    const [editingLocation, setEditingLocation] = useState("");
-    const locationInputRef = useRef(null);
-
-    const [isEditingWebsite, setIsEditingWebsite] = useState(false);
-    const [editingWebsite, setEditingWebsite] = useState("");
-    const websiteInputRef = useRef(null);
-
-    const [isEditingFacebook, setIsEditingFacebook] = useState(false);
-    const [editingFacebook, setEditingFacebook] = useState("");
-    const facebookInputRef = useRef(null);
-
-    const [isEditingTwitter, setIsEditingTwitter] = useState(false);
-    const [editingTwitter, setEditingTwitter] = useState("");
-    const twitterInputRef = useRef(null);
-
-    const [isEditingInstagram, setIsEditingInstagram] = useState(false);
-    const [editingInstagram, setEditingInstagram] = useState("");
-    const instagramInputRef = useRef(null);
-
-    const [isEditingLinkedin, setIsEditingLinkedin] = useState(false);
-    const [editingLinkedin, setEditingLinkedin] = useState("");
-    const linkedinInputRef = useRef(null);
-   
-    const [isEditingProfessionName, setIsEditingProfessionName] = useState(false);
-    const [editingProfessionName, setEditingProfessionName] = useState("");
-    const professionNameInputRef = useRef<HTMLInputElement>(null);
-   
-    useEffect(() => {
-      if (isEditingProfessionName && professionNameInputRef.current) {
-        professionNameInputRef.current.focus();
-      }
-    }, [isEditingProfessionName]);
+  const ProfileInfoCard = ({
+    professional,
+    themeSettings,
+    isEditingName,
+    isEditingHeadline,
+    isEditingAboutMe,
+    isEditingFacebook,
+    isEditingTwitter,
+    isEditingInstagram,
+    isEditingLinkedin,
+    editingName,
+    editingHeadline,
+    editingAboutMe,
+    editingFacebook,
+    editingTwitter,
+    editingInstagram,
+    editingLinkedin,
+    nameInputRef,
+    headlineInputRef,
+    aboutMeInputRef,
+    facebookInputRef,
+    twitterInputRef,
+    instagramInputRef,
+    linkedinInputRef,
+    setIsEditingName,
+    setIsEditingHeadline,
+    setIsEditingAboutMe,
+    setIsEditingFacebook,
+    setIsEditingTwitter,
+    setIsEditingInstagram,
+    setIsEditingLinkedin,
+    setEditingName,
+    setEditingHeadline,
+    setEditingAboutMe,
+    setEditingFacebook,
+    setEditingTwitter,
+    setEditingInstagram,
+    setEditingLinkedin,
+    handleFieldUpdate,
+    setShowBannerModal,
+    setShowProfilePictureModal
+  }) => {
     return (
       <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <Label className="text-sm font-semibold text-gray-700">
-                  Banner Image
-                </Label>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <Label className="text-sm font-semibold text-gray-700">
+                Banner Image
+              </Label>
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => setShowBannerModal(true)}
+              >
+                <div className="w-full aspect-3/1 rounded-xl overflow-hidden border-4 border-white shadow-lg">
+                  {professional.banner ? (
+                    <img
+                      src={professional.banner}
+                      alt="Profile banner"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                      <Image className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                {/* Small edit icon in top corner */}
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Edit className="h-3 w-3 text-gray-700" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                Recommended dimensions: 1200x300px • Click to edit
+              </p>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              <div className="shrink-0 flex flex-col items-center space-y-2 mt-6 md:mt-0">
                 <div
                   className="relative group cursor-pointer"
-                  onClick={() => setShowBannerModal(true)}
+                  onClick={() => setShowProfilePictureModal(true)}
                 >
-                  <div className="w-full aspect-3/1 rounded-xl overflow-hidden border-4 border-white shadow-lg">
-                    {professional.banner ? (
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    {professional.profilePicture ? (
                       <img
-                        src={professional.banner}
-                        alt="Profile banner"
+                        src={professional.profilePicture}
+                        alt={professional.name}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-                        <Image className="h-8 w-8 text-gray-400" />
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <User className="h-10 w-10 text-gray-400" />
                       </div>
                     )}
                   </div>
@@ -3778,197 +3949,253 @@ export default function ProfessionalDashboard() {
                     <Edit className="h-3 w-3 text-gray-700" />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 text-center">
-                  Recommended dimensions: 1200x300px • Click to edit
-                </p>
               </div>
 
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                <div className="shrink-0 flex flex-col items-center space-y-2 mt-6 md:mt-0">
-                  <div
-                    className="relative group cursor-pointer"
-                    onClick={() => setShowProfilePictureModal(true)}
-                  >
-                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                      {professional.profilePicture ? (
-                        <img
-                          src={professional.profilePicture}
-                          alt={professional.name}
-                          className="w-full h-full object-cover"
+              <div className="flex-1 space-y-4">
+                {/* Professional Name */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <User className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Name
+                      </p>
+                      {isEditingName ? (
+                        <Input
+                          key="name-input"
+                          ref={nameInputRef}
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="mt-1"
+                          autoFocus
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <User className="h-10 w-10 text-gray-400" />
-                        </div>
+                        <p className="text-md text-gray-900 font-medium ">
+                          {professional.name || "Not provided"}
+                        </p>
                       )}
                     </div>
-                    {/* Small edit icon in top corner */}
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Edit className="h-3 w-3 text-gray-700" />
-                    </div>
+                    {isEditingName ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await handleFieldUpdate("name", editingName);
+                            // Update professional state immediately
+                            setProfessional(prev => prev ? { ...prev, name: editingName } : null);
+                            setIsEditingName(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsEditingName(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`${themeSettings.borderRadius} shrink-0`}
+                        onClick={() => {
+                          setEditingName(professional.name || "");
+                          setIsEditingName(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex-1 space-y-4">
-                  {/* Professional Name */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                      <User className="h-5 w-5 text-gray-400 shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">
-                          Name
-                        </p>
-                        {isEditingName ? (
-                          <Input
-                            key="name-input"
-                            ref={nameInputRef}
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            className="mt-1"
-                            autoFocus
-                          />
-                        ) : (
-                            <p className="text-md text-gray-900 font-medium ">
-                              {professional.name || "Not provided"}
-                            </p>
-                        )}
-                      </div>
-                      {isEditingName ? (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              handleFieldUpdate("name", editingName);
-                              setIsEditingName(false);
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setIsEditingName(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className={`${themeSettings.borderRadius} shrink-0`}
-                            onClick={() => {
-                              setEditingName(professional.name || "");
-                              setIsEditingName(true);
-                            }}
-                          >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  {/* Professional Headline */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                      <Edit className="h-5 w-5 text-gray-400 shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">
-                          Headline
-                        </p>
-                        {isEditingHeadline ? (
-                          <Input
-                            key="headline-input"
-                            ref={headlineInputRef}
-                            value={editingHeadline}
-                            onChange={(e) => setEditingHeadline(e.target.value)}
-                            className="mt-1"
-                            autoFocus
-                          />
-                        ) : (
-                            <p className="text-md text-amber-600 font-medium">
-                              {professional.professionalHeadline ||
-                                "Not provided"}
-                            </p>
-                        )}
-                      </div>
+                {/* Professional Headline */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Edit className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Headline
+                      </p>
                       {isEditingHeadline ? (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              handleFieldUpdate(
-                                "professionalHeadline",
-                                editingHeadline
-                              );
-                              setIsEditingHeadline(false);
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setIsEditingHeadline(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                        <Input
+                          key="headline-input"
+                          ref={headlineInputRef}
+                          value={editingHeadline}
+                          onChange={(e) => setEditingHeadline(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
                       ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className={`${themeSettings.borderRadius} shrink-0`}
-                            onClick={() => {
-                              setEditingHeadline(
-                                professional.professionalHeadline || ""
-                              );
-                              setIsEditingHeadline(true);
-                            }}
-                          >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <p className="text-md text-amber-600 font-medium">
+                          {professional.professionalHeadline ||
+                            "Not provided"}
+                        </p>
                       )}
                     </div>
+                    {isEditingHeadline ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await handleFieldUpdate(
+                              "professionalHeadline",
+                              editingHeadline
+                            );
+                            // Update professional state immediately
+                            setProfessional(prev => prev ? { ...prev, professionalHeadline: editingHeadline } : null);
+                            setIsEditingHeadline(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsEditingHeadline(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`${themeSettings.borderRadius} shrink-0`}
+                        onClick={() => {
+                          setEditingHeadline(
+                            professional.professionalHeadline || ""
+                          );
+                          setIsEditingHeadline(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* About Me - Fifth */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">
-                  About Me
-                </Label>
+            {/* About Me - Fifth */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                About Me
+              </Label>
+              {isEditingAboutMe ? (
+                <Textarea
+                  key="aboutme-input"
+                  ref={aboutMeInputRef}
+                  value={editingAboutMe}
+                  onChange={(e) => setEditingAboutMe(e.target.value)}
+                  placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+                  className={`${themeSettings.borderRadius} border-gray-200 min-h-[120px] leading-relaxed`}
+                  autoFocus
+                />
+              ) : (
+                <Textarea
+                  value={professional.aboutMe || ""}
+                  readOnly
+                  placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+                  className={`${themeSettings.borderRadius} bg-gray-50 border-gray-200 min-h-[120px] leading-relaxed`}
+                />
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">
+                  {professional.aboutMe
+                    ? `${professional.aboutMe.length} characters`
+                    : "0 characters"}
+                </span>
                 {isEditingAboutMe ? (
-                  <Textarea
-                    key="aboutme-input"
-                    ref={aboutMeInputRef}
-                    value={editingAboutMe}
-                    onChange={(e) => setEditingAboutMe(e.target.value)}
-                    placeholder="Tell clients about yourself, your experience, and what makes you unique..."
-                    className={`${themeSettings.borderRadius} border-gray-200 min-h-[120px] leading-relaxed`}
-                    autoFocus
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        await handleFieldUpdate("aboutMe", editingAboutMe);
+                        // Update professional state immediately
+                        setProfessional(prev => prev ? { ...prev, aboutMe: editingAboutMe } : null);
+                        setIsEditingAboutMe(false);
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditingAboutMe(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 ) : (
-                  <Textarea
-                      value={professional.aboutMe || ""}
-                    readOnly
-                    placeholder="Tell clients about yourself, your experience, and what makes you unique..."
-                      className={`${themeSettings.borderRadius} bg-gray-50 border-gray-200 min-h-[120px] leading-relaxed`}
-                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={themeSettings.borderRadius}
+                    onClick={() => {
+                      setEditingAboutMe(professional.aboutMe || "");
+                      setIsEditingAboutMe(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 )}
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">
-                    {professional.aboutMe
-                      ? `${professional.aboutMe.length} characters`
-                      : "0 characters"}
-                  </span>
-                  {isEditingAboutMe ? (
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Social Media Links */}
+          <div className="space-y-6">
+            {/* Social Media Links */}
+            <div className="space-y-4">
+              <Label className="text-sm font-semibold text-gray-700">
+                Social Media Links
+              </Label>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <Facebook className="h-5 w-5 text-blue-600 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      Facebook
+                    </p>
+                    {isEditingFacebook ? (
+                      <Input
+                        key="facebook-input"
+                        ref={facebookInputRef}
+                        value={editingFacebook}
+                        onChange={(e) => setEditingFacebook(e.target.value)}
+                        placeholder="https://facebook.com/username"
+                        className="mt-1"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-900">
+                        {professional.facebook ? (
+                          <a
+                            href={professional.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            Connected
+                          </a>
+                        ) : (
+                          "Not connected"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  {isEditingFacebook ? (
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() => {
-                          handleFieldUpdate("aboutMe", editingAboutMe);
-                          setIsEditingAboutMe(false);
+                        onClick={async () => {
+                          await handleFieldUpdate("facebook", editingFacebook);
+                          // Update professional state immediately
+                          setProfessional(prev => prev ? { ...prev, facebook: editingFacebook } : null);
+                          setIsEditingFacebook(false);
                         }}
                       >
                         Save
@@ -3976,316 +4203,245 @@ export default function ProfessionalDashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setIsEditingAboutMe(false)}
+                        onClick={() => setIsEditingFacebook(false)}
                       >
                         Cancel
                       </Button>
                     </div>
                   ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`${themeSettings.borderRadius} shrink-0`}
+                      onClick={() => {
+                        setEditingFacebook(professional.facebook || "");
+                        setIsEditingFacebook(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <Twitter className="h-5 w-5 text-sky-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      Twitter
+                    </p>
+                    {isEditingTwitter ? (
+                      <Input
+                        key="twitter-input"
+                        ref={twitterInputRef}
+                        value={editingTwitter}
+                        onChange={(e) => setEditingTwitter(e.target.value)}
+                        placeholder="https://twitter.com/username"
+                        className="mt-1"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-900">
+                        {professional.twitter ? (
+                          <a
+                            href={professional.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sky-600 hover:underline"
+                          >
+                            Connected
+                          </a>
+                        ) : (
+                          "Not connected"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  {isEditingTwitter ? (
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className={themeSettings.borderRadius}
-                        onClick={() => {
-                          setEditingAboutMe(professional.aboutMe || "");
-                          setIsEditingAboutMe(true);
+                        onClick={async () => {
+                          await handleFieldUpdate("twitter", editingTwitter);
+                          // Update professional state immediately
+                          setProfessional(prev => prev ? { ...prev, twitter: editingTwitter } : null);
+                          setIsEditingTwitter(false);
                         }}
                       >
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingTwitter(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`${themeSettings.borderRadius} shrink-0`}
+                      onClick={() => {
+                        setEditingTwitter(professional.twitter || "");
+                        setIsEditingTwitter(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <Instagram className="h-5 w-5 text-pink-600 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      Instagram
+                    </p>
+                    {isEditingInstagram ? (
+                      <Input
+                        key="instagram-input"
+                        ref={instagramInputRef}
+                        value={editingInstagram}
+                        onChange={(e) => setEditingInstagram(e.target.value)}
+                        placeholder="https://instagram.com/username"
+                        className="mt-1"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-900">
+                        {professional.instagram ? (
+                          <a
+                            href={professional.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-600 hover:underline"
+                          >
+                            Connected
+                          </a>
+                        ) : (
+                          "Not connected"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  {isEditingInstagram ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          await handleFieldUpdate("instagram", editingInstagram);
+                          // Update professional state immediately
+                          setProfessional(prev => prev ? { ...prev, instagram: editingInstagram } : null);
+                          setIsEditingInstagram(false);
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingInstagram(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`${themeSettings.borderRadius} shrink-0`}
+                      onClick={() => {
+                        setEditingInstagram(professional.instagram || "");
+                        setIsEditingInstagram(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <Linkedin className="h-5 w-5 text-blue-700 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      LinkedIn
+                    </p>
+                    {isEditingLinkedin ? (
+                      <Input
+                        key="linkedin-input"
+                        ref={linkedinInputRef}
+                        value={editingLinkedin}
+                        onChange={(e) => setEditingLinkedin(e.target.value)}
+                        placeholder="https://linkedin.com/in/username"
+                        className="mt-1"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-900">
+                        {professional.linkedin ? (
+                          <a
+                            href={professional.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            Connected
+                          </a>
+                        ) : (
+                          "Not connected"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  {isEditingLinkedin ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          await handleFieldUpdate("linkedin", editingLinkedin);
+                          // Update professional state immediately
+                          setProfessional(prev => prev ? { ...prev, linkedin: editingLinkedin } : null);
+                          setIsEditingLinkedin(false);
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingLinkedin(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`${themeSettings.borderRadius} shrink-0`}
+                      onClick={() => {
+                        setEditingLinkedin(professional.linkedin || "");
+                        setIsEditingLinkedin(true);
+                      }}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Right Column - Social Media Links */}
-            <div className="space-y-6">
-              {/* Social Media Links */}
-              <div className="space-y-4">
-                <Label className="text-sm font-semibold text-gray-700">
-                  Social Media Links
-                </Label>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Facebook className="h-5 w-5 text-blue-600 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">
-                        Facebook
-                      </p>
-                      {isEditingFacebook ? (
-                        <Input
-                          key="facebook-input"
-                          ref={facebookInputRef}
-                          value={editingFacebook}
-                          onChange={(e) => setEditingFacebook(e.target.value)}
-                          placeholder="https://facebook.com/username"
-                          className="mt-1"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-900">
-                          {professional.facebook ? (
-                              <a
-                                href={professional.facebook}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                              Connected
-                            </a>
-                          ) : (
-                                "Not connected"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    {isEditingFacebook ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            handleFieldUpdate("facebook", editingFacebook);
-                            setIsEditingFacebook(false);
-                          }}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setIsEditingFacebook(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`${themeSettings.borderRadius} shrink-0`}
-                          onClick={() => {
-                            setEditingFacebook(professional.facebook || "");
-                            setIsEditingFacebook(true);
-                          }}
-                        >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Twitter className="h-5 w-5 text-sky-500 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">
-                        Twitter
-                      </p>
-                      {isEditingTwitter ? (
-                        <Input
-                          key="twitter-input"
-                          ref={twitterInputRef}
-                          value={editingTwitter}
-                          onChange={(e) => setEditingTwitter(e.target.value)}
-                          placeholder="https://twitter.com/username"
-                          className="mt-1"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-900">
-                          {professional.twitter ? (
-                              <a
-                                href={professional.twitter}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sky-600 hover:underline"
-                              >
-                              Connected
-                            </a>
-                          ) : (
-                                "Not connected"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    {isEditingTwitter ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            handleFieldUpdate("twitter", editingTwitter);
-                            setIsEditingTwitter(false);
-                          }}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setIsEditingTwitter(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`${themeSettings.borderRadius} shrink-0`}
-                          onClick={() => {
-                            setEditingTwitter(professional.twitter || "");
-                            setIsEditingTwitter(true);
-                          }}
-                        >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Instagram className="h-5 w-5 text-pink-600 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">
-                        Instagram
-                      </p>
-                      {isEditingInstagram ? (
-                        <Input
-                          key="instagram-input"
-                          ref={instagramInputRef}
-                          value={editingInstagram}
-                          onChange={(e) => setEditingInstagram(e.target.value)}
-                          placeholder="https://instagram.com/username"
-                          className="mt-1"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-900">
-                          {professional.instagram ? (
-                              <a
-                                href={professional.instagram}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-pink-600 hover:underline"
-                              >
-                              Connected
-                            </a>
-                          ) : (
-                                "Not connected"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    {isEditingInstagram ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            handleFieldUpdate("instagram", editingInstagram);
-                            setIsEditingInstagram(false);
-                          }}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setIsEditingInstagram(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`${themeSettings.borderRadius} shrink-0`}
-                          onClick={() => {
-                            setEditingInstagram(professional.instagram || "");
-                            setIsEditingInstagram(true);
-                          }}
-                        >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Linkedin className="h-5 w-5 text-blue-700 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">
-                        LinkedIn
-                      </p>
-                      {isEditingLinkedin ? (
-                        <Input
-                          key="linkedin-input"
-                          ref={linkedinInputRef}
-                          value={editingLinkedin}
-                          onChange={(e) => setEditingLinkedin(e.target.value)}
-                          placeholder="https://linkedin.com/in/username"
-                          className="mt-1"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-900">
-                          {professional.linkedin ? (
-                              <a
-                                href={professional.linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-700 hover:underline"
-                              >
-                              Connected
-                            </a>
-                          ) : (
-                                "Not connected"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    {isEditingLinkedin ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            handleFieldUpdate("linkedin", editingLinkedin);
-                            setIsEditingLinkedin(false);
-                          }}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setIsEditingLinkedin(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`${themeSettings.borderRadius} shrink-0`}
-                          onClick={() => {
-                            setEditingLinkedin(professional.linkedin || "");
-                            setIsEditingLinkedin(true);
-                          }}
-                        >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  className={`w-full ${themeSettings.borderRadius} mt-4`}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add More Social Links
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                className={`w-full ${themeSettings.borderRadius} mt-4`}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add More Social Links
+              </Button>
             </div>
           </div>
         </div>
+      </div>
     );
   };
 
@@ -4618,46 +4774,46 @@ export default function ProfessionalDashboard() {
         <div
           className={`fixed inset-0 ${getBackgroundClass()} bg-center blur-sm -z-10`}
         ></div>
-      {/* Top Header Bar */}
-      <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-2">
-          <div className="flex items-center">
-            <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
-            <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div>
+        {/* Top Header Bar */}
+        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-3 sm:px-4 py-2">
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
+              <span className="h-8 border-l border-gray-300 mx-2"></span>
+              <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                   Professional Dashboard
                 </h1>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="text-right hidden sm:block">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.name || "Professional"}
                 </p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
-            </div>
-            <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-              <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+                <p className="text-sm text-gray-500">{user?.email}</p>
+              </div>
+              <span className="h-8 border-l border-gray-300 mx-2"></span>
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
+                <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Layout: Three Column Grid */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Desktop Only */}
-        {!isMobile && (
-          <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
-            <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-              <div className="flex items-center space-x-2">
-                <User className="h-6 w-6" />
-                <span className="font-semibold">Professional</span>
+        {/* Main Layout: Three Column Grid */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Sidebar - Desktop Only */}
+          {!isMobile && (
+            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
+                <div className="flex items-center space-x-2">
+                  <User className="h-6 w-6" />
+                  <span className="font-semibold">Professional</span>
+                </div>
               </div>
-            </div>
-            <nav className="flex-1 p-4">
-              <ul className="space-y-2">
+              <nav className="flex-1 p-4">
+                <ul className="space-y-2">
                   {sidebarItems.map((item) => (
                     <li key={item.title}>
                       {item.subItems ? (
@@ -4709,48 +4865,48 @@ export default function ProfessionalDashboard() {
                           className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
                               ? "bg-amber-100 text-amber-600"
                               : "text-gray-700 hover:bg-amber-50"
-                        }`}
+                            }`}
                         >
                           <item.icon className="h-5 w-5" />
                           <span>{item.title}</span>
                         </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </nav>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </nav>
 
-            {/* Logout Section */}
-            <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
-              <button
-                onClick={async () => {
+              {/* Logout Section */}
+              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
+                <button
+                  onClick={async () => {
                     await logout();
                     router.push("/login");
-                }}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </button>
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Middle Content */}
+          {/* Middle Content */}
           <div
             className={`flex-1 overflow-auto hide-scrollbar transition-all duration-300 ease-in-out pb-20 md:pb-0`}
           >
-          <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
-            {renderMiddleContent()}
+            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
+              {renderMiddleContent()}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Bottom Navigation */}
-      {isMobile && (
-        <>
-          {/* More Menu Overlay */}
-          {showMoreMenu && (
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <>
+            {/* More Menu Overlay */}
+            {showMoreMenu && (
               <div
                 className="fixed inset-0 bg-black/10 backdrop-blur-sm  bg-opacity-50 z-40"
                 onClick={() => setShowMoreMenu(false)}
@@ -4759,198 +4915,197 @@ export default function ProfessionalDashboard() {
                   className="absolute bottom-20 left-0 right-0 bg-white  rounded-3xl  p-4"
                   onClick={(e) => e.stopPropagation()}
                 >
-                <div className="space-y-2">
-                  {menuItems.slice(3).map((item) => {
-                    const MobileIcon = item.mobileIcon;
-                    return (
-                      <button
-                        key={item.value}
-                        onClick={() => {
-                          setCurrentView(item.value);
-                          setShowMoreMenu(false);
-                        }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${currentView === item.value
+                  <div className="space-y-2">
+                    {menuItems.slice(3).map((item) => {
+                      const MobileIcon = item.mobileIcon;
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => {
+                            setCurrentView(item.value);
+                            setShowMoreMenu(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${currentView === item.value
                             ? "bg-amber-100 text-amber-600"
                             : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                      >
-                        <MobileIcon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Bottom Navigation Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-            <div className="flex justify-around items-center py-2">
-              {menuItems.slice(0, 4).map((item) => {
-                const MobileIcon = item.mobileIcon;
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setCurrentView(item.value)}
-                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
-                        ? "text-amber-500"
-                        : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    <MobileIcon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">
-                      {item.mobileTitle}
-                    </span>
-                  </button>
-                );
-              })}
-              {/* More button for additional items */}
-              <button
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${showMoreMenu ||
-                      menuItems.slice(4).some((item) => item.value === currentView)
-                      ? "text-amber-500"
-                      : "text-gray-500 hover:text-gray-700"
-                    }`}
-              >
-                <MoreHorizontal className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">More</span>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Image Upload Modals */}
-      {/* Banner Image Upload Modal */}
-      <Dialog open={showBannerModal} onOpenChange={setShowBannerModal}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Edit Banner Image</DialogTitle>
-            <DialogDescription>
-                Upload and crop your banner image. Recommended dimensions:
-                1200x300px
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            <ImageUpload
-              accept="image/*"
-              aspectRatio={4 / 1}
-              uploadUrl="/api/professionals/upload"
-              uploadType="banner"
-              onUpload={(url) => {
-                setBannerUrl(url);
-                setShowBannerModal(false);
-                toast({
-                  title: "Success",
-                  description: "Banner image updated successfully!",
-                });
-              }}
-                onError={(error) =>
-                  toast({
-                    title: "Upload Error",
-                    description: error,
-                    variant: "destructive",
-                })
-              }
-            />
-
-            {professional?.banner && (
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Current Banner</h4>
-                <div className="relative">
-                  <img
-                    src={professional.banner}
-                    alt="Current banner"
-                    className="w-full h-32 object-cover rounded-xl border"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-4 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setShowBannerModal(false)}
-                  className={`flex-1 ${themeSettings.borderRadius}`}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Profile Picture Upload Modal */}
-        <Dialog
-          open={showProfilePictureModal}
-          onOpenChange={setShowProfilePictureModal}
-        >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Profile Picture</DialogTitle>
-            <DialogDescription>
-                Upload and crop your profile picture. Recommended dimensions:
-                400x400px (square)
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            <ImageUpload
-              accept="image/*"
-              aspectRatio={1}
-              uploadUrl="/api/professionals/upload"
-              uploadType="profile"
-              onUpload={(url) => {
-                setProfilePictureUrl(url);
-                setShowProfilePictureModal(false);
-                toast({
-                  title: "Success",
-                  description: "Profile picture updated successfully!",
-                });
-              }}
-                onError={(error) =>
-                  toast({
-                    title: "Upload Error",
-                    description: error,
-                    variant: "destructive",
-                })
-              }
-            />
-
-            {professional?.profilePicture && (
-              <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900">
-                    Current Profile Picture
-                  </h4>
-                <div className="flex justify-center">
-                  <div className="relative">
-                    <img
-                      src={professional.profilePicture}
-                      alt="Current profile picture"
-                      className="w-32 h-32 object-cover rounded-full border-4 border-white shadow-lg"
-                    />
+                            }`}
+                        >
+                          <MobileIcon className="h-5 w-5" />
+                          <span className="font-medium">{item.title}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="flex gap-4 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setShowProfilePictureModal(false)}
-                  className={`flex-1 ${themeSettings.borderRadius}`}
-              >
-                Cancel
-              </Button>
+            {/* Bottom Navigation Bar */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+              <div className="flex justify-around items-center py-2">
+                {menuItems.slice(0, 4).map((item) => {
+                  const MobileIcon = item.mobileIcon;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setCurrentView(item.value)}
+                      className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
+                        ? "text-amber-500"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                      <MobileIcon className="h-5 w-5 mb-1" />
+                      <span className="text-xs font-medium">
+                        {item.mobileTitle}
+                      </span>
+                    </button>
+                  );
+                })}
+                {/* More button for additional items */}
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${showMoreMenu ||
+                      menuItems.slice(4).some((item) => item.value === currentView)
+                      ? "text-amber-500"
+                      : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                  <MoreHorizontal className="h-5 w-5 mb-1" />
+                  <span className="text-xs font-medium">More</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </>
+        )}
+
+        {/* Image Upload Modals */}
+        {/* Banner Image Upload Modal */}
+        <Dialog open={showBannerModal} onOpenChange={setShowBannerModal}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Edit Banner Image</DialogTitle>
+              <DialogDescription>
+                Upload and crop your banner image. Recommended dimensions:
+                1200x300px
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <ImageUpload
+                accept="image/*"
+                aspectRatio={4 / 1}
+                uploadUrl="/api/professionals/upload"
+                uploadType="banner"
+                onUpload={(url) => {
+                  setBannerUrl(url);
+                  setShowBannerModal(false);
+                  toast({
+                    title: "Success",
+                    description: "Banner image updated successfully!",
+                  });
+                }}
+                onError={(error) =>
+                  toast({
+                    title: "Upload Error",
+                    description: error,
+                    variant: "destructive",
+                  })
+                }
+              />
+
+              {professional?.banner && (
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">Current Banner</h4>
+                  <div className="relative">
+                    <img
+                      src={professional.banner}
+                      alt="Current banner"
+                      className="w-full h-32 object-cover rounded-xl border"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBannerModal(false)}
+                  className={`flex-1 ${themeSettings.borderRadius}`}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Profile Picture Upload Modal */}
+        <Dialog
+          open={showProfilePictureModal}
+          onOpenChange={setShowProfilePictureModal}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Profile Picture</DialogTitle>
+              <DialogDescription>
+                Upload and crop your profile picture. Recommended dimensions:
+                400x400px (square)
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <ImageUpload
+                accept="image/*"
+                aspectRatio={1}
+                uploadUrl="/api/professionals/upload"
+                uploadType="profile"
+                onUpload={(url) => {
+                  setProfilePictureUrl(url);
+                  setShowProfilePictureModal(false);
+                  toast({
+                    title: "Success",
+                    description: "Profile picture updated successfully!",
+                  });
+                }}
+                onError={(error) =>
+                  toast({
+                    title: "Upload Error",
+                    description: error,
+                    variant: "destructive",
+                  })
+                }
+              />
+
+              {professional?.profilePicture && (
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">
+                    Current Profile Picture
+                  </h4>
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <img
+                        src={professional.profilePicture}
+                        alt="Current profile picture"
+                        className="w-32 h-32 object-cover rounded-full border-4 border-white shadow-lg"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowProfilePictureModal(false)}
+                  className={`flex-1 ${themeSettings.borderRadius}`}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </ThemeProvider>
   );
 }
-

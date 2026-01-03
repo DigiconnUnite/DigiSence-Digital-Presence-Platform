@@ -462,7 +462,7 @@ export default function ProfessionalsPage() {
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-12">
-                    <h2 className="text-2xl font-bold text-primary">
+                        <h2 className="text-2xl font-bold text-slate-800">
                       {searchTerm
                         ? `Search Results (${filteredProfessionals.length})`
                         : `All Professionals (${filteredProfessionals.length})`}

@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
               aboutMe: true,
               profilePicture: true,
               banner: true,
+              resume: true,
               location: true,
               phone: true,
               email: true,

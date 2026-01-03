@@ -23,7 +23,20 @@ export async function GET(request: NextRequest) {
       take: 5
     })
 
-    return NextResponse.json({ businesses })
+    const professionals = await db.professional.findMany({
+      select: {
+        id: true,
+        name: true,
+        profilePicture: true,
+        banner: true,
+        professionalHeadline: true,
+        location: true,
+        isActive: true,
+      },
+      take: 10
+    })
+
+    return NextResponse.json({ businesses, professionals })
   } catch (error) {
     console.error('Debug error:', error)
     return NextResponse.json({ error: 'Debug failed' }, { status: 500 })

@@ -125,6 +125,7 @@ interface Professional {
   aboutMe: string | null;
   profilePicture: string | null;
   banner: string | null;
+  resume: string | null;
   location: string | null;
   phone: string | null;
   email: string | null;
@@ -1139,10 +1140,248 @@ export default function ProfessionalDashboard() {
                      
                   {/* Basic Profile Information Tab */}
                   <TabsContent value="basic" className="mt-4">
-                    <div className="space-y-6">
-                      <ProfileInfoCard professional={professional} />
-                    </div>
-                  </TabsContent>
+                   <div className="space-y-6">
+                     <ProfileInfoCard professional={professional} />
+                     {/* Resume Upload Section */}
+                     <Card
+                       className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
+                     >
+                       <CardContent className="p-6">
+                         <div className="flex justify-between items-start mb-4">
+                           <div>
+                             <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                               Resume/CV
+                             </h3>
+                             <p className="text-sm text-gray-600">
+                               Upload your professional resume (PDF only, max 5MB)
+                             </p>
+                           </div>
+                         </div>
+                         
+                         <div className="space-y-4">
+                           {/* Current Resume Display */}
+                           {professional?.resume ? (
+                             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                               <div className="flex items-center gap-3">
+                                 <FileText className="h-5 w-5 text-blue-600" />
+                                 <div>
+                                   <p className="font-medium text-gray-900">
+                                     Current Resume
+                                   </p>
+                                   <p className="text-sm text-gray-500">
+                                     {professional.resume.split('/').pop()}
+                                   </p>
+                                 </div>
+                               </div>
+                               <div className="flex gap-2">
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   className={themeSettings.borderRadius}
+                                   onClick={() => {
+                                     if (professional.resume) {
+                                       const link = document.createElement('a');
+                                       link.href = professional.resume as string;
+                                       link.download = (professional.resume as string).split('/').pop() || 'resume.pdf';
+                                       link.target = '_blank';
+                                       document.body.appendChild(link);
+                                       link.click();
+                                       document.body.removeChild(link);
+                                     }
+                                   }}
+                                 >
+                                   <Download className="h-4 w-4 mr-2" />
+                                   Download
+                                 </Button>
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
+                                   onClick={async () => {
+                                     try {
+                                       setIsLoading(true);
+                                       const response = await fetch(`/api/professionals/${professional.id}`, {
+                                         method: "PUT",
+                                         headers: {
+                                           "Content-Type": "application/json",
+                                         },
+                                         body: JSON.stringify({ resume: null }),
+                                       });
+                                       
+                                       if (response.ok) {
+                                         const data = await response.json();
+                                         setProfessional(data.professional);
+                                         toast({
+                                           title: "Success",
+                                           description: "Resume removed successfully!",
+                                         });
+                                       } else {
+                                         const error = await response.json();
+                                         toast({
+                                           title: "Error",
+                                           description: `Failed to remove resume: ${error.error}`,
+                                           variant: "destructive",
+                                         });
+                                       }
+                                     } catch (error) {
+                                       console.error("Remove resume error:", error);
+                                       toast({
+                                         title: "Error",
+                                         description: "Failed to remove resume. Please try again.",
+                                         variant: "destructive",
+                                       });
+                                     } finally {
+                                       setIsLoading(false);
+                                     }
+                                   }}
+                                 >
+                                   <X className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                             </div>
+                           ) : (
+                             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+                               <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                               <p className="text-sm text-gray-500">No resume uploaded yet</p>
+                             </div>
+                           )}
+                           
+                           {/* Resume Upload */}
+                           <div className="space-y-3">
+                             <Label className="text-sm font-medium text-gray-700">
+                               Upload Resume (PDF only, max 5MB)
+                             </Label>
+                             <div className="flex items-center gap-4">
+                               <Input
+                                 type="file"
+                                 accept=".pdf"
+                                 id="resume-upload"
+                                 className="hidden"
+                                 onChange={async (e) => {
+                                   const file = e.target.files?.[0];
+                                   if (!file) return;
+                                   
+                                   // Validate file type
+                                   if (file.type !== 'application/pdf') {
+                                     toast({
+                                       title: "Invalid File Type",
+                                       description: "Please upload a PDF file only.",
+                                       variant: "destructive",
+                                     });
+                                     return;
+                                   }
+                                   
+                                   // Validate file size (5MB max)
+                                   const maxSize = 5 * 1024 * 1024; // 5MB
+                                   if (file.size > maxSize) {
+                                     toast({
+                                       title: "File Too Large",
+                                       description: "Maximum file size is 5MB.",
+                                       variant: "destructive",
+                                     });
+                                     return;
+                                   }
+                                   
+                                   try {
+                                     setIsLoading(true);
+                                     
+                                     const formData = new FormData();
+                                     formData.append('file', file);
+                                     formData.append('type', 'resume');
+                                     
+                                     const response = await fetch('/api/professionals/upload', {
+                                       method: 'POST',
+                                       body: formData,
+                                     });
+                                     
+                                     if (response.ok) {
+                                       const data = await response.json();
+                                       
+                                       // Update professional with new resume URL
+                                       const updateResponse = await fetch(`/api/professionals/${professional.id}`, {
+                                         method: "PUT",
+                                         headers: {
+                                           "Content-Type": "application/json",
+                                         },
+                                         body: JSON.stringify({ resume: data.url }),
+                                       });
+                                       
+                                       if (updateResponse.ok) {
+                                         const updateData = await updateResponse.json();
+                                         setProfessional(updateData.professional);
+                                         
+                                         toast({
+                                           title: "Success",
+                                           description: "Resume uploaded successfully!",
+                                         });
+                                       } else {
+                                         const error = await updateResponse.json();
+                                         toast({
+                                           title: "Error",
+                                           description: `Failed to update profile: ${error.error}`,
+                                           variant: "destructive",
+                                         });
+                                       }
+                                     } else {
+                                       const error = await response.json();
+                                       toast({
+                                         title: "Upload Error",
+                                         description: error.error || "Failed to upload resume.",
+                                         variant: "destructive",
+                                       });
+                                     }
+                                   } catch (error) {
+                                     console.error("Upload error:", error);
+                                     toast({
+                                       title: "Error",
+                                       description: "Failed to upload resume. Please try again.",
+                                       variant: "destructive",
+                                     });
+                                   } finally {
+                                     setIsLoading(false);
+                                     // Reset file input
+                                     const input = document.getElementById('resume-upload') as HTMLInputElement;
+                                     if (input) input.value = '';
+                                   }
+                                 }}
+                               />
+                               <Label
+                                 htmlFor="resume-upload"
+                                 className={`flex-1 cursor-pointer ${themeSettings.borderRadius} border-2 border-dashed border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors flex items-center justify-center py-8`}
+                               >
+                                 <div className="text-center">
+                                   <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                                   <p className="text-sm text-gray-600 font-medium">
+                                     Click to upload or drag and drop
+                                   </p>
+                                   <p className="text-xs text-gray-500">
+                                     PDF files only (max 5MB)
+                                   </p>
+                                 </div>
+                               </Label>
+                             </div>
+                           </div>
+                           
+                           {/* Upload Instructions */}
+                           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                             <div className="flex items-start gap-3">
+                               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                               <div className="text-sm text-amber-800 space-y-1">
+                                 <p className="font-medium">Upload Guidelines:</p>
+                                 <ul className="list-disc list-inside space-y-1">
+                                   <li>File format: PDF only</li>
+                                   <li>Maximum file size: 5MB</li>
+                                   <li>Content should be professional and up-to-date</li>
+                                   <li>Include your work experience, education, and skills</li>
+                                 </ul>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   </div>
+                 </TabsContent>
 
                   {/* Skills & Expertise Tab */}
                   <TabsContent value="skills" className="mt-6">

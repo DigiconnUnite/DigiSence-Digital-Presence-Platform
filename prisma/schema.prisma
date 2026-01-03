@@ -80,6 +80,7 @@ model Professional {
    aboutMe               String?  // About me section
    profilePicture        String?
    banner                String?
+   resume                String?  // Resume PDF URL
    location              String?
    phone                 String?
    email                 String?

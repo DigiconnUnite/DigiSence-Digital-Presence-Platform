@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadProfessionalProfilePicture, uploadProfessionalBanner, uploadProfessionalPortfolio, getOptimizedImageUrl } from '@/lib/s3-upload'
+import { uploadProfessionalProfilePicture, uploadProfessionalBanner, uploadProfessionalPortfolio, uploadProfessionalResume, getOptimizedImageUrl } from '@/lib/s3-upload'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 
@@ -28,23 +28,30 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const uploadType = formData.get('type') as 'profile' | 'banner' | 'portfolio' // Add type parameter
+    const uploadType = formData.get('type') as 'profile' | 'banner' | 'portfolio' | 'resume' // Add type parameter
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file
-    const maxSize = 10 * 1024 * 1024 // 10MB for images
-    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'image/svg+xml']
+    // Validate file based on type
+    let maxSize = 10 * 1024 * 1024 // 10MB for images
+    let allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'image/svg+xml']
+    let errorMessage = 'File must be a valid image format (JPEG, JPG, PNG, WebP, GIF, BMP, TIFF, SVG)'
 
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
+    if (uploadType === 'resume') {
+      maxSize = 5 * 1024 * 1024 // 5MB for resumes
+      allowedTypes = ['application/pdf']
+      errorMessage = 'Resume must be a PDF file'
     }
 
-    if (!allowedImageTypes.includes(file.type)) {
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: `File size must be less than ${maxSize / (1024 * 1024)}MB` }, { status: 400 })
+    }
+
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({
-        error: 'File must be a valid image format (JPEG, JPG, PNG, WebP, GIF, BMP, TIFF, SVG)'
+        error: errorMessage
       }, { status: 400 })
     }
 
@@ -74,6 +81,9 @@ export async function POST(request: NextRequest) {
       case 'portfolio':
         uploadResult = await uploadProfessionalPortfolio(buffer, file.name, professional.id)
         break
+      case 'resume':
+        uploadResult = await uploadProfessionalResume(buffer, file.name, professional.id)
+        break
       default:
         return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 })
     }
@@ -85,12 +95,14 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Update professional record with the new image URL
+    // Update professional record with the new image URL or resume URL
     const updateData: any = {}
     if (uploadType === 'profile') {
       updateData.profilePicture = uploadResult.url
     } else if (uploadType === 'banner') {
       updateData.banner = uploadResult.url
+    } else if (uploadType === 'resume') {
+      updateData.resume = uploadResult.url
     }
 
     if (Object.keys(updateData).length > 0) {
@@ -116,6 +128,11 @@ export async function POST(request: NextRequest) {
       }
     } : null
 
+    // Return appropriate message based on upload type
+    const successMessage = uploadType === 'resume'
+      ? 'Resume uploaded successfully!'
+      : 'Image uploaded successfully!'
+
     return NextResponse.json({
       success: true,
       url: uploadResult.url,
@@ -123,7 +140,7 @@ export async function POST(request: NextRequest) {
       filename: file.name,
       size: file.size,
       type: file.type,
-      message: 'Image uploaded successfully!'
+      message: successMessage
     })
   } catch (error) {
     console.error('Professional upload error:', error)

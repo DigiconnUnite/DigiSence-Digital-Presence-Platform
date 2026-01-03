@@ -102,7 +102,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const getButtonClass = () => {
     return `${
       themeSettings.buttonStyle || "rounded-xl"
-    } bg-amber-600 hover:bg-amber-700 text-white`;
+    } bg-sky-600 hover:bg-sky-700 text-white`;
   };
 
   const getPrimaryColor = () => themeSettings.primaryColor;

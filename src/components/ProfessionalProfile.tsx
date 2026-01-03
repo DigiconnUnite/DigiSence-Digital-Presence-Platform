@@ -14,6 +14,7 @@ interface Professional {
   aboutMe: string | null;
   profilePicture: string | null;
   banner: string | null;
+  resume: string | null;
   location: string | null;
   phone: string | null;
   email: string | null;
@@ -341,10 +342,10 @@ export default function ProfessionalProfile({
 
     return (
       <Card
-        className={`${getCardClass()} h-[700px] bg-linear-to-t from-amber-100 via-white to-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
+        className={`${getCardClass()} h-[700px] bg-linear-to-t from-sky-100 via-white to-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
       >
         {/* Banner */}
-        <div className="relative h-auto bg-linear-to-r from-amber-200 to-amber-300 aspect-3/1 rounded-2xl overflow-hidden">
+        <div className="relative h-auto bg-linear-to-r from-sky-200 to-sky-300 aspect-3/1 rounded-2xl overflow-hidden">
           {professional.banner && (
             <img
               src={bannerImage.src}
@@ -401,7 +402,7 @@ export default function ProfessionalProfile({
                 onClick={() =>
                   window.open(`tel:${professional.phone}`, "_self")
                 }
-                className={`flex items-center w-auto bg-amber-400 hover:bg-amber-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
+                className={`flex items-center w-auto bg-sky-400 hover:bg-sky-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Make Call
@@ -436,14 +437,25 @@ export default function ProfessionalProfile({
 
           {/* Additional Buttons */}
           <div className="grid grid-cols-2 gap-3 mb-6">
+            {professional.resume ? (
+              <Button
+                onClick={() => window.open(professional.resume!, '_blank')}
+                className={`flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Resume
+              </Button>
+            ) : (
+              <Button
+                className={`flex flex-row gap-2 items-center shadow-sm text-gray-400 space-y-1 p-3 bg-gray-100 ${getBorderRadius()} cursor-not-allowed transition-colors`}
+                disabled
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                No Resume
+              </Button>
+            )}
             <Button
-              className={`flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-amber-200 cursor-pointer transition-colors`}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Resume
-            </Button>
-            <Button
-              className={`flex flex-row gap-2 items-center text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-amber-200 cursor-pointer transition-colors`}
+              className={`flex flex-row gap-2 items-center text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
             >
               <Download className="w-4 h-4 mr-2" />
               Download Card
@@ -457,7 +469,7 @@ export default function ProfessionalProfile({
                 href={professional.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
+                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiFacebook className="w-6 h-6 text-blue-600" />
               </a>
@@ -467,7 +479,7 @@ export default function ProfessionalProfile({
                 href={professional.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
+                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiX className="w-6 h-6 text-black" />
               </a>
@@ -477,7 +489,7 @@ export default function ProfessionalProfile({
                 href={professional.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-12 h-12 bg-gradient-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
+                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiInstagram className="w-6 h-6 text-pink-600" />
               </a>
@@ -487,7 +499,7 @@ export default function ProfessionalProfile({
                 href={professional.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-12 h-12 bg-linear-to-b from-amber-100 to-white ${getBorderRadius()} hover:from-amber-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
+                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
               >
                 <SiLinkedin className="w-6 h-6 text-blue-700" />
               </a>
@@ -510,7 +522,7 @@ export default function ProfessionalProfile({
                 });
               }
             }}
-            className={`w-full mb-5 flex items-center cursor-pointer justify-center bg-white shadow-md hover:bg-amber-200 text-gray-700 ${getBorderRadius()} p-3 transition-colors`}
+            className={`w-full mb-5 flex items-center cursor-pointer justify-center bg-white shadow-md hover:bg-sky-200 text-gray-700 ${getBorderRadius()} p-3 transition-colors`}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Profile
@@ -584,7 +596,7 @@ export default function ProfessionalProfile({
           {/* Right Side */}
           <Button
             onClick={() => setCurrentView("contact")}
-            className={`bg-amber-600 hover:bg-amber-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
+            className={`bg-sky-600 hover:bg-sky-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
           >
             Let's Talk
           </Button>
@@ -597,7 +609,7 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "home"
-                ? "text-amber-500 bg-amber-50"
+                ? "text-sky-500 bg-sky-50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => {
@@ -611,7 +623,7 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "about"
-                ? "text-amber-500 bg-amber-50"
+                ? "text-sky-500 bg-sky-50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("about")}
@@ -622,7 +634,7 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "services"
-                ? "text-amber-500 bg-amber-50"
+                ? "text-sky-500 bg-sky-50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("services")}
@@ -633,7 +645,7 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "portfolio"
-                ? "text-amber-500 bg-amber-50"
+                ? "text-sky-500 bg-sky-50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("portfolio")}
@@ -644,7 +656,7 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "contact"
-                ? "text-amber-500 bg-amber-50"
+                ? "text-sky-500 bg-sky-50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("contact")}
@@ -677,7 +689,7 @@ export default function ProfessionalProfile({
                       {/* About Me Section */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                          <User className="w-5 h-5 mr-2 text-amber-600" />
+                          <User className="w-5 h-5 mr-2 text-sky-600" />
                           About Me
                         </h3>
                         <p className="text-gray-700 leading-relaxed">
@@ -689,7 +701,7 @@ export default function ProfessionalProfile({
                       {/* Education Section */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-amber-600" />
+                          <Award className="w-5 h-5 mr-2 text-sky-600" />
                           Education
                         </h3>
                         {professional.education &&
@@ -701,8 +713,8 @@ export default function ProfessionalProfile({
                                   key={index}
                                   className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
                                 >
-                                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <Award className="w-5 h-5 text-amber-600" />
+                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                    <Award className="w-5 h-5 text-sky-600" />
                                   </div>
                                   <div className="flex-1">
                                     <p className="font-semibold text-gray-900">
@@ -729,7 +741,7 @@ export default function ProfessionalProfile({
                       {/* Certifications Section */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-amber-600" />
+                          <Award className="w-5 h-5 mr-2 text-sky-600" />
                           Certifications
                         </h3>
                         {professional.certifications &&
@@ -741,8 +753,8 @@ export default function ProfessionalProfile({
                                   key={index}
                                   className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
                                 >
-                                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <Award className="w-5 h-5 text-amber-600" />
+                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                    <Award className="w-5 h-5 text-sky-600" />
                                   </div>
                                   <div className="flex-1">
                                     <p className="font-semibold text-gray-900">
@@ -798,8 +810,8 @@ export default function ProfessionalProfile({
                             key={index}
                             className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
                           >
-                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
-                              <Award className="w-6 h-6 text-amber-600" />
+                            <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                              <Award className="w-6 h-6 text-sky-600" />
                             </div>
                             <span className="text-sm font-semibold text-gray-900 text-center">
                               {service.name}
@@ -843,7 +855,7 @@ export default function ProfessionalProfile({
                           return (
                             <div
                               key={index}
-                              className="relative p-7 px-10 bg-gradient-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden"
+                              className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
                             >
                               <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
                                 <img
@@ -945,8 +957,8 @@ export default function ProfessionalProfile({
                                     key={`exp-${index}`}
                                     className="flex items-start space-x-4 rounded-lg"
                                   >
-                                    <div className="w-15 h-15 bg-linear-to-b from-amber-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
-                                      <Building2 className="w-5 h-5 text-amber-600" />
+                                    <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
+                                      <Building2 className="w-5 h-5 text-sky-600" />
                                     </div>
                                     <div className="flex-1 flex justify-items-end gap-1 w-full">
                                       <div className="grid grid-cols-1 gap-1">
@@ -1001,8 +1013,8 @@ export default function ProfessionalProfile({
                                       key={`exp-dup-${index}`}
                                       className="flex items-start space-x-4 rounded-lg"
                                     >
-                                      <div className="w-15 h-15 bg-linear-to-b from-amber-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
-                                        <Building2 className="w-5 h-5 text-amber-600" />
+                                      <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                                        <Building2 className="w-5 h-5 text-sky-600" />
                                       </div>
                                       <div className="flex-1 flex justify-items-end gap-1 w-full">
                                         <div className="grid grid-cols-1 gap-1">
@@ -1056,7 +1068,7 @@ export default function ProfessionalProfile({
                                 key={index}
                                 className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
                               >
-                                <Award className="w-5 h-5 text-amber-600 mr-2" />
+                                <Award className="w-5 h-5 text-sky-600 mr-2" />
                                 <span className="text-sm text-gray-700">
                                   {skill}
                                 </span>
@@ -1104,7 +1116,7 @@ export default function ProfessionalProfile({
                             return (
                               <div
                                 key={index}
-                                className="relative p-7 px-10 bg-gradient-to-t border from-amber-100/80 to-transparent rounded-xl overflow-hidden"
+                                className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
                               >
                                 <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
                                   <img
@@ -1153,8 +1165,8 @@ export default function ProfessionalProfile({
                               key={index}
                               className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
                             >
-                              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
-                                <Award className="w-6 h-6 text-amber-600" />
+                              <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                                <Award className="w-6 h-6 text-sky-600" />
                               </div>
                               <span className="text-sm font-semibold text-gray-900 text-center">
                                 {service.name}
@@ -1186,7 +1198,7 @@ export default function ProfessionalProfile({
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r py-6 px-4">
+      <footer className="bg-linear-to-r py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm font-medium">
             Developed By{" "}
@@ -1194,7 +1206,7 @@ export default function ProfessionalProfile({
               href="https://digiconnunite.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-400 hover:text-amber-300 transition-colors duration-200 font-semibold"
+              className="text-sky-400 hover:text-sky-300 transition-colors duration-200 font-semibold"
             >
               Digiconn Unite Pvt. Ltd.
             </a>

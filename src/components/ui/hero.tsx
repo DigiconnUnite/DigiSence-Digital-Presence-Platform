@@ -5,20 +5,20 @@ import { useState, useEffect, useRef } from "react";
 import { Android } from "./android";
 
 const images = [
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
-  "profile-1.png",
-  "profile-2.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
+  "p-1.png",
+  "b-1.png",
 ];
 
 export default function HeroSectionOne() {

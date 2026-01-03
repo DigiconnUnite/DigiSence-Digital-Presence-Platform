@@ -980,7 +980,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
             </div>
           ) : (
             // Default hero when no slides are configured
-              <div className="relative w-full h-[40vw] min-h-[160px] max-h-[240px] md:h-[500px] md:min-h-[320px] bg-linear-to-br from-cyan-400 via-cyan-500 to-cyan-600 rounded-2xl overflow-hidden shadow-lg">
+              <div className="relative w-full h-[40vw] min-h-40 max-h-60 md:h-[500px] md:min-h-80 bg-linear-to-br from-cyan-400 via-cyan-500 to-cyan-600 rounded-2xl overflow-hidden shadow-lg">
                 <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
                   <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto flex flex-col justify-center h-full">
                     <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg whitespace-pre-line">
@@ -1790,8 +1790,8 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                       decoding="async"
                     />
                   ) : (
-                        <span className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 3 ? "w-[60px] h-[60px] md:w-[80px] md:h-[80px]" : "w-[40px] h-[40px] md:w-[56px] md:h-[56px]"}`}>
-                          <Image className={`text-gray-400 ${index === 0 || index === 3 ? "w-8 h-8 md:w-10 md:h-10" : "w-6 h-6 md:w-8 md:h-8"}`} />
+                        <span className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 3 ? "w-[60px] h-[60px] md:w-20 md:h-20" : "w-10 h-10 md:w-14 md:h-14"}`}>
+                          <Image className={`text-gray-400 ${index === 0 || index === 3 ? "w-8 h-8 md:w-10 md:h-10" : "w-6 h-6 md:w-8 md:h-8"}`} /> 
                     </span>
                   )}
 

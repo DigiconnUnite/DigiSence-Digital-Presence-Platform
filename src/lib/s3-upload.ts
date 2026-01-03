@@ -17,7 +17,7 @@ export interface UploadOptions {
   acl?: 'private' | 'public-read'
   entityType?: 'business' | 'professional' | 'brand' | 'product' | 'user' | 'general'
   entityId?: string
-  imageType?: 'logo' | 'banner' | 'profile' | 'product' | 'hero' | 'brand' | 'portfolio' | 'catalog'
+  imageType?: 'logo' | 'banner' | 'profile' | 'product' | 'hero' | 'brand' | 'portfolio' | 'catalog' | 'resume'
 }
 
 /**
@@ -308,6 +308,22 @@ export async function uploadBrandLogo(
     entityId: brandId,
     imageType: 'logo',
     contentType: 'image/png'
+  })
+}
+
+/**
+ * Upload professional resume PDF
+ */
+export async function uploadProfessionalResume(
+  fileBuffer: Buffer | Uint8Array,
+  fileName: string,
+  professionalId: string
+): Promise<UploadResult> {
+  return uploadToS3(fileBuffer, fileName, {
+    entityType: 'professional',
+    entityId: professionalId,
+    imageType: 'resume',
+    contentType: 'application/pdf'
   })
 }
 

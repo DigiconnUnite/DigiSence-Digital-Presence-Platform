@@ -121,6 +121,7 @@ export default function ProfessionalProfile({
   const [currentView, setCurrentView] = useState<
     "home" | "about" | "services" | "portfolio" | "contact"
   >("home");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Ensure skills and servicesOffered are arrays
   const skills = Array.isArray(professional.skills) ? professional.skills : [];
@@ -160,6 +161,16 @@ export default function ProfessionalProfile({
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Scroll detection for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Real-time synchronization
@@ -575,7 +586,8 @@ export default function ProfessionalProfile({
       suppressHydrationWarning
     >
       {/* Top Navigation Bar - Desktop */}
-      <nav className="hidden md:block fixed top-4 left-1/2 max-w-7xl w-screen transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3">
+      <nav className={`hidden md:block fixed left-1/2 max-w-7xl w-screen transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3 transition-all duration-200 ease-in-out ${isScrolled ? 'top-0 w-full rounded-none' : 'top-4'
+        }`}>
         <div className="flex items-center justify-between mx-auto">
           {/* Left Side */}
           <div className="flex items-center space-x-3">

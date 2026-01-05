@@ -43,7 +43,7 @@ export default function ImageUpload({
   allowVideo = false,
   uploadUrl,
   uploadType,
-  aspectRatio = 1
+  aspectRatio = 16/9
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)

@@ -2487,7 +2487,8 @@ export default function ProfessionalDashboard() {
                                   <ImageUpload
                                     onUpload={(url) => setPortfolioFormData({ ...portfolioFormData, url })}
                                     uploadUrl="/api/professionals/upload"
-                                    uploadType="portfolio"
+                                      uploadType="portfolio"
+
                                   />
                                   {portfolioFormData.url && (
                                     <p className="text-sm text-gray-600">

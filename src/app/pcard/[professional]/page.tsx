@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: PageProps) {
   }
 
   const pageUrl = `${baseUrl}/pcard/${professionalSlug}`
-  const imageUrl = professional.profilePicture ? `${baseUrl}/api/placeholder/1200/630?text=${encodeURIComponent(professional.name)}` : `${baseUrl}/placeholder.png`
+  const imageUrl = professional.profilePicture ? `${baseUrl}/api/placeholder/1200/630?text=${encodeURIComponent(professional.name)}` : `${baseUrl}`
 
   const description = (professional.aboutMe || `Professional profile for ${professional.name}`).slice(0, 160)
 

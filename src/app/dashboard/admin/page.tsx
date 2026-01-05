@@ -1347,7 +1347,7 @@ export default function SuperAdminDashboard() {
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <div className="overflow-x-auto hide-scrollbar rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader className='bg-amber-100'>
                       <TableRow>
@@ -1371,7 +1371,7 @@ export default function SuperAdminDashboard() {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.open(`/${business.slug}`, '_blank')}>
+                              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.open(`/catalog/${business.slug}`, '_blank')}>
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleEditBusiness(business)}>
@@ -1395,7 +1395,7 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Add Professionals</h1>
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Professionals</h1>
               <p className="text-xl text-gray-600">Manage and monitor your professionals from this dashboard section.</p>
             </div>
             <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
@@ -2038,9 +2038,8 @@ export default function SuperAdminDashboard() {
 
     if (rightPanelContent === 'add-professional') {
       return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto hide-scrollbar">
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold">ADD PROFESSIONAL ACCOUNT</h3>
             <p className="text-sm text-gray-600">Create basic account details. The professional will manage their profile content through their admin panel.</p>
             <form onSubmit={handleAddProfessional} className="space-y-6">
               {/* Basic Account Information */}
@@ -2295,7 +2294,7 @@ export default function SuperAdminDashboard() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
-          <div className="w-64 m-4 border  bg-white border-r  rounded-out-r-4xl border-gray-200 flex flex-col shadow-sm">
+          <div className="w-64 m-4 border  bg-white border-r   rounded-3xl border-gray-200 flex flex-col shadow-sm">
             <div className="p-4 border-b border-gray-200 rounded-t-3xl">
               <div className="flex items-center space-x-2">
                 <Crown className="h-6 w-6" />

@@ -1,18 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import bcrypt from 'bcryptjs'
+import { hashPassword } from '@/lib/auth'
 import type { UserRole } from '@/lib/auth'
+import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { z } from 'zod'
+
+const createProfessionalSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(6),
+  adminName: z.string().min(2),
+  phone: z.string().optional(),
+})
+
+async function getSuperAdmin(request: NextRequest) {
+  const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+
+  if (!token) {
+    return null
+  }
+
+  const payload = verifyToken(token)
+  if (!payload || payload.role !== 'SUPER_ADMIN') {
+    return null
+  }
+
+  return payload
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
-    const {
-      name,
-      email,
-      password,
-      adminName,
-      phone,
-    } = body
+    const createData = createProfessionalSchema.parse(body)
+    const { name, email, password, adminName, phone } = createData
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
@@ -27,72 +52,85 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
+    const hashedPassword = await hashPassword(password)
 
-    // Generate slug from name
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    // Generate unique slug from name
+    let baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    if (!baseSlug) baseSlug = 'professional'
 
-    // Create user and professional in a transaction
-    const result = await db.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name: adminName,
-          role: 'PROFESSIONAL_ADMIN' as UserRole,
-        },
-      })
+    let slug = baseSlug
+    let counter = 1
+    while (await db.professional.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`
+      counter++
+    }
 
-      const professional = await tx.professional.create({
-        data: {
-          name,
-          slug,
-          phone,
-          email: email, // Professional's contact email
-          adminId: user.id,
-          // All other profile fields are set to null - professionals will fill them in their dashboard
-          professionalHeadline: null,
-          aboutMe: null,
-          profilePicture: null,
-          banner: null,
-          location: null,
-          website: null,
-          facebook: null,
-          twitter: null,
-          instagram: null,
-          linkedin: null,
-          workExperience: [],
-          education: [],
-          skills: [],
-          servicesOffered: [],
-          portfolio: [],
-        },
-      })
+    // Create user first
+    const user = await db.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: adminName,
+        role: 'PROFESSIONAL_ADMIN' as UserRole,
+      },
+    })
 
-      return { user, professional }
+    // Create professional
+    const professional = await db.professional.create({
+      data: {
+        name,
+        slug,
+        phone: phone && phone !== '' ? phone : undefined,
+        email: email, // Professional's contact email
+        adminId: user.id,
+        // All other profile fields are set to null - professionals will fill them in their dashboard
+        professionalHeadline: null,
+        aboutMe: null,
+        profilePicture: null,
+        banner: null,
+        location: null,
+        website: null,
+        facebook: null,
+        twitter: null,
+        instagram: null,
+        linkedin: null,
+        workExperience: null,
+        education: null,
+        skills: null,
+        servicesOffered: null,
+        portfolio: null,
+      },
     })
 
     return NextResponse.json({
       user: {
-        id: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-        role: result.user.role,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
       },
       professional: {
-        id: result.professional.id,
-        name: result.professional.name,
-        slug: result.professional.slug,
-        phone: result.professional.phone,
-        email: result.professional.email,
-        isActive: result.professional.isActive,
-        createdAt: result.professional.createdAt,
+        id: professional.id,
+        name: professional.name,
+        slug: professional.slug,
+        phone: professional.phone,
+        email: professional.email,
+        isActive: professional.isActive,
+        createdAt: professional.createdAt,
       },
     }, { status: 201 })
   } catch (error) {
     console.error('Professional creation error:', error)
+    console.error('Error stack:', (error as any).stack)
+
+    // Return more specific error for debugging
+    let errorMessage = 'Internal server error'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

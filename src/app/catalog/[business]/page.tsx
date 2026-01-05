@@ -169,7 +169,7 @@ export async function generateMetadata({ params }: PageProps) {
     format: 'auto',
     crop: 'fill',
     gravity: 'auto'
-  }) : `${baseUrl}/placeholder.png`
+  }) : `${baseUrl}`
 
   const description = (business.description || `Professional profile for ${business.name}`).slice(0, 160)
 

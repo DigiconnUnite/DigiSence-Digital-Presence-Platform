@@ -45,6 +45,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -84,7 +90,6 @@ import {
   MessageCircle,
   LineChart,
   Cog,
-  MoreHorizontal,
   LogOut,
   User,
   Briefcase,
@@ -100,9 +105,9 @@ import {
   GraduationCap,
   Upload,
   X,
+  Award,
   ChevronRight,
   Palette,
-  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
@@ -159,10 +164,9 @@ export default function ProfessionalDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [currentView, setCurrentView] = useState("overview");
   const [activeProfileTab, setActiveProfileTab] = useState("basic");
-  const [sidebarExpanded, setSidebarExpanded] = useState({ profile: true });
+  // Removed sidebarExpanded state as dropdown is removed
 
   const getHeaderTitle = () => {
     switch (activeProfileTab) {
@@ -244,10 +248,7 @@ export default function ProfessionalDashboard() {
       name: string;
       level: "beginner" | "intermediate" | "expert" | "master";
     }>
-  >([]);
-  const [isEditingSkills, setIsEditingSkills] = useState(false);
-  const [skillSearchQuery, setSkillSearchQuery] = useState("");
-  const [selectedSkillCategory, setSelectedSkillCategory] = useState("all");
+    >([]);
 
   // Work Experience state
   const [workExperience, setWorkExperience] = useState<any[]>([]);
@@ -272,6 +273,16 @@ export default function ProfessionalDashboard() {
   const [showPortfolioDialog, setShowPortfolioDialog] = useState(false);
   const [editingPortfolioItem, setEditingPortfolioItem] = useState<number | null>(null);
   const [portfolioFormData, setPortfolioFormData] = useState({ title: '', description: '', url: '' });
+
+  // Skills dialog states
+  const [showSkillsDialog, setShowSkillsDialog] = useState(false);
+  const [editingSkillsItem, setEditingSkillsItem] = useState<number | null>(null);
+  const [skillsFormData, setSkillsFormData] = useState({ name: '', level: 'intermediate' as const });
+
+  // Skills editing states
+  const [isEditingSkills, setIsEditingSkills] = useState(false);
+  const [skillSearchQuery, setSkillSearchQuery] = useState("");
+  const [selectedSkillCategory, setSelectedSkillCategory] = useState("all");
 
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -746,6 +757,14 @@ export default function ProfessionalDashboard() {
     }
   };
 
+
+  const [showSkillDialog, setShowSkillDialog] = useState(false);
+  const [editingSkillItem, setEditingSkillItem] = useState<number | null>(null);
+  const [skillFormData, setSkillFormData] = useState({
+    name: '',
+    level: 'intermediate' as 'beginner' | 'intermediate' | 'expert' | 'master'
+  });
+
   const handleFieldUpdate = async (field: string, value: string) => {
     if (!professional) return;
 
@@ -1065,20 +1084,6 @@ export default function ProfessionalDashboard() {
       mobileTitle: "Profile",
     },
     {
-      title: "Inquiries",
-      icon: MessageSquare,
-      mobileIcon: MessageCircle,
-      value: "inquiries",
-      mobileTitle: "Inquiries",
-    },
-    {
-      title: "Analytics",
-      icon: TrendingUp,
-      mobileIcon: LineChart,
-      value: "analytics",
-      mobileTitle: "Analytics",
-    },
-    {
       title: "Settings",
       icon: Settings,
       mobileIcon: Cog,
@@ -1096,14 +1101,7 @@ export default function ProfessionalDashboard() {
     {
       title: "User Profile",
       icon: User,
-      subItems: [
-        { title: "Basic Information", value: "basic", icon: User },
-        { title: "Work Experience", value: "experience", icon: Briefcase },
-        { title: "Education", value: "education", icon: GraduationCap },
-        { title: "Services", value: "services", icon: Package },
-        { title: "Portfolio", value: "portfolio", icon: Image },
-        { title: "Contact Information", value: "contact", icon: Mail },
-      ],
+      value: "profile",
     },
     // {
     //   title: "Theme Customization",
@@ -1154,12 +1152,13 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-slate-800 mb-2">
+              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
                 Professional Dashboard Overview
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-sm md:text-base text-gray-600">
                 Welcome back! Here's your professional profile overview.
               </p>
+
             </div>
 
             {/* Stats Overview */}
@@ -1238,14 +1237,14 @@ export default function ProfessionalDashboard() {
               <div className="space-y-6">
                   {/* Header Section - Removed cancel button from top */}
                 <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h1 className="text-xl font-bold text-slate-800 mb-2">
-                      {getHeaderTitle()}
-                    </h1>
-                    <p className="text-xl text-gray-600">
-                      Your professional details
-                    </p>
-                  </div>
+                    <div>
+                      <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
+                        {getHeaderTitle()}
+                      </h1>
+                      <p className="text-sm md:text-base text-gray-600">
+                        Your professional details
+                      </p>
+                    </div>
                   <div className="flex gap-3">
                       <Button
                         className={themeSettings.buttonStyle}
@@ -1263,14 +1262,28 @@ export default function ProfessionalDashboard() {
                     onValueChange={setActiveProfileTab}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-6">
-                      <TabsTrigger value="basic">Basic</TabsTrigger>
-                      <TabsTrigger value="skills">Skills</TabsTrigger>
-                      <TabsTrigger value="experience">Experience</TabsTrigger>
-                      <TabsTrigger value="education">Education</TabsTrigger>
-                      <TabsTrigger value="services">Services</TabsTrigger>
-                      <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-                    </TabsList>
+                    <div className="flex items-center">
+                      <TabsList className={`grid w-full ${isMobile ? 'grid-cols-3' : 'grid-cols-6'}`}>
+                        <TabsTrigger value="basic">Basic</TabsTrigger>
+                        <TabsTrigger value="skills">Skills</TabsTrigger>
+                        <TabsTrigger value="experience">Experience</TabsTrigger>
+                        {!isMobile && <TabsTrigger value="education">Education</TabsTrigger>}
+                        {!isMobile && <TabsTrigger value="services">Services</TabsTrigger>}
+                        {!isMobile && <TabsTrigger value="portfolio">Portfolio</TabsTrigger>}
+                      </TabsList>
+                      {isMobile && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="ml-2">More</Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => setActiveProfileTab("education")}>Education</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setActiveProfileTab("services")}>Services</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setActiveProfileTab("portfolio")}>Portfolio</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
 
                   {/* Basic Profile Information Tab */}
                   <TabsContent value="basic" className="mt-4">
@@ -1336,316 +1349,170 @@ export default function ProfessionalDashboard() {
                     </TabsContent>
 
                   {/* Skills & Expertise Tab */}
-                  <TabsContent value="skills" className="mt-6">
-                      <Card
-                        className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex justify-end mb-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setIsEditingSkills(!isEditingSkills)}
-                              className={`${themeSettings.borderRadius} border-gray-300 hover:border-amber-300 hover:bg-amber-50 transition-colors`}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              {isEditingSkills ? "Cancel" : "Manage Skills"}
-                            </Button>
-                          </div>
-                          {isEditingSkills ? (
-                            <div className="space-y-6 animate-fadeIn">
-                              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                                <p className="text-sm text-amber-800">
-                                  <Edit className="h-4 w-4 inline mr-2" />
-                                  You're now managing your skills. Add, edit, or
-                                  remove skills below.
-                                </p>
-                              </div>
+                    {/* Skills & Expertise Tab */}
+                    <TabsContent value="skills" className="mt-4">
+                      <div className="space-y-6">
+                        <Button
+                          onClick={() => {
+                            setEditingSkillItem(null);
+                            setSkillFormData({ name: '', level: 'intermediate' });
+                            setShowSkillDialog(true);
+                          }}
+                          className={`w-full ${themeSettings.buttonStyle} ${themeSettings.borderRadius}`}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Skill
+                        </Button>
 
-                              {/* Skills Management Interface */}
-                              <div className="space-y-6">
-                                {/* Search and Filter */}
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                  <div className="flex-1">
-                                    <Input
-                                      placeholder="Search skills..."
-                                      value={skillSearchQuery}
-                                      onChange={(e) =>
-                                        setSkillSearchQuery(e.target.value)
-                                      }
-                                      className={themeSettings.borderRadius}
-                                    />
+                        <div className="space-y-3">
+                          {skills.map((item, index) => {
+                            const levelColors = {
+                              beginner: "text-gray-600",
+                              intermediate: "text-blue-600",
+                              expert: "text-purple-600",
+                              master: "text-amber-600",
+                            };
+
+                            const levelLabels = {
+                              beginner: "Beginner",
+                              intermediate: "Intermediate",
+                              expert: "Expert",
+                              master: "Master",
+                            };
+
+                            const levelIcons = {
+                              beginner: <Award className="h-4 w-4" />,
+                              intermediate: <Award className="h-4 w-4" />,
+                              expert: <Award className="h-4 w-4" />,
+                              master: <Crown className="h-4 w-4" />,
+                            };
+
+                            return (
+                              <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
+                                <CardContent className="p-4">
+                                  <div className="flex items-start gap-4">
+                                    <div className="shrink-0">
+                                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${item.level === 'beginner' ? 'from-gray-100 to-gray-200' :
+                                        item.level === 'intermediate' ? 'from-blue-100 to-blue-200' :
+                                          item.level === 'expert' ? 'from-purple-100 to-purple-200' :
+                                            'from-amber-100 to-orange-100'
+                                        } flex items-center justify-center`}>
+                                        <div className={levelColors[item.level]}>
+                                          {levelIcons[item.level]}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-slate-800 text-lg">
+                                        {item.name}
+                                      </h4>
+                                      <p className={`${levelColors[item.level]} font-medium text-sm mb-1`}>
+                                        {levelLabels[item.level]}
+                                      </p>
+                                    </div>
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setEditingSkillItem(index);
+                                          setSkillFormData(item);
+                                          setShowSkillDialog(true);
+                                        }}
+                                        className={themeSettings.borderRadius}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          const newSkills = skills.filter((_, i) => i !== index);
+                                          setSkills(newSkills);
+                                          handleUpdateSkills();
+                                        }}
+                                        className={`${themeSettings.borderRadius} text-red-600 hover:text-red-700 hover:bg-red-50`}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+
+                        <Dialog open={showSkillDialog} onOpenChange={setShowSkillDialog}>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                {editingSkillItem !== null ? 'Edit' : 'Add'} Skill
+                              </DialogTitle>
+                              <DialogDescription>
+                                {editingSkillItem !== null ? 'Update your skill details.' : 'Add your skill details.'}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={(e) => {
+                              e.preventDefault();
+                              const newSkills = editingSkillItem !== null
+                                ? skills.map((item, index) => index === editingSkillItem ? skillFormData : item)
+                                : [...skills, skillFormData];
+                              setSkills(newSkills);
+                              handleUpdateSkills();
+                              setShowSkillDialog(false);
+                              setEditingSkillItem(null);
+                              setSkillFormData({ name: '', level: 'intermediate' });
+                            }}>
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label>Skill Name</Label>
+                                  <Input
+                                    value={skillFormData.name}
+                                    onChange={(e) => setSkillFormData({ ...skillFormData, name: e.target.value })}
+                                    placeholder="e.g., JavaScript"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Proficiency Level</Label>
                                   <Select
-                                    value={selectedSkillCategory}
-                                    onValueChange={setSelectedSkillCategory}
+                                    value={skillFormData.level}
+                                    onValueChange={(value) => setSkillFormData({ ...skillFormData, level: value as 'beginner' | 'intermediate' | 'expert' | 'master' })}
                                   >
-                                    <SelectTrigger
-                                      className={`w-full sm:w-48 ${themeSettings.borderRadius}`}
-                                    >
-                                      <SelectValue placeholder="Category" />
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select level" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="all">
-                                        All Categories
-                                      </SelectItem>
-                                      <SelectItem value="technical">
-                                        Technical
-                                      </SelectItem>
-                                      <SelectItem value="design">
-                                        Design
-                                      </SelectItem>
-                                      <SelectItem value="business">
-                                        Business
-                                      </SelectItem>
-                                      <SelectItem value="soft">
-                                        Soft Skills
-                                      </SelectItem>
+                                      <SelectItem value="beginner">Beginner</SelectItem>
+                                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                                      <SelectItem value="expert">Expert</SelectItem>
+                                      <SelectItem value="master">Master</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
-
-                                {/* Current Skills Grid */}
-                                <div className="space-y-4">
-                                  <h4 className="font-medium text-slate-800">
-                                    Your Skills
-                                  </h4>
-                                  {skills.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                      {skills
-                                        .filter((skill) =>
-                                          skill.name
-                                            .toLowerCase()
-                                            .includes(
-                                              skillSearchQuery.toLowerCase()
-                                            )
-                                        )
-                                        .map((skill, index) => {
-                                          const levelColors = {
-                                          beginner:
-                                            "from-gray-100 to-gray-200 text-gray-800 border-gray-300 hover:shadow-gray-200",
-                                          intermediate:
-                                            "from-blue-100 to-blue-200 text-blue-800 border-blue-300 hover:shadow-blue-200",
-                                          expert:
-                                            "from-purple-100 to-purple-200 text-purple-800 border-purple-300 hover:shadow-purple-200",
-                                          master:
-                                            "from-amber-100 to-orange-100 text-amber-800 border-amber-300 hover:shadow-amber-200",
-                                        };
-                                        const levelLabels = {
-                                          beginner: "Beginner",
-                                          intermediate: "Intermediate",
-                                          expert: "Expert",
-                                          master: "Master",
-                                        };
-                                        return (
-                                          <div
-                                            key={index}
-                                            className={`group relative p-3 ${themeSettings.borderRadius
-                                              } bg-linear-to-r ${levelColors[skill.level]
-                                              } border hover:shadow-md transition-all duration-200 cursor-pointer`}
-                                          >
-                                            <div className="flex items-center justify-between">
-                                              <span className="font-medium text-sm">
-                                                {skill.name}
-                                              </span>
-                                              <div className="flex items-center gap-2">
-                                                <span className="text-xs opacity-75">
-                                                  {levelLabels[skill.level]}
-                                                </span>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                  onClick={() => {
-                                                    const newSkills =
-                                                      skills.filter(
-                                                        (_, i) => i !== index
-                                                      );
-                                                    setSkills(newSkills);
-                                                  }}
-                                                >
-                                                  <X className="h-3 w-3" />
-                                                </Button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-8 text-gray-500">
-                                      No skills added yet. Add your first skill
-                                      below.
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Add New Skill */}
-                                <ArrayFieldManager
-                                  title=""
-                                  items={skills}
-                                  onChange={setSkills}
-                                  renderItem={() => null}
-                                  createNewItem={() => ({
-                                    name: "",
-                                    level: "intermediate" as const,
-                                  })}
-                                  renderForm={(item, onSave, onCancel) => (
-                                    <SkillForm
-                                      item={item}
-                                      onSave={onSave}
-                                      onCancel={onCancel}
-                                    />
-                                  )}
-                                  itemName="Skill"
-                                />
                               </div>
-
-                              <div className="flex gap-4 pt-4 border-t border-gray-100">
+                              <DialogFooter>
                                 <Button
-                                  onClick={handleUpdateSkills}
-                                  className={`flex-1 ${themeSettings.buttonStyle}`}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Save Skills
-                                </Button>
-                                <Button
+                                  type="button"
                                   variant="outline"
-                                  onClick={() => setIsEditingSkills(false)}
-                                  className={`flex-1 ${themeSettings.borderRadius}`}
+                                  onClick={() => setShowSkillDialog(false)}
+                                  className={themeSettings.borderRadius}
                                 >
                                   Cancel
                                 </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="animate-fadeIn">
-                              {skills.length > 0 ? (
-                                <div className="space-y-6">
-                                  {/* Skills Cloud Visualization */}
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium text-slate-800">
-                                      Skills Overview
-                                    </h4>
-                                      <div className="flex flex-wrap gap-3">
-                                        {skills.map((skill, index) => {
-                                          const levelColors = {
-                                        beginner:
-                                          "from-gray-100 to-gray-200 text-gray-800 border-gray-300",
-                                        intermediate:
-                                          "from-blue-100 to-blue-200 text-blue-800 border-blue-300",
-                                        expert:
-                                          "from-purple-100 to-purple-200 text-purple-800 border-purple-300",
-                                        master:
-                                          "from-amber-100 to-orange-100 text-amber-800 border-amber-300",
-                                      };
-                                      const levelSizes = {
-                                        beginner: "text-sm px-3 py-2",
-                                        intermediate: "text-sm px-4 py-2",
-                                        expert: "text-base px-4 py-2",
-                                        master: "text-base px-5 py-3",
-                                      };
-                                      return (
-                                        <span
-                                          key={index}
-                                          className={`inline-flex items-center ${themeSettings.borderRadius
-                                            } bg-linear-to-r ${levelColors[skill.level]
-                                            } ${levelSizes[skill.level]
-                                            } font-medium border hover:shadow-md transition-all duration-200`}
-                                        >
-                                          {skill.name}
-                                        </span>
-                                      );
-                                    })}
-                                      </div>
-                                    </div>
-
-                                    {/* Skills by Proficiency Level */}
-                                    <div className="space-y-4">
-                                      <h4 className="font-medium text-slate-800">
-                                        Skills by Proficiency
-                                      </h4>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {(
-                                          [
-                                            "master",
-                                            "expert",
-                                            "intermediate",
-                                            "beginner",
-                                          ] as const
-                                        ).map((level) => {
-                                          const levelSkills = skills.filter(
-                                            (skill) => skill.level === level
-                                          );
-                                          if (levelSkills.length === 0) return null;
-
-                                      const levelLabels = {
-                                        beginner: "Beginner",
-                                        intermediate: "Intermediate",
-                                        expert: "Expert",
-                                        master: "Master",
-                                      };
-                                      const levelColors = {
-                                        beginner: "text-gray-600",
-                                        intermediate: "text-blue-600",
-                                        expert: "text-purple-600",
-                                        master: "text-amber-600",
-                                      };
-
-                                      return (
-                                        <div
-                                          key={level}
-                                          className="bg-gray-50 rounded-xl p-4"
-                                        >
-                                          <h5
-                                            className={`font-medium mb-3 ${levelColors[level]}`}
-                                          >
-                                            {levelLabels[level]} (
-                                            {levelSkills.length})
-                                          </h5>
-                                          <div className="flex flex-wrap gap-2">
-                                            {levelSkills.map((skill, index) => (
-                                              <span
-                                                key={index}
-                                                className="px-3 py-1 bg-white rounded-full text-sm text-gray-700 border border-gray-200"
-                                              >
-                                                {skill.name}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="text-center py-12">
-                                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                                      <Crown className="h-8 w-8 text-gray-400" />
-                                    </div>
-                                    <h3 className="text-lg font-medium text-slate-800 mb-2">
-                                      No skills yet
-                                    </h3>
-                                      <p className="text-gray-500 mb-4">
-                                        Showcase your skills and expertise to attract
-                                        clients.
-                                      </p>
-                                      <Button
-                                        variant="outline"
-                                        onClick={() => setIsEditingSkills(true)}
-                                    className={`${themeSettings.borderRadius} border-dashed border-2 border-gray-300 hover:border-amber-300 hover:bg-amber-50`}
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Your First Skill
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                  </TabsContent>
+                                <Button
+                                  type="submit"
+                                  className={themeSettings.buttonStyle}
+                                >
+                                  {editingSkillItem !== null ? 'Update' : 'Add'} Skill
+                                </Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TabsContent>
 
                   {/* Work Experience Tab */}
                   <TabsContent value="experience" className="mt-4">
@@ -2923,10 +2790,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
                 Account Settings
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-sm md:text-base text-gray-600">
                 Manage your account preferences and security.
               </p>
             </div>
@@ -4106,7 +3973,7 @@ export default function ProfessionalDashboard() {
 
               {isEditingAboutMe ? (
                 <Textarea
-                  key="aboutme-input"
+                  key="about-me-input"
                   ref={aboutMeInputRef}
                   value={editingAboutMe}
                   onChange={(e) => setEditingAboutMe(e.target.value)}
@@ -4150,7 +4017,7 @@ export default function ProfessionalDashboard() {
                         <p className="font-medium text-gray-900">
                           Current Resume
                         </p>
-                        <p className="text-sm truncate text-gray-500">
+                        <p className="text-sm line-clamp-1 text-gray-500">
                           {professional.resume.split('/').pop()}
                         </p>
                       </div>
@@ -4643,14 +4510,6 @@ export default function ProfessionalDashboard() {
                   )}
                 </div>
               </div>
-
-              <Button
-                variant="outline"
-                className={`w-full ${themeSettings.borderRadius} mt-4`}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add More Social Links
-              </Button>
             </div>
           </div>
         </div>
@@ -5029,61 +4888,19 @@ export default function ProfessionalDashboard() {
                 <ul className="space-y-2">
                   {sidebarItems.map((item) => (
                     <li key={item.title}>
-                      {item.subItems ? (
-                        <div>
-                          <button
-                            onClick={() =>
-                              setSidebarExpanded((prev) => ({
-                                ...prev,
-                                profile: !prev.profile,
-                              }))
-                            }
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-2xl text-left transition-colors text-gray-700 hover:bg-amber-50"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <item.icon className="h-5 w-5" />
-                              <span>{item.title}</span>
-                            </div>
-                            <ChevronDown
-                              className={`h-4 w-4 transition-transform ${sidebarExpanded.profile ? "rotate-180" : ""
-                                }`}
-                            />
-                          </button>
-                          {sidebarExpanded.profile && (
-                            <ul className="ml-6 mt-2 space-y-1">
-                              {item.subItems.map((subItem) => (
-                                <li key={subItem.value}>
-                                  <button
-                                    onClick={() => {
-                                      setCurrentView("profile");
-                                      setActiveProfileTab(subItem.value);
-                                    }}
-                                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${activeProfileTab === subItem.value &&
-                                        currentView === "profile"
-                                        ? "bg-amber-100 text-amber-600"
-                                        : "text-gray-700 hover:bg-amber-50"
-                                      }`}
-                                  >
-                                    <subItem.icon className="h-4 w-4" />
-                                    <span>{subItem.title}</span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setCurrentView(item.value)}
-                          className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                              ? "bg-amber-100 text-amber-600"
-                              : "text-gray-700 hover:bg-amber-50"
-                            }`}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          <span>{item.title}</span>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setCurrentView(item.value);
+                          if (item.value === "profile") setActiveProfileTab("basic");
+                        }}
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
+                          ? "bg-amber-100 text-amber-600"
+                          : "text-gray-700 hover:bg-amber-50"
+                          }`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -5117,78 +4934,28 @@ export default function ProfessionalDashboard() {
 
         {/* Mobile Bottom Navigation */}
         {isMobile && (
-          <>
-            {/* More Menu Overlay */}
-            {showMoreMenu && (
-              <div
-                className="fixed inset-0 bg-black/10 backdrop-blur-sm  bg-opacity-50 z-40"
-                onClick={() => setShowMoreMenu(false)}
-              >
-                <div
-                  className="absolute bottom-20 left-0 right-0 bg-white  rounded-3xl  p-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-2">
-                    {menuItems.slice(3).map((item) => {
-                      const MobileIcon = item.mobileIcon;
-                      return (
-                        <button
-                          key={item.value}
-                          onClick={() => {
-                            setCurrentView(item.value);
-                            setShowMoreMenu(false);
-                          }}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${currentView === item.value
-                            ? "bg-amber-100 text-amber-600"
-                            : "text-gray-700 hover:bg-gray-100"
-                            }`}
-                        >
-                          <MobileIcon className="h-5 w-5" />
-                          <span className="font-medium">{item.title}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bottom Navigation Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-              <div className="flex justify-around items-center py-2">
-                {menuItems.slice(0, 4).map((item) => {
-                  const MobileIcon = item.mobileIcon;
-                  return (
-                    <button
-                      key={item.value}
-                      onClick={() => setCurrentView(item.value)}
-                      className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
-                        ? "text-amber-500"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                      <MobileIcon className="h-5 w-5 mb-1" />
-                      <span className="text-xs font-medium">
-                        {item.mobileTitle}
-                      </span>
-                    </button>
-                  );
-                })}
-                {/* More button for additional items */}
-                <button
-                  onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${showMoreMenu ||
-                      menuItems.slice(4).some((item) => item.value === currentView)
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
+            <div className="flex justify-around items-center py-2">
+              {menuItems.map((item) => {
+                const MobileIcon = item.mobileIcon;
+                return (
+                  <button
+                    key={item.value}
+                    onClick={() => setCurrentView(item.value)}
+                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
                       ? "text-amber-500"
                       : "text-gray-500 hover:text-gray-700"
-                    }`}
-                >
-                  <MoreHorizontal className="h-5 w-5 mb-1" />
-                  <span className="text-xs font-medium">More</span>
-                </button>
-              </div>
+                      }`}
+                  >
+                    <MobileIcon className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">
+                      {item.mobileTitle}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </>
+          </div>
         )}
 
         {/* Image Upload Modals */}

@@ -78,7 +78,7 @@ export default function PricingPage() {
                 <span
                   className={cn(
                     "font-bold text-xl",
-                    navTransparent ? "text-white" : "text-primary"
+                    navTransparent ? "text-white" : "text-slate-800"
                   )}
                 >
                   DigiSence

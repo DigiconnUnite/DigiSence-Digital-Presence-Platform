@@ -37,7 +37,7 @@ export default function ContactPage() {
                       className="h-7 w-auto"
                     />
 
-                    <span className="font-bold text-xl text-primary">
+                    <span className="font-bold text-xl text-slate-800">
                       DigiSence
                     </span>
                   </Link>

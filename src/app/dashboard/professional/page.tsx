@@ -105,6 +105,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
+import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
 
 type ButtonVariant =
   | "link"
@@ -3903,11 +3904,12 @@ export default function ProfessionalDashboard() {
                 onClick={() => setShowBannerModal(true)}
               >
                 <div className="w-full aspect-3/1 rounded-xl overflow-hidden border-4 border-white shadow-lg">
-                  {professional.banner ? (
+                  {professional.banner && isValidImageUrl(professional.banner) ? (
                     <img
                       src={professional.banner}
                       alt="Profile banner"
                       className="w-full h-full object-cover"
+                      onError={handleImageError}
                     />
                   ) : (
                     <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center">
@@ -3932,11 +3934,12 @@ export default function ProfessionalDashboard() {
                   onClick={() => setShowProfilePictureModal(true)}
                 >
                   <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                    {professional.profilePicture ? (
+                    {professional.profilePicture && isValidImageUrl(professional.profilePicture) ? (
                       <img
                         src={professional.profilePicture}
                         alt={professional.name}
                         className="w-full h-full object-cover"
+                        onError={handleImageError}
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -5018,9 +5021,10 @@ export default function ProfessionalDashboard() {
                   <h4 className="font-medium text-gray-900">Current Banner</h4>
                   <div className="relative">
                     <img
-                      src={professional.banner}
+                      src={professional.banner && isValidImageUrl(professional.banner) ? getOptimizedImageUrl(professional.banner, { width: 800, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center" }) : professional.banner}
                       alt="Current banner"
                       className="w-full h-32 object-cover rounded-xl border"
+                      onError={handleImageError}
                     />
                   </div>
                 </div>
@@ -5084,9 +5088,10 @@ export default function ProfessionalDashboard() {
                   <div className="flex justify-center">
                     <div className="relative">
                       <img
-                        src={professional.profilePicture}
+                        src={professional.profilePicture && isValidImageUrl(professional.profilePicture) ? getOptimizedImageUrl(professional.profilePicture, { width: 128, height: 128, quality: 85, format: "auto", crop: "fill", gravity: "center" }) : professional.profilePicture}
                         alt="Current profile picture"
                         className="w-32 h-32 object-cover rounded-full border-4 border-white shadow-lg"
+                        onError={handleImageError}
                       />
                     </div>
                   </div>

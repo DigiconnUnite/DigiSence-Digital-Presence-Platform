@@ -36,8 +36,13 @@ export const getOptimizedImageUrl = (url: string, options?: {
     if (transformations.length > 0) {
       const transformationString = transformations.join(',')
       // Use 'resize' prefix to match CloudFront behavior configuration
-      const key = url.split('cloudfront.net/')[1]
-      return `${url.split('cloudfront.net/')[0]}cloudfront.net/resize/${transformationString}/${key}`
+      // Extract the path after cloudfront.net
+      const urlParts = url.split('cloudfront.net/')
+      if (urlParts.length === 2) {
+        const baseUrl = urlParts[0] + 'cloudfront.net/'
+        const key = urlParts[1]
+        return `${baseUrl}resize/${transformationString}/${key}`
+      }
     }
 
     return url
@@ -82,4 +87,23 @@ export const validateImageFile = (file: File) => {
   }
 
   return true
+}
+
+// Function to handle image loading errors with fallback
+export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const target = event.target as HTMLImageElement
+  // Set a fallback image or hide the image
+  target.src = '/placeholder.png'
+  target.onerror = null // Prevent infinite loop
+}
+
+// Function to check if URL is valid
+export const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
 }

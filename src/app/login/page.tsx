@@ -76,7 +76,7 @@ export default function LoginPage() {
               alt="DigiSence Logo"
               className="h-8 w-auto"
             />
-            <span className="font-bold text-xl text-primary">DigiSence</span>
+            <span className="font-bold text-xl text-slate-800">DigiSence</span>
           </Link>
           <Button
             onClick={() => router.push('/')}

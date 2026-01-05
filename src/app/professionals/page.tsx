@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getOptimizedImageUrl } from '@/lib/image-utils'
+import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils'
 import Aurora from '@/components/Aurora'
 import Footer from '@/components/Footer'
 import { cn } from '@/lib/utils'
@@ -99,6 +99,7 @@ export default function ProfessionalsPage() {
       const response = await fetch('/api/professionals')
       if (response.ok) {
         const data = await response.json()
+        console.log('Fetched professionals data:', data.professionals)
         setProfessionals(data.professionals)
         setFilteredProfessionals(data.professionals)
       } else {
@@ -203,7 +204,7 @@ export default function ProfessionalsPage() {
                 >
                   <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
 
-                  <span className="font-bold text-xl text-primary">
+                  <span className="font-bold text-xl text-slate-700">
                     DigiSence
                   </span>
                 </Link>
@@ -296,7 +297,7 @@ export default function ProfessionalsPage() {
           </div>
 
           {/* Category Slider - Full Width */}
-          <div className="bg-gray-50 py-0.5 border-t border-gray-200">
+          <div className="bg-gray-50  border-t border-gray-200">
             <div className="max-w-7xl mx-auto ">
               <div
                 className="flex items-center overflow-x-auto scrollbar-hide px-4"
@@ -315,9 +316,9 @@ export default function ProfessionalsPage() {
                         )
                       }
                       className={cn(
-                        "px-4 py-2 text-sm font-semibold whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0 flex items-center space-x-2",
+                        "px-4 py-1 text-sm hover:bg-slate-800 hover:text-white font-semibold whitespace-nowrap cursor-pointer transition-colors shrink-0 border-r border-gray-300 last:border-r-0 flex items-center space-x-2",
                         selectedCategory === profession.name
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-slate-800 text-white"
                           : " text-gray-500 "
                       )}
                     >
@@ -382,7 +383,7 @@ export default function ProfessionalsPage() {
         </nav>
 
         {/* Main Content */}
-        <main className="pt-30  ">
+        <main className="pt-30  relative ">
           {/* Hero Banner - 16:9 Ratio */}
           <section className=" px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
@@ -396,8 +397,8 @@ export default function ProfessionalsPage() {
             </div>
           </section>
 
-          {/* Search Bar and Filters */}
-          <div className=" px-4 sm:px-6 py-8 lg:px-8">
+          {/* Search Bar and Filters - Sticky */}
+          <div className="sticky top-20 z-30 px-4 sm:px-6 py-8 lg:px-8">
             <div className="max-w-7xl mx-auto ">
               <div className="w-auto sm:w-auto  relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
@@ -420,7 +421,7 @@ export default function ProfessionalsPage() {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <Card
                       key={i}
-                      className="overflow-hidden bg-white/80 backdrop-blur-sm relative"
+                      className="overflow-hidden p-0 bg-white/80 backdrop-blur-sm relative"
                     >
                       <div className="relative h-24 md:h-32 bg-muted rounded-t-lg">
                       </div>
@@ -469,43 +470,60 @@ export default function ProfessionalsPage() {
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredProfessionals.map((professional) => (
                       <Card
                         key={professional.id}
                         className="overflow-hidden  pt-0 backdrop-blur-sm relative"
                       >
-                        <div className="relative h-24 md:h-32 m-1.5  mb-0 pb-0 bg-cover bg-center rounded-lg" style={{backgroundImage: `url(${professional.banner ? getOptimizedImageUrl(professional.banner, {width: 400, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center"}) : '/card-bg.png'})`}}>
+                        <div className="relative h-24 md:h-32 m-1.5 mb-0 pb-0 rounded-lg overflow-hidden" style={{ minHeight: '96px' }}>
+                          {/* Banner image background */}
+                          {professional.banner ? (
+                            <img
+                              src={professional.banner}
+                              alt="Banner"
+                              className="w-full h-full object-cover"
+                              style={{ zIndex: 0 }}
+                              onError={(e) => {
+                                console.error('Banner image failed to load:', professional.banner);
+                                handleImageError(e);
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center" style={{ zIndex: 0 }}>
+                              <div className="text-center text-gray-400">
+                                <div className="text-4xl mb-2">🖼️</div>
+                                <div className="text-sm">No banner</div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         {professional.profilePicture ? (
                           <img
-                            src={getOptimizedImageUrl(
-                              professional.profilePicture,
-                              {
-                                width: 88,
-                                height: 88,
-                                quality: 85,
-                                format: "auto",
-                                crop: "fill",
-                                gravity: "center",
-                              }
-                            )}
+                            src={professional.profilePicture}
                             alt={professional.name}
                             className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-3 border-white shadow-md"
                             loading="lazy"
+                            onError={(e) => {
+                              console.error('Profile picture failed to load:', professional.profilePicture);
+                              handleImageError(e);
+                            }}
+                            style={{ zIndex: 20 }}
                           />
                         ) : (
-                          <div className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-muted flex items-center justify-center border-2 border-white shadow-md">
-                            <User className="h-9 w-9 md:h-11 md:w-11 text-muted-foreground" />
+                          <div className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md" style={{ zIndex: 20 }}>
+                            <User className="h-9 w-9 md:h-11 md:w-11 text-gray-600" />
                           </div>
                         )}
                         <CardHeader className="pt-0  pb-2 md:pb-4">
                           <div className="flex items-center space-x-2 md:space-x-4">
                             <div className="w-18 md:w-22"></div>
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
+                              <Link href={`/pcard/${professional.slug}`}>
+                              <CardTitle className="text-lg md:text-lg hover:text-slate-600  font-semibold text-slate-700 truncate">
                                 {professional.name}
                               </CardTitle>
+                              </Link>
                               {professional.professionalHeadline && (
                                 <Badge
                                   variant="secondary"

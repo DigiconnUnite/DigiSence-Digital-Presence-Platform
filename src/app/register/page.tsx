@@ -79,7 +79,7 @@ export default function RegisterPage() {
                 alt="DigiSence Logo"
                 className="h-8 w-auto"
               />
-              <span className="font-bold text-xl text-primary">DigiSence</span>
+              <span className="font-bold text-xl text-slate-800">DigiSence</span>
             </Link>
             <Button
               onClick={() => router.push('/')}
@@ -138,7 +138,7 @@ export default function RegisterPage() {
               alt="DigiSence Logo"
               className="h-8 w-auto"
             />
-            <span className="font-bold text-xl text-primary">DigiSence</span>
+            <span className="font-bold text-xl text-slate-800">DigiSence</span>
           </Link>
           <Button
             onClick={() => router.push('/')}
@@ -311,7 +311,7 @@ export default function RegisterPage() {
                         <Label htmlFor="phone-professional">Phone Number</Label>
                         <Input
                           id="phone-professional"
-                          type="tel"
+                          type="tel"  
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           disabled={loading}

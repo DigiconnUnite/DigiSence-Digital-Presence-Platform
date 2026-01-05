@@ -52,6 +52,7 @@ import {
   Megaphone,
   Coffee
 } from 'lucide-react'
+import { FaWhatsapp } from 'react-icons/fa'
 
 interface Business {
   id: string
@@ -188,7 +189,7 @@ export default function BusinessesPage() {
                 >
                   <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
 
-                  <span className="font-bold text-xl text-primary">
+                  <span className="font-bold text-xl text-slate-800">
                     DigiSence
                   </span>
                 </Link>
@@ -452,7 +453,7 @@ export default function BusinessesPage() {
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-12">
-                        <h2 className="text-2xl font-bold text-slate-800">
+                    <h2 className="text-2xl font-bold text-slate-800">
                       {searchTerm
                         ? `Search Results (${filteredBusinesses.length})`
                         : `All Businesses (${filteredBusinesses.length})`}
@@ -463,7 +464,7 @@ export default function BusinessesPage() {
                     {filteredBusinesses.map((business) => (
                       <Card
                         key={business.id}
-                        className="overflow-hidden border  bg-white/80 backdrop-blur-sm"
+                        className="overflow-hidden border bg-white/80 backdrop-blur-sm flex flex-col h-full"
                       >
                         <CardHeader className="pb-2 md:pb-4">
                           <div className="flex items-center space-x-2 md:space-x-4">
@@ -489,9 +490,11 @@ export default function BusinessesPage() {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg md:text-xl font-bold text-primary truncate">
-                                {business.name}
-                              </CardTitle>
+                              <Link href={`/catalog/${business.slug}`}>
+                                <CardTitle className="text-lg md:text-xl font-semibold text-slate-700 truncate">
+                                  {business.name}
+                                </CardTitle>
+                              </Link>
                               {business.category && (
                                 <Badge
                                   variant="secondary"
@@ -504,58 +507,84 @@ export default function BusinessesPage() {
                           </div>
                         </CardHeader>
 
-                        <CardContent className="space-y-2 md:space-y-4 px-4 md:px-6">
+                        <CardContent className="flex flex-col flex-1 px-4 md:px-6">
                           {business.description && (
-                            <CardDescription className="text-muted-foreground line-clamp-2 md:line-clamp-3 text-sm md:text-base">
+                            <CardDescription className="text-muted-foreground line-clamp-2 text-sm md:text-base mb-2 md:mb-4">
                               {business.description}
                             </CardDescription>
                           )}
 
-                          {/* Contact Info */}
-                          <div className="space-y-2">
+                          {/* Contact Info - Now more compact */}
+                          <div className="flex flex-wrap gap-1 mb-2 md:mb-4">
                             {business.address && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                              <div className="flex items-center text-sm text-muted-foreground bg-gray-50  py-1 rounded-full">
+                                <MapPin className="h-5 w-5 mr-1 text-muted-foreground shrink-0" />
                                 <span className="truncate">
                                   {business.address}
                                 </span>
                               </div>
                             )}
+                          </div>
+
+                          {/* Spacer to push the bottom section to the bottom */}
+                          <div className="flex-1"></div>
+
+                          {/* Contact CTA Buttons */}
+                          <div className="flex gap-2 mb-2 md:mb-4">
                             {business.phone && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Phone className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span>{business.phone}</span>
-                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 rounded-full text-xs md:text-sm"
+                                asChild
+                              >
+                                <a href={`tel:${business.phone}`}>
+                                  <Phone className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                  <span className="hidden sm:inline">Call</span>
+                                </a>
+                              </Button>
                             )}
-                            {business.email && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Mail className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-                                <span className="truncate">
-                                  {business.email}
-                                </span>
-                              </div>
-                            )}
-                            {business.website && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Globe className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                            {business.phone && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 rounded-full text-white hover:text-white text-xs bg-green-500 md:text-sm  hover:bg-green-50 hover:border-green-300"
+                                asChild
+                              >
                                 <a
-                                  href={
-                                    business.website.startsWith("http")
-                                      ? business.website
-                                      : `https://${business.website}`
-                                  }
+                                  href={`https://wa.me/${business.phone.replace(
+                                    /[^0-9]/g,
+                                    ""
+                                  )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-primary hover:underline truncate"
                                 >
-                                  Visit Website
+                                  <FaWhatsapp className="h-3 w-3 md:h-4 md:w-4 mr-1  text-white" />
+                                  <span className="hidden sm:inline">
+                                    WhatsApp
+                                  </span>
                                 </a>
-                              </div>
+                              </Button>
+                            )}
+                            {business.email && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 rounded-full text-xs md:text-sm"
+                                asChild
+                              >
+                                <a href={`mailto:${business.email}`}>
+                                  <Mail className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                  <span className="hidden sm:inline">
+                                    Email
+                                  </span>
+                                </a>
+                              </Button>
                             )}
                           </div>
 
-                          {/* Stats */}
-                          <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border">
+                          {/* Stats - Fixed at bottom */}
+                          <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-border mt-auto">
                             <div className="flex items-center text-xs md:text-sm text-muted-foreground">
                               <Package className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                               <span>{business.products.length} products</span>
@@ -563,7 +592,7 @@ export default function BusinessesPage() {
                             <Button
                               asChild
                               size="sm"
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs md:text-sm"
+                              className="bg-sky-900 hover:bg-sky-800 text-primary-foreground rounded-full text-xs md:text-sm"
                             >
                               <Link href={`/catalog/${business.slug}`}>
                                 <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />

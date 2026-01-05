@@ -76,7 +76,6 @@ export async function GET(request: NextRequest) {
               banner: true,
               resume: true,
               location: true,
-              phone: true,
               email: true,
               website: true,
               facebook: true,

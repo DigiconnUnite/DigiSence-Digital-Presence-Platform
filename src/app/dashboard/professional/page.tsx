@@ -208,6 +208,7 @@ export default function ProfessionalDashboard() {
   const [isEditingAboutMe, setIsEditingAboutMe] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
+
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [isEditingWebsite, setIsEditingWebsite] = useState(false);
   const [isEditingFacebook, setIsEditingFacebook] = useState(false);
@@ -221,6 +222,7 @@ export default function ProfessionalDashboard() {
   const [editingAboutMe, setEditingAboutMe] = useState("");
   const [editingEmail, setEditingEmail] = useState("");
   const [editingPhone, setEditingPhone] = useState("");
+
   const [editingLocation, setEditingLocation] = useState("");
   const [editingWebsite, setEditingWebsite] = useState("");
   const [editingFacebook, setEditingFacebook] = useState("");
@@ -296,6 +298,7 @@ export default function ProfessionalDashboard() {
   const aboutMeInputRef = useRef<HTMLTextAreaElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+
   const locationInputRef = useRef<HTMLInputElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
   const facebookInputRef = useRef<HTMLInputElement>(null);
@@ -364,6 +367,8 @@ export default function ProfessionalDashboard() {
   useEffect(() => {
     if (isEditingPhone) phoneInputRef.current?.focus();
   }, [isEditingPhone]);
+
+
 
   useEffect(() => {
     if (isEditingLocation) locationInputRef.current?.focus();
@@ -1276,6 +1281,9 @@ export default function ProfessionalDashboard() {
                           isEditingName={isEditingName}
                           isEditingHeadline={isEditingHeadline}
                           isEditingAboutMe={isEditingAboutMe}
+                          isEditingEmail={isEditingEmail}
+                          isEditingPhone={isEditingPhone}
+                          isEditingLocation={isEditingLocation}
                           isEditingFacebook={isEditingFacebook}
                           isEditingTwitter={isEditingTwitter}
                           isEditingInstagram={isEditingInstagram}
@@ -1283,6 +1291,9 @@ export default function ProfessionalDashboard() {
                           editingName={editingName}
                           editingHeadline={editingHeadline}
                           editingAboutMe={editingAboutMe}
+                          editingEmail={editingEmail}
+                          editingPhone={editingPhone}
+                          editingLocation={editingLocation}
                           editingFacebook={editingFacebook}
                           editingTwitter={editingTwitter}
                           editingInstagram={editingInstagram}
@@ -1290,6 +1301,9 @@ export default function ProfessionalDashboard() {
                           nameInputRef={nameInputRef}
                           headlineInputRef={headlineInputRef}
                           aboutMeInputRef={aboutMeInputRef}
+                          emailInputRef={emailInputRef}
+                          phoneInputRef={phoneInputRef}
+                          locationInputRef={locationInputRef}
                           facebookInputRef={facebookInputRef}
                           twitterInputRef={twitterInputRef}
                           instagramInputRef={instagramInputRef}
@@ -1297,6 +1311,9 @@ export default function ProfessionalDashboard() {
                           setIsEditingName={setIsEditingName}
                           setIsEditingHeadline={setIsEditingHeadline}
                           setIsEditingAboutMe={setIsEditingAboutMe}
+                          setIsEditingEmail={setIsEditingEmail}
+                          setIsEditingPhone={setIsEditingPhone}
+                          setIsEditingLocation={setIsEditingLocation}
                           setIsEditingFacebook={setIsEditingFacebook}
                           setIsEditingTwitter={setIsEditingTwitter}
                           setIsEditingInstagram={setIsEditingInstagram}
@@ -1304,6 +1321,9 @@ export default function ProfessionalDashboard() {
                           setEditingName={setEditingName}
                           setEditingHeadline={setEditingHeadline}
                           setEditingAboutMe={setEditingAboutMe}
+                          setEditingEmail={setEditingEmail}
+                          setEditingPhone={setEditingPhone}
+                          setEditingLocation={setEditingLocation}
                           setEditingFacebook={setEditingFacebook}
                           setEditingTwitter={setEditingTwitter}
                           setEditingInstagram={setEditingInstagram}
@@ -3168,7 +3188,7 @@ export default function ProfessionalDashboard() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label>Location</Label>
                     <Input
@@ -3176,6 +3196,8 @@ export default function ProfessionalDashboard() {
                       className={themeSettings.borderRadius}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Phone</Label>
                     <Input
@@ -3183,8 +3205,6 @@ export default function ProfessionalDashboard() {
                       className={themeSettings.borderRadius}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Website</Label>
                     <Input
@@ -3192,6 +3212,8 @@ export default function ProfessionalDashboard() {
                       className={themeSettings.borderRadius}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label>Email</Label>
                     <Input
@@ -3393,7 +3415,7 @@ export default function ProfessionalDashboard() {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Input
@@ -3402,6 +3424,8 @@ export default function ProfessionalDashboard() {
                   className={themeSettings.borderRadius}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Phone</Label>
                 <Input
@@ -3410,8 +3434,6 @@ export default function ProfessionalDashboard() {
                   className={themeSettings.borderRadius}
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Website</Label>
                 <Input
@@ -3420,6 +3442,8 @@ export default function ProfessionalDashboard() {
                   className={themeSettings.borderRadius}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input
@@ -3618,6 +3642,9 @@ export default function ProfessionalDashboard() {
     isEditingName,
     isEditingHeadline,
     isEditingAboutMe,
+    isEditingEmail,
+    isEditingPhone,
+    isEditingLocation,
     isEditingFacebook,
     isEditingTwitter,
     isEditingInstagram,
@@ -3625,6 +3652,9 @@ export default function ProfessionalDashboard() {
     editingName,
     editingHeadline,
     editingAboutMe,
+    editingEmail,
+    editingPhone,
+    editingLocation,
     editingFacebook,
     editingTwitter,
     editingInstagram,
@@ -3632,6 +3662,9 @@ export default function ProfessionalDashboard() {
     nameInputRef,
     headlineInputRef,
     aboutMeInputRef,
+    emailInputRef,
+    phoneInputRef,
+    locationInputRef,
     facebookInputRef,
     twitterInputRef,
     instagramInputRef,
@@ -3639,6 +3672,9 @@ export default function ProfessionalDashboard() {
     setIsEditingName,
     setIsEditingHeadline,
     setIsEditingAboutMe,
+    setIsEditingEmail,
+    setIsEditingPhone,
+    setIsEditingLocation,
     setIsEditingFacebook,
     setIsEditingTwitter,
     setIsEditingInstagram,
@@ -3646,6 +3682,9 @@ export default function ProfessionalDashboard() {
     setEditingName,
     setEditingHeadline,
     setEditingAboutMe,
+    setEditingEmail,
+    setEditingPhone,
+    setEditingLocation,
     setEditingFacebook,
     setEditingTwitter,
     setEditingInstagram,
@@ -3842,6 +3881,184 @@ export default function ProfessionalDashboard() {
                     )}
                   </div>
                 </div>
+                {/* Email */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Mail className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Email
+                      </p>
+                      {isEditingEmail ? (
+                        <Input
+                          key="email-input"
+                          ref={emailInputRef}
+                          value={editingEmail}
+                          onChange={(e) => setEditingEmail(e.target.value)}
+                          type="email"
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-md text-gray-900 font-medium">
+                          {professional.email || "Not provided"}
+                        </p>
+                      )}
+                    </div>
+                    {isEditingEmail ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await handleFieldUpdate("email", editingEmail);
+                            // Update professional state immediately
+                            setProfessional(prev => prev ? { ...prev, email: editingEmail } : null);
+                            setIsEditingEmail(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsEditingEmail(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`${themeSettings.borderRadius} shrink-0`}
+                        onClick={() => {
+                          setEditingEmail(professional.email || "");
+                          setIsEditingEmail(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {/* Phone */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Phone className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Phone
+                      </p>
+                      {isEditingPhone ? (
+                        <Input
+                          key="phone-input"
+                          ref={phoneInputRef}
+                          value={editingPhone}
+                          onChange={(e) => setEditingPhone(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-md text-gray-900 font-medium">
+                          {professional.phone || "Not provided"}
+                        </p>
+                      )}
+                    </div>
+                    {isEditingPhone ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await handleFieldUpdate("phone", editingPhone);
+                            // Update professional state immediately
+                            setProfessional(prev => prev ? { ...prev, phone: editingPhone } : null);
+                            setIsEditingPhone(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsEditingPhone(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`${themeSettings.borderRadius} shrink-0`}
+                        onClick={() => {
+                          setEditingPhone(professional.phone || "");
+                          setIsEditingPhone(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {/* Location */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Location
+                      </p>
+                      {isEditingLocation ? (
+                        <Input
+                          key="location-input"
+                          ref={locationInputRef}
+                          value={editingLocation}
+                          onChange={(e) => setEditingLocation(e.target.value)}
+                          className="mt-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <p className="text-md text-gray-900 font-medium">
+                          {professional.location || "Not provided"}
+                        </p>
+                      )}
+                    </div>
+                    {isEditingLocation ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await handleFieldUpdate("location", editingLocation);
+                            // Update professional state immediately
+                            setProfessional(prev => prev ? { ...prev, location: editingLocation } : null);
+                            setIsEditingLocation(false);
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsEditingLocation(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`${themeSettings.borderRadius} shrink-0`}
+                        onClick={() => {
+                          setEditingLocation(professional.location || "");
+                          setIsEditingLocation(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -3933,7 +4150,7 @@ export default function ProfessionalDashboard() {
                         <p className="font-medium text-gray-900">
                           Current Resume
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm truncate text-gray-500">
                           {professional.resume.split('/').pop()}
                         </p>
                       </div>
@@ -4136,8 +4353,7 @@ export default function ProfessionalDashboard() {
                       <ul className="list-disc list-inside space-y-1">
                         <li>File format: PDF only</li>
                         <li>Maximum file size: 5MB</li>
-                        <li>Content should be professional and up-to-date</li>
-                        <li>Include your work experience, education, and skills</li>
+
                       </ul>
                     </div>
                   </div>

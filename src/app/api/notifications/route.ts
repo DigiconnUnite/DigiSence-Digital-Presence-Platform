@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendInquiryNotification } from '@/lib/email'
+import { sendInquiryNotification, sendAccountCreationNotification } from '@/lib/email'
 
 interface NotificationData {
-  type: 'inquiry' | 'businessListingInquiry' | 'general'
+  type: 'inquiry' | 'businessListingInquiry' | 'accountCreation' | 'general'
   inquiryId?: string
   businessListingInquiryId?: string
   statusUpdate?: boolean
   message?: string
+  // Account creation fields
+  name?: string
+  email?: string
+  password?: string
+  accountType?: 'business' | 'professional'
+  loginUrl?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -62,6 +68,15 @@ export async function POST(request: NextRequest) {
           // TODO: Implement admin notification email
         }
       }
+    } else if (data.type === 'accountCreation' && data.name && data.email && data.password && data.accountType && data.loginUrl) {
+      // Send account creation notification
+      await sendAccountCreationNotification({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        accountType: data.accountType,
+        loginUrl: data.loginUrl,
+      })
     }
 
     return NextResponse.json({ success: true })

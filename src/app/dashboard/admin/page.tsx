@@ -927,37 +927,69 @@ export default function SuperAdminDashboard() {
     }
 
     try {
+      // Generate a password for the new account
+      const generatedPassword = generatePassword()
+
       let response
+      let accountData
       if (inquiry.type === 'BUSINESS') {
+        accountData = {
+          name: inquiry.businessName,
+          email: inquiry.email,
+          password: generatedPassword,
+          adminName: inquiry.name,
+          phone: inquiry.phone,
+          address: inquiry.location,
+        }
         response = await fetch('/api/admin/businesses', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            name: inquiry.businessName,
-            email: inquiry.email,
-            adminName: inquiry.name,
-            phone: inquiry.phone,
-            address: inquiry.location,
-          }),
+          body: JSON.stringify(accountData),
         })
       } else {
+        accountData = {
+          name: inquiry.name,
+          email: inquiry.email,
+          password: generatedPassword,
+          adminName: inquiry.name,
+          phone: inquiry.phone,
+        }
         response = await fetch('/api/admin/professionals', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            name: inquiry.name,
-            email: inquiry.email,
-            adminName: inquiry.name,
-            phone: inquiry.phone,
-          }),
+          body: JSON.stringify(accountData),
         })
       }
 
       if (response.ok) {
+        // Send email notification with credentials
+        try {
+          const emailResponse = await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'accountCreation',
+              name: inquiry.name,
+              email: inquiry.email,
+              password: generatedPassword,
+              accountType: inquiry.type.toLowerCase(),
+              loginUrl: `${window.location.origin}/login`,
+            }),
+          })
+
+          if (!emailResponse.ok) {
+            console.error('Failed to send account creation email')
+          }
+        } catch (emailError) {
+          console.error('Email notification error:', emailError)
+        }
+
         // Update inquiry status to COMPLETED
         await fetch(`/api/registration-inquiries/${inquiry.id}`, {
           method: 'PUT',
@@ -976,7 +1008,7 @@ export default function SuperAdminDashboard() {
 
         toast({
           title: "Success",
-          description: `${inquiry.type} account created successfully!`,
+          description: `${inquiry.type} account created successfully! Login credentials sent to ${inquiry.email}`,
         })
         fetchData() // Refresh data
       } else {

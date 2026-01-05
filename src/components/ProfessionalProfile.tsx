@@ -237,6 +237,38 @@ export default function ProfessionalProfile({
     return () => clearInterval(interval);
   }, [mounted, professional?.id, professional?.slug]);
 
+  const handleResumeDownload = async () => {
+    if (!professional.resume) {
+      alert('No resume available for download.');
+      return;
+    }
+
+    try {
+      // Create a temporary link element for downloading
+      const link = document.createElement('a');
+      link.href = professional.resume;
+      link.download = `${professional.name}_Resume`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+
+      // Check if it's a direct download link or needs to be opened in browser
+      const fileExtension = professional.resume.split('.').pop()?.toLowerCase();
+
+      if (fileExtension === 'pdf' || fileExtension === 'doc' || fileExtension === 'docx') {
+        // For document files, try to download directly
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For other file types or URLs, open in new tab
+        window.open(professional.resume, '_blank', 'noopener,noreferrer');
+      }
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      alert('Failed to download resume. Please try again or contact the professional directly.');
+    }
+  };
+
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -480,7 +512,7 @@ export default function ProfessionalProfile({
           <div className="grid grid-cols-2 gap-3 mb-6">
             {professional.resume ? (
               <Button
-                onClick={() => window.open(professional.resume!, '_blank')}
+                onClick={handleResumeDownload}
                 className={`flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
               >
                 <FileText className="w-4 h-4 mr-2" />

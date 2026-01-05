@@ -25,8 +25,15 @@ export default function HeroSectionOne() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const dragStartX = useRef(0);
   const dragStartIndex = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set isClient to true after component mounts
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleImageClick = (index: number) => {
     if (!isDragging) {
@@ -36,39 +43,88 @@ export default function HeroSectionOne() {
 
   // Auto-scroll functionality for infinite carousel
   useEffect(() => {
-    if (isHovered || isDragging) return;
+    if (!isClient || isHovered || isDragging) return;
 
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % images.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isHovered, isDragging]);
+  }, [isHovered, isDragging, isClient]);
 
   // Responsive values
   const getResponsiveValues = () => {
-    if (typeof window === "undefined") return { radius: 700, cardWidth: 200, dragSensitivity: 100 };
+    if (typeof window === "undefined") return {
+      radius: 700,
+      cardWidth: 200,
+      dragSensitivity: 100,
+      containerHeight: 500,
+      perspective: 12000
+    };
+
     const width = window.innerWidth;
-    if (width < 640) return { radius: 350, cardWidth: 120, dragSensitivity: 60 };
-    if (width < 1024) return { radius: 500, cardWidth: 160, dragSensitivity: 80 };
-    return { radius: 700, cardWidth: 200, dragSensitivity: 100 };
+    const height = window.innerHeight;
+
+    // Mobile specific optimizations
+    if (width < 640) {
+      // Adjust for mobile viewport
+      const mobileHeight = Math.min(height * 0.6, 400);
+      return {
+        radius: Math.min(width * 0.8, 280),
+        cardWidth: Math.min(width * 0.4, 120),
+        dragSensitivity: 60,
+        containerHeight: mobileHeight,
+        perspective: 8000
+      };
+    }
+
+    // Tablet specific optimizations
+    if (width < 1024) {
+      return {
+        radius: 500,
+        cardWidth: 160,
+        dragSensitivity: 80,
+        containerHeight: 600,
+        perspective: 10000
+      };
+    }
+
+    // Desktop
+    return {
+      radius: 700,
+      cardWidth: 200,
+      dragSensitivity: 100,
+      containerHeight: 800,
+      perspective: 12000
+    };
   };
 
-  const [responsiveValues, setResponsiveValues] = useState({ radius: 1500, cardWidth: 300, dragSensitivity: 0 });
+  const [responsiveValues, setResponsiveValues] = useState({
+    radius: 700,
+    cardWidth: 200,
+    dragSensitivity: 100,
+    containerHeight: 500,
+    perspective: 12000
+  });
 
   useEffect(() => {
-    const handleResize = () => setResponsiveValues(getResponsiveValues());
+    const handleResize = () => {
+      const newValues = getResponsiveValues();
+      setResponsiveValues(newValues);
+    };
+
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const { radius, cardWidth, dragSensitivity } = responsiveValues;
+  const { radius, cardWidth, dragSensitivity, containerHeight, perspective } = responsiveValues;
   const totalCards = images.length;
   const angleStep = (2 * Math.PI) / totalCards;
 
-  // Drag handlers
+  // Drag handlers with improved touch support
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     dragStartX.current = clientX;
@@ -77,6 +133,8 @@ export default function HeroSectionOne() {
 
   const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
+
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const deltaX = clientX - dragStartX.current;
     const indexDelta = Math.round(-deltaX / dragSensitivity);
@@ -88,19 +146,34 @@ export default function HeroSectionOne() {
     setIsDragging(false);
   };
 
-  return (
-    <div className="relative py-30 h-fit overflow-hidden primary-gradient">
+  // Prevent scrolling when dragging on mobile
+  useEffect(() => {
+    const preventDefault = (e: TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault();
+      }
+    };
 
+    if (isDragging) {
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    }
+  }, [isDragging]);
+
+  return (
+    <div className="relative py-20 md:py-30 h-fit overflow-hidden primary-gradient">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/2 z-0 flex items-center justify-center -translate-x-1/2"
       >
-        <div className="h-[600px] w-[600px] sm:h-[700px] sm:w-[700px] lg:h-[700px] lg:w-[1200px] rounded-full bg-cyan-700 opacity-20 blur-3xl shadow-2xl " />
+        <div className="h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] md:h-[600px] md:w-[600px] lg:h-[700px] lg:w-[1200px] rounded-full bg-cyan-700 opacity-20 blur-3xl shadow-2xl " />
       </div>
 
-      <div className="relative mx-auto    flex max-w-7xl flex-col items-center justify-center px-4">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4">
         <div className="py-8 md:py-16 lg:py-20 w-full">
-          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-3xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
+          <h1 className="relative z-10 mx-auto max-w-4xl text-center text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
             {"Launch your website in hours, not days"
               .split(" ")
               .map((word, index) => (
@@ -127,9 +200,9 @@ export default function HeroSectionOne() {
               delay: 1,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="relative z-10 mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+            className="relative z-10 mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
           >
-            <button className="w-full sm:w-48 md:w-60 transform rounded-lg bg-slate-800 px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200">
+            <button className="w-full sm:w-48 md:w-60 transform rounded-lg  px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200">
               Explore Now
             </button>
             <button className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">
@@ -140,9 +213,11 @@ export default function HeroSectionOne() {
       </div>
 
       <div
-        className="relative h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px] flex max-w-screen mx-auto items-center justify-center overflow-hidden select-none"
+        ref={containerRef}
+        className="relative mx-auto flex max-w-screen items-center justify-center overflow-hidden select-none"
         style={{
-          perspective: "12000px",
+          height: `${containerHeight}px`,
+          perspective: `${perspective}px`,
           cursor: isDragging ? "grabbing" : "grab",
         }}
         onMouseEnter={() => setIsHovered(true)}
@@ -157,7 +232,6 @@ export default function HeroSectionOne() {
         onTouchMove={handleDragMove}
         onTouchEnd={handleDragEnd}
       >
-
         <div
           className="relative mx-auto flex h-full w-full items-center justify-center"
           style={{
@@ -177,7 +251,6 @@ export default function HeroSectionOne() {
 
             // Cards in front are more visible
             const isFront = Math.cos(angle) > 0;
-            // const opacity = isFront ? 0.5 + Math.cos(angle) * 0.5 : 0.3;
             const scale = isFront ? 0.9 + Math.cos(angle) * 0.9 : 0.2;
             const zIndex = Math.round(Math.cos(angle) * 100) + 100;
 
@@ -191,7 +264,6 @@ export default function HeroSectionOne() {
                   z: translateZ,
                   rotateY: rotateY,
                   scale: scale,
-                  // opacity: opacity,
                 }}
                 transition={{
                   duration: isDragging ? 0.18 : 0.5,
@@ -206,7 +278,7 @@ export default function HeroSectionOne() {
               >
                 <Android
                   src={image}
-                  className="h-full w-full  object-contain pointer-events-none"
+                  className="h-full w-full object-contain pointer-events-none"
                 />
               </motion.div>
             );

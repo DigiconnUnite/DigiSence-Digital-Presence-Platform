@@ -19,7 +19,7 @@ interface Professional {
   phone: string | null;
   email: string | null;
   website: string | null;
-  facebook: string | null;
+  facebook: string | null; 
   twitter: string | null;
   instagram: string | null;
   linkedin: string | null;

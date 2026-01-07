@@ -433,7 +433,7 @@ export default function SuperAdminDashboard() {
 
       setStats((prev) => ({
         ...prev,
-        totalBusinesses: businessesData.data.length,
+        totalBusinesses: businessesData.data?.length || 0,
         totalInquiries,
         totalUsers,
         activeBusinesses,
@@ -457,7 +457,7 @@ export default function SuperAdminDashboard() {
       ).length;
       setStats((prev) => ({
         ...prev,
-        totalProfessionals: professionalsData.data.length,
+        totalProfessionals: professionalsData.data?.length || 0,
         activeProfessionals,
       }));
     }
@@ -581,7 +581,6 @@ export default function SuperAdminDashboard() {
           setRightPanelContent(null);
           setGeneratedPassword("");
           setGeneratedUsername("");
-          fetchData();
           e.currentTarget.reset();
         } else {
           const error = await response.json();
@@ -603,7 +602,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [generatedPassword, generatePassword, toast, fetchData]
+    [generatedPassword, generatePassword, toast]
   );
 
   // Handle edit business
@@ -1015,7 +1014,6 @@ export default function SuperAdminDashboard() {
           setRightPanelContent(null);
           setGeneratedPassword("");
           setGeneratedUsername("");
-          fetchData();
           e.currentTarget.reset();
         } else {
           const error = await response.json();
@@ -1038,7 +1036,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [generatedPassword, generatePassword, toast, fetchData]
+    [generatedPassword, generatePassword, toast]
   );
 
   // Handle update professional with improved error handling
@@ -1151,7 +1149,6 @@ export default function SuperAdminDashboard() {
           });
           setShowRightPanel(false);
           setRightPanelContent(null);
-          fetchData();
           e.currentTarget.reset();
         } else {
           const error = await response.json();
@@ -1171,7 +1168,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle edit category
@@ -1212,7 +1209,6 @@ export default function SuperAdminDashboard() {
 
         if (response.ok) {
           console.log("Category update successful");
-          fetchData();
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -1239,7 +1235,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [editingCategory, fetchData, toast]
+    [editingCategory, toast]
   );
 
   // Handle delete category with improved error handling
@@ -1262,7 +1258,6 @@ export default function SuperAdminDashboard() {
 
         if (response.ok) {
           console.log("Category delete successful");
-          fetchData();
           toast({
             title: "Success",
             description: "Category deleted successfully",
@@ -1287,7 +1282,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle update business listing inquiry with improved error handling
@@ -3488,7 +3483,6 @@ export default function SuperAdminDashboard() {
                     setEditingProfessional(null);
                     setGeneratedPassword("");
                     setGeneratedUsername("");
-                    fetchData();
                   } else {
                     const error = await response.json();
                     toast({

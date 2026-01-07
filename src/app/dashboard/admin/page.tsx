@@ -533,13 +533,16 @@ export default function SuperAdminDashboard() {
           totalActiveProducts: business.isActive ? prev.totalActiveProducts - business._count.products : prev.totalActiveProducts
         }))
         
-        // Then fetch fresh data to ensure consistency
-        await fetchData()
+        // Force immediate re-render to show the updated table
+        setForceRerender(prev => prev + 1)
         
         toast({
           title: "Success",
           description: "Business deleted successfully",
         })
+        
+        // Then fetch fresh data to ensure consistency
+        await fetchData()
       } else {
         const error = await response.json()
         console.error('Business deletion failed:', error)
@@ -622,13 +625,16 @@ export default function SuperAdminDashboard() {
           activeProfessionals: prev.activeProfessionals - 1
         }))
         
-        // Then fetch fresh data to ensure consistency
-        await fetchData()
+        // Force immediate re-render to show the updated table
+        setForceRerender(prev => prev + 1)
         
         toast({
           title: "Success",
           description: "Professional deleted successfully",
         })
+        
+        // Then fetch fresh data to ensure consistency
+        await fetchData()
       } else {
         const error = await response.json()
         console.error('Professional deletion failed:', error)

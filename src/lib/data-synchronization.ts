@@ -118,10 +118,14 @@ export class DataSynchronizationService {
       where: {
         AND: [
           {
-            business: null,
+            business: {
+              is: null,
+            },
           },
           {
-            professional: null,
+            professional: {
+              is: null,
+            },
           },
           {
             role: {
@@ -147,7 +151,9 @@ export class DataSynchronizationService {
   private async findMissingBusinessAdmins(): Promise<string[]> {
     const missingAdminBusinesses = await db.business.findMany({
       where: {
-        admin: null,
+        admin: {
+          is: null,
+        },
       },
       select: {
         id: true,
@@ -167,7 +173,9 @@ export class DataSynchronizationService {
   private async findMissingProfessionalAdmins(): Promise<string[]> {
     const missingAdminProfessionals = await db.professional.findMany({
       where: {
-        admin: null,
+        admin: {
+          is: null,
+        },
       },
       select: {
         id: true,
@@ -228,7 +236,9 @@ export class DataSynchronizationService {
   private async fixMissingBusinessAdmins(): Promise<number> {
     const missingAdminBusinesses = await db.business.findMany({
       where: {
-        admin: null,
+        admin: {
+          is: null,
+        },
       },
       select: {
         id: true,
@@ -270,7 +280,9 @@ export class DataSynchronizationService {
   private async fixMissingProfessionalAdmins(): Promise<number> {
     const missingAdminProfessionals = await db.professional.findMany({
       where: {
-        admin: null,
+        admin: {
+          is: null,
+        },
       },
       select: {
         id: true,

@@ -27,6 +27,19 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Alternative approach: extract ID from URL pathname
+    const url = new URL(request.url)
+    const pathname = url.pathname
+    const pathSegments = pathname.split('/')
+    const extractedId = pathSegments[pathSegments.length - 1]
+    
+    // Use the extracted ID if params.id is undefined
+    const inquiryId = params.id || extractedId
+
+    if (!inquiryId) {
+      return NextResponse.json({ error: 'Missing registration inquiry ID' }, { status: 400 })
+    }
+
     const admin = await getSuperAdmin(request)
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -36,7 +49,7 @@ export async function PUT(
     const { status } = updateSchema.parse(body)
 
     const inquiry = await db.registrationInquiry.update({
-      where: { id: params.id },
+      where: { id: inquiryId },
       data: { status },
     })
 

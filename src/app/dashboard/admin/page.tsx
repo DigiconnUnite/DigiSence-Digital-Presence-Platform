@@ -273,6 +273,7 @@ export default function SuperAdminDashboard() {
       const businessesRes = await fetch('/api/admin/businesses')
       if (businessesRes.ok) {
         const data = await businessesRes.json()
+        console.log('Fetched businesses:', data.businesses.length)
         setBusinesses(data.businesses)
 
         // Calculate stats
@@ -293,44 +294,61 @@ export default function SuperAdminDashboard() {
           totalProfessionals: professionals.length,
           activeProfessionals: professionals.filter(p => p.isActive).length,
         })
+      } else {
+        console.error('Failed to fetch businesses:', businessesRes.status)
       }
 
       // Fetch categories
       const categoriesRes = await fetch('/api/admin/categories')
       if (categoriesRes.ok) {
         const data = await categoriesRes.json()
+        console.log('Fetched categories:', data.categories.length)
         setCategories(data.categories)
+      } else {
+        console.error('Failed to fetch categories:', categoriesRes.status)
       }
 
       // Fetch inquiries
       const inquiriesRes = await fetch('/api/inquiries')
       if (inquiriesRes.ok) {
         const data = await inquiriesRes.json()
+        console.log('Fetched inquiries:', data.inquiries.length)
         setInquiries(data.inquiries)
+      } else {
+        console.error('Failed to fetch inquiries:', inquiriesRes.status)
       }
 
       // Fetch professionals
       const professionalsRes = await fetch('/api/professionals')
       if (professionalsRes.ok) {
         const data = await professionalsRes.json()
+        console.log('Fetched professionals:', data.professionals.length)
         setProfessionals(data.professionals)
 
         // Calculate professional stats
         const activeProfessionals = data.professionals.filter((p: Professional) => p.isActive).length
+      } else {
+        console.error('Failed to fetch professionals:', professionalsRes.status)
       }
 
       // Fetch business listing inquiries
       const businessListingInquiriesRes = await fetch('/api/business-listing-inquiries')
       if (businessListingInquiriesRes.ok) {
         const data = await businessListingInquiriesRes.json()
+        console.log('Fetched business listing inquiries:', data.inquiries.length)
         setBusinessListingInquiries(data.inquiries)
+      } else {
+        console.error('Failed to fetch business listing inquiries:', businessListingInquiriesRes.status)
       }
 
       // Fetch registration inquiries
       const registrationInquiriesRes = await fetch('/api/registration-inquiries')
       if (registrationInquiriesRes.ok) {
         const data = await registrationInquiriesRes.json()
+        console.log('Fetched registration inquiries:', data.inquiries.length)
         setRegistrationInquiries(data.inquiries)
+      } else {
+        console.error('Failed to fetch registration inquiries:', registrationInquiriesRes.status)
       }
     } catch (error) {
       console.error('Failed to fetch admin data:', error)
@@ -493,18 +511,37 @@ export default function SuperAdminDashboard() {
     }
 
     try {
+      console.log('Deleting business:', business.id, business.name)
       const response = await fetch(`/api/admin/businesses/${business.id}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
+        console.log('Business deletion successful, refreshing data...')
+        
+        // Remove the deleted business from the local state immediately
+        setBusinesses(prev => prev.filter(biz => biz.id !== business.id))
+        
+        // Update stats immediately
+        setStats(prev => ({
+          ...prev,
+          totalBusinesses: prev.totalBusinesses - 1,
+          totalUsers: prev.totalUsers - 1,
+          activeBusinesses: business.isActive ? prev.activeBusinesses - 1 : prev.activeBusinesses,
+          totalProducts: prev.totalProducts - business._count.products,
+          totalActiveProducts: business.isActive ? prev.totalActiveProducts - business._count.products : prev.totalActiveProducts
+        }))
+        
+        // Then fetch fresh data to ensure consistency
         await fetchData()
+        
         toast({
           title: "Success",
           description: "Business deleted successfully",
         })
       } else {
         const error = await response.json()
+        console.error('Business deletion failed:', error)
         toast({
           title: "Error",
           description: `Failed to delete business: ${error.error}`,
@@ -512,6 +549,7 @@ export default function SuperAdminDashboard() {
         })
       }
     } catch (error) {
+      console.error('Business deletion error:', error)
       toast({
         title: "Error",
         description: "Failed to delete business. Please try again.",
@@ -565,18 +603,34 @@ export default function SuperAdminDashboard() {
     }
 
     try {
+      console.log('Deleting professional:', id)
       const response = await fetch(`/api/professionals/${id}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
+        console.log('Professional deletion successful, refreshing data...')
+        
+        // Remove the deleted professional from the local state immediately
+        setProfessionals(prev => prev.filter(prof => prof.id !== id))
+        
+        // Update stats immediately
+        setStats(prev => ({
+          ...prev,
+          totalProfessionals: prev.totalProfessionals - 1,
+          activeProfessionals: prev.activeProfessionals - 1
+        }))
+        
+        // Then fetch fresh data to ensure consistency
         await fetchData()
+        
         toast({
           title: "Success",
           description: "Professional deleted successfully",
         })
       } else {
         const error = await response.json()
+        console.error('Professional deletion failed:', error)
         toast({
           title: "Error",
           description: `Failed to delete professional: ${error.error}`,
@@ -584,6 +638,7 @@ export default function SuperAdminDashboard() {
         })
       }
     } catch (error) {
+      console.error('Professional deletion error:', error)
       toast({
         title: "Error",
         description: "Failed to delete professional. Please try again.",

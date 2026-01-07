@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
           skills: true,
           servicesOffered: true,
           portfolio: true,
+          isActive: true, // Add this line to include isActive in the select
           admin: {
             select: {
               name: true,
@@ -139,6 +140,9 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
       })
+
+      console.log('Professionals API returning professionals:', professionals.length)
+      console.log('Professionals data:', professionals.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })))
 
       return NextResponse.json({ professionals })
     }

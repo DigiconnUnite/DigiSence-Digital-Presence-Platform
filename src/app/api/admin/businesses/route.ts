@@ -88,6 +88,9 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
+    console.log('Admin API returning businesses:', businesses.length)
+    console.log('Businesses data:', businesses.map(b => ({ id: b.id, name: b.name, isActive: b.isActive })))
+
     return NextResponse.json({ businesses })
   } catch (error) {
     console.error('Businesses fetch error:', error)

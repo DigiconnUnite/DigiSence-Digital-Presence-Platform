@@ -43,13 +43,19 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    // Extract ID from params (proper Next.js way)
+    const { id: businessId } = await params
+
+    if (!businessId) {
+      return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+    }
+
     const body = await request.json()
     const updateData = updateBusinessSchema.parse(body)
 
     // Check if business exists and belongs to this admin
     const existingBusiness = await db.business.findUnique({
-      where: { id },
+      where: { id: businessId },
     })
 
     if (!existingBusiness) {
@@ -63,7 +69,7 @@ export async function POST(
       
       // Check if new slug is already taken
       const slugExists = await db.business.findFirst({
-        where: { 
+        where: {
           slug: newSlug,
           id: { not: existingBusiness.id }
         },
@@ -126,16 +132,34 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    // Extract ID from params (proper Next.js way)
+    const { id: businessId } = await params
 
-    if (!id) {
+    console.log('DELETE request details:')
+    console.log('Full URL:', request.url)
+    console.log('Business ID from params:', businessId)
+
+    if (!businessId) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
+    console.log('Business DELETE params:', params)
+    console.log('Business DELETE id:', businessId)
+
     // Check if business exists
+    console.log('Looking for business with ID:', businessId)
     const existingBusiness = await db.business.findUnique({
-      where: { id },
+      where: { id: businessId },
     })
+
+    console.log('Found business:', existingBusiness ? 'YES' : 'NO')
+    if (existingBusiness) {
+      console.log('Business details:', {
+        id: existingBusiness.id,
+        name: existingBusiness.name,
+        isActive: existingBusiness.isActive
+      })
+    }
 
     if (!existingBusiness) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
@@ -143,16 +167,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     // Delete related records (products, inquiries)
     await db.product.deleteMany({
-      where: { businessId: id },
+      where: { businessId },
     })
 
     await db.inquiry.deleteMany({
-      where: { businessId: id },
+      where: { businessId },
     })
 
     // Delete the business
     await db.business.delete({
-      where: { id },
+      where: { id: businessId },
     })
 
     return NextResponse.json({
@@ -178,8 +202,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Extract ID from params (proper Next.js way)
     const { id: businessId } = await params
-    
+
+    if (!businessId) {
+      return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+    }
+
     // Check if business exists
     const existingBusiness = await db.business.findUnique({
       where: { id: businessId },

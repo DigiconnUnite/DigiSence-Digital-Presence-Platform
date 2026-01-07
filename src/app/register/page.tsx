@@ -404,7 +404,7 @@ export default function RegisterPage() {
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           disabled={loading}
-                          placeholder="+1 234 567 8900"
+                          placeholder="+91 8080808080"
                           className="focus:ring-2 focus:ring-primary transition-all"
                         />
                       </div>
@@ -481,7 +481,7 @@ export default function RegisterPage() {
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           disabled={loading}
-                          placeholder="+1 234 567 8900"
+                          placeholder="+91 8080808080"
                           className="focus:ring-2 focus:ring-primary transition-all"
                         />
                       </div>

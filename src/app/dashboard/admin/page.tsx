@@ -2924,7 +2924,7 @@ export default function SuperAdminDashboard() {
                     <Label>Phone</Label>
                     <Input
                       name="phone"
-                      placeholder="+1 234 567 8900"
+                      placeholder="+91 8080808080"
                       className="rounded-2xl"
                     />
                   </div>

@@ -5,7 +5,7 @@ const testProfessional: ProfessionalData = {
   name: "John Doe",
   professionalHeadline: "Senior Software Engineer",
   location: "San Francisco, CA",
-  phone: "+1 (555) 123-4567",
+  phone: "+91 (555) 123-4567",
   email: "john.doe@example.com",
   website: "https://johndoe.dev",
   facebook: "https://facebook.com/johndoe",

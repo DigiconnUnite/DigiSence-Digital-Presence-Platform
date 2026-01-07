@@ -1132,7 +1132,7 @@ export default function ProfessionalProfile({
                           onChange={(e) =>
                             setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
                           }
-                          placeholder="+1 (555) 123-4567"
+                          placeholder="+91 (555) 123-4567"
                           className={getBorderRadius()}
                         />
                       </div>

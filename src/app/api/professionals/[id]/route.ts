@@ -124,16 +124,24 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Professional not found' }, { status: 404 })
     }
 
-    // Delete the professional
-    await db.professional.delete({
-      where: { id },
+    // Use transaction to ensure all deletions succeed or fail together
+    await db.$transaction(async (tx) => {
+      // Delete the professional
+      await tx.professional.delete({
+        where: { id },
+      })
+
+      // Also delete the associated admin user
+      await tx.user.delete({
+        where: { id: existingProfessional.adminId },
+      })
     })
 
-    return NextResponse.json({ message: 'Professional deleted successfully' })
+    return NextResponse.json({ message: 'Professional and associated user deleted successfully' })
   } catch (error) {
     console.error('Professional deletion error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to delete professional and associated user' },
       { status: 500 }
     )
   }

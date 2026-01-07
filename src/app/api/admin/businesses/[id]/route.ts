@@ -148,28 +148,36 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
 
-    // Delete related records (products, inquiries)
-    await db.product.deleteMany({
-      where: { businessId },
-    })
+    // Use transaction to ensure all deletions succeed or fail together
+    await db.$transaction(async (tx) => {
+      // Delete related records first (products, inquiries)
+      await tx.product.deleteMany({
+        where: { businessId },
+      })
 
-    await db.inquiry.deleteMany({
-      where: { businessId },
-    })
+      await tx.inquiry.deleteMany({
+        where: { businessId },
+      })
 
-    // Delete the business
-    await db.business.delete({
-      where: { id: businessId },
+      // Delete the business
+      await tx.business.delete({
+        where: { id: businessId },
+      })
+
+      // Also delete the associated admin user
+      await tx.user.delete({
+        where: { id: existingBusiness.adminId },
+      })
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Business deleted successfully',
+      message: 'Business and associated user deleted successfully',
     })
   } catch (error) {
     console.error('Business deletion error:', error)
     return NextResponse.json(
-      { error: 'Failed to delete business' },
+      { error: 'Failed to delete business and associated user' },
       { status: 500 }
     )
   }

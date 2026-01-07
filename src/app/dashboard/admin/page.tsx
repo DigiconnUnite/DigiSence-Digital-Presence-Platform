@@ -634,8 +634,20 @@ export default function SuperAdminDashboard() {
         );
 
         if (response.ok) {
-          console.log("Update successful");
-          await fetchData();
+          console.log("Update successful, updating state...");
+          
+          // Update the business in the local state immediately
+          setBusinesses((prev) =>
+            prev.map((biz) =>
+              biz.id === editingBusiness.id
+                ? { ...biz, ...updateData }
+                : biz
+            )
+          );
+
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
+
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -664,7 +676,7 @@ export default function SuperAdminDashboard() {
         setIsLoading(false);
       }
     },
-    [editingBusiness, fetchData, toast]
+    [editingBusiness, toast]
   );
 
   // Handle delete business with improved error handling
@@ -688,7 +700,11 @@ export default function SuperAdminDashboard() {
           console.log("Business deletion successful, updating state...");
 
           // Remove the deleted business from the local state immediately
-          setBusinesses((prev) => prev.filter((biz) => biz.id !== business.id));
+          setBusinesses((prev) => {
+            const updatedBusinesses = prev.filter((biz) => biz.id !== business.id);
+            console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
+            return updatedBusinesses;
+          });
 
           // Update stats immediately
           setStats((prev) => ({
@@ -704,9 +720,13 @@ export default function SuperAdminDashboard() {
               : prev.totalActiveProducts,
           }));
 
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
+
+          // Show success message with enhanced details
           toast({
             title: "Success",
-            description: "Business deleted successfully",
+            description: "Business and associated user deleted successfully",
           });
         } else {
           const error = await response.json();
@@ -772,6 +792,9 @@ export default function SuperAdminDashboard() {
               : prev.totalActiveProducts - business._count.products,
           }));
 
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
+
           toast({
             title: "Success",
             description: `Business ${!business.isActive ? 'activated' : 'suspended'} successfully`,
@@ -827,7 +850,11 @@ export default function SuperAdminDashboard() {
           console.log("Professional deletion successful, updating state...");
 
           // Remove the deleted professional from the local state immediately
-          setProfessionals((prev) => prev.filter((prof) => prof.id !== id));
+          setProfessionals((prev) => {
+            const updatedProfessionals = prev.filter((prof) => prof.id !== id);
+            console.log("Updated professionals list:", updatedProfessionals.length, "professionals remaining");
+            return updatedProfessionals;
+          });
 
           // Update stats immediately
           setStats((prev) => ({
@@ -836,9 +863,13 @@ export default function SuperAdminDashboard() {
             activeProfessionals: prev.activeProfessionals - 1,
           }));
 
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
+
+          // Show success message with enhanced details
           toast({
             title: "Success",
-            description: "Professional deleted successfully",
+            description: "Professional and associated user deleted successfully",
           });
         } else {
           const error = await response.json();
@@ -900,6 +931,9 @@ export default function SuperAdminDashboard() {
               ? prev.activeProfessionals + 1
               : prev.activeProfessionals - 1,
           }));
+
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
 
           toast({
             title: "Success",
@@ -1027,8 +1061,20 @@ export default function SuperAdminDashboard() {
         );
 
         if (response.ok) {
-          console.log("Account update successful");
-          await fetchData();
+          console.log("Account update successful, updating state...");
+          
+          // Update the professional in the local state immediately
+          setProfessionals((prev) =>
+            prev.map((prof) =>
+              prof.id === editingProfessional.id
+                ? { ...prof, ...updateData }
+                : prof
+            )
+          );
+
+          // Force re-render to ensure UI updates
+          setForceRerender((prev) => prev + 1);
+
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -1058,7 +1104,7 @@ export default function SuperAdminDashboard() {
         setIsLoading(false);
       }
     },
-    [editingProfessional, fetchData, toast]
+    [editingProfessional, toast]
   );
 
   // Handle add category with improved error handling

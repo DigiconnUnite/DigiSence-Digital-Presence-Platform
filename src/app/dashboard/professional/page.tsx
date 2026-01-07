@@ -87,7 +87,6 @@ import {
   Home,
   Grid3X3,
   FolderTree,
-  MessageCircle,
   LineChart,
   Cog,
   LogOut,
@@ -800,6 +799,8 @@ export default function ProfessionalDashboard() {
             break;
           case "phone":
             setEditingPhone(value);
+            // Update professional state immediately for phone
+            setProfessional(prev => prev ? { ...prev, phone: value } : null);
             break;
           case "location":
             setEditingLocation(value);

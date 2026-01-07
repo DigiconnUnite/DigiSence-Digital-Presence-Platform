@@ -51,6 +51,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { saveAs } from 'file-saver';
 import {
   MapPin,
   Phone,
@@ -109,6 +111,7 @@ export default function ProfessionalProfile({
   } = useTheme();
   const [professional, setProfessional] = useState(initialProfessional);
   const [inquiryModal, setInquiryModal] = useState(false);
+  const [workExperienceModal, setWorkExperienceModal] = useState(false);
   const [inquiryData, setInquiryData] = useState<InquiryFormData>({
     name: "",
     email: "",
@@ -266,6 +269,52 @@ export default function ProfessionalProfile({
     } catch (error) {
       console.error('Error downloading resume:', error);
       alert('Failed to download resume. Please try again or contact the professional directly.');
+    }
+  };
+
+  const handleDownloadCard = async () => {
+    try {
+      // Create professional data object
+      const professionalData = {
+        name: professional.name,
+        professionalHeadline: professional.professionalHeadline,
+        location: professional.location,
+        phone: professional.phone,
+        email: professional.email,
+        website: professional.website,
+        facebook: professional.facebook,
+        twitter: professional.twitter,
+        instagram: professional.instagram,
+        linkedin: professional.linkedin,
+      };
+
+      // Call the API to generate the visiting card
+      const response = await fetch('/api/professionals/card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ professional: professionalData }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate visiting card');
+      }
+
+      // Get the PNG buffer from the response
+      const cardBuffer = await response.arrayBuffer();
+      
+      // Create a blob and download
+      const blob = new Blob([cardBuffer], { type: 'image/png' });
+      const fileName = `${professional.name.replace(/\s+/g, '_')}_Visiting_Card.png`;
+      
+      // Use file-saver to download
+      saveAs(blob, fileName);
+      
+      toast.success('Visiting card downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading card:', error);
+      toast.error('Failed to download visiting card. Please try again.');
     }
   };
 
@@ -528,6 +577,7 @@ export default function ProfessionalProfile({
               </Button>
             )}
             <Button
+              onClick={handleDownloadCard}
               className={`flex flex-row gap-2 items-center text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
             >
               <Download className="w-4 h-4 mr-2" />
@@ -635,34 +685,58 @@ export default function ProfessionalProfile({
           {/* Center Navigation */}
           <div className="flex space-x-8">
             <button
-              className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
+              className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                currentView === "home"
+                  ? "text-sky-600 bg-sky-50 border border-sky-200"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              } px-3 py-2 rounded-lg`}
               onClick={() => {
                 setCurrentView("home");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Home className="w-4 h-4 mr-2" />
+              <Home className={`w-4 h-4 mr-2 transition-colors ${
+                currentView === "home" ? "text-sky-600" : "text-gray-500"
+              }`} />
               Home
             </button>
             <button
-              className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
+              className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                currentView === "about"
+                  ? "text-sky-600 bg-sky-50 border border-sky-200"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              } px-3 py-2 rounded-lg`}
               onClick={() => setCurrentView("about")}
             >
-              <User className="w-4 h-4 mr-2" />
+              <User className={`w-4 h-4 mr-2 transition-colors ${
+                currentView === "about" ? "text-sky-600" : "text-gray-500"
+              }`} />
               About
             </button>
             <button
-              className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
+              className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                currentView === "services"
+                  ? "text-sky-600 bg-sky-50 border border-sky-200"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              } px-3 py-2 rounded-lg`}
               onClick={() => setCurrentView("services")}
             >
-              <Users className="w-4 h-4 mr-2" />
+              <Users className={`w-4 h-4 mr-2 transition-colors ${
+                currentView === "services" ? "text-sky-600" : "text-gray-500"
+              }`} />
               Services
             </button>
             <button
-              className="flex items-center text-sm font-medium transition-colors text-gray-600 hover:text-gray-800"
+              className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                currentView === "portfolio"
+                  ? "text-sky-600 bg-sky-50 border border-sky-200"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              } px-3 py-2 rounded-lg`}
               onClick={() => setCurrentView("portfolio")}
             >
-              <ImageIcon className="w-4 h-4 mr-2" />
+              <ImageIcon className={`w-4 h-4 mr-2 transition-colors ${
+                currentView === "portfolio" ? "text-sky-600" : "text-gray-500"
+              }`} />
               Portfolio
             </button>
           </div>
@@ -852,6 +926,32 @@ export default function ProfessionalProfile({
                         )}
                       </div>
                     </div>
+
+                    {/* Skills Section */}
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <Award className="w-5 h-5 mr-2 text-sky-600" />
+                        Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {skills.map((skill: any, index: number) => (
+                          <div
+                            key={index}
+                            className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200 shadow-sm`}
+                          >
+                            <Award className="w-4 h-4 text-sky-600 mr-2" />
+                            <span className="text-sm text-gray-700">
+                              {skill.name?.name || skill.name}
+                            </span>
+                          </div>
+                        ))}
+                        {skills.length === 0 && (
+                          <p className="text-gray-500 italic">
+                            No skills information available.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -872,9 +972,6 @@ export default function ProfessionalProfile({
                         <h2 className="text-2xl font-bold text-slate-800">
                         Services
                       </h2>
-                      <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
-                        View All <ChevronRight className="w-4 h-4 ml-1" />
-                      </button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         {servicesOffered
@@ -913,54 +1010,60 @@ export default function ProfessionalProfile({
                           <h2 className="text-xl font-bold text-slate-800">
                         Portfolio
                       </h2>
-                      <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
-                        View All <ChevronRight className="w-4 h-4 ml-1" />
-                      </button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {portfolio
-                            .slice(0, 2)
                         .map((item: any, index: number) => {
                           const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
                           return (
-                            <div
-                              key={index}
-                              className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
-                            >
-                              <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                                {isVideo ? (
-                                  <video
-                                    src={item.url}
-                                    controls
-                                    className="h-full w-full object-cover absolute -bottom-2"
-                                    poster={item.thumbnail || undefined}
-                                  >
-                                    Your browser does not support the video tag.
-                                  </video>
-                                ) : (
-                                  (() => {
-                                    const optimizedImage = useOptimizedImage(
-                                      item.url,
-                                      400,
-                                      250
-                                    );
-                                    return (
-                                      <img
-                                        src={optimizedImage.src}
-                                        srcSet={optimizedImage.srcSet}
-                                        sizes={optimizedImage.sizes}
-                                        alt={item.title}
-                                        className="h-full p-0 object-cover absolute -bottom-2"
-                                      />
-                                    );
-                                  })()
-                                )}
+                            <div className="flex flex-col ">
+                              <div
+                                key={index}
+                                className="relative p-7 px-10 bg-linear-to-t border   from-sky-100/80 to-transparent rounded-xl overflow-hidden"
+                              >
+                                <div className="relative  bg-white h-fit   border -bottom-8  aspect-video rounded-lg overflow-hidden">
+                                  {isVideo ? (
+                                    <video
+                                      src={item.url}
+                                      controls
+                                      className="h-full w-full object-cover absolute inset-0"
+                                      poster={item.thumbnail || undefined}
+                                    >
+                                      Your browser does not support the video
+                                      tag.
+                                    </video>
+                                  ) : (
+                                    (() => {
+                                      const optimizedImage = useOptimizedImage(
+                                        item.url,
+                                        400,
+                                        250
+                                      );
+                                      return (
+                                        <img
+                                          src={optimizedImage.src}
+                                          srcSet={optimizedImage.srcSet}
+                                          sizes={optimizedImage.sizes}
+                                          alt={item.title}
+                                          className="h-full w-full object-cover absolute inset-0"
+                                        />
+                                      );
+                                    })()
+                                  )}
+                                </div>
+                                <div className="absolute bottom-3 left-3 border bg-white/80 backdrop-blur-sm rounded-full px-3 py-0.2">
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {item.title}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                                <span className="text-sm font-semibold text-gray-900">
-                                  {item.title}
-                                </span>
-                              </div>
+                              {item.description && (
+                                <div className=" p-3 border-b border-l border-r  rounded-xl">
+                                  <p className="text-sm  text-gray-600 text-start">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -984,7 +1087,99 @@ export default function ProfessionalProfile({
                           <h2 className="text-xl font-bold text-slate-800 mb-4">
                       Let's Talk
                     </h2>
-                    <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>
+                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                      Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
+                    </p>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      setInquiryModal(true);
+                    }} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-name">Name *</Label>
+                          <Input
+                            id="contact-name"
+                            value={inquiryData.name}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({ ...prev, name: e.target.value }))
+                            }
+                            required
+                            placeholder="Your full name"
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-email">Email *</Label>
+                          <Input
+                            id="contact-email"
+                            type="email"
+                            value={inquiryData.email}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({ ...prev, email: e.target.value }))
+                            }
+                            required
+                            placeholder="your.email@example.com"
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contact-phone">Phone</Label>
+                        <Input
+                          id="contact-phone"
+                          type="tel"
+                          value={inquiryData.phone}
+                          onChange={(e) =>
+                            setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
+                          }
+                          placeholder="+1 (555) 123-4567"
+                          className={getBorderRadius()}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contact-message">Message *</Label>
+                        <Textarea
+                          id="contact-message"
+                          value={inquiryData.message}
+                          onChange={(e) =>
+                            setInquiryData((prev) => ({
+                              ...prev,
+                              message: e.target.value,
+                            }))
+                          }
+                          rows={5}
+                          required
+                          placeholder="Tell me about your project or ask your question..."
+                          className={getBorderRadius()}
+                        />
+                      </div>
+                      <div className="flex space-x-3">
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`flex-1 ${getButtonClass()}`}
+                        >
+                          {isSubmitting ? (
+                            "Sending..."
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Send Message
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setInquiryData({ name: "", email: "", phone: "", message: "" });
+                          }}
+                          className={getBorderRadius()}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
               </div>
@@ -1009,7 +1204,10 @@ export default function ProfessionalProfile({
                                   <h2 className="text-xl font-bold text-slate-800">
                             Work Experience
                           </h2>
-                          <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
+                          <button
+                            onClick={() => setWorkExperienceModal(true)}
+                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                          >
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
@@ -1110,7 +1308,10 @@ export default function ProfessionalProfile({
                                   <h2 className="text-xl font-bold text-slate-800">
                             Expert Area
                           </h2>
-                          <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
+                          <button
+                            onClick={() => setCurrentView("about")}
+                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                          >
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
@@ -1153,7 +1354,10 @@ export default function ProfessionalProfile({
                                 <h2 className="text-xl font-bold text-slate-800">
                           Portfolio
                         </h2>
-                        <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
+                        <button
+                          onClick={() => setCurrentView("portfolio")}
+                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                        >
                           View All <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                       </div>
@@ -1172,7 +1376,7 @@ export default function ProfessionalProfile({
                                     <video
                                       src={item.url}
                                       controls
-                                      className="h-full w-full object-cover absolute -bottom-2"
+                                      className="h-full w-full object-cover absolute  -bottom-2"
                                       poster={item.thumbnail || undefined}
                                     >
                                       Your browser does not support the video tag.
@@ -1190,9 +1394,9 @@ export default function ProfessionalProfile({
                                             srcSet={optimizedImage.srcSet}
                                             sizes={optimizedImage.sizes}
                                             alt={item.title}
-                                            className="h-full object-cover absolute -bottom-2"
+                                            className="h-full w-full object-cover absolute inset-0"
                                           />
-                                      );
+                                        );
                                     })()
                                   )}
                                 </div>
@@ -1222,7 +1426,10 @@ export default function ProfessionalProfile({
                                 <h2 className="text-2xl font-bold text-slate-800">
                           Services
                         </h2>
-                        <button className="text-sm text-gray-600 hover:text-gray-800 flex items-center">
+                        <button
+                          onClick={() => setCurrentView("services")}
+                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                        >
                           View All <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                       </div>
@@ -1256,7 +1463,18 @@ export default function ProfessionalProfile({
                               <h2 className="text-xl font-bold text-slate-800 mb-4">
                         Let's Talk
                       </h2>
-                      <div className="w-full h-12 bg-gray-100 rounded-2xl"></div>
+                      <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                        Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
+                      </p>
+                      <div className="mt-6">
+                        <Button
+                          onClick={() => setCurrentView("contact")}
+                          className={`w-full ${getButtonClass()} shadow-lg`}
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Send Message
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1378,18 +1596,71 @@ export default function ProfessionalProfile({
                   </>
                 )}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setInquiryModal(false)}
-                className={getBorderRadius()}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Work Experience Modal */}
+      <Dialog open={workExperienceModal} onOpenChange={setWorkExperienceModal}>
+        <DialogContent className="max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Work Experience</DialogTitle>
+            <DialogDescription>
+              Complete work history and professional experience
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {validWorkExperience.map((exp: any, index: number) => (
+              <div
+                key={index}
+                className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
+              >
+                <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10 shadow-sm">
+                  <Building2 className="w-5 h-5 text-sky-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-gray-900 font-semibold text-sm">
+                        {exp.company}
+                      </p>
+                      <p className="text-gray-700 text-xs">
+                        {exp.position}
+                      </p>
+                      <p className="text-gray-600 text-xs">
+                        {exp.location}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-gray-500 text-xs">
+                        {exp.duration}
+                      </span>
+                      <span className="text-gray-400 text-xs">
+                        Total:{" "}
+                        {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                  {exp.description && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">
+                        {exp.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {validWorkExperience.length === 0 && (
+              <p className="text-gray-500 italic text-center py-4">
+                No work experience information available.
+              </p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+

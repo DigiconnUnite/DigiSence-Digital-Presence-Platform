@@ -29,18 +29,21 @@ export default function RegisterPage() {
   // Check for existing inquiries on mount
   useEffect(() => {
     const checkExistingInquiry = async () => {
-      const email = localStorage.getItem('registration_email')
-      if (email) {
-        try {
-          const response = await fetch(`/api/registration-inquiries?email=${encodeURIComponent(email)}`)
-          if (response.ok) {
-            const data = await response.json()
-            if (data.inquiries && data.inquiries.length > 0) {
-              setExistingInquiry(data.inquiries[0])
+      // Check if we're in a browser environment
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const email = localStorage.getItem('registration_email')
+        if (email) {
+          try {
+            const response = await fetch(`/api/registration-inquiries?email=${encodeURIComponent(email)}`)
+            if (response.ok) {
+              const data = await response.json()
+              if (data.inquiries && data.inquiries.length > 0) {
+                setExistingInquiry(data.inquiries[0])
+              }
             }
+          } catch (error) {
+            console.error('Error checking existing inquiry:', error)
           }
-        } catch (error) {
-          console.error('Error checking existing inquiry:', error)
         }
       }
     }
@@ -76,7 +79,9 @@ export default function RegisterPage() {
 
       if (response.ok) {
         // Store email for future status checks
-        localStorage.setItem('registration_email', formData.email)
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('registration_email', formData.email)
+        }
         setSuccess(true)
       } else {
         const errorData = await response.json()
@@ -288,7 +293,7 @@ export default function RegisterPage() {
             </div>
             
             {/* Status Check */}
-            {localStorage.getItem('registration_email') && (
+            {typeof window !== 'undefined' && window.localStorage && localStorage.getItem('registration_email') && (
               <div className="text-center">
                 <Button
                   variant="outline"

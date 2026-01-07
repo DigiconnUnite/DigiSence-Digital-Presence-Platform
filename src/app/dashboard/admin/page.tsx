@@ -685,7 +685,7 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          console.log("Business deletion successful, refreshing data...");
+          console.log("Business deletion successful, updating state...");
 
           // Remove the deleted business from the local state immediately
           setBusinesses((prev) => prev.filter((biz) => biz.id !== business.id));
@@ -703,9 +703,6 @@ export default function SuperAdminDashboard() {
               ? prev.totalActiveProducts - business._count.products
               : prev.totalActiveProducts,
           }));
-
-          // Then fetch fresh data to ensure consistency
-          await fetchData();
 
           toast({
             title: "Success",
@@ -731,7 +728,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle toggle business status
@@ -753,8 +750,32 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          console.log("Toggle successful");
-          await fetchData();
+          console.log("Toggle successful, updating state...");
+          
+          // Update the business in the local state immediately
+          setBusinesses((prev) =>
+            prev.map((biz) =>
+              biz.id === business.id
+                ? { ...biz, isActive: !biz.isActive }
+                : biz
+            )
+          );
+
+          // Update stats immediately
+          setStats((prev) => ({
+            ...prev,
+            activeBusinesses: !business.isActive
+              ? prev.activeBusinesses + 1
+              : prev.activeBusinesses - 1,
+            totalActiveProducts: !business.isActive
+              ? prev.totalActiveProducts + business._count.products
+              : prev.totalActiveProducts - business._count.products,
+          }));
+
+          toast({
+            title: "Success",
+            description: `Business ${!business.isActive ? 'activated' : 'suspended'} successfully`,
+          });
         } else {
           const error = await response.json();
           console.error("Toggle failed:", error);
@@ -775,7 +796,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle edit professional
@@ -803,7 +824,7 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          console.log("Professional deletion successful, refreshing data...");
+          console.log("Professional deletion successful, updating state...");
 
           // Remove the deleted professional from the local state immediately
           setProfessionals((prev) => prev.filter((prof) => prof.id !== id));
@@ -814,9 +835,6 @@ export default function SuperAdminDashboard() {
             totalProfessionals: prev.totalProfessionals - 1,
             activeProfessionals: prev.activeProfessionals - 1,
           }));
-
-          // Then fetch fresh data to ensure consistency
-          await fetchData();
 
           toast({
             title: "Success",
@@ -842,7 +860,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle toggle professional status
@@ -864,8 +882,29 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          console.log("Toggle successful");
-          await fetchData();
+          console.log("Toggle successful, updating state...");
+          
+          // Update the professional in the local state immediately
+          setProfessionals((prev) =>
+            prev.map((prof) =>
+              prof.id === professional.id
+                ? { ...prof, isActive: !prof.isActive }
+                : prof
+            )
+          );
+
+          // Update stats immediately
+          setStats((prev) => ({
+            ...prev,
+            activeProfessionals: !professional.isActive
+              ? prev.activeProfessionals + 1
+              : prev.activeProfessionals - 1,
+          }));
+
+          toast({
+            title: "Success",
+            description: `Professional ${!professional.isActive ? 'activated' : 'deactivated'} successfully`,
+          });
         } else {
           const error = await response.json();
           console.error("Toggle failed:", error);
@@ -887,7 +926,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   // Handle add professional with improved error handling
@@ -1339,7 +1378,6 @@ export default function SuperAdminDashboard() {
             title: "Success",
             description: `${inquiry.type} account created successfully! Login credentials sent to ${inquiry.email}`,
           });
-          fetchData(); // Refresh data
         } else {
           const error = await response.json();
           toast({
@@ -1359,7 +1397,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [generatePassword, toast, fetchData]
+    [generatePassword, toast]
   );
 
   // Handle create account from inquiry with sidebar
@@ -1405,16 +1443,10 @@ export default function SuperAdminDashboard() {
             )
           );
 
-          // Force immediate re-render to show the rejected status
-          setForceRerender((prev) => prev + 1);
-
           toast({
             title: "Success",
             description: "Registration request rejected.",
           });
-
-          // Refresh data to ensure consistency
-          fetchData();
         } else {
           const error = await response.json();
           toast({
@@ -1434,7 +1466,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [fetchData, toast]
+    [toast]
   );
 
   const menuItems = [
@@ -1502,6 +1534,7 @@ export default function SuperAdminDashboard() {
       mobileTitle: "Settings",
     },
   ];
+
 
   const renderSkeletonContent = () => {
     switch (currentView) {

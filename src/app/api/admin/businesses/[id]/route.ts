@@ -135,31 +135,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Extract ID from params (proper Next.js way)
     const { id: businessId } = await params
 
-    console.log('DELETE request details:')
-    console.log('Full URL:', request.url)
-    console.log('Business ID from params:', businessId)
-
     if (!businessId) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
-    console.log('Business DELETE params:', params)
-    console.log('Business DELETE id:', businessId)
-
     // Check if business exists
-    console.log('Looking for business with ID:', businessId)
     const existingBusiness = await db.business.findUnique({
       where: { id: businessId },
     })
-
-    console.log('Found business:', existingBusiness ? 'YES' : 'NO')
-    if (existingBusiness) {
-      console.log('Business details:', {
-        id: existingBusiness.id,
-        name: existingBusiness.name,
-        isActive: existingBusiness.isActive
-      })
-    }
 
     if (!existingBusiness) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
@@ -185,11 +168,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     })
   } catch (error) {
     console.error('Business deletion error:', error)
-      return NextResponse.json(
-        { error: 'Failed to delete business' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json(
+      { error: 'Failed to delete business' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function PUT(
@@ -231,10 +214,10 @@ export async function PUT(
       business,
     })
   } catch (error) {
-      console.error('Business toggle error:', error)
-      return NextResponse.json(
-        { error: 'Failed to toggle business status' },
-        { status: 500 }
-      )
-    }
+    console.error('Business toggle error:', error)
+    return NextResponse.json(
+      { error: 'Failed to toggle business status' },
+      { status: 500 }
+    )
+  }
 }

@@ -3,8 +3,8 @@ import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 
-const updateInquirySchema = z.object({
-  status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'COMPLETED']).optional(),
+const updateSchema = z.object({
+  status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'COMPLETED']),
   assignedTo: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -24,44 +24,69 @@ async function getSuperAdmin(request: NextRequest) {
   return payload
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const admin = await getSuperAdmin(request)
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { status, assignedTo, notes } = updateInquirySchema.parse(body)
+    const { id: inquiryId } = await params
 
-    const inquiryId = params.id
+    if (!inquiryId) {
+      return NextResponse.json({ error: 'Missing inquiry ID' }, { status: 400 })
+    }
 
-    // Check if inquiry exists
-    const existingInquiry = await db.businessListingInquiry.findUnique({
+    const inquiry = await db.businessListingInquiry.findUnique({
       where: { id: inquiryId },
+      include: {
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     })
 
-    if (!existingInquiry) {
+    if (!inquiry) {
       return NextResponse.json({ error: 'Inquiry not found' }, { status: 404 })
     }
 
-    // If assigning to a user, verify the user exists
-    if (assignedTo) {
-      const user = await db.user.findUnique({
-        where: { id: assignedTo },
-      })
-      if (!user) {
-        return NextResponse.json({ error: 'Assigned user not found' }, { status: 404 })
-      }
+    return NextResponse.json({ inquiry })
+  } catch (error) {
+    console.error('Business listing inquiry fetch error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Update inquiry
-    const updatedInquiry = await db.businessListingInquiry.update({
+    const { id: inquiryId } = await params
+    const body = await request.json()
+    const { status, assignedTo, notes } = updateSchema.parse(body)
+
+    const inquiry = await db.businessListingInquiry.update({
       where: { id: inquiryId },
       data: {
-        ...(status && { status }),
-        ...(assignedTo !== undefined && { assignedTo }),
-        ...(notes !== undefined && { notes }),
+        status,
+        assignedTo: assignedTo || null,
+        notes: notes || null,
       },
       include: {
         assignedUser: {
@@ -74,24 +99,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       },
     })
 
-    // Send email notification to user if status changed
-    if (status && status !== existingInquiry.status) {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications?businessListingInquiryId=${inquiryId}&statusUpdate=true`, {
-          method: 'POST',
-        })
-
-        if (!response.ok) {
-          console.error('Failed to send status update email notification')
-        }
-      } catch (error) {
-        console.error('Status update email notification error:', error)
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      inquiry: updatedInquiry,
+      inquiry,
     })
   } catch (error) {
     console.error('Business listing inquiry update error:', error)
@@ -108,35 +118,33 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const admin = await getSuperAdmin(request)
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const inquiryId = params.id
+    const { id: inquiryId } = await params
 
-    // Check if inquiry exists
-    const existingInquiry = await db.businessListingInquiry.findUnique({
-      where: { id: inquiryId },
-    })
-
-    if (!existingInquiry) {
-      return NextResponse.json({ error: 'Inquiry not found' }, { status: 404 })
+    if (!inquiryId) {
+      return NextResponse.json({ error: 'Missing inquiry ID' }, { status: 400 })
     }
 
-    // Delete inquiry
+    // Delete the inquiry
     await db.businessListingInquiry.delete({
       where: { id: inquiryId },
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Inquiry deleted successfully',
+      message: 'Business listing inquiry deleted successfully',
     })
   } catch (error) {
-    console.error('Business listing inquiry delete error:', error)
+    console.error('Business listing inquiry deletion error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -110,25 +110,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    
-    // Alternative approach: extract ID from URL pathname
-    const url = new URL(request.url)
-    const pathname = url.pathname
-    const pathSegments = pathname.split('/')
-    const extractedId = pathSegments[pathSegments.length - 1]
-    
-    // Use the extracted ID if params.id is undefined
-    const professionalId = id || extractedId
 
-    if (!professionalId) {
+    if (!id) {
       return NextResponse.json({ error: 'Professional ID is required' }, { status: 400 })
     }
 
-    console.log('Attempting to delete professional with ID:', professionalId)
-
     // Check if professional exists first
     const existingProfessional = await db.professional.findUnique({
-      where: { id: professionalId },
+      where: { id },
     })
 
     if (!existingProfessional) {
@@ -137,24 +126,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Delete the professional
     await db.professional.delete({
-      where: { id: professionalId },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Professional deleted successfully' })
   } catch (error) {
     console.error('Professional deletion error:', error)
-    
-    // Type guard to safely access error properties
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    } else {
-      console.error('Unknown error:', error)
-    }
-    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

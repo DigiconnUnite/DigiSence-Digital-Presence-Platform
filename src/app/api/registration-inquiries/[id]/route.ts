@@ -24,17 +24,10 @@ async function getSuperAdmin(request: NextRequest) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Alternative approach: extract ID from URL pathname
-    const url = new URL(request.url)
-    const pathname = url.pathname
-    const pathSegments = pathname.split('/')
-    const extractedId = pathSegments[pathSegments.length - 1]
-    
-    // Use the extracted ID if params.id is undefined
-    const inquiryId = params.id || extractedId
+    const { id: inquiryId } = await params
 
     if (!inquiryId) {
       return NextResponse.json({ error: 'Missing registration inquiry ID' }, { status: 400 })

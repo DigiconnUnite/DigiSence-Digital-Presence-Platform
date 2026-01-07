@@ -212,7 +212,7 @@ export default function SuperAdminDashboard() {
   const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [showRightPanel, setShowRightPanel] = useState(false)
-  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-professional' | 'edit-professional' | 'add-category' | 'edit-category' | null>(null)
+  const [rightPanelContent, setRightPanelContent] = useState<'add-business' | 'edit-business' | 'add-professional' | 'edit-professional' | 'add-category' | 'edit-category' | 'create-account-from-inquiry' | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -225,6 +225,7 @@ export default function SuperAdminDashboard() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [selectedBusinessListingInquiry, setSelectedBusinessListingInquiry] = useState<any>(null)
   const [showBusinessListingInquiryDialog, setShowBusinessListingInquiryDialog] = useState(false)
+  const [forceRerender, setForceRerender] = useState(0)
 
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<any[]>([])
@@ -989,7 +990,7 @@ export default function SuperAdminDashboard() {
       let accountData
       if (inquiry.type === 'BUSINESS') {
         accountData = {
-          name: inquiry.businessName,
+          name: inquiry.businessName || inquiry.name,
           email: inquiry.email,
           password: generatedPassword,
           adminName: inquiry.name,
@@ -1084,13 +1085,23 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  const handleRejectInquiry = async (inquiryId: string) => {
+  const handleCreateAccountFromInquiryWithSidebar = async (inquiry: any) => {
+    // Set the inquiry data for the sidebar
+    setEditingBusiness(inquiry.type === 'BUSINESS' ? inquiry : null)
+    setEditingProfessional(inquiry.type === 'PROFESSIONAL' ? inquiry : null)
+    
+    // Open the account creation sidebar
+    setRightPanelContent('create-account-from-inquiry')
+    setShowRightPanel(true)
+  }
+
+  const handleRejectInquiry = async (inquiry: any) => {
     if (!confirm('Reject this registration request?')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/registration-inquiries/${inquiryId}`, {
+      const response = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1099,16 +1110,23 @@ export default function SuperAdminDashboard() {
       })
 
       if (response.ok) {
-        // Update the inquiry in the list
+        // Update the inquiry in the list immediately
         setRegistrationInquiries(prev =>
-          prev.map(inquiry =>
-            inquiry.id === inquiryId ? { ...inquiry, status: 'REJECTED' } : inquiry
+          prev.map(regInquiry =>
+            regInquiry.id === inquiry.id ? { ...regInquiry, status: 'REJECTED' } : regInquiry
           )
         )
+        
+        // Force immediate re-render to show the rejected status
+        setForceRerender(prev => prev + 1)
+        
         toast({
           title: "Success",
           description: "Registration request rejected.",
         })
+        
+        // Refresh data to ensure consistency
+        fetchData()
       } else {
         const error = await response.json()
         toast({
@@ -1336,6 +1354,9 @@ export default function SuperAdminDashboard() {
     if (isLoading) {
       return renderSkeletonContent()
     }
+    
+    // Use forceRerender to ensure UI updates immediately
+    const _ = forceRerender
 
     switch (currentView) {
       case 'dashboard':
@@ -1670,7 +1691,7 @@ export default function SuperAdminDashboard() {
               <p className="text-xl text-gray-600">Review and approve business and professional registration requests</p>
             </div>
             <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
+              <div className="">
                 <div className="overflow-x-auto rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader>
@@ -1705,7 +1726,15 @@ export default function SuperAdminDashboard() {
                           </TableCell>
                           <TableCell className="text-gray-900">{inquiry.location || 'Not specified'}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="rounded-full">{inquiry.status}</Badge>
+                            <Badge
+                              variant={inquiry.status === 'REJECTED' ? 'destructive' : 'outline'}
+                              className="rounded-full"
+                            >
+                              {inquiry.status}
+                              {inquiry.status === 'REJECTED' && (
+                                <AlertTriangle className="h-3 w-3 ml-1" />
+                              )}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-gray-900">{new Date(inquiry.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>
@@ -1715,7 +1744,7 @@ export default function SuperAdminDashboard() {
                                   <Button
                                     size="sm"
                                     className="rounded-xl bg-green-600 hover:bg-green-700"
-                                    onClick={() => handleCreateAccountFromInquiry(inquiry)}
+                                    onClick={() => handleCreateAccountFromInquiryWithSidebar(inquiry)}
                                   >
                                     <UserCheck className="h-4 w-4 mr-1" />
                                     Create Account
@@ -1724,14 +1753,24 @@ export default function SuperAdminDashboard() {
                                     size="sm"
                                     variant="outline"
                                     className="rounded-xl"
-                                    onClick={() => handleRejectInquiry(inquiry.id)}
+                                    onClick={() => handleRejectInquiry(inquiry)}
                                   >
+                                    <AlertTriangle className="h-4 w-4 mr-1" />
                                     Reject
                                   </Button>
                                 </>
                               )}
                               {inquiry.status === 'COMPLETED' && (
-                                <Badge variant="default" className="rounded-full">Account Created</Badge>
+                                <Badge variant="default" className="rounded-full">
+                                  <UserCheck className="h-3 w-3 mr-1" />
+                                  Account Created
+                                </Badge>
+                              )}
+                              {inquiry.status === 'REJECTED' && (
+                                <Badge variant="destructive" className="rounded-full">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Rejected
+                                </Badge>
                               )}
                             </div>
                           </TableCell>
@@ -2244,6 +2283,261 @@ export default function SuperAdminDashboard() {
                   setRightPanelContent(null);
                 }} className="rounded-2xl">Cancel</Button>
                 <Button type="submit" className="rounded-2xl">Save Changes</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
+    if (rightPanelContent === 'create-account-from-inquiry' && (editingBusiness || editingProfessional)) {
+      const inquiry = editingBusiness || editingProfessional
+      const isBusiness = !!editingBusiness
+      
+      if (!inquiry) {
+        return null
+      }
+      
+      return (
+        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto hide-scrollbar">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold">CREATE ACCOUNT FROM INQUIRY</h3>
+              <p className="text-sm text-gray-600">Complete the account setup for {inquiry.name}</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-2xl">
+              <h4 className="font-medium text-gray-900 mb-2">Inquiry Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div><span className="font-medium">Type:</span> {isBusiness ? 'Business' : 'Professional'}</div>
+                <div><span className="font-medium">Name:</span> {inquiry.name}</div>
+                <div><span className="font-medium">Email:</span> {inquiry.email}</div>
+                {isBusiness && <div><span className="font-medium">Business Name:</span> {(inquiry as any).businessName || 'N/A'}</div>}
+                <div><span className="font-medium">Location:</span> {(inquiry as any).location || 'Not specified'}</div>
+                {inquiry.phone && <div><span className="font-medium">Phone:</span> {inquiry.phone}</div>}
+              </div>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              
+              const manualPassword = formData.get('password') as string
+              const password = manualPassword || generatedPassword || generatePassword()
+              
+              const accountData = {
+                name: isBusiness
+                  ? (formData.get('businessName') as string || (inquiry as any).businessName || inquiry.name)
+                  : inquiry.name,
+                email: inquiry.email,
+                password: password,
+                adminName: formData.get('adminName') as string || inquiry.name,
+                phone: inquiry.phone,
+                ...(isBusiness && {
+                  address: isBusiness ? (inquiry as any).location : undefined,
+                  description: isBusiness ? (formData.get('description') as string) : undefined,
+                  categoryId: isBusiness ? (formData.get('categoryId') as string) : undefined,
+                })
+              }
+
+              try {
+                const response = await fetch(isBusiness ? '/api/admin/businesses' : '/api/admin/professionals', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(accountData),
+                })
+
+                if (response.ok) {
+                  // Send email notification with credentials
+                  try {
+                    const emailResponse = await fetch('/api/notifications', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        type: 'accountCreation',
+                        name: inquiry.name,
+                        email: inquiry.email,
+                        password: password,
+                        accountType: isBusiness ? 'business' : 'professional',
+                        loginUrl: `${window.location.origin}/login`,
+                      }),
+                    })
+
+                    if (!emailResponse.ok) {
+                      console.error('Failed to send account creation email')
+                    }
+                  } catch (emailError) {
+                    console.error('Email notification error:', emailError)
+                  }
+
+                  // Update inquiry status to COMPLETED
+                  await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: 'COMPLETED' }),
+                  })
+
+                  // Update the inquiry in the list
+                  setRegistrationInquiries(prev =>
+                    prev.map(regInquiry =>
+                      regInquiry.id === inquiry.id ? { ...regInquiry, status: 'COMPLETED' } : regInquiry
+                    )
+                  )
+
+                  toast({
+                    title: "Success",
+                    description: `${isBusiness ? 'Business' : 'Professional'} account created successfully! Login credentials sent to ${inquiry.email}`,
+                  })
+                  
+                  // Close sidebar and refresh data
+                  setShowRightPanel(false)
+                  setRightPanelContent(null)
+                  setEditingBusiness(null)
+                  setEditingProfessional(null)
+                  setGeneratedPassword('')
+                  setGeneratedUsername('')
+                  fetchData()
+                } else {
+                  const error = await response.json()
+                  toast({
+                    title: "Error",
+                    description: `Failed to create account: ${error.error}`,
+                    variant: "destructive",
+                  })
+                }
+              } catch (error) {
+                console.error('Failed to create account:', error)
+                toast({
+                  title: "Error",
+                  description: "Failed to create account. Please try again.",
+                  variant: "destructive",
+                })
+              }
+            }} className="space-y-6">
+              {/* Account Configuration */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Account Configuration
+                </h4>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label>Admin Name</Label>
+                    <Input name="adminName" defaultValue={inquiry.name} required className="rounded-2xl" />
+                  </div>
+                  
+                  {isBusiness && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Business Name</Label>
+                        <Input name="businessName" defaultValue={isBusiness ? ((inquiry as any).businessName || inquiry.name) : inquiry.name} required className="rounded-2xl" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Textarea name="description" placeholder="Brief description of the business..." className="rounded-2xl" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select name="categoryId">
+                          <SelectTrigger className="rounded-2xl">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Credentials */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center">
+                  <Key className="h-4 w-4 mr-2" />
+                  Login Credentials
+                </h4>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label>Email (Login)</Label>
+                    <Input name="email" value={inquiry.email || ''} disabled className="rounded-2xl bg-gray-100" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label>Password</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          const generated = generatePassword()
+                          setGeneratedPassword(generated)
+                        }}
+                        className="rounded-xl"
+                      >
+                        Generate Password
+                      </Button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={generatedPassword}
+                        onChange={(e) => setGeneratedPassword(e.target.value)}
+                        className="pr-10 rounded-2xl"
+                        placeholder="Enter or generate a password..."
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">Password will be sent to the user via email</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowRightPanel(false);
+                    setRightPanelContent(null);
+                    setEditingBusiness(null);
+                    setEditingProfessional(null);
+                    setGeneratedPassword('');
+                    setGeneratedUsername('');
+                  }}
+                  className="rounded-2xl"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="rounded-2xl bg-green-600 hover:bg-green-700">
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Create Account
+                </Button>
               </div>
             </form>
           </div>

@@ -115,3 +115,74 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: inquiryId } = await params
+    const body = await request.json()
+    const { status } = body
+
+    // Validate status
+    if (!['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
+      return NextResponse.json(
+        { error: 'Invalid status' },
+        { status: 400 }
+      )
+    }
+
+    // Update inquiry status
+    const inquiry = await db.registrationInquiry.update({
+      where: { id: inquiryId },
+      data: { status },
+    })
+
+    return NextResponse.json({
+      success: true,
+      inquiry,
+    })
+  } catch (error) {
+    console.error('Registration inquiry update error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: inquiryId } = await params
+
+    // Delete inquiry
+    await db.registrationInquiry.delete({
+      where: { id: inquiryId },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Registration inquiry deleted successfully',
+    })
+  } catch (error) {
+    console.error('Registration inquiry deletion error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

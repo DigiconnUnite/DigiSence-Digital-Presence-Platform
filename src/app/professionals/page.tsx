@@ -732,7 +732,7 @@ export default function ProfessionalsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1 rounded-full text-xs h-8 transition-all duration-200 hover:bg-gray-100"
+                                className="flex-1 rounded-full text-xs h-8 transition-all duration-200 hover:bg-blue-500"
                                 asChild
                               >
                                 <a href={`mailto:${professional.email}`}>

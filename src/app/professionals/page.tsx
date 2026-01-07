@@ -62,6 +62,7 @@ interface Professional {
   phone: string | null
   email: string | null
   website: string | null
+  aboutme: string | null
 }
 
 interface Category {
@@ -184,16 +185,20 @@ export default function ProfessionalsPage() {
         </div>
 
         {/* Sidebar - Hidden by default on all screens */}
-        <div className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
+        <div
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <Link href="/" className="flex items-center space-x-2">
                 <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
-                <span className="font-bold text-xl text-slate-800">DigiSence</span>
+                <span className="font-bold text-xl text-slate-800">
+                  DigiSence
+                </span>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -270,7 +275,9 @@ export default function ProfessionalsPage() {
               <div className="pt-6 mt-6 border-t border-gray-200">
                 <div className="flex items-center px-3 mb-3">
                   <Filter className="mr-2 h-4 w-4 text-gray-500" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Categories</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Categories
+                  </span>
                 </div>
                 <div className="space-y-1">
                   {professions.map((profession) => {
@@ -335,17 +342,16 @@ export default function ProfessionalsPage() {
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
             <div className="flex justify-between items-center h-14 md:h-16">
               <div className="flex items-center ">
-
-                <Link
-                  href="/"
-                  className="flex items-center space-x-2"
-                >
-                  <img src="/logo.svg" alt="DigiSence" className="h-6 w-auto sm:h-7" />
+                <Link href="/" className="flex items-center space-x-2">
+                  <img
+                    src="/logo.svg"
+                    alt="DigiSence"
+                    className="h-6 w-auto sm:h-7"
+                  />
                   <span className="font-bold text-lg sm:text-xl text-slate-800">
                     DigiSence
                   </span>
                 </Link>
-
               </div>
               <div className="hidden md:flex space-x-4 lg:space-x-8 flex-1 justify-center">
                 <Link
@@ -440,14 +446,14 @@ export default function ProfessionalsPage() {
             <div className="max-w-7xl mx-auto">
               <div className="relative">
                 <button
-                  onClick={() => scrollCategories('left')}
+                  onClick={() => scrollCategories("left")}
                   className="absolute left-0 top-0 bottom-0 z-10 bg-gray-50 hover:bg-white flex items-center justify-center pr-1 border-r  transition-all duration-200 "
                   aria-label="Scroll left"
                 >
                   <ChevronLeft className="h-4 w-4 text-gray-600" />
                 </button>
                 <button
-                  onClick={() => scrollCategories('right')}
+                  onClick={() => scrollCategories("right")}
                   className="absolute right-0 top-0 bottom-0 z-10 bg-gray-50 hover:bg-white flex items-center justify-center pl-1 border-l transition-all duration-200 "
                   aria-label="Scroll right"
                 >
@@ -478,8 +484,12 @@ export default function ProfessionalsPage() {
                         )}
                       >
                         <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="hidden sm:inline">{profession.name}</span>
-                        <span className="sm:hidden">{profession.name.split(' ')[0]}</span>
+                        <span className="hidden sm:inline">
+                          {profession.name}
+                        </span>
+                        <span className="sm:hidden">
+                          {profession.name.split(" ")[0]}
+                        </span>
                       </button>
                     );
                   })}
@@ -568,13 +578,13 @@ export default function ProfessionalsPage() {
                 </div>
               ) : filteredProfessionals.length === 0 ? (
                 <div className="text-center py-16">
-                    <User className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-primary mb-2">
+                  <User className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-primary mb-2">
                     {searchTerm
                       ? "No professionals found"
                       : "No professionals available"}
                   </h3>
-                    <p className="text-muted-foreground text-sm sm:text-base">
+                  <p className="text-muted-foreground text-sm sm:text-base">
                     {searchTerm
                       ? "Try adjusting your search terms"
                       : "Check back later for new professionals"}
@@ -582,21 +592,24 @@ export default function ProfessionalsPage() {
                 </div>
               ) : (
                 <>
-                      <div className="flex justify-between items-center mb-6 sm:mb-8">
-                        <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+                  <div className="flex justify-between items-center mb-6 sm:mb-8">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
                       {searchTerm
                         ? `Search Results (${filteredProfessionals.length})`
                         : `All Professionals (${filteredProfessionals.length})`}
                     </h2>
                   </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6">
                     {filteredProfessionals.map((professional) => (
                       <Card
                         key={professional.id}
                         className="overflow-hidden pt-0 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg transition-all duration-300 relative"
                       >
-                        <div className="relative h-24 md:h-32 m-1.5 mb-0 pb-0 rounded-lg overflow-hidden" style={{ minHeight: '96px' }}>
+                        <div
+                          className="relative h-24 md:h-32 m-1.5 mb-0 pb-0 rounded-lg overflow-hidden"
+                          style={{ minHeight: "96px" }}
+                        >
                           {/* Banner image background */}
                           {professional.banner ? (
                             <img
@@ -605,16 +618,20 @@ export default function ProfessionalsPage() {
                               className="w-full h-full object-cover"
                               style={{ zIndex: 0 }}
                               onError={(e) => {
-                                console.error('Banner image failed to load:', professional.banner);
+                                console.error(
+                                  "Banner image failed to load:",
+                                  professional.banner
+                                );
                                 handleImageError(e);
                               }}
                             />
                           ) : (
-                              <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center" style={{ zIndex: 0 }}>
-                                <div className="text-center text-gray-400">
-                                  <ImageIcon
-                                    className="h-10 mx-auto w-10 text-gray-400"
-                                  />
+                            <div
+                              className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center"
+                              style={{ zIndex: 0 }}
+                            >
+                              <div className="text-center text-gray-400">
+                                <ImageIcon className="h-10 mx-auto w-10 text-gray-400" />
                                 <div className="text-sm">No banner</div>
                               </div>
                             </div>
@@ -627,13 +644,19 @@ export default function ProfessionalsPage() {
                             className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-3 border-white shadow-md"
                             loading="lazy"
                             onError={(e) => {
-                              console.error('Profile picture failed to load:', professional.profilePicture);
+                              console.error(
+                                "Profile picture failed to load:",
+                                professional.profilePicture
+                              );
                               handleImageError(e);
                             }}
                             style={{ zIndex: 20 }}
                           />
                         ) : (
-                          <div className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md" style={{ zIndex: 20 }}>
+                          <div
+                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md"
+                            style={{ zIndex: 20 }}
+                          >
                             <User className="h-9 w-9 md:h-11 md:w-11 text-gray-600" />
                           </div>
                         )}
@@ -659,17 +682,11 @@ export default function ProfessionalsPage() {
                         </CardHeader>
 
                         <CardContent className="space-y-1 md:space-y-2 px-2 md:px-3">
-                          {/* Contact Info - Now more compact */}
-                          <div className="flex flex-wrap gap-1 mb-2 sm:mb-4">
-                            {professional.location && (
-                              <div className="flex items-center text-xs text-muted-foreground bg-gray-50 py-1 rounded-full">
-                                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-muted-foreground shrink-0" />
-                                <span className="truncate max-w-[150px] sm:max-w-none">
-                                  {professional.location}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          {professional.aboutme && (
+                            <CardDescription className="text-muted-foreground line-clamp-2 text-xs sm:text-sm mb-2 sm:mb-4">
+                              {professional.aboutme}
+                            </CardDescription>
+                          )}
 
                           {/* Spacer to push the bottom section to the bottom */}
                           <div className="flex-1"></div>

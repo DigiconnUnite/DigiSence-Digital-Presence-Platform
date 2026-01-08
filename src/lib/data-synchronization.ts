@@ -1,10 +1,10 @@
-import { db } from './db';
+import { db } from "./db";
 
 export interface DataIntegrityCheck {
-  type: 'orphaned_user' | 'missing_business' | 'missing_professional';
+  type: "orphaned_user" | "missing_business" | "missing_professional";
   description: string;
   affectedRecords: string[];
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
 }
 
 export interface DataSyncResult {
@@ -19,7 +19,6 @@ export interface DataSyncResult {
  * between users, businesses, and professionals
  */
 export class DataSynchronizationService {
-  
   /**
    * Check for data integrity issues
    */
@@ -31,10 +30,10 @@ export class DataSynchronizationService {
       const orphanedUsers = await this.findOrphanedUsers();
       if (orphanedUsers.length > 0) {
         checks.push({
-          type: 'orphaned_user',
+          type: "orphaned_user",
           description: `Found ${orphanedUsers.length} users without associated business or professional records`,
           affectedRecords: orphanedUsers,
-          severity: 'high',
+          severity: "high",
         });
       }
 
@@ -42,31 +41,33 @@ export class DataSynchronizationService {
       const missingBusinessAdmins = await this.findMissingBusinessAdmins();
       if (missingBusinessAdmins.length > 0) {
         checks.push({
-          type: 'missing_business',
+          type: "missing_business",
           description: `Found ${missingBusinessAdmins.length} businesses with missing admin users`,
           affectedRecords: missingBusinessAdmins,
-          severity: 'high',
+          severity: "high",
         });
       }
 
       // Check for professionals with missing admin users
-      const missingProfessionalAdmins = await this.findMissingProfessionalAdmins();
+      const missingProfessionalAdmins =
+        await this.findMissingProfessionalAdmins();
       if (missingProfessionalAdmins.length > 0) {
         checks.push({
-          type: 'missing_professional',
+          type: "missing_professional",
           description: `Found ${missingProfessionalAdmins.length} professionals with missing admin users`,
           affectedRecords: missingProfessionalAdmins,
-          severity: 'high',
+          severity: "high",
         });
       }
-
     } catch (error) {
-      console.error('Data integrity check failed:', error);
+      console.error("Data integrity check failed:", error);
       checks.push({
-        type: 'orphaned_user',
-        description: `Data integrity check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: "orphaned_user",
+        description: `Data integrity check failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
         affectedRecords: [],
-        severity: 'medium',
+        severity: "medium",
       });
     }
 
@@ -97,14 +98,16 @@ export class DataSynchronizationService {
       result.fixedRecords += missingBusinessAdminsFixed;
 
       // Fix missing professional admins
-      const missingProfessionalAdminsFixed = await this.fixMissingProfessionalAdmins();
+      const missingProfessionalAdminsFixed =
+        await this.fixMissingProfessionalAdmins();
       result.fixedRecords += missingProfessionalAdminsFixed;
 
       result.success = true;
-
     } catch (error) {
-      result.errors.push(error instanceof Error ? error.message : 'Unknown error');
-      console.error('Data integrity fix failed:', error);
+      result.errors.push(
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      console.error("Data integrity fix failed:", error);
     }
 
     return result;
@@ -129,7 +132,7 @@ export class DataSynchronizationService {
           },
           {
             role: {
-              in: ['BUSINESS_ADMIN', 'PROFESSIONAL_ADMIN'],
+              in: ["BUSINESS_ADMIN", "PROFESSIONAL_ADMIN"],
             },
           },
         ],
@@ -142,7 +145,7 @@ export class DataSynchronizationService {
       },
     });
 
-    return orphanedUsers.map(user => `${user.id} (${user.email})`);
+    return orphanedUsers.map((user) => `${user.id} (${user.email})`);
   }
 
   /**
@@ -151,9 +154,7 @@ export class DataSynchronizationService {
   private async findMissingBusinessAdmins(): Promise<string[]> {
     const missingAdminBusinesses = await db.business.findMany({
       where: {
-        admin: {
-          is: null,
-        },
+        admin: undefined,
       },
       select: {
         id: true,
@@ -162,8 +163,9 @@ export class DataSynchronizationService {
       },
     });
 
-    return missingAdminBusinesses.map(business => 
-      `${business.id} (${business.name}) - Admin ID: ${business.adminId}`
+    return missingAdminBusinesses.map(
+      (business) =>
+        `${business.id} (${business.name}) - Admin ID: ${business.adminId}`
     );
   }
 
@@ -173,9 +175,7 @@ export class DataSynchronizationService {
   private async findMissingProfessionalAdmins(): Promise<string[]> {
     const missingAdminProfessionals = await db.professional.findMany({
       where: {
-        admin: {
-          is: null,
-        },
+        admin: undefined,
       },
       select: {
         id: true,
@@ -184,8 +184,9 @@ export class DataSynchronizationService {
       },
     });
 
-    return missingAdminProfessionals.map(professional => 
-      `${professional.id} (${professional.name}) - Admin ID: ${professional.adminId}`
+    return missingAdminProfessionals.map(
+      (professional) =>
+        `${professional.id} (${professional.name}) - Admin ID: ${professional.adminId}`
     );
   }
 
@@ -197,14 +198,18 @@ export class DataSynchronizationService {
       where: {
         AND: [
           {
-            business: null,
+            business: {
+              is: null,
+            },
           },
           {
-            professional: null,
+            professional: {
+              is: null,
+            },
           },
           {
             role: {
-              in: ['BUSINESS_ADMIN', 'PROFESSIONAL_ADMIN'],
+              in: ["BUSINESS_ADMIN", "PROFESSIONAL_ADMIN"],
             },
           },
         ],
@@ -222,7 +227,7 @@ export class DataSynchronizationService {
     await db.user.deleteMany({
       where: {
         id: {
-          in: orphanedUsers.map(user => user.id),
+          in: orphanedUsers.map((user) => user.id),
         },
       },
     });
@@ -236,9 +241,7 @@ export class DataSynchronizationService {
   private async fixMissingBusinessAdmins(): Promise<number> {
     const missingAdminBusinesses = await db.business.findMany({
       where: {
-        admin: {
-          is: null,
-        },
+        admin: undefined,
       },
       select: {
         id: true,
@@ -256,7 +259,7 @@ export class DataSynchronizationService {
       try {
         // Try to find the user by adminId
         const user = await db.user.findUnique({
-          where: { id: business.adminId },
+          where: { id: business.adminId || "" }, // Added fallback for empty string safety if needed, though usually ID is string
         });
 
         if (!user) {
@@ -279,10 +282,8 @@ export class DataSynchronizationService {
    */
   private async fixMissingProfessionalAdmins(): Promise<number> {
     const missingAdminProfessionals = await db.professional.findMany({
-      where: {
-        admin: {
-          is: null,
-        },
+       where: {
+        admin: undefined,
       },
       select: {
         id: true,
@@ -300,7 +301,7 @@ export class DataSynchronizationService {
       try {
         // Try to find the user by adminId
         const user = await db.user.findUnique({
-          where: { id: professional.adminId },
+          where: { id: professional.adminId || "" },
         });
 
         if (!user) {
@@ -329,13 +330,22 @@ export class DataSynchronizationService {
     missingBusinessAdmins: number;
     missingProfessionalAdmins: number;
   }> {
-    const [users, businesses, professionals, orphanedUsers, missingBusinessAdmins, missingProfessionalAdmins] = await Promise.all([
+    const [
+      users,
+      businesses,
+      professionals,
+      orphanedUsers,
+      missingBusinessAdmins,
+      missingProfessionalAdmins,
+    ] = await Promise.all([
       db.user.count(),
       db.business.count(),
       db.professional.count(),
-      this.findOrphanedUsers().then(users => users.length),
-      this.findMissingBusinessAdmins().then(businesses => businesses.length),
-      this.findMissingProfessionalAdmins().then(professionals => professionals.length),
+      this.findOrphanedUsers().then((users) => users.length),
+      this.findMissingBusinessAdmins().then((businesses) => businesses.length),
+      this.findMissingProfessionalAdmins().then(
+        (professionals) => professionals.length
+      ),
     ]);
 
     return {
@@ -353,21 +363,23 @@ export class DataSynchronizationService {
    */
   async runPeriodicSync(): Promise<void> {
     try {
-      console.log('Starting periodic data synchronization...');
-      
+      console.log("Starting periodic data synchronization...");
+
       const result = await this.fixDataIntegrity();
-      
+
       if (result.success) {
-        console.log(`Data synchronization completed. Fixed ${result.fixedRecords} records.`);
-        
+        console.log(
+          `Data synchronization completed. Fixed ${result.fixedRecords} records.`
+        );
+
         if (result.integrityChecks.length > 0) {
-          console.log('Remaining integrity issues:', result.integrityChecks);
+          console.log("Remaining integrity issues:", result.integrityChecks);
         }
       } else {
-        console.error('Data synchronization failed:', result.errors);
+        console.error("Data synchronization failed:", result.errors);
       }
     } catch (error) {
-      console.error('Periodic sync failed:', error);
+      console.error("Periodic sync failed:", error);
     }
   }
 }

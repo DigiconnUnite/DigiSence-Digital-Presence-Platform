@@ -4,8 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useRealtimeData } from "@/lib/use-realtime-data";
-import { dataSyncService } from "@/lib/data-synchronization";
 import {
   Card,
   CardContent,
@@ -282,25 +280,6 @@ export default function SuperAdminDashboard() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  // Data synchronization check
-  useEffect(() => {
-    const checkDataIntegrity = async () => {
-      try {
-        const result = await dataSyncService.fixDataIntegrity();
-        if (result.fixedRecords > 0) {
-          console.log(`Data synchronization fixed ${result.fixedRecords} records`);
-          toast({
-            title: "Data Synchronization",
-            description: `Fixed ${result.fixedRecords} data integrity issues`,
-          });
-        }
-      } catch (error) {
-        console.error("Data synchronization failed:", error);
-      }
-    };
-
-    checkDataIntegrity();
-  }, [toast]);
 
   // Authentication check
   useEffect(() => {
@@ -328,7 +307,9 @@ export default function SuperAdminDashboard() {
   }, [businesses, searchTerm, filterStatus]);
 
   const filteredCategories = useMemo(() => {
-    return categories.filter(
+    // Ensure categories is an array before filtering
+    const categoriesArray = Array.isArray(categories) ? categories : [];
+    return categoriesArray.filter(
       (category) =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         category.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -343,171 +324,112 @@ export default function SuperAdminDashboard() {
     };
   }, [filteredBusinesses]);
 
-  // Real-time data fetching using the new hook
-  const businessesData = useRealtimeData<Business[]>(
-    "/api/admin/businesses",
-    {
-      pollingInterval: 10000, // 10 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 30000, // 30 seconds
-    }
-  );
 
-  const categoriesData = useRealtimeData<Category[]>(
-    "/api/admin/categories",
-    {
-      pollingInterval: 15000, // 15 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 45000, // 45 seconds
-    }
-  );
+  // Data fetching function
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setDataFetchError(null);
+    
+    try {
+      const [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes] = await Promise.all([
+        fetch("/api/admin/businesses"),
+        fetch("/api/admin/categories"),
+        fetch("/api/inquiries"),
+        fetch("/api/admin/professionals"),
+        fetch("/api/business-listing-inquiries"),
+        fetch("/api/registration-inquiries"),
+      ]);
 
-  const inquiriesData = useRealtimeData<any[]>(
-    "/api/inquiries",
-    {
-      pollingInterval: 8000, // 8 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 20000, // 20 seconds
-    }
-  );
+      // Check if all responses are ok
+      const allResponsesOk = [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes].every(res => res.ok);
+      
+      if (!allResponsesOk) {
+        throw new Error("One or more API calls failed");
+      }
 
-  const professionalsData = useRealtimeData<Professional[]>(
-    "/api/professionals",
-    {
-      pollingInterval: 12000, // 12 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 35000, // 35 seconds
-    }
-  );
+      const businessesData = await businessesRes.json();
+      const categoriesData = await categoriesRes.json();
+      const inquiriesData = await inquiriesRes.json();
+      const professionalsData = await professionalsRes.json();
+      const businessListingInquiriesData = await businessListingInquiriesRes.json();
+      const registrationInquiriesData = await registrationInquiriesRes.json();
 
-  const businessListingInquiriesData = useRealtimeData<any[]>(
-    "/api/business-listing-inquiries",
-    {
-      pollingInterval: 10000, // 10 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 30000, // 30 seconds
-    }
-  );
+      // Debug logging
+      console.log('API Responses:', {
+        businessesData,
+        categoriesData,
+        inquiriesData,
+        professionalsData,
+        businessListingInquiriesData,
+        registrationInquiriesData
+      });
 
-  const registrationInquiriesData = useRealtimeData<any[]>(
-    "/api/registration-inquiries",
-    {
-      pollingInterval: 15000, // 15 seconds
-      retryAttempts: 3,
-      retryDelay: 1000,
-      enableSSE: true,
-      cacheTime: 45000, // 45 seconds
-    }
-  );
+      // Extract data from API responses
+      const businessesArray = Array.isArray(businessesData.businesses) ? businessesData.businesses : [];
+      const categoriesArray = Array.isArray(categoriesData.categories) ? categoriesData.categories : [];
+      const inquiriesArray = Array.isArray(inquiriesData.inquiries) ? inquiriesData.inquiries : [];
+      const professionalsArray = Array.isArray(professionalsData.professionals) ? professionalsData.professionals : [];
+      const businessListingInquiriesArray = Array.isArray(businessListingInquiriesData.businessListingInquiries) ? businessListingInquiriesData.businessListingInquiries : [];
+      const registrationInquiriesArray = Array.isArray(registrationInquiriesData.registrationInquiries) ? registrationInquiriesData.registrationInquiries : (Array.isArray(registrationInquiriesData) ? registrationInquiriesData : []);
 
-  // Update state when data changes
-  useEffect(() => {
-    if (businessesData.data) {
-      setBusinesses(businessesData.data);
-      // Calculate stats
-      const totalInquiries = businessesData.data.reduce(
-        (sum: number, b: Business) => sum + b._count.inquiries,
+      console.log('Extracted arrays:', {
+        businessesArray: businessesArray.length,
+        categoriesArray: categoriesArray.length,
+        inquiriesArray: inquiriesArray.length,
+        professionalsArray: professionalsArray.length,
+        businessListingInquiriesArray: businessListingInquiriesArray.length,
+        registrationInquiriesArray: registrationInquiriesArray.length
+      });
+
+      setBusinesses(businessesArray);
+      setCategories(categoriesArray);
+      setInquiries(inquiriesArray);
+      setProfessionals(professionalsArray);
+      setBusinessListingInquiries(businessListingInquiriesArray);
+      setRegistrationInquiries(registrationInquiriesArray);
+
+      // Calculate stats safely
+      const totalInquiries = businessesArray.reduce(
+        (sum: number, b: Business) => sum + (b._count?.inquiries || 0),
         0
       );
-      const totalProducts = businessesData.data.reduce(
-        (sum: number, b: Business) => sum + b._count.products,
+      const totalProducts = businessesArray.reduce(
+        (sum: number, b: Business) => sum + (b._count?.products || 0),
         0
       );
-      const activeBusinesses = businessesData.data.filter(
-        (b) => b.isActive
+      const activeBusinesses = businessesArray.filter(
+        (b: Business) => b.isActive
       ).length;
-      const totalActiveProducts = businessesData.data
-        .filter((b) => b.isActive)
-        .reduce((sum: number, b: Business) => sum + b._count.products, 0);
-      const totalUsers = businessesData.data.length;
+      const totalActiveProducts = businessesArray
+        .filter((b: Business) => b.isActive)
+        .reduce((sum: number, b: Business) => sum + (b._count?.products || 0), 0);
+      const totalUsers = businessesArray.length;
+      const activeProfessionals = professionalsArray.filter(
+        (p: Professional) => p.isActive
+      ).length;
 
-      setStats((prev) => ({
-        ...prev,
-        totalBusinesses: businessesData.data?.length || 0,
+      setStats({
+        totalBusinesses: businessesData.length,
         totalInquiries,
         totalUsers,
         activeBusinesses,
         totalProducts,
         totalActiveProducts,
-      }));
-    }
-
-    if (categoriesData.data) {
-      setCategories(categoriesData.data);
-    }
-
-    if (inquiriesData.data) {
-      setInquiries(inquiriesData.data);
-    }
-
-    if (professionalsData.data) {
-      setProfessionals(professionalsData.data);
-      const activeProfessionals = professionalsData.data.filter(
-        (p: Professional) => p.isActive
-      ).length;
-      setStats((prev) => ({
-        ...prev,
-        totalProfessionals: professionalsData.data?.length || 0,
+        totalProfessionals: professionalsData.length,
         activeProfessionals,
-      }));
+      });
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+      setDataFetchError("Failed to fetch data. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    if (businessListingInquiriesData.data) {
-      setBusinessListingInquiries(businessListingInquiriesData.data);
-    }
-
-    if (registrationInquiriesData.data) {
-      setRegistrationInquiries(registrationInquiriesData.data);
-    }
-
-    // Set loading and error states
-    setIsLoading(
-      businessesData.loading ||
-      categoriesData.loading ||
-      inquiriesData.loading ||
-      professionalsData.loading ||
-      businessListingInquiriesData.loading ||
-      registrationInquiriesData.loading
-    );
-
-    setDataFetchError(
-      businessesData.error ||
-      categoriesData.error ||
-      inquiriesData.error ||
-      professionalsData.error ||
-      businessListingInquiriesData.error ||
-      registrationInquiriesData.error
-    );
-  }, [
-    businessesData.data,
-    categoriesData.data,
-    inquiriesData.data,
-    professionalsData.data,
-    businessListingInquiriesData.data,
-    registrationInquiriesData.data,
-    businessesData.loading,
-    categoriesData.loading,
-    inquiriesData.loading,
-    professionalsData.loading,
-    businessListingInquiriesData.loading,
-    registrationInquiriesData.loading,
-    businessesData.error,
-    categoriesData.error,
-    inquiriesData.error,
-    professionalsData.error,
-    businessListingInquiriesData.error,
-    registrationInquiriesData.error,
-  ]);
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Generate password utility
   const generatePassword = useCallback(() => {
@@ -581,7 +503,12 @@ export default function SuperAdminDashboard() {
           setRightPanelContent(null);
           setGeneratedPassword("");
           setGeneratedUsername("");
-          e.currentTarget.reset();
+          // Reset form safely
+          if (e.currentTarget) {
+            e.currentTarget.reset();
+          }
+          // Refresh data to show the new business
+          fetchData();
         } else {
           const error = await response.json();
           console.error("Business creation failed:", error);
@@ -1014,7 +941,12 @@ export default function SuperAdminDashboard() {
           setRightPanelContent(null);
           setGeneratedPassword("");
           setGeneratedUsername("");
-          e.currentTarget.reset();
+          // Reset form safely
+          if (e.currentTarget) {
+            e.currentTarget.reset();
+          }
+          // Refresh data to show the new professional
+          fetchData();
         } else {
           const error = await response.json();
           console.error("Professional creation failed:", error);
@@ -1712,30 +1644,6 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  // Data health monitoring
-  const [dataHealth, setDataHealth] = useState<any>(null);
-  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
-
-  const checkDataHealth = useCallback(async () => {
-    if (!user?.role || user.role !== "SUPER_ADMIN") return;
-    
-    setIsCheckingHealth(true);
-    try {
-      const stats = await dataSyncService.getDataStatistics();
-      setDataHealth(stats);
-    } catch (error) {
-      console.error("Failed to check data health:", error);
-    } finally {
-      setIsCheckingHealth(false);
-    }
-  }, [user]);
-
-  // Check data health periodically
-  useEffect(() => {
-    checkDataHealth();
-    const interval = setInterval(checkDataHealth, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [checkDataHealth]);
 
   const renderMiddleContent = () => {
     if (isLoading) {
@@ -1744,6 +1652,9 @@ export default function SuperAdminDashboard() {
 
     // Use forceRerender to ensure UI updates immediately
     const _ = forceRerender;
+
+    // Ensure categories is always an array
+    const safeCategories = Array.isArray(categories) ? categories : [];
 
     switch (currentView) {
       case "dashboard":
@@ -1759,59 +1670,6 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
 
-            {/* Data Health Status */}
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl p-4 sm:p-6 mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Data Health Status</h3>
-                <div className="flex items-center space-x-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    dataHealth && dataHealth.orphanedUsers === 0 && dataHealth.missingBusinessAdmins === 0 && dataHealth.missingProfessionalAdmins === 0
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {isCheckingHealth ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900 mr-2"></div>
-                        Checking...
-                      </>
-                    ) : (
-                      dataHealth && dataHealth.orphanedUsers === 0 && dataHealth.missingBusinessAdmins === 0 && dataHealth.missingProfessionalAdmins === 0
-                        ? 'Healthy'
-                        : 'Issues Found'
-                    )}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={checkDataHealth}
-                    className="rounded-2xl"
-                    disabled={isCheckingHealth}
-                  >
-                    {isCheckingHealth ? 'Refreshing...' : 'Refresh'}
-                  </Button>
-                </div>
-              </div>
-              {dataHealth && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-sm text-gray-600">Total Users</div>
-                    <div className="text-2xl font-bold text-gray-900">{dataHealth.users}</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-sm text-gray-600">Orphaned Users</div>
-                    <div className={`text-2xl font-bold ${dataHealth.orphanedUsers > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {dataHealth.orphanedUsers}
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl">
-                    <div className="text-sm text-gray-600">Missing Admins</div>
-                    <div className={`text-2xl font-bold ${dataHealth.missingBusinessAdmins + dataHealth.missingProfessionalAdmins > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {dataHealth.missingBusinessAdmins + dataHealth.missingProfessionalAdmins}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1910,31 +1768,11 @@ export default function SuperAdminDashboard() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        businessesData.refresh();
-                        categoriesData.refresh();
-                        inquiriesData.refresh();
-                        professionalsData.refresh();
-                        businessListingInquiriesData.refresh();
-                        registrationInquiriesData.refresh();
+                        fetchData();
                       }}
                       className="rounded-2xl"
                     >
                       Retry
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        businessesData.clearCache();
-                        categoriesData.clearCache();
-                        inquiriesData.clearCache();
-                        professionalsData.clearCache();
-                        businessListingInquiriesData.clearCache();
-                        registrationInquiriesData.clearCache();
-                      }}
-                      className="rounded-2xl"
-                    >
-                      Clear Cache
                     </Button>
                   </div>
                 </div>
@@ -2198,20 +2036,7 @@ export default function SuperAdminDashboard() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleToggleProfessionalStatus(professional)
-                                  }
-                                >
-                                  {professional.isActive ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <UserCheck className="h-4 w-4" />
-                                  )}
-                                </Button>
+                      
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -2270,7 +2095,7 @@ export default function SuperAdminDashboard() {
                 </Button>
 
                 <div className="space-y-4">
-                  {filteredCategories
+                  {safeCategories
                     .filter((c) => !c.parentId)
                     .map((parentCategory) => (
                       <div key={parentCategory.id}>
@@ -2300,7 +2125,7 @@ export default function SuperAdminDashboard() {
                             </Button>
                           </div>
                         </div>
-                        {filteredCategories
+                        {safeCategories
                           .filter((c) => c.parentId === parentCategory.id)
                           .map((childCategory) => (
                             <div
@@ -2724,7 +2549,7 @@ export default function SuperAdminDashboard() {
               <div className="space-y-4">
                 <div>
                   <Label>Platform Name</Label>
-                  <Input defaultValue="DigiSence" className="rounded-2xl" />
+                  <Input defaultValue="DigiSense" className="rounded-2xl" />
                 </div>
                 <div>
                   <Label>Admin Email</Label>
@@ -2745,6 +2570,9 @@ export default function SuperAdminDashboard() {
 
   const renderRightPanel = () => {
     if (!showRightPanel) return null;
+
+    // Ensure categories is always an array
+    const safeCategories = Array.isArray(categories) ? categories : [];
 
     if (rightPanelContent === "add-business") {
       return (
@@ -2948,7 +2776,7 @@ export default function SuperAdminDashboard() {
                 <Label>Category</Label>
                 <Select
                   name="categoryId"
-                  defaultValue={editingBusiness.category?.id}
+                  defaultValue={editingBusiness.category?.id || ""}
                 >
                   <SelectTrigger className="rounded-2xl">
                     <SelectValue />
@@ -3081,7 +2909,7 @@ export default function SuperAdminDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No parent</SelectItem>
-                    {categories
+                    {safeCategories
                       .filter((c) => !c.parentId && c.id !== editingCategory.id)
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
@@ -3552,7 +3380,7 @@ export default function SuperAdminDashboard() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map((category) => (
+                            {safeCategories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                               </SelectItem>
@@ -3764,11 +3592,11 @@ export default function SuperAdminDashboard() {
       <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
         <div className="flex justify-between items-center px-3 sm:px-4 py-2">
           <div className="flex items-center ">
-            <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
+            <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
             <span className="h-8 border-l border-gray-300 mx-2"></span>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                DigiSence
+                DigiSense
               </h1>
             </div>
           </div>
@@ -3991,19 +3819,19 @@ export default function SuperAdminDashboard() {
                 <div>
                   <Label className="text-sm font-medium">Business Name</Label>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.businessName}
+                    {selectedBusinessListingInquiry?.businessName || "Not provided"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Contact Name</Label>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.contactName}
+                    {selectedBusinessListingInquiry?.contactName || "Not provided"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Email</Label>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.email}
+                    {selectedBusinessListingInquiry?.email || "Not provided"}
                   </p>
                 </div>
                 <div>
@@ -4017,21 +3845,21 @@ export default function SuperAdminDashboard() {
                     Business Description
                   </Label>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.businessDescription ||
+                    {selectedBusinessListingInquiry?.businessDescription ||
                       "Not provided"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Inquiry Type</Label>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.inquiryType ||
+                    {selectedBusinessListingInquiry?.inquiryType ||
                       "Not specified"}
                   </p>
                 </div>
                 <div className="md:col-span-2">
                   <Label className="text-sm font-medium">Requirements</Label>
                   <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
-                    {selectedBusinessListingInquiry.requirements}
+                    {selectedBusinessListingInquiry?.requirements || "Not provided"}
                   </p>
                 </div>
               </div>
@@ -4054,7 +3882,7 @@ export default function SuperAdminDashboard() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="PENDING">Pending</SelectItem>
@@ -4080,7 +3908,7 @@ export default function SuperAdminDashboard() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select user" />
+                        <SelectValue placeholder="Select user or leave unassigned" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">Unassigned</SelectItem>
@@ -4095,7 +3923,7 @@ export default function SuperAdminDashboard() {
                 <div>
                   <Label>Notes</Label>
                   <Textarea
-                    value={selectedBusinessListingInquiry.notes || ""}
+                    value={selectedBusinessListingInquiry?.notes || ""}
                     onChange={(e) => {
                       const updated = {
                         ...selectedBusinessListingInquiry,
@@ -4125,15 +3953,15 @@ export default function SuperAdminDashboard() {
               onClick={() => {
                 if (selectedBusinessListingInquiry) {
                   const updates: any = {
-                    status: selectedBusinessListingInquiry.status,
-                    notes: selectedBusinessListingInquiry.notes,
+                    status: selectedBusinessListingInquiry?.status,
+                    notes: selectedBusinessListingInquiry?.notes,
                   };
-                  if (selectedBusinessListingInquiry.assignedTo) {
+                  if (selectedBusinessListingInquiry?.assignedTo) {
                     updates.assignedTo =
                       selectedBusinessListingInquiry.assignedTo;
                   }
                   handleUpdateBusinessListingInquiry(
-                    selectedBusinessListingInquiry.id,
+                    selectedBusinessListingInquiry?.id,
                     updates
                   );
                 }

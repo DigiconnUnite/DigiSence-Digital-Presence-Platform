@@ -28,6 +28,39 @@ async function getSuperAdmin(request: NextRequest) {
   return payload
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const professionals = await db.professional.findMany({
+      include: {
+        admin: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    console.log('Admin API returning professionals:', professionals.length)
+    console.log('Professionals data:', professionals.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })))
+
+    return NextResponse.json({ professionals })
+  } catch (error) {
+    console.error('Professionals fetch error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const admin = await getSuperAdmin(request)

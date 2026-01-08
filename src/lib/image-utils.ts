@@ -13,42 +13,8 @@ export const getOptimizedImageUrl = (url: string, options?: {
   brightness?: number
   contrast?: number
 }) => {
-  // Check if it's a CloudFront URL (our new system)
-  if (url && url.includes('cloudfront.net')) {
-    // Build CloudFront transformation string
-    const transformations: string[] = []
-
-    // Basic transformations for CloudFront
-    if (options?.width) transformations.push(`w_${options.width}`)
-    if (options?.height) transformations.push(`h_${options.height}`)
-    if (options?.quality) transformations.push(`q_${options.quality || 85}`)
-    if (options?.format) {
-      if (options.format === 'auto') {
-        transformations.push('f_auto')
-      } else {
-        transformations.push(`f_${options.format}`)
-      }
-    }
-    if (options?.crop) transformations.push(`c_${options.crop}`)
-    if (options?.gravity) transformations.push(`g_${options.gravity}`)
-
-    // Add transformations if any are specified
-    if (transformations.length > 0) {
-      const transformationString = transformations.join(',')
-      // Use 'resize' prefix to match CloudFront behavior configuration
-      // Extract the path after cloudfront.net
-      const urlParts = url.split('cloudfront.net/')
-      if (urlParts.length === 2) {
-        const baseUrl = urlParts[0] + 'cloudfront.net/'
-        const key = urlParts[1]
-        return `${baseUrl}resize/${transformationString}/${key}`
-      }
-    }
-
-    return url
-  }
-
-  // Return original URL if not a CloudFront URL
+  // Temporarily disable transformations to fix access denied errors
+  // Return original URL without any transformations
   return url
 }
 

@@ -1393,7 +1393,7 @@ export default function ProfessionalDashboard() {
                                 <CardContent className="p-4">
                                   <div className="flex items-start gap-4">
                                     <div className="shrink-0">
-                                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${item.level === 'beginner' ? 'from-gray-100 to-gray-200' :
+                                      <div className={`w-10 h-10 rounded-lg bg-linear-to-r ${item.level === 'beginner' ? 'from-gray-100 to-gray-200' :
                                         item.level === 'intermediate' ? 'from-blue-100 to-blue-200' :
                                           item.level === 'expert' ? 'from-purple-100 to-purple-200' :
                                             'from-amber-100 to-orange-100'

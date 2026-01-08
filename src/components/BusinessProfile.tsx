@@ -701,13 +701,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                 {business.logo && business.logo.trim() !== '' ? (
                   <img
-                    src={getOptimizedImageUrl(business.logo, {
-                      width: 200,
-                      height: 200,
-                      quality: 85,
-                      format: 'auto',
-                      crop: 'fit'
-                    })}
+                    src={getOptimizedImageUrl(business.logo)}
                     alt={business.name}
                     className="h-10 w-10 rounded-full object-cover"
                     loading="eager"
@@ -1077,14 +1071,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <div className="shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
                       <img
-                        src={getOptimizedImageUrl(business.logo, {
-                          width: 280,
-                          height: 280,
-                          quality: 90,
-                          format: 'auto',
-                          crop: 'fill',
-                          gravity: 'center',
-                        })}
+                        src={getOptimizedImageUrl(business.logo)}
                         srcSet={generateSrcSet(business.logo)}
                         sizes="(max-width: 640px) 80px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                         alt={business.name}

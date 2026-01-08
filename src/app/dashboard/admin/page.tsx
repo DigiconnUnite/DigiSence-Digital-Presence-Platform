@@ -249,6 +249,7 @@ export default function SuperAdminDashboard() {
   ] = useState(false);
   const [forceRerender, setForceRerender] = useState(0);
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
+  const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
 
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<
@@ -1300,12 +1301,16 @@ export default function SuperAdminDashboard() {
         return;
       }
 
+      setCreatingAccount(inquiry.id);
+
       try {
         // Generate a password for the new account
         const generatedPassword = generatePassword();
 
         let response;
         let accountData;
+        let successMessage;
+        
         if (inquiry.type === "BUSINESS") {
           accountData = {
             name: inquiry.businessName || inquiry.name,
@@ -1322,6 +1327,7 @@ export default function SuperAdminDashboard() {
             },
             body: JSON.stringify(accountData),
           });
+          successMessage = "Business account created successfully!";
         } else {
           accountData = {
             name: inquiry.name,
@@ -1337,9 +1343,12 @@ export default function SuperAdminDashboard() {
             },
             body: JSON.stringify(accountData),
           });
+          successMessage = "Professional account created successfully!";
         }
 
         if (response.ok) {
+          const result = await response.json();
+          
           // Send email notification with credentials
           try {
             const emailResponse = await fetch("/api/notifications", {
@@ -1365,7 +1374,7 @@ export default function SuperAdminDashboard() {
           }
 
           // Update inquiry status to COMPLETED
-          await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+          const statusUpdateResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -1373,25 +1382,38 @@ export default function SuperAdminDashboard() {
             body: JSON.stringify({ status: "COMPLETED" }),
           });
 
-          // Update the inquiry in the list
-          setRegistrationInquiries((prev) =>
-            prev.map((regInquiry) =>
-              regInquiry.id === inquiry.id
-                ? { ...regInquiry, status: "COMPLETED" }
-                : regInquiry
-            )
-          );
+          if (statusUpdateResponse.ok) {
+            // Update the inquiry in the list
+            setRegistrationInquiries((prev) =>
+              prev.map((regInquiry) =>
+                regInquiry.id === inquiry.id
+                  ? { ...regInquiry, status: "COMPLETED" }
+                  : regInquiry
+              )
+            );
 
-          toast({
-            title: "Success",
-            description: `${inquiry.type} account created successfully! Login credentials sent to ${inquiry.email}`,
-          });
+            toast({
+              title: "Success",
+              description: `${successMessage} Login credentials sent to ${inquiry.email}`,
+            });
+            
+            // Refresh data to ensure the UI is up to date
+            fetchData();
+          } else {
+            console.error("Failed to update inquiry status");
+            toast({
+              title: "Warning",
+              description: `${successMessage} but failed to update inquiry status.`,
+              variant: "destructive",
+            });
+          }
         } else {
           const error = await response.json();
+          console.error("Account creation failed:", error);
           toast({
             title: "Error",
             description: `Failed to create account: ${
-              error.error || "Unknown error"
+              error.error || error.message || "Unknown error"
             }`,
             variant: "destructive",
           });
@@ -1403,9 +1425,11 @@ export default function SuperAdminDashboard() {
           description: "Failed to create account. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setCreatingAccount(null);
       }
     },
-    [generatePassword, toast]
+    [generatePassword, toast, fetchData]
   );
 
   // Handle create account from inquiry with sidebar
@@ -1428,6 +1452,8 @@ export default function SuperAdminDashboard() {
       if (!confirm("Reject this registration request?")) {
         return;
       }
+
+      setCreatingAccount(inquiry.id);
 
       try {
         const response = await fetch(
@@ -1460,7 +1486,7 @@ export default function SuperAdminDashboard() {
           toast({
             title: "Error",
             description: `Failed to reject inquiry: ${
-              error.error || "Unknown error"
+              error.error || error.message || "Unknown error"
             }`,
             variant: "destructive",
           });
@@ -1472,6 +1498,8 @@ export default function SuperAdminDashboard() {
           description: "Failed to reject inquiry. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setCreatingAccount(null);
       }
     },
     [toast]
@@ -2420,18 +2448,38 @@ export default function SuperAdminDashboard() {
                                             inquiry
                                           )
                                         }
+                                        disabled={creatingAccount === inquiry.id}
                                       >
-                                        <UserCheck className="h-4 w-4 mr-1" />
-                                        Create Account
+                                        {creatingAccount === inquiry.id ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1"></div>
+                                            Creating...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <UserCheck className="h-4 w-4 mr-1" />
+                                            Create Account
+                                          </>
+                                        )}
                                       </Button>
                                       <Button
                                         size="sm"
                                         variant="outline"
                                         className="rounded-xl"
                                         onClick={() => handleRejectInquiry(inquiry)}
+                                        disabled={creatingAccount === inquiry.id}
                                       >
-                                        <AlertTriangle className="h-4 w-4 mr-1" />
-                                        Reject
+                                        {creatingAccount === inquiry.id ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
+                                            Processing...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <AlertTriangle className="h-4 w-4 mr-1" />
+                                            Reject
+                                          </>
+                                        )}
                                       </Button>
                                     </>
                                   )}
@@ -3349,6 +3397,8 @@ export default function SuperAdminDashboard() {
                   );
 
                   if (response.ok) {
+                    const result = await response.json();
+                    
                     // Send email notification with credentials
                     try {
                       const emailResponse = await fetch("/api/notifications", {
@@ -3374,7 +3424,7 @@ export default function SuperAdminDashboard() {
                     }
 
                     // Update inquiry status to COMPLETED
-                    await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+                    const statusUpdateResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
                       method: "PUT",
                       headers: {
                         "Content-Type": "application/json",
@@ -3382,37 +3432,48 @@ export default function SuperAdminDashboard() {
                       body: JSON.stringify({ status: "COMPLETED" }),
                     });
 
-                    // Update the inquiry in the list
-                    setRegistrationInquiries((prev) =>
-                      prev.map((regInquiry) =>
-                        regInquiry.id === inquiry.id
-                          ? { ...regInquiry, status: "COMPLETED" }
-                          : regInquiry
-                      )
-                    );
+                    if (statusUpdateResponse.ok) {
+                      // Update the inquiry in the list
+                      setRegistrationInquiries((prev) =>
+                        prev.map((regInquiry) =>
+                          regInquiry.id === inquiry.id
+                            ? { ...regInquiry, status: "COMPLETED" }
+                            : regInquiry
+                        )
+                      );
 
-                    toast({
-                      title: "Success",
-                      description: `${
-                        isBusiness ? "Business" : "Professional"
-                      } account created successfully! Login credentials sent to ${
-                        inquiry.email
-                      }`,
-                    });
+                      toast({
+                        title: "Success",
+                        description: `${
+                          isBusiness ? "Business" : "Professional"
+                        } account created successfully! Login credentials sent to ${
+                          inquiry.email
+                        }`,
+                      });
 
-                    // Close sidebar and refresh data
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                    setEditingBusiness(null);
-                    setEditingProfessional(null);
-                    setGeneratedPassword("");
-                    setGeneratedUsername("");
+                      // Close sidebar and refresh data
+                      setShowRightPanel(false);
+                      setRightPanelContent(null);
+                      setEditingBusiness(null);
+                      setEditingProfessional(null);
+                      setGeneratedPassword("");
+                      setGeneratedUsername("");
+                      fetchData();
+                    } else {
+                      console.error("Failed to update inquiry status");
+                      toast({
+                        title: "Warning",
+                        description: `${isBusiness ? "Business" : "Professional"} account created but failed to update inquiry status.`,
+                        variant: "destructive",
+                      });
+                    }
                   } else {
                     const error = await response.json();
+                    console.error("Account creation failed:", error);
                     toast({
                       title: "Error",
                       description: `Failed to create account: ${
-                        error.error || "Unknown error"
+                        error.error || error.message || "Unknown error"
                       }`,
                       variant: "destructive",
                     });
@@ -3568,15 +3629,26 @@ export default function SuperAdminDashboard() {
                     setGeneratedUsername("");
                   }}
                   className="rounded-2xl"
+                  disabled={creatingAccount !== null}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="rounded-2xl bg-green-600 hover:bg-green-700"
+                  disabled={creatingAccount !== null}
                 >
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  Create Account
+                  {creatingAccount ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Create Account
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

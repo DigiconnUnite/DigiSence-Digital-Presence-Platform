@@ -16,6 +16,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus,
   Edit,
@@ -67,24 +77,19 @@ import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
 
 // Import extracted components
-import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
-import MobileNav from "./components/MobileNav";
-import Overview from "./components/Overview";
-import ProfileTabs from "./components/ProfileTabs";
-import BasicProfileTab from "./components/BasicProfileTab";
-import SkillsTab from "./components/SkillsTab";
-import ExperienceTab from "./components/ExperienceTab";
-import EducationTab from "./components/EducationTab";
-import ServicesTab from "./components/ServicesTab";
-import PortfolioTab from "./components/PortfolioTab";
-import ContactTab from "./components/ContactTab";
 import InquiriesView from "./components/InquiriesView";
 import AnalyticsView from "./components/AnalyticsView";
 import ThemeView from "./components/ThemeView";
 import SettingsView from "./components/SettingsView";
 import CreateProfileView from "./components/CreateProfileView";
+import StatCard from "./components/StatCard";
+import ActionCard from "./components/ActionCard";
+import ProfileView from "./components/ProfileView";
+import OverviewView from "./components/OverviewView";
 import ImageUpload from "@/components/ui/image-upload";
+import InquiryDetailsDialog from "./components/InquiryDetailsDialog";
+import BannerUploadModal from "./components/BannerUploadModal";
+import ProfilePictureUploadModal from "./components/ProfilePictureUploadModal";
 
 type ButtonVariant =
   | "link"
@@ -1124,71 +1129,12 @@ export default function ProfessionalDashboard() {
     switch (currentView) {
       case "overview":
         return (
-          <div
-            className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
-          >
-            <div className="mb-8">
-              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
-                Professional Dashboard Overview
-              </h1>
-              <p className="text-sm md:text-base text-gray-600">
-                Welcome back! Here's your professional profile overview.
-              </p>
-
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                title="Profile Views"
-                value="0"
-                subtitle="This month"
-                icon={<Eye className="h-4 w-4 text-gray-400" />}
-              />
-              <StatCard
-                title="Profile Status"
-                value={professional?.isActive ? "Active" : "Inactive"}
-                subtitle="Current status"
-                icon={<UserCheck className="h-4 w-4 text-gray-400" />}
-              />
-              <StatCard
-                title="Profile URL"
-                value={professional ? `/pcard/${professional.slug}` : "Not set"}
-                subtitle="Your public profile"
-                icon={<Globe className="h-4 w-4 text-gray-400" />}
-                truncate
-              />
-              <StatCard
-                title="Platform Health"
-                value="Good"
-                subtitle="System status"
-                icon={<Activity className="h-4 w-4 text-gray-400" />}
-              />
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ActionCard
-                title="View My Profile"
-                description="See how your professional profile appears to visitors"
-                icon={<Eye className="h-5 w-5" />}
-                buttonText="View Public Profile"
-                buttonAction={() =>
-                  professional &&
-                  window.open(`/pcard/${professional.slug}`, "_blank")
-                }
-                disabled={!professional}
-              />
-              <ActionCard
-                title="Edit Profile"
-                description="Update your professional information and portfolio"
-                icon={<Edit className="h-5 w-5" />}
-                buttonText="Edit Profile"
-                buttonAction={() => setCurrentView("profile")}
-                variant="outline"
-              />
-            </div>
-          </div>
+          <OverviewView
+            professional={professional}
+            stats={stats}
+            themeSettings={themeSettings}
+            setCurrentView={setCurrentView}
+          />
         );
 
       case "profile":

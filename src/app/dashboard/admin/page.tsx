@@ -364,13 +364,22 @@ export default function SuperAdminDashboard() {
         registrationInquiriesData
       });
 
-      // Extract data from API responses
+      // Extract data from API responses with proper error handling
       const businessesArray = Array.isArray(businessesData.businesses) ? businessesData.businesses : [];
       const categoriesArray = Array.isArray(categoriesData.categories) ? categoriesData.categories : [];
       const inquiriesArray = Array.isArray(inquiriesData.inquiries) ? inquiriesData.inquiries : [];
       const professionalsArray = Array.isArray(professionalsData.professionals) ? professionalsData.professionals : [];
       const businessListingInquiriesArray = Array.isArray(businessListingInquiriesData.businessListingInquiries) ? businessListingInquiriesData.businessListingInquiries : [];
-      const registrationInquiriesArray = Array.isArray(registrationInquiriesData.registrationInquiries) ? registrationInquiriesData.registrationInquiries : (Array.isArray(registrationInquiriesData) ? registrationInquiriesData : []);
+      
+      // Fix: Handle registration inquiries response properly
+      let registrationInquiriesArray: any[] = [];
+      if (registrationInquiriesData && Array.isArray(registrationInquiriesData.inquiries)) {
+        registrationInquiriesArray = registrationInquiriesData.inquiries;
+      } else if (Array.isArray(registrationInquiriesData)) {
+        registrationInquiriesArray = registrationInquiriesData;
+      } else if (registrationInquiriesData && registrationInquiriesData.inquiries) {
+        registrationInquiriesArray = registrationInquiriesData.inquiries;
+      }
 
       console.log('Extracted arrays:', {
         businessesArray: businessesArray.length,
@@ -430,6 +439,18 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Debug logging for registration inquiries specifically
+  useEffect(() => {
+    if (currentView === "registration-requests") {
+      console.log('Registration inquiries data:', {
+        length: registrationInquiries.length,
+        data: registrationInquiries,
+        isLoading,
+        dataFetchError
+      });
+    }
+  }, [registrationInquiries, isLoading, dataFetchError, currentView]);
 
   // Generate password utility
   const generatePassword = useCallback(() => {
@@ -2242,129 +2263,204 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
             <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="">
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-gray-900">Type</TableHead>
-                        <TableHead className="text-gray-900">Name</TableHead>
-                        <TableHead className="text-gray-900">
-                          Business Name
-                        </TableHead>
-                        <TableHead className="text-gray-900">Contact</TableHead>
-                        <TableHead className="text-gray-900">
-                          Location
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Date</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {registrationInquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id}>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                inquiry.type === "BUSINESS"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                              className="rounded-full"
-                            >
-                              {inquiry.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-900 font-medium">
-                            {inquiry.name}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.businessName || "N/A"}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="text-sm">{inquiry.email}</div>
-                              {inquiry.phone && (
-                                <div className="text-sm text-gray-500">
-                                  {inquiry.phone}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.location || "Not specified"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                inquiry.status === "REJECTED"
-                                  ? "destructive"
-                                  : "outline"
-                              }
-                              className="rounded-full"
-                            >
-                              {inquiry.status}
-                              {inquiry.status === "REJECTED" && (
-                                <AlertTriangle className="h-3 w-3 ml-1" />
-                              )}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              {inquiry.status === "PENDING" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    className="rounded-xl bg-green-600 hover:bg-green-700"
-                                    onClick={() =>
-                                      handleCreateAccountFromInquiryWithSidebar(
-                                        inquiry
-                                      )
-                                    }
-                                  >
-                                    <UserCheck className="h-4 w-4 mr-1" />
-                                    Create Account
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="rounded-xl"
-                                    onClick={() => handleRejectInquiry(inquiry)}
-                                  >
-                                    <AlertTriangle className="h-4 w-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </>
-                              )}
-                              {inquiry.status === "COMPLETED" && (
-                                <Badge
-                                  variant="default"
-                                  className="rounded-full"
-                                >
-                                  <UserCheck className="h-3 w-3 mr-1" />
-                                  Account Created
-                                </Badge>
-                              )}
-                              {inquiry.status === "REJECTED" && (
-                                <Badge
-                                  variant="destructive"
-                                  className="rounded-full"
-                                >
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Rejected
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+              <div className="p-4 sm:p-6">
+                {/* Search and Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search registration requests..."
+                      className="pl-10 w-full rounded-2xl"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      fetchData();
+                    }}
+                    className="rounded-2xl"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Refresh Data
+                  </Button>
                 </div>
+
+                {/* Data Fetching Status for Registration Requests */}
+                {dataFetchError && (
+                  <div className="bg-red-50 border border-red-200 rounded-3xl p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <span className="text-red-600 font-medium">Data Fetching Error</span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            fetchData();
+                          }}
+                          className="rounded-2xl"
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+                  </div>
+                )}
+                
+                {/* Empty State */}
+                {registrationInquiries.length === 0 && !isLoading && (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <UserCheck className="h-16 w-16 mx-auto mb-4" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Registration Requests
+                    </h3>
+                    <p className="text-gray-600">
+                      There are currently no business or professional registration requests to review.
+                    </p>
+                  </div>
+                )}
+                
+                {/* Data Table */}
+                {registrationInquiries.length > 0 && (
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-gray-900">Type</TableHead>
+                          <TableHead className="text-gray-900">Name</TableHead>
+                          <TableHead className="text-gray-900">
+                            Business Name
+                          </TableHead>
+                          <TableHead className="text-gray-900">Contact</TableHead>
+                          <TableHead className="text-gray-900">
+                            Location
+                          </TableHead>
+                          <TableHead className="text-gray-900">Status</TableHead>
+                          <TableHead className="text-gray-900">Date</TableHead>
+                          <TableHead className="text-gray-900">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {registrationInquiries
+                          .filter((inquiry) => {
+                            const matchesSearch =
+                              inquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              inquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+                            return matchesSearch;
+                          })
+                          .map((inquiry) => (
+                            <TableRow key={inquiry.id}>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    inquiry.type === "BUSINESS"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className="rounded-full"
+                                >
+                                  {inquiry.type}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-gray-900 font-medium">
+                                {inquiry.name}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {inquiry.businessName || "N/A"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                <div>
+                                  <div className="text-sm">{inquiry.email}</div>
+                                  {inquiry.phone && (
+                                    <div className="text-sm text-gray-500">
+                                      {inquiry.phone}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {inquiry.location || "Not specified"}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    inquiry.status === "REJECTED"
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                  className="rounded-full"
+                                >
+                                  {inquiry.status}
+                                  {inquiry.status === "REJECTED" && (
+                                    <AlertTriangle className="h-3 w-3 ml-1" />
+                                  )}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {new Date(inquiry.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  {inquiry.status === "PENDING" && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        className="rounded-xl bg-green-600 hover:bg-green-700"
+                                        onClick={() =>
+                                          handleCreateAccountFromInquiryWithSidebar(
+                                            inquiry
+                                          )
+                                        }
+                                      >
+                                        <UserCheck className="h-4 w-4 mr-1" />
+                                        Create Account
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="rounded-xl"
+                                        onClick={() => handleRejectInquiry(inquiry)}
+                                      >
+                                        <AlertTriangle className="h-4 w-4 mr-1" />
+                                        Reject
+                                      </Button>
+                                    </>
+                                  )}
+                                  {inquiry.status === "COMPLETED" && (
+                                    <Badge
+                                      variant="default"
+                                      className="rounded-full"
+                                    >
+                                      <UserCheck className="h-3 w-3 mr-1" />
+                                      Account Created
+                                    </Badge>
+                                  )}
+                                  {inquiry.status === "REJECTED" && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="rounded-full"
+                                    >
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      Rejected
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </div>
           </div>

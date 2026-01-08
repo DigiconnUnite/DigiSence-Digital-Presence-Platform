@@ -60,7 +60,7 @@ const updateBusinessSchema = z.object({
     close: z.string().optional()
   })).optional(),
   gstNumber: z.string().max(50).optional(),
-  categoryId: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
   heroContent: z.any().optional(),
   brandContent: z.any().optional(),
   portfolioContent: z.any().optional(),

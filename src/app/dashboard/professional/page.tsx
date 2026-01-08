@@ -5,61 +5,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole } from "@/lib/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useTheme, ThemeProvider } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  ArrayFieldManager,
-  WorkExperienceForm,
-  EducationForm,
-  SkillForm,
-  ServiceForm,
-  PortfolioItemForm,
-} from "@/components/ui/array-field-manager";
 import { Skeleton } from "@/components/ui/skeleton";
-import ImageUpload from "@/components/ui/image-upload";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
@@ -110,6 +65,26 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
+
+// Import extracted components
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import MobileNav from "./components/MobileNav";
+import Overview from "./components/Overview";
+import ProfileTabs from "./components/ProfileTabs";
+import BasicProfileTab from "./components/BasicProfileTab";
+import SkillsTab from "./components/SkillsTab";
+import ExperienceTab from "./components/ExperienceTab";
+import EducationTab from "./components/EducationTab";
+import ServicesTab from "./components/ServicesTab";
+import PortfolioTab from "./components/PortfolioTab";
+import ContactTab from "./components/ContactTab";
+import InquiriesView from "./components/InquiriesView";
+import AnalyticsView from "./components/AnalyticsView";
+import ThemeView from "./components/ThemeView";
+import SettingsView from "./components/SettingsView";
+import CreateProfileView from "./components/CreateProfileView";
+import ImageUpload from "@/components/ui/image-upload";
 
 type ButtonVariant =
   | "link"

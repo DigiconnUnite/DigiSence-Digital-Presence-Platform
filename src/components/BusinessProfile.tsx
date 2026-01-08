@@ -697,30 +697,90 @@ export default function BusinessProfile({ business: initialBusiness, categories:
       <nav className="hidden md:block sticky top-0 z-40 bg-white/90 border-b backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex relative  items-center space-x-4">
-              {business.logo && business.logo.trim() !== '' && (
-                <img
-                  src={getOptimizedImageUrl(business.logo, {
-                    width: 200,
-                    height: 200,
-                    quality: 85,
-                    format: 'auto',
-                    crop: 'fit'
-                  })}
-                  alt={business.name}
-                  className="h-12 w-auto"
-                  loading="eager"
-                />
-              )}
-              <span className="font-semibold text-lg">{business.name}</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                {business.logo && business.logo.trim() !== '' ? (
+                  <img
+                    src={getOptimizedImageUrl(business.logo, {
+                      width: 200,
+                      height: 200,
+                      quality: 85,
+                      format: 'auto',
+                      crop: 'fit'
+                    })}
+                    alt={business.name}
+                    className="h-10 w-10 rounded-full object-cover"
+                    loading="eager"
+                  />
+                ) : (
+                  <Building2 className="w-6 h-6 text-gray-600" />
+                )}
+              </div>
+              <div className="h-6 w-px bg-gray-300"></div>
+              <span className="text-lg font-bold text-gray-900">
+                {business.name}
+              </span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden font-bold md:flex space-x-8">
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
-                <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
-                <a href="#brands" className="text-gray-700 hover:text-gray-900 transition-colors ">Brands</a>
-                <a href="#products" className="text-gray-600 hover:text-gray-900 transition-colors">Products</a>
-                <a href="#portfolio" className="text-gray-600 hover:text-gray-900 transition-colors">Portfolio</a>
+              <div className="hidden md:flex space-x-8">
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${activeSection === 'home'
+                    ? 'text-cyan-600 bg-cyan-50 border border-cyan-200'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    } px-3 py-2 rounded-lg`}
+                  onClick={() => {
+                    setActiveSection('home');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <Home className={`w-4 h-4 mr-2 transition-colors ${activeSection === 'home' ? 'text-cyan-600' : 'text-gray-500'
+                    }`} />
+                  Home
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${activeSection === 'about'
+                    ? 'text-cyan-600 bg-cyan-50 border border-cyan-200'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    } px-3 py-2 rounded-lg`}
+                  onClick={() => scrollToSection(aboutRef as React.RefObject<HTMLDivElement>, 'about')}
+                >
+                  <User className={`w-4 h-4 mr-2 transition-colors ${activeSection === 'about' ? 'text-cyan-600' : 'text-gray-500'
+                    }`} />
+                  About
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${activeSection === 'brands'
+                    ? 'text-cyan-600 bg-cyan-50 border border-cyan-200'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    } px-3 py-2 rounded-lg`}
+                  onClick={() => scrollToSection(brandsRef as React.RefObject<HTMLDivElement>, 'brands')}
+                >
+                  <Grid3X3 className={`w-4 h-4 mr-2 transition-colors ${activeSection === 'brands' ? 'text-cyan-600' : 'text-gray-500'
+                    }`} />
+                  Brands
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${activeSection === 'products'
+                    ? 'text-cyan-600 bg-cyan-50 border border-cyan-200'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    } px-3 py-2 rounded-lg`}
+                  onClick={() => scrollToSection(productsRef as React.RefObject<HTMLDivElement>, 'products')}
+                >
+                  <ShoppingBag className={`w-4 h-4 mr-2 transition-colors ${activeSection === 'products' ? 'text-cyan-600' : 'text-gray-500'
+                    }`} />
+                  Products
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${activeSection === 'portfolio'
+                    ? 'text-cyan-600 bg-cyan-50 border border-cyan-200'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    } px-3 py-2 rounded-lg`}
+                  onClick={() => scrollToSection(portfolioRef as React.RefObject<HTMLDivElement>, 'portfolio')}
+                >
+                  <Briefcase className={`w-4 h-4 mr-2 transition-colors ${activeSection === 'portfolio' ? 'text-cyan-600' : 'text-gray-500'
+                    }`} />
+                  Portfolio
+                </button>
               </div>
             </div>
           </div>

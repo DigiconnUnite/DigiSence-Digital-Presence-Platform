@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   turbopack: {},
+  // Add this configuration
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   images: {
     domains: ['d1234567890.cloudfront.net'], // Add your CloudFront domain
     formats: ['image/webp', 'image/avif'],

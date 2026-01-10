@@ -114,7 +114,7 @@ export default function HomePage() {
                     pathname === item.link
                       ? "bg-slate-800 text-white"
                       : "text-gray-700 hover:bg-gray-100"
-                  )}
+                  )}                        
                 >
                   <IconComponent className="mr-3 h-5 w-5" />
                   {item.name}

@@ -112,9 +112,24 @@ export async function POST(
       },
     })
 
+    // Notify Frontend via WebSocket
+    const io = (global as any).io
+
+    if (io) {
+      io.to(business.id).emit('data-updated', {
+        type: 'BUSINESS_UPDATE',
+        data: business
+      })
+    }
+
     return NextResponse.json({
       success: true,
       business,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Business update error:', error)
@@ -220,6 +235,11 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       business,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Business toggle error:', error)

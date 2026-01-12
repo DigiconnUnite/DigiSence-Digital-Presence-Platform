@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -38,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 backdrop-blur-sm z-50 bg-black/50",
         className
       )}
       {...props}
@@ -95,7 +96,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse w-full gap-2 sm:flex-row sm:justify-end",
         className
       )}
       {...props}
@@ -108,6 +109,7 @@ function DialogTitle({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
+    // FIXED: Changed Primitive.Title to DialogPrimitive.Title
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn("text-lg leading-none font-semibold", className)}

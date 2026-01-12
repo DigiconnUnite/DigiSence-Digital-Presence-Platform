@@ -43,27 +43,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogFooter } from "@/components/ui/dialog";
-import {
-  ArrayFieldManager,
-  WorkExperienceForm,
-  EducationForm,
-  SkillForm,
-  ServiceForm,
-  PortfolioItemForm,
-} from "@/components/ui/array-field-manager";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+
 import {
   Plus,
   Edit,
@@ -84,8 +64,7 @@ import {
   Package,
   TrendingUp,
   Activity,
-  Crown,
-  Globe,
+  X,
   UserCheck,
   AlertTriangle,
   Home,
@@ -1710,11 +1689,11 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900 ">
                 {" "}
                 Admin Dashboard Overview
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Welcome back! Here's what's happening with your business.
               </p>
             </div>
@@ -1830,15 +1809,15 @@ export default function SuperAdminDashboard() {
             )}
 
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900 ">
                 Add Businesses
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Manage and monitor your businesses from this dashboard section.
               </p>
             </div>
-            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
-              <div className="p-4 sm:p-6">
+            <div className="">
+              <div className="">
                 {/* Search and Filters */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
                   <Button
@@ -1852,7 +1831,7 @@ export default function SuperAdminDashboard() {
                     Add New
                   </Button>
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
+                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
                       <SelectValue placeholder="Filter by Status: Active" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1873,7 +1852,7 @@ export default function SuperAdminDashboard() {
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto hide-scrollbar rounded-2xl border border-gray-200">
+                <div className="overflow-x-auto hide-scrollbar bg-white rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader className="bg-amber-100">
                       <TableRow>
@@ -1958,16 +1937,16 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900 ">
                 Professionals
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Manage and monitor your professionals from this dashboard
                 section.
               </p>
             </div>
-            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
-              <div className="p-4 sm:p-6">
+            <div className="">
+              <div className="">
                 {/* Search and Filters */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
                   <Button
@@ -1979,13 +1958,13 @@ export default function SuperAdminDashboard() {
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
-                  </Button>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full sm:w-48 rounded-2xl">
+                  </Button> 
+                  <Select value={filterStatus}  onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
                       <SelectValue placeholder="Filter by Status: Active" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">
+                      <SelectItem  value="all">
                         All ({professionals.length})
                       </SelectItem>
                       <SelectItem value="active">
@@ -1999,12 +1978,12 @@ export default function SuperAdminDashboard() {
                     </SelectContent>
                   </Select>
                   <Button variant="outline" className="rounded-2xl">
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 bg-white w-4 mr-2" />
                     Export Data
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader className="bg-amber-100">
                       <TableRow>
@@ -2121,25 +2100,25 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 {" "}
-                CATEGORY MANAGER
+                Category Manager
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Configure business categories and classifications
               </p>
             </div>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
+            <div className="">
+              <div className="">
                 <Button
                   onClick={() => {
                     setRightPanelContent("add-category");
                     setShowRightPanel(true);
                   }}
                   variant="outline"
-                  className="mb-6 rounded-2xl"
+                  className="mb-6 bg-slate-900 border-none text-white rounded-2xl"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4  w-4 mr-2" />
                   Add New Category
                 </Button>
 
@@ -2220,16 +2199,16 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
-                INQUIRIES MANAGEMENT
+              <h1 className="text-lg font-bold text-gray-900">
+                Inquiries Management
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 View and manage customer inquiries
               </p>
             </div>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+            <div className="">
+              <div className="">
+                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -2282,20 +2261,20 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 REGISTRATION REQUESTS
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Review and approve business and professional registration
                 requests
               </p>
             </div>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
+        <div className="">
+              <div className="">
                 {/* Search and Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <div className="relative bg-white rounded-2xl border border-gray-200 flex-1">
+                    <Search className="absolute left-3 top-1/2 transform  -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search registration requests..."
                       className="pl-10 w-full rounded-2xl"
@@ -2357,7 +2336,7 @@ export default function SuperAdminDashboard() {
                 
                 {/* Data Table */}
                 {registrationInquiries.length > 0 && (
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <div className="overflow-x-auto rounded-2xl bg-white border border-gray-200">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -2517,16 +2496,16 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+             <h1 className="text-lg font-bold text-gray-900">
                 BUSINESS LISTING INQUIRIES
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Manage business listing requests and digital presence
                 enhancement inquiries
               </p>
             </div>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
+            <div className="">
+              <div className="">
                 <div className="overflow-x-auto rounded-2xl border border-gray-200">
                   <Table>
                     <TableHeader>
@@ -2637,10 +2616,10 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Platform Analytics
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Detailed analytics and insights
               </p>
             </div>
@@ -2682,10 +2661,10 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 System Settings
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Configure system preferences
               </p>
             </div>
@@ -2712,102 +2691,307 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const renderRightPanel = () => {
-    if (!showRightPanel) return null;
+    
+const renderRightPanel = () => {
+  if (!showRightPanel) return null;
 
-    // Ensure categories is always an array
-    const safeCategories = Array.isArray(categories) ? categories : [];
+  // Ensure categories is always an array
+  const safeCategories = Array.isArray(categories) ? categories : [];
 
-    if (rightPanelContent === "add-business") {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
+  // Common close handler
+  const closePanel = () => {
+    setShowRightPanel(false);
+    setRightPanelContent(null);
+    setGeneratedPassword("");
+    setGeneratedUsername("");
+    setEditingBusiness(null);
+    setEditingProfessional(null);
+    setCreatingAccount(null);
+  };
+
+  // Helper to render standard modal structure
+  const ModalLayout = ({
+    title,
+    description,
+    children,
+    footerContent,
+    formId,
+  }: {
+    title: string;
+    description: string;
+    children: React.ReactNode;
+    footerContent: React.ReactNode;
+    formId?: string;
+  }) => (
+    <div className="flex flex-col h-[90vh] bg-white relative">
+      {/* Fixed Header - shrink-0 ensures it doesn't get squashed */}
+      <DialogHeader className="px-6 pt-4 pb-2 border-b shrink-0 space-y-1.5 bg-white z-10">
+        <div className="flex justify-between items-start w-full">
+          <div className="">
+            <DialogTitle className="text-md font-semibold leading-none tracking-tight">{title}</DialogTitle>
+            <DialogDescription className="text-xs text-gray-500 font-normal">
+              {description}
+            </DialogDescription>
+          </div>
+        </div>
+      </DialogHeader>
+
+      {/* Scrollable Body - flex-1 makes it fill space, overflow-y-auto enables scrolling */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-4">
+        {children}
+      </div>
+
+      {/* Fixed Footer - shrink-0 keeps it at bottom, border-t separates it */}
+      <DialogFooter className="px-6 py-2  flex flex-row justify-center  border-t  bg-white z-10">
+        {footerContent}
+      </DialogFooter>
+    </div>
+  );
+
+  // --- ADD BUSINESS ---
+  if (rightPanelContent === "add-business") {
+    return (
+      <ModalLayout
+        title="Add New Business"
+        description="Create a new business account and listing."
+        formId="add-business-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form="add-business-form" className="rounded-2xl w-auto flex-1">
+              Create Business
+            </Button>
+          </>
+        }
+      >
+        <form id="add-business-form" onSubmit={handleAddBusiness} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Business Name</Label>
+            <Input name="name" required className="rounded-xl" placeholder="e.g. Acme Corp" />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea name="description" className="rounded-xl" placeholder="Brief business description..." />
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select name="categoryId" required>
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input name="phone" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Website</Label>
+              <Input name="website" className="rounded-xl" />
+            </div>
+          </div>
+          
+          <Separator />
+          <div>
+            <h4 className="font-medium text-sm mb-4">Admin Account Details</h4>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Admin Name</Label>
+                  <Input name="adminName" required className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Admin Email</Label>
+                  <Input name="email" type="email" required className="rounded-xl" />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const form = document.getElementById("add-business-form") as HTMLFormElement;
+                  const businessName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+                  const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
+                  handleGenerateCredentials(businessName, adminName);
+                }}
+                className="w-full rounded-xl"
+              >
+                <Key className="h-4 w-4 mr-2" /> Generate Credentials
+              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Username</Label>
+                  <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Input
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={generatedPassword}
+                      onChange={(e) => setGeneratedPassword(e.target.value)}
+                      className="pr-10 rounded-2xl"
+                      placeholder="Generated or manual password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-2xl"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
+
+  // --- EDIT BUSINESS ---
+  if (rightPanelContent === "edit-business" && editingBusiness) {
+    return (
+      <ModalLayout
+        title="Edit Business"
+        description="Update business details and category."
+        formId="edit-business-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-business-form" className="rounded-2xl">
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-business-form" onSubmit={handleUpdateBusiness} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Business Name</Label>
+            <Input name="name" defaultValue={editingBusiness.name} required className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea name="description" defaultValue={editingBusiness.description} className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Logo URL</Label>
+            <Input name="logo" defaultValue={editingBusiness.logo} className="rounded-2xl" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Input name="address" defaultValue={editingBusiness.address} className="rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input name="phone" defaultValue={editingBusiness.phone} className="rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Website</Label>
+              <Input name="website" defaultValue={editingBusiness.website} className="rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Admin Email</Label>
+              <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="rounded-2xl" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select name="categoryId" defaultValue={editingBusiness.category?.id || ""}>
+              <SelectTrigger className="rounded-2xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
+
+  // --- ADD PROFESSIONAL ---
+  if (rightPanelContent === "add-professional") {
+    return (
+      <ModalLayout
+        title="Add Professional"
+        description="Register a new professional profile."
+        formId="add-professional-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
+              Cancel
+            </Button>
+            <Button type="submit" form="add-professional-form" className="rounded-2xl">
+              Create Profile
+            </Button>
+          </>
+        }
+      >
+        <form id="add-professional-form" onSubmit={handleAddProfessional} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Professional Name</Label>
+            <Input name="name" required className="rounded-2xl" placeholder="Full Name" />
+          </div>
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <Input name="phone" placeholder="+91 8080808080" className="rounded-2xl" />
+          </div>
+
+          <Separator />
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">ADD BUSINESS</h3>
-            <form onSubmit={handleAddBusiness} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Business Name</Label>
-                <Input name="name" required className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea name="description" className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select name="categoryId">
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Address</Label>
-                <Input name="address" className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input name="phone" className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Website</Label>
-                <Input name="website" className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>--- Admin Account ---</Label>
-              </div>
+            <h4 className="font-medium text-sm">Login Credentials</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Admin Name</Label>
                 <Input name="adminName" required className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input
-                  name="email"
-                  type="email"
-                  required
-                  className="rounded-2xl"
-                />
+                <Input name="email" type="email" required className="rounded-2xl" />
               </div>
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget.closest(
-                    "form"
-                  ) as HTMLFormElement;
-                  const businessName =
-                    (
-                      form.querySelector(
-                        'input[name="name"]'
-                      ) as HTMLInputElement
-                    )?.value || "";
-                  const adminName =
-                    (
-                      form.querySelector(
-                        'input[name="adminName"]'
-                      ) as HTMLInputElement
-                    )?.value || "";
-                  handleGenerateCredentials(businessName, adminName);
-                }}
-                className="rounded-2xl"
-              >
-                Generate Credentials
-              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget.closest("form") as HTMLFormElement;
+                const professionalName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+                const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
+                handleGenerateCredentials(professionalName, adminName);
+              }}
+              className="w-full rounded-2xl"
+            >
+              <Key className="h-4 w-4 mr-2" /> Generate Credentials
+            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input
-                  name="username"
-                  value={generatedUsername}
-                  onChange={(e) => setGeneratedUsername(e.target.value)}
-                  className="rounded-2xl"
-                />
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
@@ -2819,854 +3003,302 @@ export default function SuperAdminDashboard() {
                     onChange={(e) => setGeneratedPassword(e.target.value)}
                     className="pr-10 rounded-2xl"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                  <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">
-                  (Leave empty to use generated or enter manually)
-                </p>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                    setGeneratedPassword("");
-                    setGeneratedUsername("");
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Create Business
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (rightPanelContent === "edit-business" && editingBusiness) {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">EDIT BUSINESS</h3>
-            <form onSubmit={handleUpdateBusiness} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Business Name</Label>
-                <Input
-                  name="name"
-                  defaultValue={editingBusiness.name}
-                  required
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  name="description"
-                  defaultValue={editingBusiness.description}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Logo URL</Label>
-                <Input
-                  name="logo"
-                  defaultValue={editingBusiness.logo}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Address</Label>
-                <Input
-                  name="address"
-                  defaultValue={editingBusiness.address}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input
-                  name="phone"
-                  defaultValue={editingBusiness.phone}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Website</Label>
-                <Input
-                  name="website"
-                  defaultValue={editingBusiness.website}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select
-                  name="categoryId"
-                  defaultValue={editingBusiness.category?.id || ""}
-                >
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Admin Email</Label>
-                <Input
-                  name="email"
-                  defaultValue={editingBusiness.admin.email}
-                  type="email"
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Save Changes
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (rightPanelContent === "add-category") {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">ADD CATEGORY</h3>
-            <form onSubmit={handleAddCategory} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Category Name</Label>
-                <Input name="name" required className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea name="description" className="rounded-2xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Parent Category</Label>
-                <Select name="parentId">
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue placeholder="Select parent category (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No parent</SelectItem>
-                    {categories
-                      .filter((c) => !c.parentId)
-                      .map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Create Category
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (rightPanelContent === "edit-category" && editingCategory) {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">EDIT CATEGORY</h3>
-            <form onSubmit={handleUpdateCategory} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Category Name</Label>
-                <Input
-                  name="name"
-                  defaultValue={editingCategory.name}
-                  required
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  name="description"
-                  defaultValue={editingCategory.description}
-                  className="rounded-2xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Parent Category</Label>
-                <Select
-                  name="parentId"
-                  defaultValue={editingCategory.parentId || "none"}
-                >
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue placeholder="Select parent category (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No parent</SelectItem>
-                    {safeCategories
-                      .filter((c) => !c.parentId && c.id !== editingCategory.id)
-                      .map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Update Category
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (rightPanelContent === "add-professional") {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto hide-scrollbar">
-          <div className="space-y-6">
-            <p className="text-sm text-gray-600">
-              Create basic account details. The professional will manage their
-              profile content through their admin panel.
-            </p>
-            <form onSubmit={handleAddProfessional} className="space-y-6">
-              {/* Basic Account Information */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <User className="h-4 w-4 mr-2" />
-                  Account Details
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label>Professional Name</Label>
-                    <Input name="name" required className="rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      name="phone"
-                      placeholder="+91 8080808080"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Account */}
-              <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Login Credentials
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label>Admin Name</Label>
-                    <Input name="adminName" required className="rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Admin Email (Login Email)</Label>
-                    <Input
-                      name="email"
-                      type="email"
-                      required
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const form = e.currentTarget.closest(
-                        "form"
-                      ) as HTMLFormElement;
-                      const professionalName =
-                        (
-                          form.querySelector(
-                            'input[name="name"]'
-                          ) as HTMLInputElement
-                        )?.value || "";
-                      const adminName =
-                        (
-                          form.querySelector(
-                            'input[name="adminName"]'
-                          ) as HTMLInputElement
-                        )?.value || "";
-                      handleGenerateCredentials(professionalName, adminName);
-                    }}
-                    className="rounded-2xl"
-                  >
-                    Generate Credentials
-                  </Button>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Username</Label>
-                      <Input
-                        name="username"
-                        value={generatedUsername}
-                        onChange={(e) => setGeneratedUsername(e.target.value)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Password</Label>
-                      <div className="relative">
-                        <Input
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          value={generatedPassword}
-                          onChange={(e) => setGeneratedPassword(e.target.value)}
-                          className="pr-10 rounded-2xl"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    (Leave empty to use generated or enter manually)
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                    setGeneratedPassword("");
-                    setGeneratedUsername("");
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Create Professional Account
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (rightPanelContent === "edit-professional" && editingProfessional) {
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto">
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold">EDIT PROFESSIONAL ACCOUNT</h3>
-            <p className="text-sm text-gray-600">
-              Edit basic account details. Profile content is managed by the
-              professional through their admin panel.
-            </p>
-            <form onSubmit={handleUpdateProfessional} className="space-y-6">
-              {/* Basic Account Information */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <User className="h-4 w-4 mr-2" />
-                  Account Details
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label>Professional Name</Label>
-                    <Input
-                      name="name"
-                      defaultValue={editingProfessional.name}
-                      required
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      name="phone"
-                      defaultValue={editingProfessional.phone || ""}
-                      className="rounded-2xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Contact Email</Label>
-                    <Input
-                      name="email"
-                      defaultValue={editingProfessional.email || ""}
-                      type="email"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                  }}
-                  className="rounded-2xl"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="rounded-2xl">
-                  Save Changes
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    if (
-      rightPanelContent === "create-account-from-inquiry" &&
-      (editingBusiness || editingProfessional)
-    ) {
-      const inquiry = editingBusiness || editingProfessional;
-      const isBusiness = !!editingBusiness;
-
-      if (!inquiry) {
-        return null;
-      }
-
-      return (
-        <div className="w-full h-full rounded-3xl bg-white p-4 sm:p-6 overflow-y-auto hide-scrollbar">
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold">
-                CREATE ACCOUNT FROM INQUIRY
-              </h3>
-              <p className="text-sm text-gray-600">
-                Complete the account setup for {inquiry.name}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-2xl">
-              <h4 className="font-medium text-gray-900 mb-2">
-                Inquiry Details
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="font-medium">Type:</span>{" "}
-                  {isBusiness ? "Business" : "Professional"}
-                </div>
-                <div>
-                  <span className="font-medium">Name:</span> {inquiry.name}
-                </div>
-                <div>
-                  <span className="font-medium">Email:</span> {inquiry.email}
-                </div>
-                {isBusiness && (
-                  <div>
-                    <span className="font-medium">Business Name:</span>{" "}
-                    {(inquiry as any).businessName || "N/A"}
-                  </div>
-                )}
-                <div>
-                  <span className="font-medium">Location:</span>{" "}
-                  {(inquiry as any).location || "Not specified"}
-                </div>
-                {inquiry.phone && (
-                  <div>
-                    <span className="font-medium">Phone:</span> {inquiry.phone}
-                  </div>
-                )}
               </div>
             </div>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
+  // --- EDIT PROFESSIONAL ---
+  if (rightPanelContent === "edit-professional" && editingProfessional) {
+    return (
+      <ModalLayout
+        title="Edit Professional"
+        description="Update professional details."
+        formId="edit-professional-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-professional-form" className="rounded-2xl">
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-professional-form" onSubmit={handleUpdateProfessional} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Professional Name</Label>
+            <Input name="name" defaultValue={editingProfessional.name} required className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <Input name="phone" defaultValue={editingProfessional.phone || ""} className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input name="email" defaultValue={editingProfessional.email || ""} type="email" className="rounded-2xl" />
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
 
-                const manualPassword = formData.get("password") as string;
-                const password =
-                  manualPassword || generatedPassword || generatePassword();
+  // --- ADD CATEGORY ---
+  if (rightPanelContent === "add-category") {
+    return (
+      <ModalLayout
+        title="Add Category"
+        description="Create a new business category."
+        formId="add-category-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
+              Cancel
+            </Button>
+            <Button type="submit" form="add-category-form" className="rounded-2xl">
+              Create Category
+            </Button>
+          </>
+        }
+      >
+        <form id="add-category-form" onSubmit={handleAddCategory} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Category Name</Label>
+            <Input name="name" required className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea name="description" className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Parent Category</Label>
+            <Select name="parentId">
+              <SelectTrigger className="rounded-2xl">
+                <SelectValue placeholder="Select parent category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No parent</SelectItem>
+                {categories.filter((c) => !c.parentId).map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
 
-                const accountData = {
-                  name: isBusiness
-                    ? (formData.get("businessName") as string) ||
-                      (inquiry as any).businessName ||
-                      inquiry.name
-                    : inquiry.name,
-                  email: inquiry.email,
-                  password: password,
-                  adminName:
-                    (formData.get("adminName") as string) || inquiry.name,
-                  phone: inquiry.phone,
-                  ...(isBusiness && {
-                    address: isBusiness ? (inquiry as any).location : undefined,
-                    description: isBusiness
-                      ? (formData.get("description") as string)
-                      : undefined,
-                    categoryId: isBusiness
-                      ? (formData.get("categoryId") as string)
-                      : undefined,
-                  }),
-                };
+  // --- EDIT CATEGORY ---
+  if (rightPanelContent === "edit-category" && editingCategory) {
+    return (
+      <ModalLayout
+        title="Edit Category"
+        description="Update category details."
+        formId="edit-category-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-category-form" className="rounded-2xl">
+              Update Category
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-category-form" onSubmit={handleUpdateCategory} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Category Name</Label>
+            <Input name="name" defaultValue={editingCategory.name} required className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea name="description" defaultValue={editingCategory.description} className="rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Parent Category</Label>
+            <Select name="parentId" defaultValue={editingCategory.parentId || "none"}>
+              <SelectTrigger className="rounded-2xl">
+                <SelectValue placeholder="Select parent category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No parent</SelectItem>
+                {safeCategories.filter((c) => !c.parentId && c.id !== editingCategory.id).map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
 
+  // --- CREATE ACCOUNT FROM INQUIRY ---
+  if (rightPanelContent === "create-account-from-inquiry" && (editingBusiness || editingProfessional)) {
+    const inquiry = editingBusiness || editingProfessional;
+    const isBusiness = !!editingBusiness;
+
+    if (!inquiry) return null;
+
+    return (
+      <ModalLayout
+        title="Create Account"
+        description="Complete account setup from registration request."
+        formId="inquiry-account-form"
+        footerContent={
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl" disabled={creatingAccount !== null}>
+              Cancel
+            </Button>
+            <Button type="submit" form="inquiry-account-form" className="rounded-2xl bg-green-600 hover:bg-green-700" disabled={creatingAccount !== null}>
+              {creatingAccount ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <UserCheck className="h-4 w-4 mr-2" />}
+              Create Account
+            </Button>
+          </>
+        }
+      >
+        <form id="inquiry-account-form" onSubmit={async (e) => { 
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const manualPassword = formData.get("password") as string;
+            const password = manualPassword || generatedPassword || generatePassword();
+
+            const accountData = {
+              name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
+              email: inquiry.email,
+              password: password,
+              adminName: (formData.get("adminName") as string) || inquiry.name,
+              phone: inquiry.phone,
+              ...(isBusiness && {
+                address: (inquiry as any).location,
+                description: (formData.get("description") as string),
+                categoryId: (formData.get("categoryId") as string),
+              }),
+            };
+
+            try {
+              const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(accountData),
+              });
+
+              if (response.ok) {
                 try {
-                  const response = await fetch(
-                    isBusiness
-                      ? "/api/admin/businesses"
-                      : "/api/admin/professionals",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(accountData),
-                    }
-                  );
-
-                  if (response.ok) {
-                    const result = await response.json();
-                    
-                    // Send email notification with credentials
-                    try {
-                      const emailResponse = await fetch("/api/notifications", {
+                    await fetch("/api/notifications", {
                         method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          type: "accountCreation",
-                          name: inquiry.name,
-                          email: inquiry.email,
-                          password: password,
-                          accountType: isBusiness ? "business" : "professional",
-                          loginUrl: `${window.location.origin}/login`,
+                            type: "accountCreation", name: inquiry.name, email: inquiry.email,
+                            password: password, accountType: isBusiness ? "business" : "professional",
+                            loginUrl: `${window.location.origin}/login`,
                         }),
-                      });
-
-                      if (!emailResponse.ok) {
-                        console.error("Failed to send account creation email");
-                      }
-                    } catch (emailError) {
-                      console.error("Email notification error:", emailError);
-                    }
-
-                    // Update inquiry status to COMPLETED
-                    const statusUpdateResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({ status: "COMPLETED" }),
                     });
+                } catch (err) { console.error(err); }
 
-                    if (statusUpdateResponse.ok) {
-                      // Update the inquiry in the list
-                      setRegistrationInquiries((prev) =>
-                        prev.map((regInquiry) =>
-                          regInquiry.id === inquiry.id
-                            ? { ...regInquiry, status: "COMPLETED" }
-                            : regInquiry
-                        )
-                      );
+                await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+                  method: "PUT", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: "COMPLETED" }),
+                });
 
-                      toast({
-                        title: "Success",
-                        description: `${
-                          isBusiness ? "Business" : "Professional"
-                        } account created successfully! Login credentials sent to ${
-                          inquiry.email
-                        }`,
-                      });
-
-                      // Close sidebar and refresh data
-                      setShowRightPanel(false);
-                      setRightPanelContent(null);
-                      setEditingBusiness(null);
-                      setEditingProfessional(null);
-                      setGeneratedPassword("");
-                      setGeneratedUsername("");
-                      fetchData();
-                    } else {
-                      console.error("Failed to update inquiry status");
-                      toast({
-                        title: "Warning",
-                        description: `${isBusiness ? "Business" : "Professional"} account created but failed to update inquiry status.`,
-                        variant: "destructive",
-                      });
-                    }
-                  } else {
-                    const error = await response.json();
-                    console.error("Account creation failed:", error);
-                    toast({
-                      title: "Error",
-                      description: `Failed to create account: ${
-                        error.error || error.message || "Unknown error"
-                      }`,
-                      variant: "destructive",
-                    });
-                  }
-                } catch (error) {
-                  console.error("Failed to create account:", error);
-                  toast({
-                    title: "Error",
-                    description: "Failed to create account. Please try again.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              className="space-y-6"
-            >
-              {/* Account Configuration */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Account Configuration
-                </h4>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label>Admin Name</Label>
-                    <Input
-                      name="adminName"
-                      defaultValue={inquiry.name}
-                      required
-                      className="rounded-2xl"
-                    />
-                  </div>
-
-                  {isBusiness && (
-                    <>
-                      <div className="space-y-2">
-                        <Label>Business Name</Label>
-                        <Input
-                          name="businessName"
-                          defaultValue={
-                            isBusiness
-                              ? (inquiry as any).businessName || inquiry.name
-                              : inquiry.name
-                          }
-                          required
-                          className="rounded-2xl"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Textarea
-                          name="description"
-                          placeholder="Brief description of the business..."
-                          className="rounded-2xl"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Category</Label>
-                        <Select name="categoryId">
-                          <SelectTrigger className="rounded-2xl">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {safeCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Credentials */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <Key className="h-4 w-4 mr-2" />
-                  Login Credentials
-                </h4>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label>Email (Login)</Label>
-                    <Input
-                      name="email"
-                      value={inquiry.email || ""}
-                      disabled
-                      className="rounded-2xl bg-gray-100"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label>Password</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const generated = generatePassword();
-                          setGeneratedPassword(generated);
-                        }}
-                        className="rounded-xl"
-                      >
-                        Generate Password
-                      </Button>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={generatedPassword}
-                        onChange={(e) => setGeneratedPassword(e.target.value)}
-                        className="pr-10 rounded-2xl"
-                        placeholder="Enter or generate a password..."
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-2xl"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Password will be sent to the user via email
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-2 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowRightPanel(false);
-                    setRightPanelContent(null);
-                    setEditingBusiness(null);
-                    setEditingProfessional(null);
-                    setGeneratedPassword("");
-                    setGeneratedUsername("");
-                  }}
-                  className="rounded-2xl"
-                  disabled={creatingAccount !== null}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="rounded-2xl bg-green-600 hover:bg-green-700"
-                  disabled={creatingAccount !== null}
-                >
-                  {creatingAccount ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Create Account
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
+                setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
+                toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
+                closePanel();
+                fetchData();
+              }
+            } catch (error) {
+                console.error(error);
+                toast({ title: "Error", description: "Failed to create account.", variant: "destructive" });
+            }
+          }} className="space-y-5">
+          
+          <div className="bg-gray-50 p-4 rounded-2xl border">
+            <h4 className="font-medium text-sm mb-2">Inquiry Details</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+              <div>Type: <span className="font-medium text-gray-900">{isBusiness ? "Business" : "Professional"}</span></div>
+              <div>Name: <span className="font-medium text-gray-900">{inquiry.name}</span></div>
+              <div>Email: <span className="font-medium text-gray-900">{inquiry.email}</span></div>
+              <div>Location: <span className="font-medium text-gray-900">{(inquiry as any).location || "N/A"}</span></div>
+            </div>
           </div>
-        </div>
-      );
-    }
 
-    return null;
-  };
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm">Account Configuration</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Admin Name</Label>
+                <Input name="adminName" defaultValue={inquiry.name} required className="rounded-2xl" />
+              </div>
+              {isBusiness && (
+                <>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Business Name</Label>
+                    <Input name="businessName" defaultValue={(inquiry as any).businessName || inquiry.name} required className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Description</Label>
+                    <Textarea name="description" placeholder="Brief description..." className="rounded-2xl" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Category</Label>
+                    <Select name="categoryId">
+                      <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>
+                          {safeCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm">Login Credentials</h4>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="flex gap-2">
+                  <div className="relative flex-1">
+                      <Input name="password" type={showPassword ? "text" : "password"} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" placeholder="Generated or manual password" />
+                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                  </div>
+                  <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }}>Generate</Button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </ModalLayout>
+    );
+  }
+
+  return null;
+};
+
+
 
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
         <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
-        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+        <div className="bg-white border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-1">
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-2xl">
                 <Skeleton className="h-8 w-8" />
@@ -3691,7 +3323,7 @@ export default function SuperAdminDashboard() {
         <div className="flex flex-1 h-fit overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm overflow-auto hide-scrollbar">
+            <div className="w-64 border bg-white border-r border-gray-200 flex flex-col shadow-sm overflow-auto hide-scrollbar">
               <div className="p-4 border-b border-gray-200 rounded-t-3xl">
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-6 w-6" />
@@ -3757,36 +3389,25 @@ export default function SuperAdminDashboard() {
     <div className="max-h-screen min-h-screen relative flex flex-col">
       <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
-      <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-2">
+      <div className="bg-white border  border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center px-3 sm:px-4 py-1">
           <div className="flex items-center ">
             <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
             <span className="h-8 border-l border-gray-300 mx-2"></span>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                DigiSense
-              </h1>
+               <span className="font-semibold">Super Admin</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-48 sm:w-64 rounded-2xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-gray-900">
                 {user?.name || "Super Admin"}
               </p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center">
-              <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+            <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
+              <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
             </div>
           </div>
         </div>
@@ -3796,13 +3417,7 @@ export default function SuperAdminDashboard() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
-          <div className="w-64 m-4 border  bg-white border-r   rounded-3xl border-gray-200 flex flex-col shadow-sm">
-            <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-              <div className="flex items-center space-x-2">
-                <Crown className="h-6 w-6" />
-                <span className="font-semibold">Super Admin</span>
-              </div>
-            </div>
+          <div className="w-64    bg-white border-r border-gray-200 flex flex-col shadow-sm">
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
                 {menuItems.map((item) => (
@@ -3840,54 +3455,25 @@ export default function SuperAdminDashboard() {
         )}
 
         {/* Middle Content */}
-        <div
-          className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-auto hide-scrollbar transition-all duration-300 ease-in-out   pb-20 md:pb-0 ${
-            showRightPanel && !isMobile ? "mr-0" : ""
-          }`}
-        >
+        <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
           <div className="flex-1  p-4 sm:p-6 overflow-auto hide-scrollbar">
             {renderMiddleContent()}
           </div>
         </div>
 
-        {/* Right Editor Panel - Desktop or Mobile Bottom Sheet */}
-        {showRightPanel && (
-          <div
-            className={`${
-              isMobile ? "fixed bottom-0 left-0 right-0 z-50" : "relative"
-            } m-4 border rounded-3xl bg-white border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm ${
-              isMobile ? "h-96" : "w-96"
-            }`}
-          >
-            {isMobile && (
-              <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-semibold">Panel</h3>
-                <button
-                  onClick={() => setShowRightPanel(false)}
-                  className="p-1 rounded-lg hover:bg-gray-100"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 6l8 8M6 14L14 6"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
-            <div className="flex-1 overflow-auto hide-scrollbar">
-              {renderRightPanel()}
-            </div>
-          </div>
-        )}
+        {/* Right Editor Panel - Dialog */}
+        <Dialog open={showRightPanel} onOpenChange={(open) => {
+          if (!open) {
+            setShowRightPanel(false);
+            setRightPanelContent(null);
+            setGeneratedPassword("");
+            setGeneratedUsername("");
+          }
+        }}>
+          <DialogContent className="max-w-4xl border bg-white p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
+            {renderRightPanel()}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Mobile Bottom Navigation */}
@@ -3973,173 +3559,187 @@ export default function SuperAdminDashboard() {
         open={showBusinessListingInquiryDialog}
         onOpenChange={setShowBusinessListingInquiryDialog}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Business Listing Inquiry Details</DialogTitle>
-            <DialogDescription>
-              Review and manage this business listing inquiry
-            </DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="max-w-4xl p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
           {selectedBusinessListingInquiry && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Business Name</Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry?.businessName || "Not provided"}
-                  </p>
+            <div className="flex flex-col h-full relative">
+              {/* Fixed Header */}
+              <DialogHeader className="p-6 border-b shrink-0 space-y-0 bg-white">
+                <div className="flex justify-between items-start w-full">
+                  <div className="">
+                    <DialogTitle className="text-md  font-semibold">Business Listing Inquiry Details</DialogTitle>
+                    <DialogDescription className="text-xs text-gray-500">
+                      Review and manage this business listing inquiry
+                    </DialogDescription>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Contact Name</Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry?.contactName || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry?.email || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Phone</Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry.phone || "Not provided"}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-medium">
-                    Business Description
-                  </Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry?.businessDescription ||
-                      "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Inquiry Type</Label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessListingInquiry?.inquiryType ||
-                      "Not specified"}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-medium">Requirements</Label>
-                  <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
-                    {selectedBusinessListingInquiry?.requirements || "Not provided"}
-                  </p>
+              </DialogHeader>
+
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-16">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Business Name</Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry?.businessName || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Contact Name</Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry?.contactName || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Email</Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry?.email || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Phone</Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry.phone || "Not provided"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium">
+                        Business Description
+                      </Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry?.businessDescription ||
+                          "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Inquiry Type</Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedBusinessListingInquiry?.inquiryType ||
+                          "Not specified"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium">Requirements</Label>
+                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                        {selectedBusinessListingInquiry?.requirements || "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Update Status</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Status</Label>
+                        <Select
+                          value={selectedBusinessListingInquiry.status}
+                          onValueChange={(value) => {
+                            const updated = {
+                              ...selectedBusinessListingInquiry,
+                              status: value,
+                            };
+                            setSelectedBusinessListingInquiry(updated);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="UNDER_REVIEW">
+                              Under Review
+                            </SelectItem>
+                            <SelectItem value="APPROVED">Approved</SelectItem>
+                            <SelectItem value="REJECTED">Rejected</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Assign To</Label>
+                        <Select
+                          value={selectedBusinessListingInquiry.assignedTo || ""}
+                          onValueChange={(value) => {
+                            const updated = {
+                              ...selectedBusinessListingInquiry,
+                              assignedTo: value || null,
+                            };
+                            setSelectedBusinessListingInquiry(updated);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select user or leave unassigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Unassigned</SelectItem>
+                            {/* You would fetch users here */}
+                            <SelectItem value="admin1">Admin 1</SelectItem>
+                            <SelectItem value="admin2">Admin 2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Notes</Label>
+                      <Textarea
+                        value={selectedBusinessListingInquiry?.notes || ""}
+                        onChange={(e) => {
+                          const updated = {
+                            ...selectedBusinessListingInquiry,
+                            notes: e.target.value,
+                          };
+                          setSelectedBusinessListingInquiry(updated);
+                        }}
+                        placeholder="Add internal notes..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Update Status</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={selectedBusinessListingInquiry.status}
-                      onValueChange={(value) => {
-                        const updated = {
-                          ...selectedBusinessListingInquiry,
-                          status: value,
-                        };
-                        setSelectedBusinessListingInquiry(updated);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="UNDER_REVIEW">
-                          Under Review
-                        </SelectItem>
-                        <SelectItem value="APPROVED">Approved</SelectItem>
-                        <SelectItem value="REJECTED">Rejected</SelectItem>
-                        <SelectItem value="COMPLETED">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Assign To</Label>
-                    <Select
-                      value={selectedBusinessListingInquiry.assignedTo || ""}
-                      onValueChange={(value) => {
-                        const updated = {
-                          ...selectedBusinessListingInquiry,
-                          assignedTo: value || null,
-                        };
-                        setSelectedBusinessListingInquiry(updated);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user or leave unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {/* You would fetch users here */}
-                        <SelectItem value="admin1">Admin 1</SelectItem>
-                        <SelectItem value="admin2">Admin 2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Notes</Label>
-                  <Textarea
-                    value={selectedBusinessListingInquiry?.notes || ""}
-                    onChange={(e) => {
-                      const updated = {
-                        ...selectedBusinessListingInquiry,
-                        notes: e.target.value,
+              {/* Absolute Footer */}
+              <DialogFooter className="px-6 w-full flex flex-col py-2 border-t absolute bottom-0 left-0 right-0 bg-white z-10">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowBusinessListingInquiryDialog(false);
+                    setSelectedBusinessListingInquiry(null);
+                  }}
+                  className="rounded-2xl w-auto "
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedBusinessListingInquiry) {
+                      const updates: any = {
+                        status: selectedBusinessListingInquiry?.status,
+                        notes: selectedBusinessListingInquiry?.notes,
                       };
-                      setSelectedBusinessListingInquiry(updated);
-                    }}
-                    placeholder="Add internal notes..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-              </div>
+                      if (selectedBusinessListingInquiry?.assignedTo) {
+                        updates.assignedTo =
+                          selectedBusinessListingInquiry.assignedTo;
+                      }
+                      handleUpdateBusinessListingInquiry(
+                        selectedBusinessListingInquiry?.id,
+                        updates
+                      );
+                    }
+                  }}
+                  className="rounded-2xl w-auto"
+                >
+                  Save Changes
+                </Button>
+              </DialogFooter>
             </div>
           )}
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowBusinessListingInquiryDialog(false);
-                setSelectedBusinessListingInquiry(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (selectedBusinessListingInquiry) {
-                  const updates: any = {
-                    status: selectedBusinessListingInquiry?.status,
-                    notes: selectedBusinessListingInquiry?.notes,
-                  };
-                  if (selectedBusinessListingInquiry?.assignedTo) {
-                    updates.assignedTo =
-                      selectedBusinessListingInquiry.assignedTo;
-                  }
-                  handleUpdateBusinessListingInquiry(
-                    selectedBusinessListingInquiry?.id,
-                    updates
-                  );
-                }
-              }}
-            >
-              Update Inquiry
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+

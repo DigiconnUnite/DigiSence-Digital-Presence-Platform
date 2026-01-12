@@ -2723,7 +2723,7 @@ const renderRightPanel = () => {
     footerContent: React.ReactNode;
     formId?: string;
   }) => (
-    <div className="flex flex-col h-[90vh] bg-white relative">
+    <div className="flex flex-col h-[90vh]  bg-white relative">
       {/* Fixed Header - shrink-0 ensures it doesn't get squashed */}
       <DialogHeader className="px-6 pt-4 pb-2 border-b shrink-0 space-y-1.5 bg-white z-10">
         <div className="flex justify-between items-start w-full">
@@ -2757,16 +2757,16 @@ const renderRightPanel = () => {
         formId="add-business-form"
         footerContent={
           <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl w-auto flex-1">
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-full w-auto flex-1">
               Cancel
             </Button>
-            <Button type="submit" form="add-business-form" className="rounded-2xl w-auto flex-1">
+            <Button type="submit" form="add-business-form" className="rounded-full w-auto flex-1">
               Create Business
             </Button>
           </>
         }
       >
-        <form id="add-business-form" onSubmit={handleAddBusiness} className="space-y-5">
+        <form id="add-business-form" onSubmit={handleAddBusiness} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }} className="space-y-5">
           <div className="space-y-2">
             <Label>Business Name</Label>
             <Input name="name" required className="rounded-xl" placeholder="e.g. Acme Corp" />
@@ -3470,7 +3470,7 @@ const renderRightPanel = () => {
             setGeneratedUsername("");
           }
         }}>
-          <DialogContent className="max-w-4xl border bg-white p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
+          <DialogContent className="max-w-4xl w-[95%] h-[90vh] border overflow-hidden  bg-white p-0  top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
             {renderRightPanel()}
           </DialogContent>
         </Dialog>
@@ -3486,7 +3486,7 @@ const renderRightPanel = () => {
               onClick={() => setShowMoreMenu(false)}
             >
               <div
-                className="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl p-4"
+                className="absolute bottom-16 left-0 right-0 bg-white rounded-t-md p-4"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="space-y-2">
@@ -3559,7 +3559,7 @@ const renderRightPanel = () => {
         open={showBusinessListingInquiryDialog}
         onOpenChange={setShowBusinessListingInquiryDialog}
       >
-        <DialogContent className="max-w-4xl p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
+        <DialogContent className="max-w-4xl  p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
           {selectedBusinessListingInquiry && (
             <div className="flex flex-col h-full relative">
               {/* Fixed Header */}

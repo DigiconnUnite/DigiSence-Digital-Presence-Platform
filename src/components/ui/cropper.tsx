@@ -162,6 +162,7 @@ function getCropSize(
   aspect: number,
   rotation = 0,
 ): Size {
+  console.log('getCropSize called with:', { mediaWidth, mediaHeight, contentWidth, contentHeight, aspect, rotation });
   const cacheKey = `${quantize(mediaWidth, 8)}-${quantize(mediaHeight, 8)}-${quantize(contentWidth, 8)}-${quantize(contentHeight, 8)}-${quantize(aspect, 0.01)}-${quantizeRotation(rotation)}`;
 
   const cached = lruGet(cropSizeCache, cacheKey);
@@ -184,6 +185,7 @@ function getCropSize(
         };
 
   lruSet(cropSizeCache, cacheKey, result, MAX_CACHE_SIZE);
+  console.log('getCropSize result:', result);
   return result;
 }
 
@@ -696,6 +698,9 @@ function Cropper(props: CropperProps) {
 
 interface CropperImplProps extends CropperProps {
   onWheelZoom?: (event: WheelEvent) => void;
+  allowResize?: boolean;
+  allowMoveBox?: boolean;
+  aspectRatios?: {name: string, ratio: number, size?: string}[];
 }
 
 function CropperImpl(props: CropperImplProps) {
@@ -924,6 +929,7 @@ function CropperImpl(props: CropperImplProps) {
           Math.abs(newPosition.x - currentCrop.x) > 1 ||
           Math.abs(newPosition.y - currentCrop.y) > 1
         ) {
+          console.log('onDrag: updating crop position to', newPosition);
           store.setState("crop", newPosition);
         }
       });

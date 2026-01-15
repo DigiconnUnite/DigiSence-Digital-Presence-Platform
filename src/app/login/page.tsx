@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import Aurora from '@/components/Aurora'
 
-export default function LoginPage() {
+function LoginContent() {
    const searchParams = useSearchParams()
    const isAdmin = searchParams.get('admin') === 'true'
    const [loginType, setLoginType] = useState<'business' | 'professional'>(isAdmin ? 'business' : 'business')
@@ -477,4 +477,8 @@ export default function LoginPage() {
       </div>
     </div>
   )
+}
+
+export default function LoginPage() {
+ return <Suspense fallback={<div>Loading...</div>}><LoginContent /></Suspense>
 }

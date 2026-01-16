@@ -28,6 +28,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -99,6 +100,7 @@ import {
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
 import ProfilePreview from '@/components/ProfilePreview'
+import HeroBannerPreview from '@/components/ui/hero-banner-preview'
 
 interface Product {
   id: string
@@ -204,16 +206,16 @@ export default function BusinessAdminDashboard() {
   const [images, setImages] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [brandFilterText, setBrandFilterText] = useState('')
-  const [activeSection, setActiveSection] = useState('profile')
-  const [expandedSections, setExpandedSections] = useState<string[]>(['profile'])
+  const [activeSection, setActiveSection] = useState<any>('dashboard')
+  const [expandedSections, setExpandedSections] = useState<string[]>(['info'])
   const [editingSection, setEditingSection] = useState<string | null>(null)
-  const [selectedProfileSection, setSelectedProfileSection] = useState<string | null>('full')
 
   // Dialog states
   // const [showHeroEditor, setShowHeroEditor] = useState(false) // never used
   const [showContentEditor, setShowContentEditor] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showProductRightbar, setShowProductRightbar] = useState(false)
+  const [showProductDialog, setShowProductDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [confirmDialogData, setConfirmDialogData] = useState<{
     title: string
@@ -296,6 +298,13 @@ export default function BusinessAdminDashboard() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [newInfoKey, setNewInfoKey] = useState('')
   const [newInfoValue, setNewInfoValue] = useState('')
+  const [savingProduct, setSavingProduct] = useState(false)
+  const [savingCategory, setSavingCategory] = useState(false)
+  const [savingBrand, setSavingBrand] = useState(false)
+  const [savingPortfolio, setSavingPortfolio] = useState(false)
+  const [savingHero, setSavingHero] = useState(false)
+  const [updatingInquiry, setUpdatingInquiry] = useState<string | null>(null)
+  const [deletingProduct, setDeletingProduct] = useState<string | null>(null)
 
   // Categories management state
   const [categoryFormData, setCategoryFormData] = useState({
@@ -305,25 +314,22 @@ export default function BusinessAdminDashboard() {
   })
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
+  // Additional state variables
+  const [rightPanelContent, setRightPanelContent] = useState<string | null>(null)
+  const [showRightPanel, setShowRightPanel] = useState(false)
+  const [selectedProfileSection, setSelectedProfileSection] = useState<string | null>(null)
+  const safeCategories = categories
+
   // Mobile responsiveness states
   const [isMobile, setIsMobile] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
 
-  // Sidebar collapse state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const getEditorTitle = () => {
-    if (activeSection === 'profile') {
-      if (selectedProfileSection === 'hero') return 'Hero Section Editor'
-      if (selectedProfileSection === 'info') return 'Business Info Editor'
-      if (selectedProfileSection === 'brands') return 'Brand Slider Editor'
-      if (selectedProfileSection === 'categories') return 'Categories Editor'
-      if (selectedProfileSection === 'portfolio') return 'Portfolio Editor'
-      if (selectedProfileSection === 'content') return 'Additional Content Editor'
-      if (selectedProfileSection === 'footer') return 'Footer Editor'
-    } else if (activeSection === 'products' && showProductRightbar) {
-      return editingProduct ? 'Edit Product' : 'Add New Product'
-    }
+    if (activeSection === 'info') return 'Business Info Editor'
+    if (activeSection === 'hero') return 'Hero Section Editor'
+    if (activeSection === 'brands') return 'Brand Slider Editor'
+    if (activeSection === 'categories') return 'Categories Editor'
     return 'Editor Panel'
   }
 
@@ -365,10 +371,6 @@ export default function BusinessAdminDashboard() {
     setMounted(true)
   }, [])
 
-  // Auto-collapse sidebar when in editor mode
-  useEffect(() => {
-    setSidebarCollapsed(!!selectedProfileSection)
-  }, [selectedProfileSection])
 
   const fetchData = async () => {
     try {
@@ -555,13 +557,19 @@ export default function BusinessAdminDashboard() {
       title: 'Delete Product',
       description: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
       action: async () => {
+        setDeletingProduct(product.id)
         try {
           const response = await fetch(`/api/business/products/${product.id}`, {
             method: 'DELETE',
           })
 
           if (response.ok) {
-            await fetchData()
+            setProducts(prev => prev.filter(p => p.id !== product.id))
+            setStats(prev => ({
+              ...prev,
+              totalProducts: prev.totalProducts - 1,
+              activeProducts: product.isActive ? prev.activeProducts - 1 : prev.activeProducts,
+            }))
             toast({
               title: "Success",
               description: "Product deleted successfully!",
@@ -580,6 +588,8 @@ export default function BusinessAdminDashboard() {
             description: "Failed to delete product. Please try again.",
             variant: "destructive",
           })
+        } finally {
+          setDeletingProduct(null)
         }
       }
     })
@@ -587,6 +597,7 @@ export default function BusinessAdminDashboard() {
   }
 
   const handleInquiryStatusUpdate = async (inquiryId: string, newStatus: string) => {
+    setUpdatingInquiry(inquiryId)
     try {
       const response = await fetch(`/api/business/inquiries/${inquiryId}`, {
         method: 'PUT',
@@ -597,7 +608,7 @@ export default function BusinessAdminDashboard() {
       })
 
       if (response.ok) {
-        await fetchData()
+        setInquiries(prev => prev.map(i => i.id === inquiryId ? { ...i, status: newStatus as any } : i))
         toast({
           title: "Success",
           description: "Inquiry status updated successfully!",
@@ -616,6 +627,8 @@ export default function BusinessAdminDashboard() {
         description: "Failed to update inquiry status. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setUpdatingInquiry(null)
     }
   }
 
@@ -827,6 +840,53 @@ export default function BusinessAdminDashboard() {
     setEditingSection(null)
   }
 
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category)
+    setCategoryFormData({
+      name: category.name,
+      description: category.description || '',
+      parentId: category.parentId || '',
+    })
+    setRightPanelContent("edit-category")
+    setShowRightPanel(true)
+  }
+
+  const handleDeleteCategory = async (category: Category) => {
+    setConfirmDialogData({
+      title: 'Delete Category',
+      description: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      action: async () => {
+        try {
+          const response = await fetch(`/api/business/categories?id=${category.id}`, {
+            method: 'DELETE',
+          })
+
+          if (response.ok) {
+            await fetchData()
+            toast({
+              title: "Success",
+              description: "Category deleted successfully!",
+            })
+          } else {
+            const errorResult = await response.json()
+            toast({
+              title: "Error",
+              description: `Failed to delete category: ${errorResult.error}`,
+              variant: "destructive",
+            })
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to delete category. Please try again.",
+            variant: "destructive",
+          })
+        }
+      }
+    })
+    setShowConfirmDialog(true)
+  }
+
   const renderSkeletonContent = () => {
     switch (activeSection) {
       case 'dashboard':
@@ -1006,8 +1066,8 @@ export default function BusinessAdminDashboard() {
       <div className="min-h-screen flex flex-col relative">
         <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
-        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+        <div className="bg-white border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-1">
             <div className="flex items-center space-x-4">
               <div className="p-2 rounded-2xl">
                 <Skeleton className="h-8 w-8" />
@@ -1034,7 +1094,7 @@ export default function BusinessAdminDashboard() {
         <div className="flex flex-1 h-fit overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <div className="w-64  bg-white border-r border-gray-200 flex flex-col shadow-sm">
               <div className="p-4 border-b border-gray-200 rounded-t-3xl">
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-6 w-6" />
@@ -1063,7 +1123,7 @@ export default function BusinessAdminDashboard() {
           )}
 
           {/* Middle Content */}
-          <div className={`flex-1 m-4 rounded-3xl bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+          <div className={`flex-1  bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
             <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
               {renderSkeletonContent()}
             </div>
@@ -1095,7 +1155,6 @@ export default function BusinessAdminDashboard() {
 
   // Menu items for navigation
   const menuItems = [
-    /*
     {
       title: 'Dashboard',
       icon: BarChart3,
@@ -1103,13 +1162,33 @@ export default function BusinessAdminDashboard() {
       value: 'dashboard',
       mobileTitle: 'Home'
     },
-    */
     {
-      title: 'Profile',
+      title: 'Business Info',
+      icon: Building,
+      mobileIcon: Building,
+      value: 'info',
+      mobileTitle: 'Info'
+    },
+    {
+      title: 'Hero Banner',
+      icon: ImageIcon,
+      mobileIcon: ImageIcon,
+      value: 'hero',
+      mobileTitle: 'Hero'
+    },
+    {
+      title: 'Brand Slider',
       icon: Palette,
       mobileIcon: Palette,
-      value: 'profile',
-      mobileTitle: 'Profile'
+      value: 'brands',
+      mobileTitle: 'Brands'
+    },
+    {
+      title: 'Category',
+      icon: Grid3X3,
+      mobileIcon: Grid3X3,
+      value: 'categories',
+      mobileTitle: 'Category'
     },
     {
       title: 'Products',
@@ -1118,60 +1197,32 @@ export default function BusinessAdminDashboard() {
       value: 'products',
       mobileTitle: 'Products'
     },
-    /*
-    {
-      title: 'Inquiries',
-      icon: Mail,
-      mobileIcon: MessageCircle,
-      value: 'inquiries',
-      mobileTitle: 'Inquiries'
-    },
-    */
-    /*
-    {
-      title: 'Analytics',
-      icon: TrendingUp,
-      mobileIcon: LineChart,
-      value: 'analytics',
-      mobileTitle: 'Analytics'
-    },
-    */
-    /*
-    {
-      title: 'Settings',
-      icon: Settings,
-      mobileIcon: Cog,
-      value: 'settings',
-      mobileTitle: 'Settings'
-    },
-    */
+ 
   ]
 
   return (
     <div className="min-h-screen flex h-screen  flex-col relative">
       <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
       {/* Top Header Bar */}
-      <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-2">
+      <div className="bg-white border  border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center px-3 sm:px-4 py-1">
           <div className="flex items-center ">
-            <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
+            <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
             <span className="h-8 border-l border-gray-300 mx-2"></span>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{business.name}</h1>
+               <span className="font-semibold">{business.name}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-2xl hidden sm:flex" onClick={() => business?.slug && window.open(`/catalog/${business.slug}`, '_blank')}>
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
+          <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">{user?.name || user.email}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <p className="text-sm font-medium text-gray-900">
+                {user?.name || "Business Admin"}
+              </p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-2xl flex items-center justify-center">
-              <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+            <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
+              <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
             </div>
           </div>
         </div>
@@ -1181,36 +1232,21 @@ export default function BusinessAdminDashboard() {
       <div className="flex  flex-1  overflow-hidden">
         {/* Left Sidebar - Desktop Only */}
         {!isMobile && (
-          <div className={`m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-            <div className="p-4 border-b border-gray-200 rounded-t-3xl flex items-center justify-between min-h-[60px]">
-              <div className={`flex items-center space-x-2 transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
-                <Building className="h-6 w-6" />
-                <span className="font-semibold">Business Admin</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className={`h-8 w-8 p-0 hover:bg-gray-100 transition-all duration-300 ${sidebarCollapsed ? 'mx-auto' : ''}`}
-                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-              >
-                <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} />
-              </Button>
-            </div>
-            <nav className="flex-1 p-4 overflow-auto hide-scrollbar">
+          <div className="w-64    bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <nav className="flex-1 p-4">
               <ul className="space-y-2">
                 {menuItems.map((item) => (
                   <li key={item.value}>
                     <button
                       onClick={() => setActiveSection(item.value)}
-                      className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 ${activeSection === item.value
-                        ? 'bg-linear-to-r from-orange-400 to-amber-500 text-white'
-                        : 'text-gray-700 hover:bg-orange-50'
-                        } ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
-                      title={sidebarCollapsed ? item.title : undefined}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${
+                        activeSection === item.value
+                          ? " bg-linear-to-r from-orange-400 to-amber-500 text-white"
+                          : "text-gray-700 hover:bg-orange-50"
+                      }`}
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>{item.title}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
                     </button>
                   </li>
                 ))}
@@ -1220,25 +1256,22 @@ export default function BusinessAdminDashboard() {
             {/* Logout Section */}
             <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
               <button
-                onClick={async () => {  
-                  await logout()
-                  router.push('/login')
+                onClick={async () => {
+                  await logout();
+                  router.push('/login');
                 }}
-                className={`w-full flex items-center px-3 py-2 rounded-2xl text-left transition-all duration-300 text-red-600 hover:bg-red-50 ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}
-                title={sidebarCollapsed ? 'Logout' : undefined}
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
               >
-                <LogOut className="h-5 w-5 shrink-0" />
-                <span className={`transition-opacity duration-300 ${sidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Logout</span>
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
               </button>
             </div>
-
-
           </div>
         )}
 
         {/* Middle Content */}
-        <div className={`flex-1 m-4 rounded-3xl  bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-auto hide-scrollbar transition-all duration-300 ease-in-out   pb-20 md:pb-0`}>
-          <div className="flex-1 p-4 sm:p-6   overflow-auto hide-scrollbar">
+        <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
+          <div className="flex-1  p-4 sm:p-6 overflow-auto hide-scrollbar">
             {/* Main Content based on activeSection */}
             {activeSection === 'dashboard' && (
               <>
@@ -1335,7 +1368,7 @@ export default function BusinessAdminDashboard() {
                             inStock: true,
                             isActive: true,
                           });
-                          setShowProductRightbar(true);
+                          setShowProductDialog(true);
                         }} className="w-full justify-start rounded-2xl">
                           <Plus className="h-4 w-4 mr-2" />
                           Add New Product
@@ -1387,163 +1420,1216 @@ export default function BusinessAdminDashboard() {
               </>
             )}
 
-            {activeSection === 'profile' && (
+            {activeSection === 'info' && (
               <div className=" mx-auto">
                 <div className="mb-6">
-                  <h1 className="text-xl font-bold text-gray-900 mb-2">Profile Management</h1>
-                  <p className="text-xl text-gray-600">Manage your business profile </p>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Business Info</h1>
+                  <p className="text-xl text-gray-600">Manage your business information</p>
                 </div>
 
-                {/* Section Tabs */}
-                <div className="mb-6">
-                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-2xl overflow-x-auto">
-                    {[
-                      { id: 'full', label: sectionTitles.full, icon: Fullscreen },
-                      { id: 'hero', label: sectionTitles.hero, icon: ImageIcon },
-                      { id: 'info', label: sectionTitles.info, icon: Building },
-                      { id: 'brands', label: sectionTitles.brands, icon: Palette },
-                      { id: 'categories', label: 'Categories', icon: Grid3X3 },
-
-                      { id: 'portfolio', label: sectionTitles.portfolio, icon: FolderTree }
-                    ].map((tab) => {
-                      const Icon = tab.icon
-                      return (
-                        <button
-                          key={tab.id}
+                <div>
+                  <div className="mt-2 space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Business Name</Label>
+                      <Input
+                        name="name"
+                        value={businessInfoFormData.name}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Owner Name</Label>
+                      <Input
+                        value={businessInfoFormData.ownerName}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, ownerName: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Description</Label>
+                      <Textarea
+                        value={businessInfoFormData.description}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">About Section</Label>
+                      <Textarea
+                        value={businessInfoFormData.about}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, about: e.target.value }))}
+                        rows={3}
+                        placeholder="Detailed about section content"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">GST Number</Label>
+                      <Input
+                        value={businessInfoFormData.gstNumber}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, gstNumber: e.target.value }))}
+                        placeholder="Enter GST number"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Opening Hours</Label>
+                      <div className="space-y-2">
+                        {businessInfoFormData.openingHours?.map((hour: any, index: number) => (
+                          <div key={index} className="flex gap-2 items-center">
+                            <Input
+                              value={hour.day}
+                              onChange={(e) => {
+                                const newHours = [...businessInfoFormData.openingHours]
+                                newHours[index].day = e.target.value
+                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                              }}
+                              placeholder="Day"
+                              className="bg-white rounded-2xl"
+                            />
+                            <Input
+                              value={hour.open}
+                              onChange={(e) => {
+                                const newHours = [...businessInfoFormData.openingHours]
+                                newHours[index].open = e.target.value
+                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                              }}
+                              placeholder="Open"
+                              className="bg-white rounded-2xl"
+                            />
+                            <Input
+                              value={hour.close}
+                              onChange={(e) => {
+                                const newHours = [...businessInfoFormData.openingHours]
+                                newHours[index].close = e.target.value
+                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                              }}
+                              placeholder="Close"
+                              className="bg-white rounded-2xl"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newHours = businessInfoFormData.openingHours.filter((_, i) => i !== index)
+                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
+                              }}
+                              className="rounded-xl"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
-                            setSelectedProfileSection(tab.id)
-                            setEditingSection(tab.id)
+                            const newHours = [...(businessInfoFormData.openingHours || []), { day: '', open: '', close: '' }]
+                            setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
                           }}
-                          className={`flex-1 flex items-center justify-center px-3 py-1 rounded-xl text-sm font-medium transition-colors min-w-fit ${selectedProfileSection === tab.id
-                            ? 'bg-white text-black shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                            }`}
+                          className="rounded-2xl"
                         >
-                          <Icon className="h-4 w-4 mr-2" />
-                          {tab.label}
-                        </button>
-                      )
-                    })}
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Opening Hour
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Logo URL</Label>
+                      <div className="space-y-2">
+                        <Input
+                          value={businessInfoFormData.logo}
+                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, logo: e.target.value }))}
+                          placeholder="https://..."
+                          className="bg-white rounded-2xl"
+                        />
+                        <div className="space-y-2">
+                          <ImageUpload
+                            accept="image/*"
+                            onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, logo: url }))}
+                            onError={(error) => toast({
+                              title: "Upload Error",
+                              description: error,
+                              variant: "destructive",
+                            })}
+                          />
+
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Address</Label>
+                      <Input
+                        value={businessInfoFormData.address}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, address: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Phone</Label>
+                      <Input
+                        value={businessInfoFormData.phone}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Email</Label>
+                      <Input
+                        value={businessInfoFormData.email}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, email: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Website</Label>
+                      <Input
+                        value={businessInfoFormData.website}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, website: e.target.value }))}
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Facebook</Label>
+                      <Input
+                        value={businessInfoFormData.facebook}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, facebook: e.target.value }))}
+                        placeholder="https://facebook.com/yourpage"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Twitter</Label>
+                      <Input
+                        value={businessInfoFormData.twitter}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, twitter: e.target.value }))}
+                        placeholder="https://twitter.com/yourhandle"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">Instagram</Label>
+                      <Input
+                        value={businessInfoFormData.instagram}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, instagram: e.target.value }))}
+                        placeholder="https://instagram.com/yourhandle"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1">LinkedIn</Label>
+                      <Input
+                        value={businessInfoFormData.linkedin}
+                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, linkedin: e.target.value }))}
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        className="bg-white rounded-2xl"
+                      />
+                    </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Dynamic Preview Area */}
-                <div className="flex-1 overflow-hidden">
-                  {selectedProfileSection === 'brands' ? (
+            {activeSection === 'hero' && (
+              <div className=" mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Hero Banner</h1>
+                  <p className="text-xl text-gray-600">Manage your hero section</p>
+                </div>
+
+                {/* Hero Banner Preview */}
+                <div className="mb-6">
+                  <HeroBannerPreview heroContent={heroContent} selectedSlideIndex={selectedSlideIndex} />
+                </div>
+
+                <div className="space-y-6">
+                  {/* Section Title */}
+                  <div>
+                    <Label className="text-sm font-medium">Section Title</Label>
+                    <Input
+                      value={sectionTitles.hero}
+                      onChange={(e) => setSectionTitles(prev => ({ ...prev, hero: e.target.value }))}
+                      placeholder="Enter section title"
+                      className="rounded-2xl"
+                    />
+                  </div>
+
+                  {/* Slide Selector and Add Button */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex-1 w-full">
+                      <Label className="text-sm font-medium">Select Slide</Label>
+                      <Select
+                        value={selectedSlideIndex?.toString()}
+                        onValueChange={(value) => setSelectedSlideIndex(parseInt(value))}
+                      >
+                        <SelectTrigger className="rounded-2xl w-full">
+                          <SelectValue placeholder="Select a slide to edit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {heroContent.slides?.map((slide: any, index: number) => (
+                            <SelectItem key={index} value={index.toString()}>
+                              {index + 1}: {slide.headline || 'Untitled'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedSlideIndex > 0) {
+                            const newSlides = [...heroContent.slides]
+                            const temp = newSlides[selectedSlideIndex]
+                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex - 1]
+                            newSlides[selectedSlideIndex - 1] = temp
+                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                            setSelectedSlideIndex(selectedSlideIndex - 1)
+                          }
+                        }}
+                        disabled={selectedSlideIndex === 0}
+                        className="rounded-xl"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedSlideIndex < heroContent.slides.length - 1) {
+                            const newSlides = [...heroContent.slides]
+                            const temp = newSlides[selectedSlideIndex]
+                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex + 1]
+                            newSlides[selectedSlideIndex + 1] = temp
+                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                            setSelectedSlideIndex(selectedSlideIndex + 1)
+                          }
+                        }}
+                        disabled={selectedSlideIndex === heroContent.slides.length - 1}
+                        className="rounded-xl"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newSlides = heroContent.slides.filter((_, i) => i !== selectedSlideIndex)
+                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                          setSelectedSlideIndex(Math.max(0, selectedSlideIndex - 1))
+                        }}
+                        className="rounded-xl"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const newSlide = {
+                            mediaType: 'image',
+                            media: '',
+                            headline: '',
+                            headlineSize: 'text-4xl md:text-6xl',
+                            headlineColor: '#ffffff',
+                            headlineAlignment: 'center',
+                            subtext: '',
+                            subtextSize: 'text-xl md:text-2xl',
+                            subtextColor: '#ffffff',
+                            subtextAlignment: 'center',
+                            cta: 'Get in Touch',
+                            ctaLink: ''
+                          }
+                          setHeroContent(prev => ({ ...prev, slides: [...prev.slides, newSlide] }))
+                          setSelectedSlideIndex(heroContent.slides.length)
+                        }}
+                        className="rounded-2xl"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Slide
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="border-b">
+                    <div className="flex space-x-8 overflow-x-auto">
+                      <button
+                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'content'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        onClick={() => setActiveTab('content')}
+                      >
+                        Content
+                      </button>
+                      <button
+                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'style'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        onClick={() => setActiveTab('style')}
+                      >
+                        Style
+                      </button>
+                      <button
+                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'settings'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        onClick={() => setActiveTab('settings')}
+                      >
+                        Settings
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tab Content */}
+                  {selectedSlideIndex !== null && heroContent.slides[selectedSlideIndex] && (
                     <div className="space-y-6">
-                      {/* Brands Table Section */}
-                      <Card className="rounded-3xl">
+                      {activeTab === 'content' && (
+                        <Card className="rounded-3xl">
+                          <CardContent className="pt-6">
+                            <div className="space-y-6">
+                              {/* Background Media */}
+                              <div>
+                                <Label className="text-sm font-medium">Background Media</Label>
+                                <div className="mt-2 space-y-3">
+                                  <Select
+                                    value={heroContent.slides[selectedSlideIndex].mediaType || 'image'}
+                                    onValueChange={(value) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], mediaType: value }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                  >
+                                    <SelectTrigger className="rounded-2xl">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="image">Image</SelectItem>
+                                      <SelectItem value="video">Video</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Input
+                                    placeholder="Media URL"
+                                    value={heroContent.slides[selectedSlideIndex].media || ''}
+                                    onChange={(e) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: e.target.value }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                    className="bg-white rounded-2xl"
+                                  />
+                                  <ImageUpload
+                                    allowVideo={true}
+                                    aspectRatio={16/9}
+                                    onUpload={(url) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: url }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                  />
+                                </div>
+                              </div>
 
-                        <CardContent>
-                          {brandContent.brands?.length > 0 ? (
-                            <Table>
-                              <TableHeader  >
-                                <TableRow>
-                                  <TableHead>Brand Name</TableHead>
-                                  <TableHead>Logo</TableHead>
-                                  <TableHead className="w-32">Actions</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {brandContent.brands.map((brand: any, index: number) => (
-                                  <TableRow key={index}>
-                                    <TableCell className="font-medium">{brand.name}</TableCell>
-                                    <TableCell>
-                                      {brand.logo ? (
-                                        <img
-                                          src={getOptimizedImageUrl(brand.logo, { width: 32, height: 32, quality: 85, format: 'auto' })}
-                                          alt={brand.name}
-                                          className="h-8 w-8 object-cover rounded-2xl"
-                                          loading="lazy"
-                                        />
-                                      ) : (
-                                        <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
-                                          <ImageIcon className="h-4 w-4 text-gray-400" />
-                                        </div>
-                                      )}
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex space-x-2">
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => {
-                                            // Edit functionality - could open a modal or set state
-                                            const newBrands = [...brandContent.brands]
-                                            // For now, just remove and re-add with prompt
-                                            const newName = prompt('Edit brand name:', brand.name)
-                                            if (newName && newName.trim()) {
-                                              newBrands[index] = { ...brand, name: newName.trim() }
-                                              setBrandContent(prev => ({ ...prev, brands: newBrands }))
+                              {/* Headline */}
+                              <div>
+                                <Label className="text-sm font-medium">Headline</Label>
+                                <Input
+                                  placeholder="Enter headline"
+                                  value={heroContent.slides[selectedSlideIndex].headline || ''}
+                                  onChange={(e) => {
+                                    const newSlides = [...heroContent.slides]
+                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headline: e.target.value }
+                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                  }}
+                                  className="mt-2 bg-white rounded-2xl"
+                                />
+                              </div>
+
+                              {/* Subtext */}
+                              <div>
+                                <Label className="text-sm font-medium">Subtext</Label>
+                                <Textarea
+                                  placeholder="Enter subtext"
+                                  rows={3}
+                                  value={heroContent.slides[selectedSlideIndex].subtext || ''}
+                                  onChange={(e) => {
+                                    const newSlides = [...heroContent.slides]
+                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtext: e.target.value }
+                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                  }}
+                                  className="mt-2 bg-white rounded-2xl"
+                                />
+                              </div>
+
+                              {/* CTA */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-sm font-medium">CTA Text</Label>
+                                  <Input
+                                    placeholder="Call to action text"
+                                    value={heroContent.slides[selectedSlideIndex].cta || ''}
+                                    onChange={(e) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], cta: e.target.value }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                    className="mt-2 bg-white rounded-2xl"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-sm font-medium">CTA Link</Label>
+                                  <Input
+                                    placeholder="https://..."
+                                    value={heroContent.slides[selectedSlideIndex].ctaLink || ''}
+                                    onChange={(e) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], ctaLink: e.target.value }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                    className="mt-2 bg-white rounded-2xl"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {activeTab === 'style' && (
+                        <Card className="rounded-3xl">
+                          <CardContent className="pt-6">
+                            <div className="space-y-6">
+                              {/* Headline Style */}
+                              <div>
+                                <h3 className="text-sm font-medium mb-4">Headline Style</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm">Size</Label>
+                                    <Select
+                                      value={heroContent.slides[selectedSlideIndex].headlineSize || 'text-4xl md:text-6xl'}
+                                      onValueChange={(value) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineSize: value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                    >
+                                      <SelectTrigger className="mt-2 rounded-2xl">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">Small</SelectItem>
+                                        <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">Medium</SelectItem>
+                                        <SelectItem value="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">Large</SelectItem>
+                                        <SelectItem value="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">Extra Large</SelectItem>
+                                        <SelectItem value="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl">Huge</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm">Color</Label>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Input
+                                        type="color"
+                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        className="w-12 h-10 p-1 rounded-2xl"
+                                      />
+                                      <Input
+                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        placeholder="#ffffff"
+                                        className="rounded-2xl"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm">Alignment</Label>
+                                    <Select
+                                      value={heroContent.slides[selectedSlideIndex].headlineAlignment || 'center'}
+                                      onValueChange={(value) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineAlignment: value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                    >
+                                      <SelectTrigger className="mt-2 rounded-2xl">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="left">Left</SelectItem>
+                                        <SelectItem value="center">Center</SelectItem>
+                                        <SelectItem value="right">Right</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Subtext Style */}
+                              <div>
+                                <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm">Size</Label>
+                                    <Select
+                                      value={heroContent.slides[selectedSlideIndex].subtextSize || 'text-xl md:text-2xl'}
+                                      onValueChange={(value) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextSize: value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                    >
+                                      <SelectTrigger className="mt-2 rounded-2xl">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl">Small</SelectItem>
+                                        <SelectItem value="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl">Medium</SelectItem>
+                                        <SelectItem value="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl">Large</SelectItem>
+                                        <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl">Extra Large</SelectItem>
+                                        <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl">Huge</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm">Color</Label>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Input
+                                        type="color"
+                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        className="w-12 h-10 p-1 rounded-2xl"
+                                      />
+                                      <Input
+                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
+                                        onChange={(e) => {
+                                          const newSlides = [...heroContent.slides]
+                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
+                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                        }}
+                                        placeholder="#ffffff"
+                                        className="rounded-2xl"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm">Alignment</Label>
+                                    <Select
+                                      value={heroContent.slides[selectedSlideIndex].subtextAlignment || 'center'}
+                                      onValueChange={(value) => {
+                                        const newSlides = [...heroContent.slides]
+                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextAlignment: value }
+                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                      }}
+                                    >
+                                      <SelectTrigger className="mt-2 rounded-2xl">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="left">Left</SelectItem>
+                                        <SelectItem value="center">Center</SelectItem>
+                                        <SelectItem value="right">Right</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {activeTab === 'settings' && (
+                        <Card className="rounded-3xl">
+                          <CardContent className="pt-6">
+                            <div className="space-y-6">
+                              <h3 className="text-sm font-medium">Slider Settings</h3>
+
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="showText" className="text-sm">Show Text Overlay</Label>
+                                  <Switch
+                                    id="showText"
+                                    checked={heroContent.slides[selectedSlideIndex]?.showText !== false}
+                                    onCheckedChange={(checked) => {
+                                      const newSlides = [...heroContent.slides]
+                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], showText: checked }
+                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
+                                  <Switch
+                                    id="autoplay"
+                                    checked={heroContent.autoPlay}
+                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, autoPlay: checked }))}
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label className="text-sm">Transition Speed (seconds)</Label>
+                                  <Select
+                                    value={heroContent.transitionSpeed?.toString()}
+                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionSpeed: parseInt(value) }))}
+                                  >
+                                    <SelectTrigger className="mt-2 rounded-2xl">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="3">3 seconds</SelectItem>
+                                      <SelectItem value="5">5 seconds</SelectItem>
+                                      <SelectItem value="7">7 seconds</SelectItem>
+                                      <SelectItem value="10">10 seconds</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div>
+                                  <Label className="text-sm">Transition Effect</Label>
+                                  <Select
+                                    value={heroContent.transitionEffect || 'fade'}
+                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionEffect: value }))}
+                                  >
+                                    <SelectTrigger className="mt-2 rounded-2xl">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="fade">Fade</SelectItem>
+                                      <SelectItem value="slide">Slide</SelectItem>
+                                      <SelectItem value="zoom">Zoom</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="showDots" className="text-sm">Show Navigation Dots</Label>
+                                  <Switch
+                                    id="showDots"
+                                    checked={heroContent.showDots !== false}
+                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showDots: checked }))}
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="showArrows" className="text-sm">Show Navigation Arrows</Label>
+                                  <Switch
+                                    id="showArrows"
+                                    checked={heroContent.showArrows !== false}
+                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showArrows: checked }))}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'brands' && (
+              <div className=" mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Brand Slider</h1>
+                  <p className="text-xl text-gray-600">Manage your brand slider</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Section Title */}
+                  <div>
+                    <Label className="text-sm font-medium">Page Title for Brand Section</Label>
+                    <Input
+                      value={sectionTitles.brands}
+                      onChange={(e) => setSectionTitles(prev => ({ ...prev, brands: e.target.value }))}
+                      placeholder="Enter section title"
+                      className="rounded-2xl"
+                    />
+                  </div>
+
+                  {/* Add New Brand Section */}
+                  <Card className="rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Add New Brand</CardTitle>
+                      <CardDescription>Add a new brand to your brand slider</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Brand Name</Label>
+                        <Input
+                          placeholder="Enter brand name"
+                          value={brandContent.newBrandName || ''}
+                          onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandName: e.target.value }))}
+                          className="bg-white rounded-2xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Brand Photo</Label>
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Photo URL or upload below"
+                            value={brandContent.newBrandLogo || ''}
+                            onChange={(e) => setBrandContent(prev => ({ ...prev, newBrandLogo: e.target.value }))}
+                            className="bg-white rounded-2xl"
+                          />
+                          <ImageUpload
+                            onUpload={(url) => setBrandContent(prev => ({ ...prev, newBrandLogo: url }))}
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          if (!brandContent.newBrandName?.trim()) {
+                            toast({
+                              title: "Error",
+                              description: "Please enter a brand name",
+                              variant: "destructive",
+                            })
+                            return
+                          }
+
+                          setSavingBrand(true)
+                          const newBrand = {
+                            name: brandContent.newBrandName.trim(),
+                            logo: brandContent.newBrandLogo || '',
+                          }
+
+                          const updatedBrands = [...(brandContent.brands || []), newBrand]
+
+                          try {
+                            const response = await fetch('/api/business', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ brandContent: { brands: updatedBrands } }),
+                            })
+
+                            if (response.ok) {
+                              setBrandContent(prev => ({
+                                ...prev,
+                                brands: updatedBrands,
+                                newBrandName: '',
+                                newBrandLogo: '',
+                              }))
+                              toast({
+                                title: "Success",
+                                description: "Brand added successfully!",
+                              })
+                            } else {
+                              const errorResult = await response.json()
+                              toast({
+                                title: "Error",
+                                description: `Failed to add brand: ${errorResult.error}`,
+                                variant: "destructive",
+                              })
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to add brand. Please try again.",
+                              variant: "destructive",
+                            })
+                          } finally {
+                            setSavingBrand(false)
+                          }
+                        }}
+                        disabled={savingBrand}
+                        className="w-full rounded-2xl"
+                      >
+                        {savingBrand ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Brand
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Brands Table Section */}
+                  <Card className="rounded-3xl">
+                    <CardContent>
+                      {brandContent.brands?.length > 0 ? (
+                        <Table>
+                          <TableHeader  >
+                            <TableRow>
+                              <TableHead>Brand Name</TableHead>
+                              <TableHead>Logo</TableHead>
+                              <TableHead className="w-32">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {brandContent.brands.map((brand: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{brand.name}</TableCell>
+                                <TableCell>
+                                  {brand.logo ? (
+                                    <img
+                                      src={getOptimizedImageUrl(brand.logo, { width: 32, height: 32, quality: 85, format: 'auto' })}
+                                      alt={brand.name}
+                                      className="h-8 w-8 object-cover rounded-2xl"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="h-8 w-8 bg-gray-200 rounded-2xl flex items-center justify-center">
+                                      <ImageIcon className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={async () => {
+                                        const newName = prompt('Edit brand name:', brand.name)
+                                        if (newName && newName.trim()) {
+                                          const updatedBrands = [...brandContent.brands]
+                                          updatedBrands[index] = { ...brand, name: newName.trim() }
+
+                                          try {
+                                            const response = await fetch('/api/business', {
+                                              method: 'PUT',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ brandContent: { brands: updatedBrands } }),
+                                            })
+
+                                            if (response.ok) {
+                                              setBrandContent(prev => ({
+                                                ...prev,
+                                                brands: updatedBrands
+                                              }))
+                                              toast({
+                                                title: "Success",
+                                                description: "Brand updated successfully!",
+                                              })
+                                            } else {
+                                              const errorResult = await response.json()
+                                              toast({
+                                                title: "Error",
+                                                description: `Failed to update brand: ${errorResult.error}`,
+                                                variant: "destructive",
+                                              })
                                             }
-                                          }}
-                                          className="rounded-xl"
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => {
-                                            setConfirmDialogData({
-                                              title: 'Delete Brand',
-                                              description: `Are you sure you want to delete "${brand.name}"?`,
-                                              action: () => {
+                                          } catch (error) {
+                                            toast({
+                                              title: "Error",
+                                              description: "Failed to update brand. Please try again.",
+                                              variant: "destructive",
+                                            })
+                                          }
+                                        }
+                                      }}
+                                      className="rounded-xl"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setConfirmDialogData({
+                                          title: 'Delete Brand',
+                                          description: `Are you sure you want to delete "${brand.name}"?`,
+                                          action: async () => {
+                                            const updatedBrands = brandContent.brands.filter((_, i) => i !== index)
+
+                                            try {
+                                              const response = await fetch('/api/business', {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ brandContent: { brands: updatedBrands } }),
+                                              })
+
+                                              if (response.ok) {
                                                 setBrandContent(prev => ({
                                                   ...prev,
-                                                  brands: prev.brands.filter((_, i) => i !== index)
+                                                  brands: updatedBrands
                                                 }))
-                                                setShowConfirmDialog(false)
+                                                toast({
+                                                  title: "Success",
+                                                  description: "Brand deleted successfully!",
+                                                })
+                                              } else {
+                                                const errorResult = await response.json()
+                                                toast({
+                                                  title: "Error",
+                                                  description: `Failed to delete brand: ${errorResult.error}`,
+                                                  variant: "destructive",
+                                                })
                                               }
-                                            })
-                                            setShowConfirmDialog(true)
-                                          }}
-                                          className="rounded-xl"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
+                                            } catch (error) {
+                                              toast({
+                                                title: "Error",
+                                                description: "Failed to delete brand. Please try again.",
+                                                variant: "destructive",
+                                              })
+                                            }
+
+                                            setShowConfirmDialog(false)
+                                          }
+                                        })
+                                        setShowConfirmDialog(true)
+                                      }}
+                                      className="rounded-xl"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No brands to manage</h3>
+                          <p className="text-gray-600">Add brands using the editor panel</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'categories' && (
+              <div className=" mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">Category Manager</h1>
+                  <p className="text-xl text-gray-600">Configure business categories and classifications</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Section Title */}
+                  <div>
+                    <Label className="text-sm font-medium mb-1">Section Title</Label>
+                    <Input
+                      value={sectionTitles.categories}
+                      onChange={(e) => setSectionTitles(prev => ({ ...prev, categories: e.target.value }))}
+                      placeholder="Enter section title"
+                      className="bg-white rounded-2xl"
+                    />
+                  </div>
+
+                  {/* Add New Category Section */}
+                  <Card className="rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Add New Category</CardTitle>
+                      <CardDescription>Add a new category for your products</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Category Name *</Label>
+                        <Input
+                          placeholder="Enter category name"
+                          value={categoryFormData.name}
+                          onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
+                          className="bg-white rounded-2xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Textarea
+                          placeholder="Describe this category"
+                          value={categoryFormData.description}
+                          onChange={(e) => setCategoryFormData(prev => ({ ...prev, description: e.target.value }))}
+                          rows={3}
+                          className="bg-white rounded-2xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Parent Category</Label>
+                        <Select
+                          value={categoryFormData.parentId || "none"}
+                          onValueChange={(value) => setCategoryFormData(prev => ({ ...prev, parentId: value === "none" ? "" : value }))}
+                        >
+                          <SelectTrigger className="bg-white rounded-2xl">
+                            <SelectValue placeholder="Select parent category (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No parent</SelectItem>
+                            {categories.filter(cat => !cat.parentId).map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            if (!categoryFormData.name.trim()) {
+                              toast({
+                                title: "Error",
+                                description: "Category name is required",
+                                variant: "destructive",
+                              })
+                              return
+                            }
+
+                            setSavingCategory(true)
+                            try {
+                              const url = editingCategory
+                                ? `/api/business/categories?id=${editingCategory.id}`
+                                : '/api/business/categories'
+                              const method = editingCategory ? 'PUT' : 'POST'
+
+                              const response = await fetch(url, {
+                                method,
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(categoryFormData),
+                              })
+
+                              if (response.ok) {
+                                const data = await response.json()
+                                if (editingCategory) {
+                                  setCategories(prev => prev.map(c => c.id === editingCategory.id ? data.category : c))
+                                } else {
+                                  setCategories(prev => [...prev, data.category])
+                                }
+                                setCategoryFormData({ name: '', description: '', parentId: '' })
+                                setEditingCategory(null)
+                                toast({
+                                  title: "Success",
+                                  description: editingCategory ? 'Category updated successfully!' : 'Category created successfully!',
+                                })
+                              } else {
+                                const errorResult = await response.json()
+                                toast({
+                                  title: "Error",
+                                  description: `Failed to ${editingCategory ? 'update' : 'create'} category: ${errorResult.error}`,
+                                  variant: "destructive",
+                                })
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: `Failed to ${editingCategory ? 'update' : 'create'} category`,
+                                variant: "destructive",
+                              })
+                            } finally {
+                              setSavingCategory(false)
+                            }
+                          }}
+                          disabled={savingCategory}
+                          className="rounded-2xl"
+                        >
+                          {savingCategory ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Saving...
+                            </>
                           ) : (
-                            <div className="text-center py-8">
-                              <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">No brands to manage</h3>
-                              <p className="text-gray-600">Add brands using the editor panel</p>
-                            </div>
+                            editingCategory ? 'Update Category' : 'Add Category'
                           )}
-                        </CardContent>
-                      </Card>
+                        </Button>
+                        {editingCategory && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setEditingCategory(null)
+                              setCategoryFormData({ name: '', description: '', parentId: '' })
+                            }}
+                            className="rounded-2xl"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-
-                    </div>
-                  ) : (
-                      <ProfilePreview
-                        business={{
-                          ...(business as any),
-                          email: business.email ?? null,
-                          products,
-                          heroContent,
-                          brandContent,
-                          portfolioContent,
-                          website: business.website ?? null,
-                        }}
-                        selectedSection={selectedProfileSection}
-                        sectionTitles={sectionTitles}
-                        heroContent={heroContent}
-                        brandContent={brandContent}
-                        portfolioContent={portfolioContent}
-                        businessFormData={businessInfoFormData}
-                        products={products}
-                        onSectionClick={(section) => {
-                          setSelectedProfileSection(section)
-                          setEditingSection(section)
-                        }}
-                      />
-                  )}
+                  {/* Categories Table Section */}
+                  <Card className="rounded-3xl">
+                    <CardContent>
+                      {categories.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Category Name</TableHead>
+                              <TableHead>Description</TableHead>
+                              <TableHead>Parent</TableHead>
+                              <TableHead className="w-32">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {categories.map((category) => (
+                              <TableRow key={category.id}>
+                                <TableCell className="font-medium">{category.name}</TableCell>
+                                <TableCell>{category.description || '—'}</TableCell>
+                                <TableCell>
+                                  {category.parent ? category.parent.name : '—'}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingCategory(category)
+                                        setCategoryFormData({
+                                          name: category.name,
+                                          description: category.description || '',
+                                          parentId: category.parentId || '',
+                                        })
+                                      }}
+                                      className="rounded-xl"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteCategory(category)}
+                                      className="rounded-xl"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h3>
+                          <p className="text-gray-600">Add your first category using the form above</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             )}
@@ -1568,7 +2654,7 @@ export default function BusinessAdminDashboard() {
                       inStock: true,
                       isActive: true,
                     });
-                    setShowProductRightbar(true);
+                    setShowProductDialog(true);
                   }} className="rounded-2xl">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Product
@@ -1814,7 +2900,7 @@ export default function BusinessAdminDashboard() {
                                   <div className="flex space-x-2">
                                     <Button size="sm" variant="outline" onClick={() => {
                                       handleProductEdit(product);
-                                      setShowProductRightbar(true);
+                                      setShowProductDialog(true);
                                     }} className="rounded-xl">
                                       <Edit className="h-4 w-4" />
                                     </Button>
@@ -1849,7 +2935,7 @@ export default function BusinessAdminDashboard() {
                             inStock: true,
                             isActive: true,
                           });
-                          setShowProductRightbar(true);
+                          setShowProductDialog(true);
                         }} className="rounded-2xl">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Product
@@ -2020,22 +3106,7 @@ export default function BusinessAdminDashboard() {
                           <Button
                             variant="outline"
                             onClick={() => {
-                              if (activeSection === 'profile' as typeof activeSection) setSelectedProfileSection(null);
-                              if (activeSection === 'products' as typeof activeSection) {
-                                setShowProductRightbar(false);
-                                setEditingProduct(null);
-                                setProductFormData({
-                                  name: '',
-                                  description: '',
-                                  price: '',
-                                  image: '',
-                                  categoryId: '',
-                                  brandName: '',
-                                  additionalInfo: {},
-                                  inStock: true,
-                                  isActive: true,
-                                });
-                              }
+                              // Cancel logic for other sections
                             }}
                             className="rounded-2xl flex-1"
                           >
@@ -2043,98 +3114,66 @@ export default function BusinessAdminDashboard() {
                           </Button>
                           <Button
                             onClick={async () => {
-                              if (activeSection === "profile" as typeof activeSection) {
-                                if (selectedProfileSection === 'info') {
-                                  await handleBasicInfoSave({ preventDefault: () => { } } as any);
-                                } else if (selectedProfileSection === 'hero') {
-                                  if (!business) return;
-                                  try {
-                                    const response = await fetch('/api/business', {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ heroContent }),
+                              if (activeSection === 'info') {
+                                await handleBasicInfoSave({ preventDefault: () => { } } as any);
+                              } else if (activeSection === 'hero') {
+                                if (!business) return;
+                                try {
+                                  const response = await fetch('/api/business', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ heroContent }),
+                                  });
+                                  if (response.ok) {
+                                    const result = await response.json();
+                                    setBusiness(result.business);
+                                    toast({
+                                      title: "Success",
+                                      description: "Hero content saved successfully!",
                                     });
-                                    if (response.ok) {
-                                      const result = await response.json();
-                                      setBusiness(result.business);
-                                      toast({
-                                        title: "Success",
-                                        description: "Hero content saved successfully!",
-                                      });
-                                    } else {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to save hero content",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                  } catch (error) {
+                                  } else {
                                     toast({
                                       title: "Error",
                                       description: "Failed to save hero content",
                                       variant: "destructive",
                                     });
                                   }
-                                } else if (selectedProfileSection === 'brands') {
-                                  if (!business) return;
-                                  try {
-                                    const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent;
-                                    const response = await fetch('/api/business', {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ brandContent: cleanBrandContent }),
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to save hero content",
+                                    variant: "destructive",
+                                  });
+                                }
+                              } else if (activeSection === 'brands') {
+                                if (!business) return;
+                                try {
+                                  const { newBrandName, newBrandLogo, ...cleanBrandContent } = brandContent;
+                                  const response = await fetch('/api/business', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ brandContent: cleanBrandContent }),
+                                  });
+                                  if (response.ok) {
+                                    const result = await response.json();
+                                    setBusiness(result.business);
+                                    toast({
+                                      title: "Success",
+                                      description: "Brand content saved successfully!",
                                     });
-                                    if (response.ok) {
-                                      const result = await response.json();
-                                      setBusiness(result.business);
-                                      toast({
-                                        title: "Success",
-                                        description: "Brand content saved successfully!",
-                                      });
-                                    } else {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to save brand content",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                  } catch (error) {
+                                  } else {
                                     toast({
                                       title: "Error",
                                       description: "Failed to save brand content",
                                       variant: "destructive",
                                     });
                                   }
-                                } else if (selectedProfileSection === 'portfolio') {
-                                  if (!business) return;
-                                  try {
-                                    const { newImageUrl, ...cleanPortfolioContent } = portfolioContent;
-                                    const response = await fetch('/api/business', {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ portfolioContent: cleanPortfolioContent }),
-                                    });
-                                    if (response.ok) {
-                                      const result = await response.json();
-                                      setBusiness(result.business);
-                                      toast({
-                                        title: "Success",
-                                        description: "Portfolio content saved successfully!",
-                                      });
-                                    } else {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to save portfolio content",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                  } catch (error) {
-                                    toast({
-                                      title: "Error",
-                                      description: "Failed to save portfolio content",
-                                      variant: "destructive",
-                                    });
-                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to save brand content",
+                                    variant: "destructive",
+                                  });
                                 }
                               } else if (activeSection === 'products' && showProductRightbar) {
                                 setIsLoading(true);
@@ -2184,6 +3223,10 @@ export default function BusinessAdminDashboard() {
                                 } finally {
                                   setIsLoading(false);
                                 }
+                              } else if (activeSection === 'categories' && showRightPanel) {
+                                setShowRightPanel(false);
+                                setEditingCategory(null);
+                                setCategoryFormData({ name: '', description: '', parentId: '' });
                               }
                             }}
                             disabled={savingStates.basicInfo || isLoading}
@@ -2243,7 +3286,7 @@ export default function BusinessAdminDashboard() {
         </div>
 
         {/* Right Editor Panel - Fixed Width */}
-        {((activeSection === 'profile' && selectedProfileSection && selectedProfileSection !== 'full') || (activeSection === 'products' && showProductRightbar)) && (
+        {(activeSection === 'categories' && showRightPanel) || (activeSection === 'profile' && showRightPanel) && (
           <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 z-50 h-96' : 'w-[480px]'} m-4 border rounded-3xl bg-white border-gray-200 flex flex-col shadow-sm transition-all duration-300 ease-in-out relative`}>
             <div className="p-4  px-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-semibold">
@@ -2255,12 +3298,9 @@ export default function BusinessAdminDashboard() {
                 {selectedProfileSection === 'content' && ' Additional Content Editor'}
                 {selectedProfileSection === 'footer' && ' Footer Editor'}
                 {activeSection === 'products' && showProductRightbar && (editingProduct ? 'Edit Product' : 'Add New Product')}
+                {activeSection === 'categories' && showRightPanel && (editingCategory ? 'Edit Category' : 'Add New Category')}
               </h3>
-              {activeSection === 'profile' && selectedProfileSection ? (
-                <Button variant="outline" size="sm" onClick={() => setSelectedProfileSection(null)} className="rounded-xl">
-                  <X className="h-4 w-4" />
-                </Button>
-              ) : activeSection === 'products' && showProductRightbar ? (
+              {activeSection === 'products' && showProductRightbar ? (
                 <Button variant="outline" size="sm" onClick={() => {
                   setShowProductRightbar(false)
                   setEditingProduct(null)
@@ -2275,6 +3315,14 @@ export default function BusinessAdminDashboard() {
                     inStock: true,
                     isActive: true,
                   })
+                }} className="rounded-xl">
+                  <X className="h-4 w-4" />
+                </Button>
+              ) : activeSection === 'categories' && showRightPanel ? (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setShowRightPanel(false)
+                  setEditingCategory(null)
+                  setCategoryFormData({ name: '', description: '', parentId: '' })
                 }} className="rounded-xl">
                   <X className="h-4 w-4" />
                 </Button>
@@ -2309,7 +3357,7 @@ export default function BusinessAdminDashboard() {
                           value={sectionTitles.hero}
                           onChange={(e) => setSectionTitles(prev => ({ ...prev, hero: e.target.value }))}
                           placeholder="Enter section title"
-                          className="rounded-2xl"
+                          className="bg-white rounded-2xl"
                         />
                       </div>
 
@@ -2825,7 +3873,7 @@ export default function BusinessAdminDashboard() {
                               name="name"
                               value={businessInfoFormData.name}
                               onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
-                              className="rounded-2xl"
+                              className="bg-white rounded-2xl"
                               required
                             />
                           </div>
@@ -3145,7 +4193,7 @@ export default function BusinessAdminDashboard() {
                                 placeholder="Image URL or upload below"
                                 value={portfolioContent.newImageUrl || ''}
                                 onChange={(e) => setPortfolioContent(prev => ({ ...prev, newImageUrl: e.target.value }))}
-                                className="rounded-2xl"
+                                className="bg-white rounded-2xl"
                               />
                               <ImageUpload
                                 allowVideo={true}
@@ -3154,7 +4202,7 @@ export default function BusinessAdminDashboard() {
                             </div>
                           </div>
                           <Button
-                            onClick={() => {
+                            onClick={async () => {
                               if (!portfolioContent.newImageUrl?.trim()) {
                                 toast({
                                   title: "Error",
@@ -3163,20 +4211,64 @@ export default function BusinessAdminDashboard() {
                                 })
                                 return
                               }
+
+                              setSavingPortfolio(true)
                               const newImage = {
                                 url: portfolioContent.newImageUrl.trim(),
                                 alt: 'Portfolio image',
                               }
-                              setPortfolioContent(prev => ({
-                                ...prev,
-                                images: [...(prev.images || []), newImage],
-                                newImageUrl: '',
-                              }))
+
+                              const updatedImages = [...(portfolioContent.images || []), newImage]
+
+                              try {
+                                const response = await fetch('/api/business', {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
+                                })
+
+                                if (response.ok) {
+                                  setPortfolioContent(prev => ({
+                                    ...prev,
+                                    images: updatedImages,
+                                    newImageUrl: '',
+                                  }))
+                                  toast({
+                                    title: "Success",
+                                    description: "Portfolio image added successfully!",
+                                  })
+                                } else {
+                                  const errorResult = await response.json()
+                                  toast({
+                                    title: "Error",
+                                    description: `Failed to add portfolio image: ${errorResult.error}`,
+                                    variant: "destructive",
+                                  })
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to add portfolio image. Please try again.",
+                                  variant: "destructive",
+                                })
+                              } finally {
+                                setSavingPortfolio(false)
+                              }
                             }}
+                            disabled={savingPortfolio}
                             className="w-full rounded-2xl"
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Image
+                            {savingPortfolio ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Adding...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Image
+                              </>
+                            )}
                           </Button>
                         </CardContent>
                       </Card>
@@ -3212,12 +4304,43 @@ export default function BusinessAdminDashboard() {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => {
+                                          onClick={async () => {
                                             const newAlt = prompt('Edit alt text:', image.alt || 'Portfolio image')
                                             if (newAlt !== null) {
-                                              const newImages = [...portfolioContent.images]
-                                              newImages[index] = { ...image, alt: newAlt.trim() || 'Portfolio image' }
-                                              setPortfolioContent(prev => ({ ...prev, images: newImages }))
+                                              const updatedImages = [...portfolioContent.images]
+                                              updatedImages[index] = { ...image, alt: newAlt.trim() || 'Portfolio image' }
+
+                                              try {
+                                                const response = await fetch('/api/business', {
+                                                  method: 'PUT',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
+                                                })
+
+                                                if (response.ok) {
+                                                  setPortfolioContent(prev => ({
+                                                    ...prev,
+                                                    images: updatedImages
+                                                  }))
+                                                  toast({
+                                                    title: "Success",
+                                                    description: "Portfolio image updated successfully!",
+                                                  })
+                                                } else {
+                                                  const errorResult = await response.json()
+                                                  toast({
+                                                    title: "Error",
+                                                    description: `Failed to update portfolio image: ${errorResult.error}`,
+                                                    variant: "destructive",
+                                                  })
+                                                }
+                                              } catch (error) {
+                                                toast({
+                                                  title: "Error",
+                                                  description: "Failed to update portfolio image. Please try again.",
+                                                  variant: "destructive",
+                                                })
+                                              }
                                             }
                                           }}
                                           className="rounded-xl"
@@ -3231,11 +4354,41 @@ export default function BusinessAdminDashboard() {
                                             setConfirmDialogData({
                                               title: 'Delete Portfolio Image',
                                               description: `Are you sure you want to delete this portfolio image?`,
-                                              action: () => {
-                                                setPortfolioContent(prev => ({
-                                                  ...prev,
-                                                  images: prev.images.filter((_, i) => i !== index)
-                                                }))
+                                              action: async () => {
+                                                const updatedImages = portfolioContent.images.filter((_, i) => i !== index)
+
+                                                try {
+                                                  const response = await fetch('/api/business', {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
+                                                  })
+
+                                                  if (response.ok) {
+                                                    setPortfolioContent(prev => ({
+                                                      ...prev,
+                                                      images: updatedImages
+                                                    }))
+                                                    toast({
+                                                      title: "Success",
+                                                      description: "Portfolio image deleted successfully!",
+                                                    })
+                                                  } else {
+                                                    const errorResult = await response.json()
+                                                    toast({
+                                                      title: "Error",
+                                                      description: `Failed to delete portfolio image: ${errorResult.error}`,
+                                                      variant: "destructive",
+                                                    })
+                                                  }
+                                                } catch (error) {
+                                                  toast({
+                                                    title: "Error",
+                                                    description: "Failed to delete portfolio image. Please try again.",
+                                                    variant: "destructive",
+                                                  })
+                                                }
+
                                                 setShowConfirmDialog(false)
                                               }
                                             })
@@ -3338,7 +4491,7 @@ export default function BusinessAdminDashboard() {
                               placeholder="Enter category name"
                               value={categoryFormData.name}
                               onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
-                              className="rounded-2xl"
+                              className="bg-white rounded-2xl"
                             />
                           </div>
                           <div className="space-y-2">
@@ -3348,7 +4501,7 @@ export default function BusinessAdminDashboard() {
                               value={categoryFormData.description}
                               onChange={(e) => setCategoryFormData(prev => ({ ...prev, description: e.target.value }))}
                               rows={3}
-                              className="rounded-2xl"
+                              className="bg-white rounded-2xl"
                             />
                           </div>
                           <div className="space-y-2">
@@ -3445,119 +4598,58 @@ export default function BusinessAdminDashboard() {
                 </>
               )}
 
-              {activeSection === 'products' && showProductRightbar && (
-                <>
+              {activeSection === 'categories' && showRightPanel && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-sm font-medium">Section Title</Label>
+                    <Input
+                      value={sectionTitles.categories}
+                      onChange={(e) => setSectionTitles(prev => ({ ...prev, categories: e.target.value }))}
+                      placeholder="Enter section title"
+                      className="rounded-2xl"
+                    />
+                  </div>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Product Name *</Label>
-                      <Input
-                        id="name"
-                        value={productFormData.name}
-                        onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Enter product name"
-                        required
-                        className="rounded-xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={productFormData.description}
-                        onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Describe your product or service"
-                        rows={4}
-                        className="rounded-xl"
-                      />
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="w-full md:w-1/2 space-y-2">
-                        <Label htmlFor="price">Price</Label>
+                  {/* Add New Category Section */}
+                  <Card className="rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="text-lg">{editingCategory ? 'Edit Category' : 'Add New Category'}</CardTitle>
+                      <CardDescription>
+                        {editingCategory ? 'Update category details' : 'Create a new category for your products'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Category Name *</Label>
                         <Input
-                          id="price"
-                          value={productFormData.price}
-                          onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
-                          placeholder="e.g., ₹50, Starting at ₹100, Free consultation"
-                          className="rounded-xl"
+                          placeholder="Enter category name"
+                          value={categoryFormData.name}
+                          onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
+                          className="rounded-2xl"
                         />
                       </div>
-                      <div className="w-full md:w-1/2 space-y-2">
-                        <Label htmlFor="image">Image URL</Label>
-                        <Input
-                          id="image"
-                          value={productFormData.image}
-                          onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
-                          placeholder="https://..."
-                          className="rounded-xl"
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Textarea
+                          placeholder="Describe this category"
+                          value={categoryFormData.description}
+                          onChange={(e) => setCategoryFormData(prev => ({ ...prev, description: e.target.value }))}
+                          rows={3}
+                          className="rounded-2xl"
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Select Existing Image</Label>
-                      <Select
-                        key={images.length}
-                        value={productFormData.image || "no-image"}
-                        onValueChange={(value) =>
-                          setProductFormData(prev => ({
-                            ...prev,
-                            image: value === "no-image" ? "" : value
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="rounded-xl w-full">
-                          <SelectValue placeholder="Choose an existing image" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no-image">No image</SelectItem>
-                          {images.map((image) => {
-                            // Display with image and ellipsized URL
-                            const MAX_URL_LENGTH = 32;
-                            let displayUrl = image;
-                            if (image.length > MAX_URL_LENGTH) {
-                              displayUrl = image.slice(0, MAX_URL_LENGTH) + "...";
-                            }
-                            return (
-                              <SelectItem className=" flex items-center gap-2" key={image} value={image}>
-                                <img
-                                  src={image}
-                                  alt={displayUrl}
-                                  className="inline-block h-8 w-8  rounded-full object-cover border pr-2"
-                                  style={{ minWidth: "2rem" }}
-                                />
-                                <span className="truncate border-l px-2 border-l-gray-300 " title={image}>
-                                  {displayUrl}
-                                </span>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      {mounted && (
-                        <ImageUpload
-                          onUpload={(url) => setProductFormData(prev => ({ ...prev, image: url }))}
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      {/* Category Selection */}
-                      <div className="w-full md:w-1/2 space-y-2">
-                        <Label>Category</Label>
+                      <div className="space-y-2">
+                        <Label>Parent Category</Label>
                         <Select
-                          key={categories.length}
-                          value={productFormData.categoryId}
-                          onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
+                          value={categoryFormData.parentId || "none"}
+                          onValueChange={(value) => setCategoryFormData(prev => ({ ...prev, parentId: value === "none" ? "" : value }))}
                         >
-                          <SelectTrigger className="rounded-xl w-full">
-                            <SelectValue placeholder="Choose a category" />
+                          <SelectTrigger className="rounded-2xl">
+                            <SelectValue placeholder="Select parent category (optional)" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map((category) => (
+                            <SelectItem value="none">No parent</SelectItem>
+                            {categories.filter(cat => !cat.parentId).map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                               </SelectItem>
@@ -3565,147 +4657,77 @@ export default function BusinessAdminDashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {/* Brand Selection */}
-                      <div className="w-full md:w-1/2 space-y-2">
-                        <Label>Brand</Label>
-                        <div className="relative">
-                          <Select
-                            value={productFormData.brandName}
-                            onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandName: value }))}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            if (!categoryFormData.name.trim()) {
+                              toast({
+                                title: "Error",
+                                description: "Category name is required",
+                                variant: "destructive",
+                              })
+                              return
+                            }
+
+                            try {
+                              const url = editingCategory
+                                ? `/api/business/categories?id=${editingCategory.id}`
+                                : '/api/business/categories'
+                              const method = editingCategory ? 'PUT' : 'POST'
+
+                              const response = await fetch(url, {
+                                method,
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(categoryFormData),
+                              })
+
+                              if (response.ok) {
+                                await fetchData()
+                                setCategoryFormData({ name: '', description: '', parentId: '' })
+                                setEditingCategory(null)
+                                setShowRightPanel(false)
+                                toast({
+                                  title: "Success",
+                                  description: editingCategory ? 'Category updated successfully!' : 'Category created successfully!',
+                                })
+                              } else {
+                                const errorResult = await response.json()
+                                toast({
+                                  title: "Error",
+                                  description: `Failed to ${editingCategory ? 'update' : 'create'} category: ${errorResult.error}`,
+                                  variant: "destructive",
+                                })
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: `Failed to ${editingCategory ? 'update' : 'create'} category`,
+                                variant: "destructive",
+                              })
+                            }
+                          }}
+                          className="rounded-2xl"
+                        >
+                          {editingCategory ? 'Update Category' : 'Add Category'}
+                        </Button>
+                        {editingCategory && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setEditingCategory(null)
+                              setCategoryFormData({ name: '', description: '', parentId: '' })
+                            }}
+                            className="rounded-2xl"
                           >
-                            <SelectTrigger className="rounded-xl w-full">
-                              <SelectValue placeholder="Choose a brand" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <div className="sticky top-0 bg-white border-b pb-2 mb-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    // Manage brands flow
-                                    setActiveSection('profile')
-                                    setSelectedProfileSection('brands')
-                                    setShowProductRightbar(false)
-                                  }}
-                                  className="w-full rounded-xl"
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Manage Brands
-                                </Button>
-                              </div>
-                              <div className="max-h-48 overflow-y-auto">
-                                {(brandContent.brands || []).filter(brand =>
-                                  typeof brand.name === 'string' &&
-                                  brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
-                                ).map((brand) => (
-                                  <SelectItem key={brand.name} value={brand.name}>
-                                    {brand.name}
-                                  </SelectItem>
-                                ))}
-                                {((brandContent.brands || []).filter(brand =>
-                                  typeof brand.name === 'string' &&
-                                  brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
-                                ).length === 0) && (
-                                    <div className="p-3 text-center text-sm text-gray-500">
-                                      No brands found matching "{brandFilterText}"
-                                    </div>
-                                  )}
-                              </div>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex border-t border-b py-2 items-center space-x-6">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="inStock"
-                          checked={productFormData.inStock}
-                          onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
-                        />
-                        <Label htmlFor="inStock">In Stock</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="isActive"
-                          checked={productFormData.isActive}
-                          onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
-                        />
-                        <Label htmlFor="isActive">Visible </Label>
-                      </div>
-                    </div>
-
-                    {/* Additional Information Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Additional Information</h3>
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            placeholder="Key (e.g., Material)"
-                            value={newInfoKey || ''}
-                            onChange={(e) => setNewInfoKey(e.target.value)}
-                            className="rounded-xl"
-                          />
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Value (e.g., Cotton)"
-                              value={newInfoValue || ''}
-                              onChange={(e) => setNewInfoValue(e.target.value)}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault()
-                                  handleAddInfo()
-                                }
-                              }}
-                              className="flex-1 rounded-xl"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleAddInfo}
-                              disabled={!newInfoKey?.trim() || !newInfoValue?.trim()}
-                              className="rounded-xl"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        {productFormData.additionalInfo && Object.keys(productFormData.additionalInfo).length > 0 && (
-                          <div className="overflow-x-auto mt-4">
-                            <table className="min-w-full bg-gray-50 rounded-xl">
-                              <tbody>
-                                {Object.entries(productFormData.additionalInfo).map(([key, value], index) => (
-                                  <tr key={index} className="border-b last:border-b-0">
-                                    <td className="px-3 py-2 font-medium text-sm">{key}</td>
-                                    <td className="px-3 py-2 text-sm">{value}</td>
-                                    <td className="py-2 text-right pr-4">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRemoveInfo(key)}
-                                        className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full flex items-center justify-center ml-auto"
-                                        title="Remove field"
-                                      >
-                                        <span className="sr-only">Remove</span>
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                            Cancel
+                          </Button>
                         )}
                       </div>
-                    </div>
-
-                    <Separator />
-                  </div>
-                </>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
+
 
 
             </div>
@@ -3730,6 +4752,11 @@ export default function BusinessAdminDashboard() {
                         inStock: true,
                         isActive: true,
                       });
+                    }
+                    if (activeSection === 'categories') {
+                      setShowRightPanel(false);
+                      setEditingCategory(null);
+                      setCategoryFormData({ name: '', description: '', parentId: '' });
                     }
                   }}
                   className="rounded-2xl  "
@@ -3831,54 +4858,6 @@ export default function BusinessAdminDashboard() {
                           });
                         }
                       }
-                    } else if (activeSection === 'products' && showProductRightbar) {
-                      setIsLoading(true);
-                      try {
-                        const url = editingProduct
-                          ? `/api/business/products/${editingProduct.id}`
-                          : '/api/business/products';
-                        const method = editingProduct ? 'PUT' : 'POST';
-                        const response = await fetch(url, {
-                          method,
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(productFormData),
-                        });
-                        if (response.ok) {
-                          await fetchData();
-                          setShowProductRightbar(false);
-                          setEditingProduct(null);
-                          setProductFormData({
-                            name: '',
-                            description: '',
-                            price: '',
-                            image: '',
-                            categoryId: '',
-                            brandName: '',
-                            additionalInfo: {},
-                            inStock: true,
-                            isActive: true,
-                          });
-                          toast({
-                            title: "Success",
-                            description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
-                          });
-                        } else {
-                          const errorResult = await response.json();
-                          toast({
-                            title: "Error",
-                            description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
-                            variant: "destructive",
-                          });
-                        }
-                      } catch (error) {
-                        toast({
-                          title: "Error",
-                          description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
-                          variant: "destructive",
-                        });
-                      } finally {
-                        setIsLoading(false);
-                      }
                     }
                   }}
                   disabled={savingStates.basicInfo || isLoading}
@@ -3901,6 +4880,429 @@ export default function BusinessAdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Product Dialog */}
+      <Dialog open={showProductDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowProductDialog(false);
+          setEditingProduct(null);
+          setProductFormData({
+            name: '',
+            description: '',
+            price: '',
+            image: '',
+            categoryId: '',
+            brandName: '',
+            additionalInfo: {},
+            inStock: true,
+            isActive: true,
+          });
+        }
+      }}>
+        <DialogContent className="max-w-4xl w-[95%] h-[90vh] border  overflow-hidden bg-white p-0 top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
+          <div className="flex flex-col h-[90vh] relative">
+            {/* Fixed Header */}
+            <DialogHeader className="px-6 pt-4 pb-2 border-b shrink-0 space-y-1.5 bg-white z-10">
+              <div className="flex justify-between items-start w-full">
+                <div className="">
+                  <DialogTitle className="text-md font-semibold leading-none tracking-tight">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                  <DialogDescription className="text-xs text-gray-500 font-normal">
+                    {editingProduct ? 'Update product details' : 'Create a new product or service'}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 px-6 py-4 min-h-0">
+              <div className="h-full px-2 overflow-y-auto hide-scrollbar">
+                <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Product Name *</Label>
+                  <Input
+                    id="name"
+                    value={productFormData.name}
+                    onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter product name"
+                    required
+                    className="bg-white rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={productFormData.description}
+                    onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe your product or service"
+                    rows={4}
+                    className="bg-white rounded-xl"
+                  />
+                </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2 space-y-2">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
+                      id="price"
+                      value={productFormData.price}
+                      onChange={(e) => setProductFormData(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="e.g., ₹50, Starting at ₹100, Free consultation"
+                      className="bg-white rounded-xl"
+                    />
+                  </div>
+                  <div className="w-full md:w-1/2 space-y-2">
+                    <Label htmlFor="image">Image URL</Label>
+                    <Input
+                      id="image"
+                      value={productFormData.image}
+                      onChange={(e) => setProductFormData(prev => ({ ...prev, image: e.target.value }))}
+                      placeholder="https://..."
+                      className="bg-white rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Select Existing Image</Label>
+                  <Select
+                    key={images.length}
+                    value={productFormData.image || "no-image"}
+                    onValueChange={(value) =>
+                      setProductFormData(prev => ({
+                        ...prev,
+                        image: value === "no-image" ? "" : value
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl w-full">
+                      <SelectValue placeholder="Choose an existing image" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no-image">No image</SelectItem>
+                      {images.map((image) => {
+                        // Display with image and ellipsized URL
+                        const MAX_URL_LENGTH = 32;
+                        let displayUrl = image;
+                        if (image.length > MAX_URL_LENGTH) {
+                          displayUrl = image.slice(0, MAX_URL_LENGTH) + "...";
+                        }
+                        return (
+                          <SelectItem className=" flex items-center gap-2" key={image} value={image}>
+                            <img
+                              src={image}
+                              alt={displayUrl}
+                              className="inline-block h-8 w-8  rounded-full object-cover border pr-2"
+                              style={{ minWidth: "2rem" }}
+                            />
+                            <span className="truncate border-l px-2 border-l-gray-300 " title={image}>
+                              {displayUrl}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  {mounted && (
+                    <ImageUpload
+                      onUpload={(url) => setProductFormData(prev => ({ ...prev, image: url }))}
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Category Selection */}
+                  <div className="w-full md:w-1/2 space-y-2">
+                    <Label>Category</Label>
+                    <Select
+                      key={categories.length}
+                      value={productFormData.categoryId}
+                      onValueChange={(value) => setProductFormData(prev => ({ ...prev, categoryId: value }))}
+                    >
+                      <SelectTrigger className="rounded-xl w-full">
+                        <SelectValue placeholder="Choose a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* Brand Selection */}
+                  <div className="w-full md:w-1/2 space-y-2">
+                    <Label>Brand</Label>
+                    <div className="relative">
+                      <Select
+                        value={productFormData.brandName}
+                        onValueChange={(value) => setProductFormData(prev => ({ ...prev, brandName: value }))}
+                      >
+                        <SelectTrigger className="rounded-xl w-full">
+                          <SelectValue placeholder="Choose a brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <div className="sticky top-0 bg-white border-b pb-2 mb-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Manage brands flow
+                                setActiveSection('profile')
+                                setSelectedProfileSection('brands')
+                                setShowProductDialog(false)
+                              }}
+                              className="w-full rounded-xl"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Manage Brands
+                            </Button>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {(brandContent.brands || []).filter(brand =>
+                              typeof brand.name === 'string' &&
+                              brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                            ).map((brand) => (
+                              <SelectItem key={brand.name} value={brand.name}>
+                                {brand.name}
+                              </SelectItem>
+                            ))}
+                            {((brandContent.brands || []).filter(brand =>
+                              typeof brand.name === 'string' &&
+                              brand.name.toLowerCase().includes(brandFilterText.toLowerCase())
+                            ).length === 0) && (
+                                <div className="p-3 text-center text-sm text-gray-500">
+                                  No brands found matching "{brandFilterText}"
+                                </div>
+                              )}
+                          </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex border-t border-b py-2 items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="inStock"
+                      checked={productFormData.inStock}
+                      onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, inStock: checked }))}
+                    />
+                    <Label htmlFor="inStock">In Stock</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isActive"
+                      checked={productFormData.isActive}
+                      onCheckedChange={(checked) => setProductFormData(prev => ({ ...prev, isActive: checked }))}
+                    />
+                    <Label htmlFor="isActive">Visible </Label>
+                  </div>
+                </div>
+
+                {/* Additional Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Additional Information</h3>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Key (e.g., Material)"
+                        value={newInfoKey || ''}
+                        onChange={(e) => setNewInfoKey(e.target.value)}
+                        className="bg-white rounded-xl"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Value (e.g., Cotton)"
+                          value={newInfoValue || ''}
+                          onChange={(e) => setNewInfoValue(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddInfo()
+                            }
+                          }}
+                          className="flex-1 bg-white rounded-xl"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddInfo}
+                          disabled={!newInfoKey?.trim() || !newInfoValue?.trim()}
+                          className="rounded-xl"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {productFormData.additionalInfo && Object.keys(productFormData.additionalInfo).length > 0 && (
+                      <div className="overflow-x-auto mt-4">
+                        <table className="min-w-full bg-gray-50 rounded-xl">
+                          <tbody>
+                            {Object.entries(productFormData.additionalInfo).map(([key, value], index) => (
+                              <tr key={index} className="border-b last:border-b-0">
+                                <td className="px-3 py-2 font-medium text-sm">{key}</td>
+                                <td className="px-3 py-2 text-sm">{value}</td>
+                                <td className="py-2 text-right pr-4">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveInfo(key)}
+                                    className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full flex items-center justify-center ml-auto"
+                                    title="Remove field"
+                                  >
+                                    <span className="sr-only">Remove</span>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+                </div>
+              </div>
+            </div>
+
+            {/* Fixed Footer */}
+            <DialogFooter className="px-6 py-3 flex flex-row justify-center border-t bg-white z-10 shrink-0">
+              <Button type="button" variant="outline" onClick={() => {
+                setShowProductDialog(false);
+                setEditingProduct(null);
+                setProductFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  image: '',
+                  categoryId: '',
+                  brandName: '',
+                  additionalInfo: {},
+                  inStock: true,
+                  isActive: true,
+                });
+              }} className="rounded-full w-auto flex-1">
+                Cancel
+              </Button>
+              <Button onClick={async () => {
+                // Client-side validation
+                if (!productFormData.name.trim()) {
+                  toast({
+                    title: "Validation Error",
+                    description: "Product name is required",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                if (productFormData.name.length < 2) {
+                  toast({
+                    title: "Validation Error",
+                    description: "Product name must be at least 2 characters long",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                setSavingProduct(true);
+                try {
+                  const url = editingProduct
+                    ? `/api/business/products/${editingProduct.id}`
+                    : '/api/business/products';
+                  const method = editingProduct ? 'PUT' : 'POST';
+                  const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productFormData),
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    if (editingProduct) {
+                      // Update existing product
+                      setProducts(prev => prev.map(p => p.id === editingProduct.id ? data.product : p));
+                      if (data.product.image && !images.includes(data.product.image)) {
+                        setImages(prev => [...new Set([...prev, data.product.image])]);
+                      }
+                      // Update stats if active status changed
+                      if (editingProduct.isActive !== data.product.isActive) {
+                        setStats(prev => ({
+                          ...prev,
+                          activeProducts: data.product.isActive ? prev.activeProducts + 1 : prev.activeProducts - 1,
+                        }));
+                      }
+                    } else {
+                      // Add new product
+                      setProducts(prev => [...prev, data.product]);
+                      if (data.product.image) {
+                        setImages(prev => [...new Set([...prev, data.product.image])]);
+                      }
+                      setStats(prev => ({
+                        ...prev,
+                        totalProducts: prev.totalProducts + 1,
+                        activeProducts: data.product.isActive ? prev.activeProducts + 1 : prev.activeProducts,
+                      }));
+                    }
+                    setShowProductDialog(false);
+                    setEditingProduct(null);
+                    setProductFormData({
+                      name: '',
+                      description: '',
+                      price: '',
+                      image: '',
+                      categoryId: '',
+                      brandName: '',
+                      additionalInfo: {},
+                      inStock: true,
+                      isActive: true,
+                    });
+                    toast({
+                      title: "Success",
+                      description: editingProduct ? 'Product updated successfully!' : 'Product added successfully!',
+                    });
+                  } else {
+                    const errorResult = await response.json();
+                    toast({
+                      title: "Error",
+                      description: `Failed to ${editingProduct ? 'update' : 'add'} product: ${errorResult.error}`,
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+                    variant: "destructive",
+                  });
+                } finally {
+                  setSavingProduct(false);
+                }
+              }} disabled={savingProduct} className="rounded-full w-auto flex-1">
+                {savingProduct ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {editingProduct ? 'Update Product' : 'Add Product'}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Bottom Navigation */}
       {isMobile && (

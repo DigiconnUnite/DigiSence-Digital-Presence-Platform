@@ -95,9 +95,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const productData = productSchema.parse(body)
 
+    // Convert empty strings to null for optional fields
+    const cleanedData = {
+      ...productData,
+      categoryId: productData.categoryId || null,
+      brandName: productData.brandName || null,
+      description: productData.description || null,
+      price: productData.price || null,
+      image: productData.image || null,
+    }
+
     const product = await db.product.create({
       data: {
-        ...productData,
+        ...cleanedData,
         businessId,
       },
     })
@@ -115,55 +125,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const admin = await getBusinessAdmin(request)
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const businessId = await getBusinessId(admin.userId)
-    if (!businessId) {
-      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
-    }
-
-    const { id: productId } = await params
-    
-    // Check if product exists and belongs to this business
-    const existingProduct = await db.product.findFirst({
-      where: { 
-        id: productId,
-        businessId 
-      },
-    })
-
-    if (!existingProduct) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
-    }
-
-    const body = await request.json()
-    const updateData = updateProductSchema.parse(body)
-
-    const product = await db.product.update({
-      where: { id: productId },
-      data: updateData,
-    })
-
-    return NextResponse.json({
-      success: true,
-      product,
-    })
-  } catch (error) {
-    console.error('Product update error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
 
 export async function DELETE(
   request: NextRequest,

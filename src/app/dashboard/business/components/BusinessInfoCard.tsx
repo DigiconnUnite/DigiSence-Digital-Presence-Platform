@@ -1,243 +1,330 @@
-'use client'
-
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Edit, Save, X, ChevronDown, ChevronUp, Search, CheckCircle, AlertCircle } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import React, { useState, useRef, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Edit, Upload } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import ReactImageCrop, { Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface BusinessInfoCardProps {
-  title: string
-  fields: Array<{
-    id: string
-    label: string
-    value: string
-    type: 'text' | 'textarea' | 'email' | 'url'
-    placeholder?: string
-    validation?: (value: string) => string | null
-  }>
-  onSave: (updatedFields: Record<string, string>) => Promise<void>
+  businessName: string;
+  adminName: string;
+  description: string;
+  logoUrl?: string;
+  onEdit?: () => void;
+  onLogoUpload?: (url: string) => void;
 }
 
-export default function BusinessInfoCard({ title, fields, onSave }: BusinessInfoCardProps) {
-  const { toast } = useToast()
-  const [editingField, setEditingField] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState<Record<string, string>>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [searchTerm, setSearchTerm] = useState('')
-  const [expanded, setExpanded] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [autoSaveStatus, setAutoSaveStatus] = useState<Record<string, 'saved' | 'saving' | 'error' | null>>({})
+export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
+  businessName,
+  adminName,
+  description,
+  logoUrl,
+  onEdit,
+  onLogoUpload,
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    businessName,
+    adminName,
+    description,
+  });
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    x: 25,
+    y: 25,
+    width: 50,
+    height: 50,
+  });
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  const handleEditClick = (fieldId: string) => {
-    setEditingField(fieldId)
-    setEditValues(prev => ({ ...prev, [fieldId]: fields.find(f => f.id === fieldId)?.value || '' }))
-  }
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit();
+    }
+    setIsEditing(!isEditing);
+  };
 
-  const handleCancelClick = (fieldId: string) => {
-    setEditingField(null)
-    setErrors(prev => ({ ...prev, [fieldId]: '' }))
-  }
+  const handleSave = () => {
+    // Here you would typically call an API to save the changes
+    // For now, we'll just toggle the editing state
+    setIsEditing(false);
+  };
 
-  const handleSaveClick = async (fieldId: string) => {
-    const field = fields.find(f => f.id === fieldId)
-    if (!field) return
+  const handleLogoUpload = (url: string) => {
+    if (onLogoUpload) {
+      onLogoUpload(url);
+    }
+  };
 
-    // Validate
-    if (field.validation) {
-      const validationError = field.validation(editValues[fieldId] || '')
-      if (validationError) {
-        setErrors(prev => ({ ...prev, [fieldId]: validationError }))
-        return
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+        setCropModalOpen(true);
       }
     }
+  }, []);
 
-    setSaving(true)
-    setAutoSaveStatus(prev => ({ ...prev, [fieldId]: 'saving' }))
+  const cropImage = useCallback(async (): Promise<Blob> => {
+    const image = imgRef.current;
+    if (!image || !croppedAreaPixels) {
+      throw new Error('Crop canvas does not exist');
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('No 2d context');
+    }
+
+    // Get the actual natural size of the image
+    const naturalWidth = image.naturalWidth;
+    const naturalHeight = image.naturalHeight;
+
+    // Calculate the scaling factor between the displayed image and the natural image
+    const scaleX = naturalWidth / image.width;
+    const scaleY = naturalHeight / image.height;
+
+    // Scale the cropped area coordinates to match the natural image dimensions
+    const scaledCropX = croppedAreaPixels.x * scaleX;
+    const scaledCropY = croppedAreaPixels.y * scaleY;
+    const scaledCropWidth = croppedAreaPixels.width * scaleX;
+    const scaledCropHeight = croppedAreaPixels.height * scaleY;
+
+    // Set canvas size to the size of the cropped area in natural pixels
+    canvas.width = scaledCropWidth;
+    canvas.height = scaledCropHeight;
+
+    // Draw the image using the scaled coordinates
+    ctx.drawImage(
+      image,
+      scaledCropX,
+      scaledCropY,
+      scaledCropWidth,
+      scaledCropHeight,
+      0,
+      0,
+      scaledCropWidth,
+      scaledCropHeight
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Canvas blob failed');
+        }
+        resolve(blob);
+      }, selectedFile?.type || 'image/jpeg');
+    });
+  }, [croppedAreaPixels, selectedFile]);
+
+  const handleConfirmCrop = useCallback(async () => {
+    if (!selectedFile) return;
 
     try {
-      await onSave({ [fieldId]: editValues[fieldId] || '' })
-      setEditingField(null)
-      setAutoSaveStatus(prev => ({ ...prev, [fieldId]: 'saved' }))
-      
-      // Clear status after 2 seconds
-      setTimeout(() => {
-        setAutoSaveStatus(prev => ({ ...prev, [fieldId]: null }))
-      }, 2000)
+      const croppedBlob = await cropImage();
+      if (!croppedBlob) return;
+
+      // Cleanup object URL to free memory
+      if (imgRef.current?.src) {
+        URL.revokeObjectURL(imgRef.current.src);
+      }
+
+      const croppedFile = new File([croppedBlob], selectedFile.name, { type: selectedFile.type });
+
+      setCropModalOpen(false);
+      setSelectedFile(null);
+      setCroppedAreaPixels(null);
+
+      // Create object URL for the cropped image and pass it to the upload handler
+      const croppedUrl = URL.createObjectURL(croppedFile);
+      if (onLogoUpload) {
+        onLogoUpload(croppedUrl);
+      }
     } catch (error) {
-      setAutoSaveStatus(prev => ({ ...prev, [fieldId]: 'error' }))
-      toast({
-        title: 'Error',
-        description: 'Failed to save changes',
-        variant: 'destructive',
-      })
-    } finally {
-      setSaving(false)
+      console.error("Error cropping image:", error);
+      alert("Failed to crop image.");
     }
-  }
-
-  const handleInputChange = (fieldId: string, value: string) => {
-    setEditValues(prev => ({ ...prev, [fieldId]: value }))
-    
-    // Clear error when user types
-    if (errors[fieldId]) {
-      setErrors(prev => ({ ...prev, [fieldId]: '' }))
-    }
-  }
-
-  const filteredFields = fields.filter(field => 
-    field.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (typeof field.value === 'string' && field.value.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  }, [selectedFile, cropImage, onLogoUpload]);
 
   return (
-    <Card className="rounded-3xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="hover:text-blue-600 transition-colors"
-          >
-            {title}
-          </button>
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search fields..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 h-8 w-40 rounded-full text-sm"
-            />
-          </div>
-        </div>
-      </CardHeader>
+    <Card className="w-full p-0  mx-auto rounded-3xl shadow-lg overflow-hidden">
+      <div className="flex flex-col md:flex-row">
+        {/* Left side - Profile Photo */}
+        <div className="md:w-fit md-h-50 bg-linear-to-br rounded-3xl m-2 from-blue-50 to-blue-100 p-3 flex flex-col items-center justify-center relative">
+          <Avatar className="w-auto h-auto mb-4 border-4 border-white shadow-md">
+            {logoUrl ? (
+              <AvatarImage src={logoUrl} alt={businessName} />
+            ) : (
+              <AvatarFallback className="bg-blue-500 text-white text-2xl font-bold">
+                {businessName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          
+          {/* Make logo clickable for upload with cropper */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            style={{ zIndex: 10 }}
+          />
 
-      {expanded && (
-        <CardContent className="space-y-4">
-          {filteredFields.length > 0 ? (
-            <div className="space-y-4">
-              {filteredFields.map((field) => (
-                <div key={field.id} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium flex items-center gap-1">
-                      {field.label}
-                      {editingField === field.id && (
-                        <span className="text-xs text-gray-500">
-                          {field.type === 'email' ? '(Email)' : field.type === 'url' ? '(URL)' : ''}
-                        </span>
-                      )}
-                    </Label>
-                    {autoSaveStatus[field.id] && (
-                      <div className="flex items-center gap-1 text-xs">
-                        {autoSaveStatus[field.id] === 'saved' && (
-                          <CheckCircle className="h-3 w-3 text-green-500" />
-                        )}
-                        {autoSaveStatus[field.id] === 'saving' && (
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
-                        )}
-                        {autoSaveStatus[field.id] === 'error' && (
-                          <AlertCircle className="h-3 w-3 text-red-500" />
-                        )}
-                        <span className={`capitalize ${
-                          autoSaveStatus[field.id] === 'saved' ? 'text-green-500' :
-                          autoSaveStatus[field.id] === 'error' ? 'text-red-500' : 'text-blue-500'
-                        }`}>
-                          {autoSaveStatus[field.id]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {editingField === field.id ? (
-                    <div className="space-y-2">
-                      {field.type === 'textarea' ? (
-                        <Textarea
-                          value={editValues[field.id] || ''}
-                          onChange={(e) => handleInputChange(field.id, e.target.value)}
-                          placeholder={field.placeholder}
-                          rows={3}
-                          className={`rounded-2xl ${errors[field.id] ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                      ) : (
-                        <Input
-                          type={field.type}
-                          value={editValues[field.id] || ''}
-                          onChange={(e) => handleInputChange(field.id, e.target.value)}
-                          placeholder={field.placeholder}
-                          className={`rounded-2xl ${errors[field.id] ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                      )}
-                      {errors[field.id] && (
-                        <p className="text-xs text-red-500 mt-1">{errors[field.id]}</p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleSaveClick(field.id)}
-                          disabled={saving}
-                          className="rounded-2xl h-8 px-3 text-sm"
-                        >
-                          {saving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-3 w-3 mr-1" />
-                              Save
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          onClick={() => handleCancelClick(field.id)}
-                          variant="outline"
-                          className="rounded-2xl h-8 px-3 text-sm"
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        {field.type === 'textarea' ? (
-                          <div className="min-h-[60px] bg-gray-50 rounded-2xl p-3 text-sm whitespace-pre-wrap">
-                            {field.value || <span className="text-gray-400">No content</span>}
-                          </div>
-                        ) : (
-                          <div className="bg-gray-50 rounded-2xl p-3 text-sm">
-                            {field.value || <span className="text-gray-400">Not set</span>}
-                          </div>
-                        )}
-                      </div>
+          {/* Image Cropper Modal */}
+          <Dialog open={cropModalOpen} onOpenChange={setCropModalOpen}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Crop Image</DialogTitle>
+              </DialogHeader>
+              {selectedFile && (
+                <div className="h-96 w-full relative">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex gap-1 mb-4 flex-wrap">
                       <Button
-                        onClick={() => handleEditClick(field.id)}
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="rounded-full h-8 w-8 p-0 ml-2 hover:bg-blue-50"
+                        onClick={() => setCrop({ unit: '%', x: 25, y: 25, width: 50, height: 50 })}
                       >
-                        <Edit className="h-4 w-4 text-blue-500" />
-                        <span className="sr-only">Edit {field.label}</span>
+                        Reset Crop
                       </Button>
                     </div>
-                  )}
+                    <ReactImageCrop
+                      crop={crop}
+                      onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCroppedAreaPixels(c)}
+                      aspect={1}
+                    >
+                      <img
+                        ref={imgRef}
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="Crop me"
+                        style={{ maxHeight: '60vh', maxWidth: '100%' }}
+                      />
+                    </ReactImageCrop>
+                  </div>
                 </div>
-              ))}
+              )}
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCropModalOpen(false);
+                    setSelectedFile(null);
+                    setCroppedAreaPixels(null);
+                    if (imgRef.current?.src) URL.revokeObjectURL(imgRef.current.src);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleConfirmCrop} disabled={!croppedAreaPixels}>
+                  Confirm Crop
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+         
+        </div>
+
+        {/* Right side - Text Content */}
+        <div className="md:w-2/3 p-6 relative">
+          {/* Edit button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 rounded-full h-8 w-8 p-0"
+            onClick={handleEditClick}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+
+          <CardHeader className="p-0 mb-4">
+            {isEditing ? (
+              <input
+                type="text"
+                value={editData.businessName}
+                onChange={(e) => setEditData({...editData, businessName: e.target.value})}
+                className="text-2xl font-bold text-gray-900 border border-gray-300 rounded-xl px-3 py-2 w-full"
+              />
+            ) : (
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                {businessName}
+              </CardTitle>
+            )}
+          </CardHeader>
+
+          <CardContent className="p-0 space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm font-medium">👤</span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Admin Name</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.adminName}
+                    onChange={(e) => setEditData({...editData, adminName: e.target.value})}
+                    className="font-medium text-gray-900 border border-gray-300 rounded-xl px-2 py-1"
+                  />
+                ) : (
+                  <p className="font-medium text-gray-900">{adminName}</p>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">No fields match your search</p>
+
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500 uppercase tracking-wide">Description</p>
+              {isEditing ? (
+                <textarea
+                  value={editData.description}
+                  onChange={(e) => setEditData({...editData, description: e.target.value})}
+                  className="text-gray-700 leading-relaxed border border-gray-300 rounded-xl px-3 py-2 w-full min-h-[100px]"
+                />
+              ) : (
+                <p className="text-gray-700 leading-relaxed">
+                  {description}
+                </p>
+              )}
             </div>
-          )}
-        </CardContent>
-      )}
+
+            {/* Additional business information can be added here */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+              <div>
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Status</p>
+                <p className="font-medium text-green-600">Active</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Category</p>
+                <p className="font-medium text-gray-900">Business Services</p>
+              </div>
+            </div>
+
+            {/* Save button when editing */}
+            {isEditing && (
+              <div className="flex justify-end mt-4">
+                <Button onClick={handleSave} className="rounded-xl">
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </div>
+      </div>
     </Card>
-  )
-}
+  );
+};

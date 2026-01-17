@@ -101,6 +101,7 @@ import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
 
 import HeroBannerManager from '@/components/ui/hero-banner-manager'
+import { BusinessInfoCard } from './components/BusinessInfoCard'
 
 interface Product {
   id: string
@@ -1428,6 +1429,19 @@ export default function BusinessAdminDashboard() {
                 <div className="mb-6">
                   <h1 className="text-xl font-bold text-gray-900 mb-2">Business Info</h1>
                   <p className="text-xl text-gray-600">Manage your business information</p>
+                </div>
+
+                {/* Business Info Card */}
+                <div className="mb-8">
+                  <BusinessInfoCard
+                    businessName={businessInfoFormData.name || 'Your Business'}
+                    adminName={businessInfoFormData.ownerName || user?.name || 'Admin'}
+                    description={businessInfoFormData.description || 'Add your business description'}
+                    logoUrl={businessInfoFormData.logo}
+                    onLogoUpload={(url) => {
+                      setBusinessInfoFormData(prev => ({ ...prev, logo: url }));
+                    }}
+                  />
                 </div>
 
                 <div>

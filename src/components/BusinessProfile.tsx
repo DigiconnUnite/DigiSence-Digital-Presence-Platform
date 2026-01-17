@@ -887,7 +887,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               format: 'auto',
                               crop: 'fill',
                               gravity: 'auto'
-                            }) : '/placeholder.png'}
+                            }) : '/placeholder.svg'}
                             srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
                             sizes={generateSizes(1200)}
                             alt={slide.headline || 'Hero image'}
@@ -896,7 +896,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             decoding="async"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder.png';
+                              target.src = '/placeholder.svg';
                             }}
                           />
                           {slide.showText !== false && (

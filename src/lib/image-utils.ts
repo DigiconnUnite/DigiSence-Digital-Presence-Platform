@@ -59,7 +59,7 @@ export const validateImageFile = (file: File) => {
 export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   const target = event.target as HTMLImageElement
   // Set a fallback image or hide the image
-  target.src = '/placeholder.png'
+  target.src = '/placeholder.svg'
   target.onerror = null // Prevent infinite loop
 }
 

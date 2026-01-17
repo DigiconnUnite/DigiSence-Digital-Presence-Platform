@@ -99,8 +99,8 @@ import {
 } from 'lucide-react'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
-import ProfilePreview from '@/components/ProfilePreview'
-import HeroBannerPreview from '@/components/ui/hero-banner-preview'
+
+import HeroBannerManager from '@/components/ui/hero-banner-manager'
 
 interface Product {
   id: string
@@ -292,6 +292,9 @@ export default function BusinessAdminDashboard() {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0)
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'settings'>('content')
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({})
+  const [selectedBannerIndex, setSelectedBannerIndex] = useState<number>(0)
+  const [showBannerModal, setShowBannerModal] = useState(false)
+  const [editingBannerIndex, setEditingBannerIndex] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -1642,512 +1645,40 @@ export default function BusinessAdminDashboard() {
                   <p className="text-xl text-gray-600">Manage your hero section</p>
                 </div>
 
-                {/* Hero Banner Preview */}
-                <div className="mb-6">
-                  <HeroBannerPreview heroContent={heroContent} selectedSlideIndex={selectedSlideIndex} />
-                </div>
-
-                <div className="space-y-6">
-                  {/* Section Title */}
-                  <div>
-                    <Label className="text-sm font-medium">Section Title</Label>
-                    <Input
-                      value={sectionTitles.hero}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, hero: e.target.value }))}
-                      placeholder="Enter section title"
-                      className="rounded-2xl"
-                    />
-                  </div>
-
-                  {/* Slide Selector and Add Button */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="flex-1 w-full">
-                      <Label className="text-sm font-medium">Select Slide</Label>
-                      <Select
-                        value={selectedSlideIndex?.toString()}
-                        onValueChange={(value) => setSelectedSlideIndex(parseInt(value))}
-                      >
-                        <SelectTrigger className="rounded-2xl w-full">
-                          <SelectValue placeholder="Select a slide to edit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {heroContent.slides?.map((slide: any, index: number) => (
-                            <SelectItem key={index} value={index.toString()}>
-                              {index + 1}: {slide.headline || 'Untitled'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedSlideIndex > 0) {
-                            const newSlides = [...heroContent.slides]
-                            const temp = newSlides[selectedSlideIndex]
-                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex - 1]
-                            newSlides[selectedSlideIndex - 1] = temp
-                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                            setSelectedSlideIndex(selectedSlideIndex - 1)
-                          }
-                        }}
-                        disabled={selectedSlideIndex === 0}
-                        className="rounded-xl"
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedSlideIndex < heroContent.slides.length - 1) {
-                            const newSlides = [...heroContent.slides]
-                            const temp = newSlides[selectedSlideIndex]
-                            newSlides[selectedSlideIndex] = newSlides[selectedSlideIndex + 1]
-                            newSlides[selectedSlideIndex + 1] = temp
-                            setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                            setSelectedSlideIndex(selectedSlideIndex + 1)
-                          }
-                        }}
-                        disabled={selectedSlideIndex === heroContent.slides.length - 1}
-                        className="rounded-xl"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newSlides = heroContent.slides.filter((_, i) => i !== selectedSlideIndex)
-                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                          setSelectedSlideIndex(Math.max(0, selectedSlideIndex - 1))
-                        }}
-                        className="rounded-xl"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          const newSlide = {
-                            mediaType: 'image',
-                            media: '',
-                            headline: '',
-                            headlineSize: 'text-4xl md:text-6xl',
-                            headlineColor: '#ffffff',
-                            headlineAlignment: 'center',
-                            subtext: '',
-                            subtextSize: 'text-xl md:text-2xl',
-                            subtextColor: '#ffffff',
-                            subtextAlignment: 'center',
-                            cta: 'Get in Touch',
-                            ctaLink: ''
-                          }
-                          setHeroContent(prev => ({ ...prev, slides: [...prev.slides, newSlide] }))
-                          setSelectedSlideIndex(heroContent.slides.length)
-                        }}
-                        className="rounded-2xl"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Slide
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Tabs */}
-                  <div className="border-b">
-                    <div className="flex space-x-8 overflow-x-auto">
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'content'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('content')}
-                      >
-                        Content
-                      </button>
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'style'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('style')}
-                      >
-                        Style
-                      </button>
-                      <button
-                        className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'settings'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        onClick={() => setActiveTab('settings')}
-                      >
-                        Settings
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Tab Content */}
-                  {selectedSlideIndex !== null && heroContent.slides[selectedSlideIndex] && (
-                    <div className="space-y-6">
-                      {activeTab === 'content' && (
-                        <Card className="rounded-3xl">
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              {/* Background Media */}
-                              <div>
-                                <Label className="text-sm font-medium">Background Media</Label>
-                                <div className="mt-2 space-y-3">
-                                  <Select
-                                    value={heroContent.slides[selectedSlideIndex].mediaType || 'image'}
-                                    onValueChange={(value) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], mediaType: value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                  >
-                                    <SelectTrigger className="rounded-2xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="image">Image</SelectItem>
-                                      <SelectItem value="video">Video</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <Input
-                                    placeholder="Media URL"
-                                    value={heroContent.slides[selectedSlideIndex].media || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                    className="bg-white rounded-2xl"
-                                  />
-                                  <ImageUpload
-                                    allowVideo={true}
-                                    aspectRatio={16/9}
-                                    onUpload={(url) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], media: url }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Headline */}
-                              <div>
-                                <Label className="text-sm font-medium">Headline</Label>
-                                <Input
-                                  placeholder="Enter headline"
-                                  value={heroContent.slides[selectedSlideIndex].headline || ''}
-                                  onChange={(e) => {
-                                    const newSlides = [...heroContent.slides]
-                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headline: e.target.value }
-                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                  }}
-                                  className="mt-2 bg-white rounded-2xl"
-                                />
-                              </div>
-
-                              {/* Subtext */}
-                              <div>
-                                <Label className="text-sm font-medium">Subtext</Label>
-                                <Textarea
-                                  placeholder="Enter subtext"
-                                  rows={3}
-                                  value={heroContent.slides[selectedSlideIndex].subtext || ''}
-                                  onChange={(e) => {
-                                    const newSlides = [...heroContent.slides]
-                                    newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtext: e.target.value }
-                                    setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                  }}
-                                  className="mt-2 bg-white rounded-2xl"
-                                />
-                              </div>
-
-                              {/* CTA */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-sm font-medium">CTA Text</Label>
-                                  <Input
-                                    placeholder="Call to action text"
-                                    value={heroContent.slides[selectedSlideIndex].cta || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], cta: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                    className="mt-2 bg-white rounded-2xl"
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium">CTA Link</Label>
-                                  <Input
-                                    placeholder="https://..."
-                                    value={heroContent.slides[selectedSlideIndex].ctaLink || ''}
-                                    onChange={(e) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], ctaLink: e.target.value }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                    className="mt-2 bg-white rounded-2xl"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {activeTab === 'style' && (
-                        <Card className="rounded-3xl">
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              {/* Headline Style */}
-                              <div>
-                                <h3 className="text-sm font-medium mb-4">Headline Style</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm">Size</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].headlineSize || 'text-4xl md:text-6xl'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineSize: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2 rounded-2xl">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">Small</SelectItem>
-                                        <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">Medium</SelectItem>
-                                        <SelectItem value="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">Large</SelectItem>
-                                        <SelectItem value="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">Extra Large</SelectItem>
-                                        <SelectItem value="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl">Huge</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Color</Label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Input
-                                        type="color"
-                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        className="w-12 h-10 p-1 rounded-2xl"
-                                      />
-                                      <Input
-                                        value={heroContent.slides[selectedSlideIndex].headlineColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        placeholder="#ffffff"
-                                        className="rounded-2xl"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Alignment</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].headlineAlignment || 'center'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], headlineAlignment: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2 rounded-2xl">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="left">Left</SelectItem>
-                                        <SelectItem value="center">Center</SelectItem>
-                                        <SelectItem value="right">Right</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Subtext Style */}
-                              <div>
-                                <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm">Size</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].subtextSize || 'text-xl md:text-2xl'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextSize: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2 rounded-2xl">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl">Small</SelectItem>
-                                        <SelectItem value="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl">Medium</SelectItem>
-                                        <SelectItem value="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl">Large</SelectItem>
-                                        <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl">Extra Large</SelectItem>
-                                        <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl">Huge</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Color</Label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Input
-                                        type="color"
-                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        className="w-12 h-10 p-1 rounded-2xl"
-                                      />
-                                      <Input
-                                        value={heroContent.slides[selectedSlideIndex].subtextColor || '#ffffff'}
-                                        onChange={(e) => {
-                                          const newSlides = [...heroContent.slides]
-                                          newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextColor: e.target.value }
-                                          setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                        }}
-                                        placeholder="#ffffff"
-                                        className="rounded-2xl"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm">Alignment</Label>
-                                    <Select
-                                      value={heroContent.slides[selectedSlideIndex].subtextAlignment || 'center'}
-                                      onValueChange={(value) => {
-                                        const newSlides = [...heroContent.slides]
-                                        newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], subtextAlignment: value }
-                                        setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                      }}
-                                    >
-                                      <SelectTrigger className="mt-2 rounded-2xl">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="left">Left</SelectItem>
-                                        <SelectItem value="center">Center</SelectItem>
-                                        <SelectItem value="right">Right</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {activeTab === 'settings' && (
-                        <Card className="rounded-3xl">
-                          <CardContent className="pt-6">
-                            <div className="space-y-6">
-                              <h3 className="text-sm font-medium">Slider Settings</h3>
-
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="showText" className="text-sm">Show Text Overlay</Label>
-                                  <Switch
-                                    id="showText"
-                                    checked={heroContent.slides[selectedSlideIndex]?.showText !== false}
-                                    onCheckedChange={(checked) => {
-                                      const newSlides = [...heroContent.slides]
-                                      newSlides[selectedSlideIndex] = { ...newSlides[selectedSlideIndex], showText: checked }
-                                      setHeroContent(prev => ({ ...prev, slides: newSlides }))
-                                    }}
-                                  />
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
-                                  <Switch
-                                    id="autoplay"
-                                    checked={heroContent.autoPlay}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, autoPlay: checked }))}
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm">Transition Speed (seconds)</Label>
-                                  <Select
-                                    value={heroContent.transitionSpeed?.toString()}
-                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionSpeed: parseInt(value) }))}
-                                  >
-                                    <SelectTrigger className="mt-2 rounded-2xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="3">3 seconds</SelectItem>
-                                      <SelectItem value="5">5 seconds</SelectItem>
-                                      <SelectItem value="7">7 seconds</SelectItem>
-                                      <SelectItem value="10">10 seconds</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm">Transition Effect</Label>
-                                  <Select
-                                    value={heroContent.transitionEffect || 'fade'}
-                                    onValueChange={(value) => setHeroContent(prev => ({ ...prev, transitionEffect: value }))}
-                                  >
-                                    <SelectTrigger className="mt-2 rounded-2xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="fade">Fade</SelectItem>
-                                      <SelectItem value="slide">Slide</SelectItem>
-                                      <SelectItem value="zoom">Zoom</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="showDots" className="text-sm">Show Navigation Dots</Label>
-                                  <Switch
-                                    id="showDots"
-                                    checked={heroContent.showDots !== false}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showDots: checked }))}
-                                  />
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <Label htmlFor="showArrows" className="text-sm">Show Navigation Arrows</Label>
-                                  <Switch
-                                    id="showArrows"
-                                    checked={heroContent.showArrows !== false}
-                                    onCheckedChange={(checked) => setHeroContent(prev => ({ ...prev, showArrows: checked }))}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  )}
-
-                </div>
+                <HeroBannerManager
+                  heroContent={heroContent}
+                  onChange={async (newContent) => {
+                    setHeroContent(newContent);
+                    if (!business) return;
+                    try {
+                      const response = await fetch('/api/business', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ heroContent: newContent }),
+                      });
+                      if (response.ok) {
+                        const result = await response.json();
+                        setBusiness(result.business);
+                        toast({
+                          title: "Success",
+                          description: "Hero content saved successfully!",
+                        });
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Failed to save hero content",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to save hero content",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                />
               </div>
             )}
 

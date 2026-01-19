@@ -265,8 +265,8 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
       </div>
 
       {/* Banner Preview Section */}
-      <Card className="bg-white/30 py-0 relative z-0">
-        <CardContent className="px-4 py-4">
+      <Card className="bg-transparent border-none shadow-none  p-0 relative z-0">
+        <CardContent className="p-0">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Banner Preview</h3>
             <div className="flex space-x-2">
@@ -290,7 +290,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
               </Button>
             </div>
           </div>
-          <div className="bg-gray-100 border-3 aspect-3/1 rounded-3xl overflow-hidden relative">
+          <div className="bg-gray-100 border-3 aspect-3/1 rounded-2xl overflow-hidden relative">
             {currentBanner ? (
               <>
                 {currentBanner.mediaType === "video" ||

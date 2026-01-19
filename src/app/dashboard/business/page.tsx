@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus,
+
   Edit,
   Trash2,
   Save,
@@ -68,6 +68,8 @@ import {
   Image as ImageIcon,
   Upload,
   Link,
+  X,
+  Plus,
   MessageSquare,
   Settings,
   Palette,
@@ -80,7 +82,7 @@ import {
   Search,
   Filter,
   MoreHorizontal,
-  X,
+  
   Play,
   Pause,
   RotateCcw,
@@ -1441,213 +1443,18 @@ export default function BusinessAdminDashboard() {
                     onLogoUpload={(url) => {
                       setBusinessInfoFormData(prev => ({ ...prev, logo: url }));
                     }}
+                    gstNumber={businessInfoFormData.gstNumber}
+                    openingHours={businessInfoFormData.openingHours}
+                    address={businessInfoFormData.address}
+                    mobile={businessInfoFormData.phone}
+                    email={businessInfoFormData.email}
+                    socialLinks={{
+                      facebook: businessInfoFormData.facebook,
+                      twitter: businessInfoFormData.twitter,
+                      instagram: businessInfoFormData.instagram,
+                      linkedin: businessInfoFormData.linkedin,
+                    }}
                   />
-                </div>
-
-                <div>
-                  <div className="mt-2 space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Business Name</Label>
-                      <Input
-                        name="name"
-                        value={businessInfoFormData.name}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Owner Name</Label>
-                      <Input
-                        value={businessInfoFormData.ownerName}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, ownerName: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Description</Label>
-                      <Textarea
-                        value={businessInfoFormData.description}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, description: e.target.value }))}
-                        rows={3}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">About Section</Label>
-                      <Textarea
-                        value={businessInfoFormData.about}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, about: e.target.value }))}
-                        rows={3}
-                        placeholder="Detailed about section content"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">GST Number</Label>
-                      <Input
-                        value={businessInfoFormData.gstNumber}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, gstNumber: e.target.value }))}
-                        placeholder="Enter GST number"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Opening Hours</Label>
-                      <div className="space-y-2">
-                        {businessInfoFormData.openingHours?.map((hour: any, index: number) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <Input
-                              value={hour.day}
-                              onChange={(e) => {
-                                const newHours = [...businessInfoFormData.openingHours]
-                                newHours[index].day = e.target.value
-                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
-                              }}
-                              placeholder="Day"
-                              className="bg-white rounded-2xl"
-                            />
-                            <Input
-                              value={hour.open}
-                              onChange={(e) => {
-                                const newHours = [...businessInfoFormData.openingHours]
-                                newHours[index].open = e.target.value
-                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
-                              }}
-                              placeholder="Open"
-                              className="bg-white rounded-2xl"
-                            />
-                            <Input
-                              value={hour.close}
-                              onChange={(e) => {
-                                const newHours = [...businessInfoFormData.openingHours]
-                                newHours[index].close = e.target.value
-                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
-                              }}
-                              placeholder="Close"
-                              className="bg-white rounded-2xl"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newHours = businessInfoFormData.openingHours.filter((_, i) => i !== index)
-                                setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
-                              }}
-                              className="rounded-xl"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const newHours = [...(businessInfoFormData.openingHours || []), { day: '', open: '', close: '' }]
-                            setBusinessInfoFormData(prev => ({ ...prev, openingHours: newHours }))
-                          }}
-                          className="rounded-2xl"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Opening Hour
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Logo URL</Label>
-                      <div className="space-y-2">
-                        <Input
-                          value={businessInfoFormData.logo}
-                          onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, logo: e.target.value }))}
-                          placeholder="https://..."
-                          className="bg-white rounded-2xl"
-                        />
-                        <div className="space-y-2">
-                          <ImageUpload
-                            accept="image/*"
-                            onUpload={(url) => setBusinessInfoFormData(prev => ({ ...prev, logo: url }))}
-                            onError={(error) => toast({
-                              title: "Upload Error",
-                              description: error,
-                              variant: "destructive",
-                            })}
-                          />
-
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Address</Label>
-                      <Input
-                        value={businessInfoFormData.address}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, address: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Phone</Label>
-                      <Input
-                        value={businessInfoFormData.phone}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Email</Label>
-                      <Input
-                        value={businessInfoFormData.email}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Website</Label>
-                      <Input
-                        value={businessInfoFormData.website}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, website: e.target.value }))}
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Facebook</Label>
-                      <Input
-                        value={businessInfoFormData.facebook}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, facebook: e.target.value }))}
-                        placeholder="https://facebook.com/yourpage"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Twitter</Label>
-                      <Input
-                        value={businessInfoFormData.twitter}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, twitter: e.target.value }))}
-                        placeholder="https://twitter.com/yourhandle"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">Instagram</Label>
-                      <Input
-                        value={businessInfoFormData.instagram}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, instagram: e.target.value }))}
-                        placeholder="https://instagram.com/yourhandle"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1">LinkedIn</Label>
-                      <Input
-                        value={businessInfoFormData.linkedin}
-                        onChange={(e) => setBusinessInfoFormData(prev => ({ ...prev, linkedin: e.target.value }))}
-                        placeholder="https://linkedin.com/in/yourprofile"
-                        className="bg-white rounded-2xl"
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             )}

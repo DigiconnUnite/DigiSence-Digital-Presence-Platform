@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import ReactImageCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { useToast } from "@/hooks/use-toast";
 
 interface BusinessInfoCardProps {
   businessName: string;
@@ -66,6 +67,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
   email,
   socialLinks,
 }) => {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isEditingLegal, setIsEditingLegal] = useState(false);
@@ -76,6 +78,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     businessName,
     adminName,
     description,
+    logo: logoUrl || "",
     gstNumber: gstNumber || "",
     openingHours: openingHours || [{ day: "", open: "", close: "" }],
     address: address || "",
@@ -87,14 +90,21 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     linkedin: socialLinks?.linkedin || "",
   });
 
+  // Update editData when logoUrl prop changes (for logo uploads)
+  React.useEffect(() => {
+    if (logoUrl !== editData.logo) {
+      setEditData(prev => ({ ...prev, logo: logoUrl || "" }));
+    }
+  }, [logoUrl]);
+
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
-    x: 25,
-    y: 25,
-    width: 50,
-    height: 50,
+    x: 20,
+    y: 20,
+    width: 60,
+    height: 60,
   });
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(
     null,
@@ -108,31 +118,60 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
   };
 
   const handleSave = async () => {
-    // Validate required fields
-    if (!editData.businessName.trim()) {
-      alert("Business name is required");
+    // Determine which section is currently being edited and validate accordingly
+    const currentlyEditingSections: string[] = []
+    if (isEditing) currentlyEditingSections.push('profile')
+    if (isEditingAbout) currentlyEditingSections.push('about')
+    if (isEditingLegal) currentlyEditingSections.push('legal')
+    if (isEditingContact) currentlyEditingSections.push('contact')
+    if (isEditingSocial) currentlyEditingSections.push('social')
+
+    // Validate required fields based on editing sections
+    if (currentlyEditingSections.includes('profile') || currentlyEditingSections.includes('about') || currentlyEditingSections.includes('legal') || currentlyEditingSections.includes('contact')) {
+      if (!editData.businessName.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Business name is required",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Only validate GST number if legal section is being edited
+    if (currentlyEditingSections.includes('legal') && editData.gstNumber && !/^[0-9]{15}$/.test(editData.gstNumber)) {
+      toast({
+        title: "Validation Error",
+        description: "GST number must be 15 digits",
+        variant: "destructive"
+      });
       return;
     }
 
-    if (editData.gstNumber && !/^[0-9]{15}$/.test(editData.gstNumber)) {
-      alert("GST number must be 15 digits");
+    // Only validate email if contact section is being edited
+    if (currentlyEditingSections.includes('contact') && editData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
       return;
     }
 
-    // Validate email format
-    if (editData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editData.email)) {
-      alert("Please enter a valid email address");
-      return;
-    }
+    // Only validate opening hours if legal section is being edited
+    if (currentlyEditingSections.includes('legal')) {
+      const hasInvalidHours = editData.openingHours.some(hour => {
+        return hour.day && (!hour.open || !hour.close);
+      });
 
-    // Validate opening hours
-    const hasInvalidHours = editData.openingHours.some(hour => {
-      return hour.day && (!hour.open || !hour.close);
-    });
-
-    if (hasInvalidHours) {
-      alert("Please provide both opening and closing times for all days");
-      return;
+      if (hasInvalidHours) {
+        toast({
+          title: "Validation Error",
+          description: "Please provide both opening and closing times for all days",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -199,14 +238,25 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
         setIsEditingContact(false);
         setIsEditingSocial(false);
         if (onEdit) onEdit();
-        alert("Business information saved successfully!");
+        toast({
+          title: "Success",
+          description: "Business information saved successfully!"
+        });
       } else {
         console.error("Failed to update business info:", responseData);
-        alert(`Failed to save changes: ${responseData.error || 'Unknown error'}`);
+        toast({
+          title: "Error",
+          description: responseData.error || 'Failed to save changes',
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error("Error saving business info:", error);
-      alert("An error occurred while saving changes. Please try again.");
+      toast({
+        title: "Error",
+        description: "An error occurred while saving changes. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false);
     }
@@ -219,6 +269,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
         const file = files[0];
         if (file.type.startsWith("image/")) {
           setSelectedFile(file);
+          // Reset crop to center position when opening modal
+          setCrop({
+            unit: "%",
+            x: 15,
+            y: 15,
+            width: 70,
+            height: 70,
+          });
+          setCroppedAreaPixels(null);
           setCropModalOpen(true);
         }
       }
@@ -284,11 +343,32 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
       setSelectedFile(null);
       setCroppedAreaPixels(null);
 
-      const croppedUrl = URL.createObjectURL(croppedFile);
-      if (onLogoUpload) onLogoUpload(croppedUrl);
+      // Upload the cropped image to the server instead of just creating a blob URL
+      const formData = new FormData();
+      formData.append('file', croppedFile);
+      formData.append('type', 'logo');
+
+      const response = await fetch('/api/business/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      const permanentUrl = data.url || data.secure_url;
+
+      if (onLogoUpload) onLogoUpload(permanentUrl);
     } catch (error) {
-      console.error("Error cropping image:", error);
-      alert("Failed to crop image.");
+      console.error("Error cropping/uploading image:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload image.",
+        variant: "destructive"
+      });
     }
   }, [selectedFile, cropImage, onLogoUpload]);
 
@@ -338,7 +418,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-shrink-0 relative group">
+            <div className="flex-shrink-0 relative">
               <Avatar className="h-44 w-44 border-2 border-white shadow-sm">
                 {logoUrl ? (
                   <AvatarImage src={logoUrl} alt={businessName} />
@@ -348,18 +428,21 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   </AvatarFallback>
                 )}
               </Avatar>
-              <label
-                htmlFor="logo-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              >
-                <Edit className="h-6 w-6 text-white" />
-              </label>
+              {isEditing && (
+                <label
+                  htmlFor="logo-upload"
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-100 transition-opacity cursor-pointer"
+                >
+                  <Edit className="h-6 w-6 text-white" />
+                </label>
+              )}
               <input
                 id="logo-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleFileSelect}
                 className="hidden"
+                disabled={!isEditing}
               />
             </div>
 
@@ -368,39 +451,49 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Business Name
                 </label>
-                <input
-                  type="text"
-                  value={editData.businessName}
-                  onChange={(e) =>
-                    setEditData({ ...editData, businessName: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  className={`w-full text-lg font-semibold text-gray-900 border rounded-md px-3 py-2 outline-none transition-colors
-                    ${
-                      isEditing
-                        ? "bg-white border-gray-300 focus:border-gray-500"
-                        : "bg-transparent border-transparent"
-                    }`}
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <User className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={editData.businessName}
+                    onChange={(e) =>
+                      setEditData({ ...editData, businessName: e.target.value })
+                    }
+                    disabled={!isEditing}
+                    className={`w-full text-lg font-semibold text-gray-900 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors
+                      ${
+                        isEditing
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Admin Name
                 </label>
-                <input
-                  type="text"
-                  value={editData.adminName}
-                  onChange={(e) =>
-                    setEditData({ ...editData, adminName: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  className={`w-full text-sm font-medium text-gray-700 border rounded-md px-3 py-2 outline-none transition-colors
-                    ${
-                      isEditing
-                        ? "bg-white border-gray-300 focus:border-gray-500"
-                        : "bg-transparent border-transparent"
-                    }`}
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <User className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={editData.adminName}
+                    onChange={(e) =>
+                      setEditData({ ...editData, adminName: e.target.value })
+                    }
+                    disabled={!isEditing}
+                    className={`w-full text-sm font-medium text-gray-700 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors
+                      ${
+                        isEditing
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -426,9 +519,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 <Button
                   size="sm"
                   className="h-8 px-3"
-                  onClick={() => setIsEditingAbout(false)}
+                  onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  <Save className="h-4 w-4 mr-2" /> Save
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save
                 </Button>
               </div>
             ) : (
@@ -442,19 +541,24 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
               </Button>
             )}
           </div>
-          <textarea
-            value={editData.description}
-            onChange={(e) =>
-              setEditData({ ...editData, description: e.target.value })
-            }
-            disabled={!isEditingAbout}
-            className={`flex-1 w-full resize-none border rounded-md p-3 text-sm leading-relaxed outline-none transition-colors min-h-[120px]
-              ${
-                isEditingAbout
-                  ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                  : "bg-transparent border-transparent text-gray-600"
-              }`}
-          />
+          <div className="relative flex-1">
+            <div className="absolute top-3 left-3 pointer-events-none">
+              <FileText className="h-4 w-4 text-gray-400" />
+            </div>
+            <textarea
+              value={editData.description}
+              onChange={(e) =>
+                setEditData({ ...editData, description: e.target.value })
+              }
+              disabled={!isEditingAbout}
+              className={`flex-1 w-full resize-none border rounded-md p-3 pl-9 text-sm leading-relaxed outline-none transition-colors min-h-[120px]
+                ${
+                  isEditingAbout
+                    ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
+                }`}
+            />
+          </div>
         </div>
 
         {/* --- Legal Info Card --- */}
@@ -479,9 +583,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 <Button
                   size="sm"
                   className="h-8 px-3"
-                  onClick={() => setIsEditingLegal(false)}
+                  onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  <Save className="h-4 w-4 mr-2" /> Save
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save
                 </Button>
               </div>
             ) : (
@@ -612,7 +722,9 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const newHours = editData.openingHours.filter((_, i) => i !== index);
+                          const newHours = editData.openingHours.filter(
+                            (_, i) => i !== index,
+                          );
                           setEditData({ ...editData, openingHours: newHours });
                         }}
                         className="h-8 w-8 p-0"
@@ -621,22 +733,26 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         <X className="h-4 w-4" />
                       </Button>
                     )}
-                    {index === editData.openingHours.length - 1 && isEditingLegal && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditData({
-                            ...editData,
-                            openingHours: [...editData.openingHours, { day: "", open: "", close: "" }],
-                          });
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    )}
+                    {index === editData.openingHours.length - 1 &&
+                      isEditingLegal && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditData({
+                              ...editData,
+                              openingHours: [
+                                ...editData.openingHours,
+                                { day: "", open: "", close: "" },
+                              ],
+                            });
+                          }}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      )}
                   </div>
                 </div>
               ))}
@@ -666,9 +782,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 <Button
                   size="sm"
                   className="h-8 px-3"
-                  onClick={() => setIsEditingContact(false)}
+                  onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  <Save className="h-4 w-4 mr-2" /> Save
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save
                 </Button>
               </div>
             ) : (
@@ -783,9 +905,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 <Button
                   size="sm"
                   className="h-8 px-3"
-                  onClick={() => setIsEditingSocial(false)}
+                  onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  <Save className="h-4 w-4 mr-2" /> Save
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save
                 </Button>
               </div>
             ) : (
@@ -906,19 +1034,22 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
               <DialogTitle>Crop Profile Image</DialogTitle>
             </DialogHeader>
             {selectedFile && (
-              <div className="h-96 w-full relative flex justify-center bg-gray-100 rounded-lg overflow-hidden">
+              <div className="h-96  relative flex justify-center bg-gray-100 rounded-lg overflow-hidden">
                 <ReactImageCrop
                   crop={crop}
                   onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
                   onComplete={(c) => setCroppedAreaPixels(c)}
                   aspect={1}
+                  circularCrop={true}
                   className="max-h-full"
+                  minWidth={100}
+                  minHeight={100}
                 >
                   <img
                     ref={imgRef}
                     src={URL.createObjectURL(selectedFile)}
                     alt="Crop me"
-                    className="max-w-full max-h-full object-contain"
+                    className=" max-h-full object-contain"
                   />
                 </ReactImageCrop>
               </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useSocket } from "@/hooks/useSocket";
 import {
   Card,
   CardContent,
@@ -260,6 +261,129 @@ export default function SuperAdminDashboard() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
+
+  // Socket.IO connection for real-time updates
+  const { socket, isConnected } = useSocket();
+
+  // Real-time updates from Socket.IO
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleBusinessCreated = (data: any) => {
+      console.log('Business created via Socket.IO:', data);
+      setBusinesses(prev => [data.business, ...prev]);
+      setStats(prev => ({
+        ...prev,
+        totalBusinesses: prev.totalBusinesses + 1,
+        totalUsers: prev.totalUsers + 1,
+      }));
+      toast({
+        title: "Business Created",
+        description: `${data.business.name} has been added to the platform.`,
+      });
+    };
+
+    const handleBusinessUpdated = (data: any) => {
+      console.log('Business updated via Socket.IO:', data);
+      setBusinesses(prev => prev.map(biz =>
+        biz.id === data.business.id ? { ...biz, ...data.business } : biz
+      ));
+      toast({
+        title: "Business Updated",
+        description: `${data.business.name} has been updated.`,
+      });
+    };
+
+    const handleBusinessDeleted = (data: any) => {
+      console.log('Business deleted via Socket.IO:', data);
+      setBusinesses(prev => prev.filter(biz => biz.id !== data.businessId));
+      setStats(prev => ({
+        ...prev,
+        totalBusinesses: prev.totalBusinesses - 1,
+        totalUsers: prev.totalUsers - 1,
+        activeBusinesses: prev.activeBusinesses - 1,
+      }));
+      toast({
+        title: "Business Deleted",
+        description: "A business has been removed from the platform.",
+      });
+    };
+
+    const handleBusinessStatusUpdated = (data: any) => {
+      console.log('Business status updated via Socket.IO:', data);
+      setBusinesses(prev => prev.map(biz =>
+        biz.id === data.business.id ? { ...biz, ...data.business } : biz
+      ));
+      setStats(prev => ({
+        ...prev,
+        activeBusinesses: data.business.isActive
+          ? prev.activeBusinesses + 1
+          : prev.activeBusinesses - 1,
+      }));
+      toast({
+        title: "Business Status Updated",
+        description: `${data.business.name} is now ${data.business.isActive ? 'active' : 'inactive'}.`,
+      });
+    };
+
+    const handleProfessionalCreated = (data: any) => {
+      console.log('Professional created via Socket.IO:', data);
+      setProfessionals(prev => [data.professional, ...prev]);
+      setStats(prev => ({
+        ...prev,
+        totalProfessionals: prev.totalProfessionals + 1,
+      }));
+      toast({
+        title: "Professional Created",
+        description: `${data.professional.name} has been added to the platform.`,
+      });
+    };
+
+    const handleProfessionalUpdated = (data: any) => {
+      console.log('Professional updated via Socket.IO:', data);
+      setProfessionals(prev => prev.map(pro =>
+        pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+      ));
+      toast({
+        title: "Professional Updated",
+        description: `${data.professional.name} has been updated.`,
+      });
+    };
+
+    const handleProfessionalDeleted = (data: any) => {
+      console.log('Professional deleted via Socket.IO:', data);
+      setProfessionals(prev => prev.filter(pro => pro.id !== data.professionalId));
+      setStats(prev => ({
+        ...prev,
+        totalProfessionals: prev.totalProfessionals - 1,
+        activeProfessionals: prev.activeProfessionals - 1,
+      }));
+      toast({
+        title: "Professional Deleted",
+        description: "A professional has been removed from the platform.",
+      });
+    };
+
+    // Register event listeners
+    socket.on('business-created', handleBusinessCreated);
+    socket.on('business-updated', handleBusinessUpdated);
+    socket.on('business-deleted', handleBusinessDeleted);
+    socket.on('business-status-updated', handleBusinessStatusUpdated);
+    socket.on('professional-created', handleProfessionalCreated);
+    socket.on('professional-updated', handleProfessionalUpdated);
+    socket.on('professional-deleted', handleProfessionalDeleted);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socket.off('business-created', handleBusinessCreated);
+      socket.off('business-updated', handleBusinessUpdated);
+      socket.off('business-deleted', handleBusinessDeleted);
+      socket.off('business-status-updated', handleBusinessStatusUpdated);
+      socket.off('professional-created', handleProfessionalCreated);
+      socket.off('professional-updated', handleProfessionalUpdated);
+      socket.off('professional-deleted', handleProfessionalDeleted);
+    };
+  }, [socket, isConnected, toast]);
 
   // Authentication check
   useEffect(() => {
@@ -3406,8 +3530,11 @@ const renderRightPanel = () => {
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
-              <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? 'Real-time connected' : 'Real-time disconnected'}></div>
+              <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
+                <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
+              </div>
             </div>
           </div>
         </div>
@@ -3742,4 +3869,3 @@ const renderRightPanel = () => {
     </div>
   );
 }
-

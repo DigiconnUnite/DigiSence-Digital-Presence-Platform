@@ -112,14 +112,14 @@ export async function POST(
       },
     })
 
-    // Notify Frontend via WebSocket
-    const io = (global as any).io
-
-    if (io) {
-      io.to(business.id).emit('data-updated', {
-        type: 'BUSINESS_UPDATE',
-        data: business
-      })
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-updated', {
+        business: business,
+        action: 'update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
     }
 
     return NextResponse.json({
@@ -230,7 +230,38 @@ export async function PUT(
     const business = await db.business.update({
       where: { id: businessId },
       data: { isActive },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            products: true,
+            inquiries: true,
+          },
+        },
+      },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-status-updated', {
+        business: business,
+        action: 'status-update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,

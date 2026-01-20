@@ -180,11 +180,27 @@ export async function POST(request: NextRequest) {
               name: true,
             },
           },
+          _count: {
+            select: {
+              products: true,
+              inquiries: true,
+            },
+          },
         },
       })
 
       return { user, business }
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-created', {
+        business: result.business,
+        action: 'create',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -213,7 +229,7 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    
+
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
@@ -240,6 +256,16 @@ export async function DELETE(request: NextRequest) {
     await db.business.delete({
       where: { id },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-deleted', {
+        businessId: id,
+        action: 'delete',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,

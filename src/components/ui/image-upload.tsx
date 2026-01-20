@@ -445,8 +445,8 @@ export default function ImageUpload({
             <DialogTitle>Crop Image</DialogTitle>
           </DialogHeader>
           {selectedFile && (
-            <div className="h-96 w-full relative">
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-col h-[calc(100vh-200px)] max-h-[70vh] w-full">
+              <div className="flex flex-col gap-4 flex-1 overflow-hidden">
                 <div className="flex gap-1 mb-4 flex-wrap">
                   <Button
                     variant={selectedAspect === 16/9 ? "default" : "outline"}
@@ -497,22 +497,26 @@ export default function ImageUpload({
                     Default
                   </Button>
                 </div>
-                <ReactImageCrop
-                  crop={crop}
-                  onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
-                  onComplete={(c) => setCroppedAreaPixels(c)}
-                  aspect={selectedAspect}
-                >
-                  <img 
-                    ref={imgRef} 
-                    src={URL.createObjectURL(selectedFile)} 
-                    alt="Crop me" 
-                  />
-                </ReactImageCrop>
+                <div className="flex-1 overflow-hidden relative">
+                  <ReactImageCrop
+                    crop={crop}
+                    onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCroppedAreaPixels(c)}
+                    aspect={selectedAspect}
+                    className="absolute inset-0"
+                  >
+                    <img
+                      ref={imgRef}
+                      src={URL.createObjectURL(selectedFile)}
+                      alt="Crop me"
+                      className="max-h-full max-w-full block"
+                    />
+                  </ReactImageCrop>
+                </div>
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button
               variant="outline"
               onClick={() => {

@@ -365,7 +365,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-shrink-0 relative">
+            <div className="shrink-0 relative">
               <Avatar className="h-44 w-44 border-2 border-white shadow-sm">
                 {editData.logo ? (
                   <AvatarImage
@@ -409,7 +409,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                     type="text"
                     value={editData.businessName}
                     disabled={true}
-                    className={`w-full text-lg font-semibold text-gray-900 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors bg-gray-100 border-gray-200 text-gray-600`}
+                    className={`w-full text-lg font-semibold  border rounded-md pl-9 pr-3 py-2 outline-none transition-colors bg-gray-100 border-gray-200 text-gray-600`}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full">

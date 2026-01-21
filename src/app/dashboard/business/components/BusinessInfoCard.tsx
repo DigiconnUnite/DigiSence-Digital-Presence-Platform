@@ -348,20 +348,33 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
       formData.append('file', croppedFile);
       formData.append('type', 'logo');
 
+      console.log('Uploading logo file:', croppedFile.name, croppedFile.type, croppedFile.size);
+
       const response = await fetch('/api/business/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Upload response status:', response.status);
+      const responseData = await response.json();
+      console.log('Upload response data:', responseData);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Upload failed:', errorData);
         throw new Error(errorData.error || 'Upload failed');
       }
 
-      const data = await response.json();
-      const permanentUrl = data.url || data.secure_url;
+      const permanentUrl = responseData.url || responseData.secure_url;
+      console.log('Logo uploaded successfully. URL:', permanentUrl);
 
-      if (onLogoUpload) onLogoUpload(permanentUrl);
+      if (onLogoUpload) {
+        console.log('Calling onLogoUpload with URL:', permanentUrl);
+        onLogoUpload(permanentUrl);
+      }
+      
+      // Also update the local state to reflect the new logo
+      setEditData(prev => ({ ...prev, logo: permanentUrl }));
     } catch (error) {
       console.error("Error cropping/uploading image:", error);
       toast({

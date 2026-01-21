@@ -165,6 +165,7 @@ export default function ProfessionalDashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [currentView, setCurrentView] = useState("overview");
   const [activeProfileTab, setActiveProfileTab] = useState("basic");
+  const [profileCompletion, setProfileCompletion] = useState(0);
   // Removed sidebarExpanded state as dropdown is removed
 
   const getHeaderTitle = () => {
@@ -346,6 +347,41 @@ export default function ProfessionalDashboard() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
+  const calculateProfileCompletion = () => {
+    if (!professional) return 0;
+
+    let completion = 0;
+    const totalFields = 10; // Total fields to complete
+
+    // Check each field and increment completion
+    if (professional.name) completion++;
+    if (professional.professionalHeadline) completion++;
+    if (professional.aboutMe) completion++;
+    if (professional.profilePicture) completion++;
+    if (professional.banner) completion++;
+    if (professional.location) completion++;
+    if (professional.phone) completion++;
+    if (professional.email) completion++;
+    if (professional.website) completion++;
+
+    // Check social media links
+    if (professional.facebook || professional.twitter || professional.instagram || professional.linkedin) {
+      completion++;
+    }
+
+    // Calculate percentage
+    const percentage = Math.round((completion / totalFields) * 100);
+    return percentage;
+  };
+
+  const getProfileCompletionStatus = (percentage: number) => {
+    if (percentage === 100) return "Complete";
+    if (percentage >= 75) return "Almost Complete";
+    if (percentage >= 50) return "Halfway There";
+    if (percentage >= 25) return "Getting Started";
+    return "Just Beginning";
+  };
+
   useEffect(() => {
     if (!loading && (!user || (user.role as string) !== "PROFESSIONAL_ADMIN")) {
       router.push("/login");
@@ -356,6 +392,13 @@ export default function ProfessionalDashboard() {
       fetchProfessionalData();
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (professional) {
+      const completion = calculateProfileCompletion();
+      setProfileCompletion(completion);
+    }
+  }, [professional]);
 
   // Focus inputs when entering edit mode
   useEffect(() => {
@@ -1177,17 +1220,17 @@ export default function ProfessionalDashboard() {
                 icon={<UserCheck className="h-4 w-4 text-gray-400" />}
               />
               <StatCard
+                title="Profile Completion"
+                value={`${profileCompletion}%`}
+                subtitle={getProfileCompletionStatus(profileCompletion)}
+                icon={<TrendingUp className="h-4 w-4 text-gray-400" />}
+              />
+              <StatCard
                 title="Profile URL"
                 value={professional ? `/pcard/${professional.slug}` : "Not set"}
                 subtitle="Your public profile"
                 icon={<Globe className="h-4 w-4 text-gray-400" />}
                 truncate
-              />
-              <StatCard
-                title="Platform Health"
-                value="Good"
-                subtitle="System status"
-                icon={<Activity className="h-4 w-4 text-gray-400" />}
               />
             </div>
 
@@ -1212,6 +1255,33 @@ export default function ProfessionalDashboard() {
                 buttonAction={() => setCurrentView("profile")}
                 variant="outline"
               />
+            </div>
+
+            {/* Profile Completion Progress */}
+            <div className="mt-8">
+              <Card className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
+                <CardHeader>
+                  <CardTitle>Profile Completion</CardTitle>
+                  <CardDescription>Complete your profile to attract more clients</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Completion: {profileCompletion}%</span>
+                      <span className="text-sm text-gray-500">{getProfileCompletionStatus(profileCompletion)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-amber-600 h-2.5 rounded-full"
+                        style={{ width: `${profileCompletion}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {profileCompletion === 100 ? "Great job! Your profile is complete." : `Complete ${100 - profileCompletion}% more to reach 100%`}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );

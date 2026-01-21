@@ -159,6 +159,7 @@ export async function PUT(request: NextRequest) {
     console.log('Business update request body:', body)
     const updateData = updateBusinessSchema.parse(body)
     console.log('Parsed updateData:', updateData)
+    console.log('Logo field in updateData:', updateData.logo)
 
     // Check if business exists and belongs to this admin
     const existingBusiness = await db.business.findUnique({
@@ -176,7 +177,7 @@ export async function PUT(request: NextRequest) {
     const cleanBusinessUpdateData = Object.fromEntries(
       Object.entries(businessUpdateData).map(([key, value]) => [
         key,
-        key === 'logo' ? value : value === "" ? null : value
+        value === "" ? null : value
       ])
     )
 
@@ -203,6 +204,7 @@ export async function PUT(request: NextRequest) {
       updateFields.slug = newSlug
     }
 
+    console.log('Updating business with fields:', updateFields)
     const business = await db.business.update({
       where: { id: existingBusiness.id },
       data: updateFields,
@@ -222,6 +224,7 @@ export async function PUT(request: NextRequest) {
         },
       },
     })
+    console.log('Business updated successfully. Logo field:', business.logo)
 
     // Update owner name if provided and not empty
     console.log('Owner name update check:', { ownerName, isUndefined: ownerName === undefined, isEmpty: ownerName?.trim() === "" })

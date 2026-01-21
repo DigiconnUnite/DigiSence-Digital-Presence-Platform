@@ -407,6 +407,8 @@ export default function BusinessAdminDashboard() {
             about: data.business.about || '',
             logo: data.business.logo || '',
             address: data.business.address || '',
+            // Ensure logo is properly set in form data
+            ...(data.business.logo && { logo: data.business.logo }),
             phone: data.business.phone || '',
             email: data.business.email || '',
             website: data.business.website || '',
@@ -721,6 +723,7 @@ export default function BusinessAdminDashboard() {
     }
 
     console.log('Frontend updateData being sent:', updateData)
+    console.log('Logo URL in updateData:', updateData.logo)
 
     // Validation
     if (!updateData.name?.trim()) {
@@ -795,6 +798,8 @@ export default function BusinessAdminDashboard() {
 
       if (response.ok) {
         const result = await response.json()
+        console.log('Business update successful. Response:', result)
+        console.log('Updated business logo:', result.business.logo)
         setBusiness(result.business)
         toast({
           title: "Success",
@@ -802,6 +807,7 @@ export default function BusinessAdminDashboard() {
         })
       } else {
         const error = await response.json()
+        console.error('Business update failed:', error)
         toast({
           title: "Error",
           description: `Failed to update: ${error.error}`,
@@ -1786,372 +1792,225 @@ export default function BusinessAdminDashboard() {
             )}
 
             {activeSection === 'portfolio' && (
-              <div className=" mx-auto">
-                <div className="mb-6">
-                  <h1 className="text-xl font-bold text-gray-900 mb-2">Portfolio Manager</h1>
-                  <p className="text-xl text-gray-600">Manage your portfolio images</p>
-                </div>
+  <div className=" mx-auto">
+    <div className="mb-6">
+      <h1 className="text-xl font-bold text-gray-900 mb-2">Portfolio Manager</h1>
+      <p className="text-xl text-gray-600">Manage your portfolio images</p>
+    </div>
 
-                <div className="space-y-6">
-                  {/* Section Title */}
-                  <div>
-                    <Label className="text-sm font-medium">Page Title for Portfolio Section</Label>
-                    <Input
-                      value={sectionTitles.portfolio}
-                      onChange={(e) => setSectionTitles(prev => ({ ...prev, portfolio: e.target.value }))}
-                      placeholder="Enter section title"
-                      className="rounded-2xl"
-                    />
-                  </div>
+    <div className="space-y-6">
+      {/* Section Title */}
+      <div>
+        <Label className="text-sm font-medium">Page Title for Portfolio Section</Label>
+        <Input
+          value={sectionTitles.portfolio}
+          onChange={(e) => setSectionTitles(prev => ({ ...prev, portfolio: e.target.value }))}
+          placeholder="Enter section title"
+          className="rounded-2xl"
+        />
+      </div>
 
-                  {/* Add New Portfolio Image Section */}
-                  <Card className="rounded-3xl">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Add New Portfolio Image</CardTitle>
-                      <CardDescription>Add a new image to your portfolio gallery (up to 6 images)</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Image URL</Label>
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Image URL or upload below"
-                            value={portfolioContent.newImageUrl || ''}
-                            onChange={(e) => setPortfolioContent(prev => ({ ...prev, newImageUrl: e.target.value }))}
-                            className="bg-white rounded-2xl"
-                          />
-                          <ImageUpload
-                            allowVideo={true}
-                            onUpload={(url) => setPortfolioContent(prev => ({ ...prev, newImageUrl: url }))}
-                          />
-                        </div>
+      {/* Portfolio Grid - Bento Layout */}
+      <Card className="rounded-3xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Portfolio Grid</CardTitle>
+              <CardDescription>Click empty slots to add, icons to manage.</CardDescription>
+            </div>
+            <div className="text-sm text-gray-500 font-medium">
+              {(portfolioContent.images || []).length}/6 Images
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4 md:grid-rows-2 auto-rows-fr">
+            {Array.from({ length: 6 }).map((_, index) => {
+              const image = (portfolioContent.images || [])[index];
+              
+              // Define grid positions for bento layout
+              const gridClasses = [
+                "md:row-span-2 md:col-span-2 col-span-2 row-span-2", // Index 0: Large Rect
+                "md:row-span-1 md:col-span-1 col-span-1",            // Index 1: Small Square
+                "md:row-span-1 md:col-span-1 col-span-1",            // Index 2: Small Square
+                "md:row-span-2 md:col-span-2 col-span-2 row-span-2", // Index 3: Large Rect
+                "md:row-span-1 md:col-span-1 col-span-1",            // Index 4: Small Square
+                "md:row-span-1 md:col-span-1 col-span-1"             // Index 5: Small Square
+              ];
+
+              // Determine aspect ratio based on slot (0 and 3 are rectangular, others square)
+              const isRect = index === 0 || index === 3;
+              const isVideo = image?.url && (image.url.includes('.mp4') || image.url.includes('.webm') || image.url.includes('.ogg'));
+
+              const handleImageUpdate = (index: number, url: string) => {
+                const updatedImages = [...(portfolioContent.images || [])];
+                updatedImages[index] = { url, alt: 'Portfolio image' };
+                savePortfolioImages(updatedImages);
+              };
+
+              const savePortfolioImages = async (images: any[]) => {
+                try {
+                  const response = await fetch('/api/business', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ portfolioContent: { images } }),
+                  });
+
+                  if (response.ok) {
+                    setPortfolioContent(prev => ({ ...prev, images }));
+                    toast({ title: "Success", description: "Portfolio updated successfully!" });
+                  } else {
+                    const errorResult = await response.json();
+                    toast({ title: "Error", description: `Failed to update portfolio: ${errorResult.error}`, variant: "destructive" });
+                  }
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to update portfolio. Please try again.", variant: "destructive" });
+                }
+              };
+
+              return (
+                <div
+                  key={index}
+                  className={`
+                    relative bg-gray-100 border-2 border-dashed border-gray-300
+                    rounded-2xl overflow-hidden group transition-all duration-300
+                    ${image ? 'border-gray-200 shadow-sm hover:shadow-md' : 'hover:border-blue-400 hover:bg-blue-50'}
+                    ${gridClasses[index] || "md:row-span-1 md:col-span-1"}
+                  `}
+                  style={{
+                    minHeight: isRect ? '220px' : '140px',
+                  }}
+                >
+                  {/* Empty Slot: Click to Open File Manager */}
+                  {!image && (
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer z-10"
+                      onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*,video/*';
+                        fileInput.onchange = (e) => {
+                          const target = e.target as HTMLInputElement;
+                          if (target.files && target.files[0]) {
+                            const file = target.files[0];
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const result = event.target?.result;
+                              if (typeof result === 'string') {
+                                handleImageUpdate(index, result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        fileInput.click();
+                      }}
+                    >
+                      <div className={`
+                        flex items-center justify-center rounded-full bg-white shadow-sm mb-3
+                        ${isRect ? "w-16 h-16" : "w-12 h-12"}
+                      `}>
+                        <Plus className={`text-gray-400 ${isRect ? "w-8 h-8" : "w-6 h-6"}`} />
                       </div>
-                      <Button
-                        onClick={async () => {
-                          if (!portfolioContent.newImageUrl?.trim()) {
-                            toast({
-                              title: "Error",
-                              description: "Please provide an image URL",
-                              variant: "destructive",
-                            })
-                            return
-                          }
+                      <span className="text-xs font-medium text-gray-500 group-hover:text-blue-600">
+                        {isRect ? 'Add Rect Image' : 'Add Square Image'}
+                      </span>
+                    </div>
+                  )}
 
-                          if ((portfolioContent.images || []).length >= 6) {
-                            toast({
-                              title: "Error",
-                              description: "Maximum 6 portfolio images allowed",
-                              variant: "destructive",
-                            })
-                            return
-                          }
-
-                          setSavingPortfolio(true)
-                          const newImage = {
-                            url: portfolioContent.newImageUrl.trim(),
-                            alt: 'Portfolio image',
-                          }
-
-                          const updatedImages = [...(portfolioContent.images || []), newImage]
-
-                          try {
-                            const response = await fetch('/api/business', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
-                            })
-
-                            if (response.ok) {
-                              setPortfolioContent(prev => ({
-                                ...prev,
-                                images: updatedImages,
-                                newImageUrl: '',
-                              }))
-                              toast({
-                                title: "Success",
-                                description: "Portfolio image added successfully!",
-                              })
-                            } else {
-                              const errorResult = await response.json()
-                              toast({
-                                title: "Error",
-                                description: `Failed to add portfolio image: ${errorResult.error}`,
-                                variant: "destructive",
-                              })
-                            }
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Failed to add portfolio image. Please try again.",
-                              variant: "destructive",
-                            })
-                          } finally {
-                            setSavingPortfolio(false)
-                          }
-                        }}
-                        disabled={savingPortfolio || (portfolioContent.images || []).length >= 6}
-                        className="w-full rounded-2xl"
-                      >
-                        {savingPortfolio ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Adding...
-                          </>
+                  {/* Filled Slot: Image or Video */}
+                  {image && (
+                    <>
+                      {/* Media Content */}
+                      <div className="absolute inset-0 bg-gray-200">
+                        {isVideo ? (
+                          <video
+                            src={image.url}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                          />
                         ) : (
-                          <>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Image ({(portfolioContent.images || []).length}/6)
-                          </>
+                          <img
+                            src={image.url}
+                            alt={image.alt || 'Portfolio image'}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
                         )}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      </div>
 
-                  {/* Portfolio Preview - Bento Grid Layout */}
-                  <Card className="rounded-3xl">
-                    <CardHeader>
-                      <CardTitle>Portfolio Preview</CardTitle>
-                      <CardDescription>Preview how your portfolio will appear (Bento Grid Layout)</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {(portfolioContent.images || []).length > 0 ? (
-                        <div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-4 md:grid-rows-2">
-                          {(portfolioContent.images || []).slice(0, 6).map((image: any, index: number) => {
-                            // Define grid positions for bento layout
-                            const gridClasses = [
-                              "md:row-span-2 md:col-span-2 col-span-2 row-span-1", // Large top-left
-                              "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
-                              "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
-                              "md:row-span-2 md:col-span-2 col-span-2 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
-                              "md:row-span-1 md:col-span-1 col-span-1", // Bottom-left small
-                              "md:row-span-1 md:col-span-1 col-span-1"  // Bottom-right small
-                            ]
+                      {/* Dark Overlay on Hover */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20" />
 
-                            const isVideo = image.url && (image.url.includes('.mp4') || image.url.includes('.webm') || image.url.includes('.ogg'))
-
-                            return (
-                              <div
-                                key={index}
-                                className={`bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center hover:shadow transition-shadow bg-center bg-cover relative overflow-hidden cursor-pointer group ${gridClasses[index] || "md:row-span-1 md:col-span-1"} ${index === 0 || index === 3 ? "min-h-[140px] md:min-h-[180px]" : "min-h-[100px] md:min-h-[120px]"}`}
-                                style={{
-                                  aspectRatio: index === 0 || index === 3 ? "2/1" : "1/1"
-                                }}
-                                onClick={() => {
-                                  const newUrl = prompt('Update image URL:', image.url)
-                                  if (newUrl && newUrl.trim()) {
-                                    const updatedImages = [...portfolioContent.images]
-                                    updatedImages[index] = { ...image, url: newUrl.trim() }
-
-                                    setPortfolioContent(prev => ({
-                                      ...prev,
-                                      images: updatedImages
-                                    }))
+                      {/* Action Buttons (Edit & Delete) */}
+                      <div className="absolute top-2 right-2 flex space-x-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {/* Edit Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // --- EDIT FLOW ---
+                            // 1. Open File Manager/Re-upload logic.
+                            // 2. Open Cropper with current image, preserving aspect ratio (isRect ? 2/1 : 1/1).
+                            
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.accept = 'image/*,video/*';
+                            fileInput.onchange = (e) => {
+                              const target = e.target as HTMLInputElement;
+                              if (target.files && target.files[0]) {
+                                const file = target.files[0];
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const result = event.target?.result;
+                                  if (typeof result === 'string') {
+                                    handleImageUpdate(index, result);
                                   }
-                                }}
-                              >
-                                {isVideo ? (
-                                  <video
-                                    src={image.url}
-                                    className="w-full h-full object-cover"
-                                    muted
-                                    loop
-                                    playsInline
-                                    style={{ pointerEvents: 'none' }}
-                                  />
-                                ) : image.url ? (
-                                  <img
-                                    src={getOptimizedImageUrl(image.url, {
-                                      width: index === 0 || index === 3 ? 600 : 300,
-                                      height: index === 0 || index === 3 ? 300 : 300,
-                                      quality: 85,
-                                      format: 'auto',
-                                      crop: 'fill',
-                                      gravity: 'auto'
-                                    })}
-                                    srcSet={generateSrcSet(image.url)}
-                                    sizes={index === 0 || index === 3 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"}
-                                    alt={image.alt || 'Portfolio image'}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                ) : (
-                                      <span className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 3 ? "w-[60px] h-[60px] md:w-20 md:h-20" : "w-10 h-10 md:w-14 md:h-14"}`}>
-                                        <ImageIcon className={`text-gray-400 ${index === 0 || index === 3 ? "w-8 h-8 md:w-10 md:h-10" : "w-6 h-6 md:w-8 md:h-8"}`} />
-                                  </span>
-                                )}
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            };
+                            fileInput.click();
+                          }}
+                          className="bg-white/90 backdrop-blur text-gray-700 hover:text-blue-600 hover:bg-white p-2 rounded-full shadow-lg transition-transform hover:scale-105"
+                          title="Edit Image"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
 
-                                {isVideo && (
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-black/50 bg-opacity-50 rounded-full p-2">
-                                      <svg className="w-4 h-4 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                      </svg>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Overlay on hover */}
-                                <div className="absolute inset-0 bg-black/50 bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white text-center">
-                                    <p className="text-xs md:text-sm font-medium">Click to update</p>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12">
-                          <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No portfolio images yet</h3>
-                          <p className="text-gray-600">Add portfolio images using the form above</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Portfolio Images Table Section */}
-                  <Card className="rounded-3xl">
-                    <CardContent>
-                      {(portfolioContent.images || []).length > 0 ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Image</TableHead>
-                              <TableHead>Alt Text</TableHead>
-                              <TableHead className="w-32">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(portfolioContent.images || []).map((image: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell>
-                                  <img
-                                    src={getOptimizedImageUrl(image.url, { width: 32, height: 32, quality: 85, format: 'auto' })}
-                                    alt={image.alt || 'Portfolio image'}
-                                    className="h-8 w-8 object-cover rounded-2xl"
-                                    loading="lazy"
-                                  />
-                                </TableCell>
-                                <TableCell className="font-medium">{image.alt || 'Portfolio image'}</TableCell>
-                                <TableCell>
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={async () => {
-                                        const newAlt = prompt('Edit alt text:', image.alt || 'Portfolio image')
-                                        if (newAlt !== null) {
-                                          const updatedImages = [...portfolioContent.images]
-                                          updatedImages[index] = { ...image, alt: newAlt.trim() || 'Portfolio image' }
-
-                                          try {
-                                            const response = await fetch('/api/business', {
-                                              method: 'PUT',
-                                              headers: { 'Content-Type': 'application/json' },
-                                              body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
-                                            })
-
-                                            if (response.ok) {
-                                              setPortfolioContent(prev => ({
-                                                ...prev,
-                                                images: updatedImages
-                                              }))
-                                              toast({
-                                                title: "Success",
-                                                description: "Portfolio image updated successfully!",
-                                              })
-                                            } else {
-                                              const errorResult = await response.json()
-                                              toast({
-                                                title: "Error",
-                                                description: `Failed to update portfolio image: ${errorResult.error}`,
-                                                variant: "destructive",
-                                              })
-                                            }
-                                          } catch (error) {
-                                            toast({
-                                              title: "Error",
-                                              description: "Failed to update portfolio image. Please try again.",
-                                              variant: "destructive",
-                                            })
-                                          }
-                                        }
-                                      }}
-                                      className="rounded-xl"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        setConfirmDialogData({
-                                          title: 'Delete Portfolio Image',
-                                          description: `Are you sure you want to delete this portfolio image?`,
-                                          action: async () => {
-                                            const updatedImages = portfolioContent.images.filter((_, i) => i !== index)
-
-                                            try {
-                                              const response = await fetch('/api/business', {
-                                                method: 'PUT',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ portfolioContent: { images: updatedImages } }),
-                                              })
-
-                                              if (response.ok) {
-                                                setPortfolioContent(prev => ({
-                                                  ...prev,
-                                                  images: updatedImages
-                                                }))
-                                                toast({
-                                                  title: "Success",
-                                                  description: "Portfolio image deleted successfully!",
-                                                })
-                                              } else {
-                                                const errorResult = await response.json()
-                                                toast({
-                                                  title: "Error",
-                                                  description: `Failed to delete portfolio image: ${errorResult.error}`,
-                                                  variant: "destructive",
-                                                })
-                                              }
-                                            } catch (error) {
-                                              toast({
-                                                title: "Error",
-                                                description: "Failed to delete portfolio image. Please try again.",
-                                                variant: "destructive",
-                                              })
-                                            }
-
-                                            setShowConfirmDialog(false)
-                                          }
-                                        })
-                                        setShowConfirmDialog(true)
-                                      }}
-                                      className="rounded-xl"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <div className="text-center py-8">
-                          <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No portfolio images to manage</h3>
-                          <p className="text-gray-600">Add portfolio images using the form above</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        {/* Delete Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDialogData({
+                              title: 'Delete Portfolio Image',
+                              description: "Are you sure you want to remove this image?",
+                              action: async () => {
+                                const updatedImages = (portfolioContent.images || []).filter((_, i) => i !== index);
+                                await savePortfolioImages(updatedImages);
+                                setShowConfirmDialog(false);
+                              }
+                            });
+                            setShowConfirmDialog(true);
+                          }}
+                          className="bg-white/90 backdrop-blur text-gray-700 hover:text-red-600 hover:bg-white p-2 rounded-full shadow-lg transition-transform hover:scale-105"
+                          title="Delete Image"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+)}
 
             {activeSection === 'categories' && (
               <div className=" mx-auto">

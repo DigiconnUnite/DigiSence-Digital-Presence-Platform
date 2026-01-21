@@ -163,14 +163,7 @@ export default function HeroSectionOne() {
   }, [isDragging]);
 
   return (
-    <div className="relative py-20 md:py-30 h-fit overflow-hidden primary-gradient">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 z-0 flex items-center justify-center -translate-x-1/2"
-      >
-        <div className="h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] md:h-[600px] md:w-[600px] lg:h-[700px] lg:w-[1200px] rounded-full bg-cyan-700 opacity-20 blur-3xl shadow-2xl " />
-      </div>
-
+    <div className="relative py-20 md:py-30 h-fit overflow-hidden bg-[#080322] bg-linear-0  to-[#5757FF] via-[#A89CFE] from-white ">
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4">
         <div className="py-8 md:py-16 lg:py-20 w-full">
           <h1 className="relative z-10 mx-auto max-w-4xl text-center text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
@@ -212,6 +205,116 @@ export default function HeroSectionOne() {
         </div>
       </div>
 
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "160px", height: "160px", top: "5%", left: "5%" }}
+        animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0.5,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "60px", height: "60px", top: "10%", left: "85%" }}
+        animate={{ y: [0, 30, 0], x: [0, -15, 0] }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "120px", height: "120px", top: "25%", left: "40%" }}
+        animate={{ y: [0, -25, 0], x: [0, 20, 0] }}
+        transition={{
+          duration: 7,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "200px", height: "200px", top: "40%", left: "75%" }}
+        animate={{ y: [0, 15, 0], x: [0, -20, 0] }}
+        transition={{
+          duration: 9,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 2,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "80px", height: "80px", top: "60%", left: "10%" }}
+        animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0.2,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "50px", height: "50px", top: "55%", left: "50%" }}
+        animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
+        transition={{
+          duration: 6.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1.5,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "140px", height: "140px", top: "70%", left: "30%" }}
+        animate={{ y: [0, -10, 0], x: [0, 25, 0] }}
+        transition={{
+          duration: 8.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0.8,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "90px", height: "90px", top: "85%", left: "80%" }}
+        animate={{ y: [0, 35, 0], x: [0, -5, 0] }}
+        transition={{
+          duration: 7.2,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0.3,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "40px", height: "40px", top: "20%", left: "20%" }}
+        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
+        transition={{
+          duration: 5.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1.2,
+        }}
+      />
+      <motion.div
+        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white"
+        style={{ width: "110px", height: "110px", top: "45%", left: "5%" }}
+        animate={{ y: [0, 25, 0], x: [0, -25, 0] }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 0.7,
+        }}
+      />
       <div
         ref={containerRef}
         className="relative mx-auto flex max-w-screen items-center justify-center overflow-hidden select-none"

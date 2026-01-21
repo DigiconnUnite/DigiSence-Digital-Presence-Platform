@@ -167,7 +167,7 @@ export default function HeroSectionOne() {
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4">
         <div className="py-8 md:py-16 lg:py-20 w-full">
           <h1 className="relative z-10 mx-auto max-w-4xl text-center text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
-            {"Launch your website in hours, not days"
+            {"Your One-Stop Solution for a Stunning Digital Profiles"
               .split(" ")
               .map((word, index) => (
                 <motion.span

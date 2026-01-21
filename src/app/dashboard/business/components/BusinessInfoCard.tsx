@@ -19,7 +19,6 @@ import {
   X,
   Plus,
   Hash,
-  Check,
   XCircle,
 } from "lucide-react";
 import {
@@ -79,6 +78,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     adminName,
     description,
     logo: logoUrl || "",
+    logoPendingSave: false,
     gstNumber: gstNumber || "",
     openingHours: openingHours || [{ day: "", open: "", close: "" }],
     address: address || "",
@@ -90,10 +90,10 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     linkedin: socialLinks?.linkedin || "",
   });
 
-  // Update editData when logoUrl prop changes (for logo uploads)
+  // Sync state when props change (e.g. after a full page load)
   React.useEffect(() => {
-    if (logoUrl !== editData.logo) {
-      setEditData(prev => ({ ...prev, logo: logoUrl || "" }));
+    if (logoUrl && logoUrl !== editData.logo) {
+      setEditData((prev) => ({ ...prev, logo: logoUrl }));
     }
   }, [logoUrl]);
 
@@ -118,79 +118,27 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
   };
 
   const handleSave = async () => {
-    // Determine which section is currently being edited and validate accordingly
-    const currentlyEditingSections: string[] = []
-    if (isEditing) currentlyEditingSections.push('profile')
-    if (isEditingAbout) currentlyEditingSections.push('about')
-    if (isEditingLegal) currentlyEditingSections.push('legal')
-    if (isEditingContact) currentlyEditingSections.push('contact')
-    if (isEditingSocial) currentlyEditingSections.push('social')
-
-    // Validate required fields based on editing sections
-    if (currentlyEditingSections.includes('profile') || currentlyEditingSections.includes('about') || currentlyEditingSections.includes('legal') || currentlyEditingSections.includes('contact')) {
-      if (!editData.businessName.trim()) {
-        toast({
-          title: "Validation Error",
-          description: "Business name is required",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
-    // Only validate GST number if legal section is being edited
-    if (currentlyEditingSections.includes('legal') && editData.gstNumber && !/^[0-9]{15}$/.test(editData.gstNumber)) {
+    // Validation logic
+    if (!editData.businessName.trim()) {
       toast({
         title: "Validation Error",
-        description: "GST number must be 15 digits",
-        variant: "destructive"
+        description: "Business name is required",
+        variant: "destructive",
       });
       return;
     }
 
-    // Only validate email if contact section is being edited
-    if (currentlyEditingSections.includes('contact') && editData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editData.email)) {
+    if (editData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editData.email)) {
       toast({
         title: "Validation Error",
-        description: "Please enter a valid email address",
-        variant: "destructive"
+        description: "Invalid email address",
+        variant: "destructive",
       });
       return;
-    }
-
-    // Only validate opening hours if legal section is being edited
-    if (currentlyEditingSections.includes('legal')) {
-      const hasInvalidHours = editData.openingHours.some(hour => {
-        return hour.day && (!hour.open || !hour.close);
-      });
-
-      if (hasInvalidHours) {
-        toast({
-          title: "Validation Error",
-          description: "Please provide both opening and closing times for all days",
-          variant: "destructive"
-        });
-        return;
-      }
     }
 
     setIsSaving(true);
     try {
-      console.log("Saving business data:", {
-        name: editData.businessName,
-        description: editData.description,
-        ownerName: editData.adminName,
-        gstNumber: editData.gstNumber,
-        openingHours: editData.openingHours,
-        address: editData.address,
-        mobile: editData.mobile,
-        email: editData.email,
-        facebook: editData.facebook,
-        twitter: editData.twitter,
-        instagram: editData.instagram,
-        linkedin: editData.linkedin,
-      });
-
       const response = await fetch("/api/business", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -207,31 +155,25 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           twitter: editData.twitter,
           instagram: editData.instagram,
           linkedin: editData.linkedin,
+          ...(editData.logoPendingSave && { logoUrl: editData.logo }), // Only send logo if it's pending save
         }),
       });
 
       const responseData = await response.json();
-      console.log("API Response:", responseData);
 
       if (response.ok) {
-        console.log("Business info updated successfully:", responseData);
-        // Update local state with saved data
-        setEditData(prev => ({
+        // Update local state from server response
+        setEditData((prev) => ({
           ...prev,
           businessName: responseData.business.name || prev.businessName,
+          logo: responseData.business.logo || prev.logo, // Sync logo from DB
+          logoPendingSave: false, // Reset pending save flag
+          adminName: responseData.business.admin?.name || prev.adminName,
           description: responseData.business.description || prev.description,
-          adminName: responseData.business.ownerName || prev.adminName,
-          gstNumber: responseData.business.gstNumber || prev.gstNumber,
-          openingHours: responseData.business.openingHours || prev.openingHours,
-          address: responseData.business.address || prev.address,
-          mobile: responseData.business.mobile || prev.mobile,
-          email: responseData.business.email || prev.email,
-          facebook: responseData.business.facebook || prev.facebook,
-          twitter: responseData.business.twitter || prev.twitter,
-          instagram: responseData.business.instagram || prev.instagram,
-          linkedin: responseData.business.linkedin || prev.linkedin,
+          // ... update other fields as needed
         }));
 
+        // Reset editing states
         setIsEditing(false);
         setIsEditingAbout(false);
         setIsEditingLegal(false);
@@ -240,22 +182,21 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
         if (onEdit) onEdit();
         toast({
           title: "Success",
-          description: "Business information saved successfully!"
+          description: "Business information saved successfully!",
         });
       } else {
-        console.error("Failed to update business info:", responseData);
         toast({
           title: "Error",
-          description: responseData.error || 'Failed to save changes',
-          variant: "destructive"
+          description: responseData.error || "Failed to save changes",
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error saving business info:", error);
       toast({
         title: "Error",
-        description: "An error occurred while saving changes. Please try again.",
-        variant: "destructive"
+        description: "An error occurred while saving changes.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -269,14 +210,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
         const file = files[0];
         if (file.type.startsWith("image/")) {
           setSelectedFile(file);
-          // Reset crop to center position when opening modal
-          setCrop({
-            unit: "%",
-            x: 15,
-            y: 15,
-            width: 70,
-            height: 70,
-          });
+          setCrop({ unit: "%", x: 15, y: 15, width: 70, height: 70 });
           setCroppedAreaPixels(null);
           setCropModalOpen(true);
         }
@@ -294,11 +228,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No 2d context");
 
-    const naturalWidth = image.naturalWidth;
-    const naturalHeight = image.naturalHeight;
-    const scaleX = naturalWidth / image.width;
-    const scaleY = naturalHeight / image.height;
-
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
     const scaledCropX = croppedAreaPixels.x * scaleX;
     const scaledCropY = croppedAreaPixels.y * scaleY;
     const scaledCropWidth = croppedAreaPixels.width * scaleX;
@@ -329,6 +260,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
 
   const handleConfirmCrop = useCallback(async () => {
     if (!selectedFile) return;
+
     try {
       const croppedBlob = await cropImage();
       if (!croppedBlob) return;
@@ -343,51 +275,53 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
       setSelectedFile(null);
       setCroppedAreaPixels(null);
 
-      // Upload the cropped image to the server instead of just creating a blob URL
+      // 1. Upload the file
       const formData = new FormData();
-      formData.append('file', croppedFile);
-      formData.append('type', 'logo');
+      formData.append("file", croppedFile);
+      formData.append("type", "logo");
 
-      console.log('Uploading logo file:', croppedFile.name, croppedFile.type, croppedFile.size);
-
-      const response = await fetch('/api/business/upload', {
-        method: 'POST',
+      const uploadResponse = await fetch("/api/business/upload", {
+        method: "POST",
         body: formData,
       });
 
-      console.log('Upload response status:', response.status);
-      const responseData = await response.json();
-      console.log('Upload response data:', responseData);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Upload failed:', errorData);
-        throw new Error(errorData.error || 'Upload failed');
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || "Upload failed");
       }
 
-      const permanentUrl = responseData.url || responseData.secure_url;
-      console.log('Logo uploaded successfully. URL:', permanentUrl);
+      const uploadData = await uploadResponse.json();
+      const permanentUrl = uploadData.url; // Assuming API returns { url: "..." }
 
-      if (onLogoUpload) {
-        console.log('Calling onLogoUpload with URL:', permanentUrl);
-        onLogoUpload(permanentUrl);
-      }
-      
-      // Also update the local state to reflect the new logo
-      setEditData(prev => ({ ...prev, logo: permanentUrl }));
+      if (!permanentUrl) throw new Error("No URL returned from upload server");
+
+      // 2. Update UI immediately but defer DB update until Save is clicked
+      setEditData((prev) => ({
+        ...prev,
+        logo: permanentUrl,
+        logoPendingSave: true,
+      }));
+      if (onLogoUpload) onLogoUpload(permanentUrl);
+
+      // 3. Show success toast for upload only
+      toast({
+        title: "Success",
+        description: "Logo uploaded successfully. Click Save to apply changes.",
+      });
     } catch (error) {
       console.error("Error cropping/uploading image:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to upload image.",
-        variant: "destructive"
+        description:
+          error instanceof Error ? error.message : "Failed to upload image.",
+        variant: "destructive",
       });
     }
-  }, [selectedFile, cropImage, onLogoUpload]);
+  }, [selectedFile, cropImage, onLogoUpload, toast]);
 
   return (
-    <Card className="w-full p-0 mx-auto border-none shadow-none  bg-transparent  ">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
+    <Card className="w-full p-0 mx-auto border-none shadow-none bg-transparent">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* --- Profile Information Card --- */}
         <div className="md:col-span-2 bg-gray-50 rounded-2xl p-6 border border-gray-200 relative">
           <div className="flex justify-between items-start mb-6">
@@ -433,11 +367,14 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-shrink-0 relative">
               <Avatar className="h-44 w-44 border-2 border-white shadow-sm">
-                {logoUrl ? (
-                  <AvatarImage src={logoUrl} alt={businessName} />
+                {editData.logo ? (
+                  <AvatarImage
+                    src={editData.logo}
+                    alt={editData.businessName}
+                  />
                 ) : (
                   <AvatarFallback className="bg-gray-200 text-gray-600 text-3xl font-bold">
-                    {businessName.charAt(0).toUpperCase()}
+                    {editData.businessName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -471,17 +408,14 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   <input
                     type="text"
                     value={editData.businessName}
-                    onChange={(e) =>
-                      setEditData({ ...editData, businessName: e.target.value })
-                    }
-                    disabled={!isEditing}
-                    className={`w-full text-lg font-semibold text-gray-900 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors
-                      ${
-                        isEditing
-                          ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                    disabled={true}
+                    className={`w-full text-lg font-semibold text-gray-900 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors bg-gray-100 border-gray-200 text-gray-600`}
                   />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full">
+                      Cannot be updated
+                    </span>
+                  </div>
                 </div>
               </div>
               <div>
@@ -499,12 +433,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                       setEditData({ ...editData, adminName: e.target.value })
                     }
                     disabled={!isEditing}
-                    className={`w-full text-sm font-medium text-gray-700 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors
-                      ${
-                        isEditing
-                          ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                    className={`w-full text-sm font-medium text-gray-700 border rounded-md pl-9 pr-3 py-2 outline-none transition-colors ${isEditing ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                   />
                 </div>
               </div>
@@ -564,12 +493,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 setEditData({ ...editData, description: e.target.value })
               }
               disabled={!isEditingAbout}
-              className={`flex-1 w-full resize-none border rounded-md p-3 pl-9 text-sm leading-relaxed outline-none transition-colors min-h-[120px]
-                ${
-                  isEditingAbout
-                    ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                    : "bg-gray-50 border-gray-200 text-gray-600"
-                }`}
+              className={`flex-1 w-full resize-none border rounded-md p-3 pl-9 text-sm leading-relaxed outline-none transition-colors min-h-[120px] ${isEditingAbout ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
             />
           </div>
         </div>
@@ -635,12 +559,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="Enter GST Number"
                   disabled={!isEditingLegal}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingLegal
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -665,12 +584,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         }}
                         placeholder="Monday"
                         disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                                ${
-                                  isEditingLegal
-                                    ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                                    : "bg-gray-50 border-gray-200 text-gray-600"
-                                }`}
+                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                       />
                     </div>
                   </div>
@@ -692,12 +606,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         }}
                         placeholder="09:00 AM"
                         disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                                ${
-                                  isEditingLegal
-                                    ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                                    : "bg-gray-50 border-gray-200 text-gray-600"
-                                }`}
+                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                       />
                     </div>
                   </div>
@@ -719,12 +628,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         }}
                         placeholder="06:00 PM"
                         disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                                ${
-                                  isEditingLegal
-                                    ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                                    : "bg-gray-50 border-gray-200 text-gray-600"
-                                }`}
+                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                       />
                     </div>
                   </div>
@@ -773,7 +677,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           </div>
         </div>
 
-        {/* --- Contact Info Card (Separate) --- */}
+        {/* --- Contact Info Card --- */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -834,12 +738,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   placeholder="Enter Address"
                   disabled={!isEditingContact}
                   rows={3}
-                  className={`w-full border rounded-md p-3 pl-9 text-sm outline-none transition-colors resize-none
-                        ${
-                          isEditingContact
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md p-3 pl-9 text-sm outline-none transition-colors resize-none ${isEditingContact ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -859,12 +758,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="Enter Mobile Number"
                   disabled={!isEditingContact}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingContact
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingContact ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -884,19 +778,14 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="Enter Email"
                   disabled={!isEditingContact}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingContact
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingContact ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* --- Social Media Card (Separate) --- */}
+        {/* --- Social Media Card --- */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -956,12 +845,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="https://facebook.com/..."
                   disabled={!isEditingSocial}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingSocial
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingSocial ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -980,12 +864,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="https://twitter.com/..."
                   disabled={!isEditingSocial}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingSocial
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 textgray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingSocial ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -994,7 +873,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                 Instagram URL
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <Instagram className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
@@ -1004,12 +883,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="https://instagram.com/..."
                   disabled={!isEditingSocial}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingSocial
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingSocial ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -1028,12 +902,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   }
                   placeholder="https://linkedin.com/..."
                   disabled={!isEditingSocial}
-                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors
-                        ${
-                          isEditingSocial
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                  className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingSocial ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                 />
               </div>
             </div>
@@ -1047,7 +916,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
               <DialogTitle>Crop Profile Image</DialogTitle>
             </DialogHeader>
             {selectedFile && (
-              <div className="h-96  relative flex justify-center bg-gray-100 rounded-lg overflow-hidden">
+              <div className="h-96 relative flex justify-center bg-gray-100 rounded-lg overflow-hidden">
                 <ReactImageCrop
                   crop={crop}
                   onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
@@ -1062,7 +931,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                     ref={imgRef}
                     src={URL.createObjectURL(selectedFile)}
                     alt="Crop me"
-                    className=" max-h-full object-contain"
+                    className="max-h-full object-contain"
                   />
                 </ReactImageCrop>
               </div>

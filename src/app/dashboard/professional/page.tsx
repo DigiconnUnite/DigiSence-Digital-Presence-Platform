@@ -5,62 +5,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole } from "@/lib/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useTheme, ThemeProvider } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  ArrayFieldManager,
-  WorkExperienceForm,
-  EducationForm,
-  SkillForm,
-  ServiceForm,
-  PortfolioItemForm,
-} from "@/components/ui/array-field-manager";
 import { Skeleton } from "@/components/ui/skeleton";
-import ImageUpload from "@/components/ui/image-upload";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus,
   Edit,
@@ -110,6 +75,21 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
+
+// Import extracted components
+import InquiriesView from "./components/InquiriesView";
+import AnalyticsView from "./components/AnalyticsView";
+import ThemeView from "./components/ThemeView";
+import SettingsView from "./components/SettingsView";
+import CreateProfileView from "./components/CreateProfileView";
+import StatCard from "./components/StatCard";
+import ActionCard from "./components/ActionCard";
+import ProfileView from "./components/ProfileView";
+import OverviewView from "./components/OverviewView";
+import ImageUpload from "@/components/ui/image-upload";
+import InquiryDetailsDialog from "./components/InquiryDetailsDialog";
+import BannerUploadModal from "./components/BannerUploadModal";
+import ProfilePictureUploadModal from "./components/ProfilePictureUploadModal";
 
 type ButtonVariant =
   | "link"

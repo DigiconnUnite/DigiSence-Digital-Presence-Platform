@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import BusinessProfile from '@/components/BusinessProfile'
 import { getOptimizedImageUrl } from '@/lib/image-utils'
 import { headers } from 'next/headers'
+import Navigation from '@/components/Navigation'
 
 interface PageProps {
   params: Promise<{
@@ -20,7 +21,7 @@ export default async function BusinessPage({ params }: PageProps) {
       name: true,
       slug: true,
       description: true,
-      logo: true,
+      logo: true, 
       address: true,
       phone: true,
       email: true,

@@ -21,6 +21,8 @@ import {
   Clock,
   XCircle,
   AlertTriangle,
+  User,
+  Briefcase,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -137,30 +139,11 @@ export default function RegisterPage() {
         </div>
 
         {/* Content - Added top padding to avoid overlapping header on mobile */}
-        <div className="w-full max-w-md space-y-6 sm:space-y-8 pt-16 sm:pt-0">
+        <div className="w-full max-w-7xl space-y-6 sm:space-y-8 pt-16 sm:pt-0">
           {children}
         </div>
       </div>
 
-      {/* Right Column - Background Image/Visuals - Matching Login Page Style */}
-      <div className="hidden md:flex flex-1 relative bg-slate-900 overflow-hidden">
-        {/* Decorative background gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-sky-900 to-slate-900 opacity-90" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay" />
-
-        {/* Optional Text Content for Right Side */}
-        <div className="relative z-10 flex flex-col items-center justify-center p-12 h-full text-white">
-          <div className="max-w-md space-y-8">
-            <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
-              Join the <span className="text-sky-400">DigiSence</span> Community
-            </h2>
-            <p className="text-lg text-slate-300">
-              Start your journey with us today. We are building a platform for
-              growth and opportunity.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
@@ -299,15 +282,7 @@ export default function RegisterPage() {
   // Show form
   return (
     <ResponsiveLayout>
-      {/* Header Text */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-          Join DigiSence
-        </h1>
-        <p className="text-sm sm:text-base text-slate-500">
-          Register your business or professional profile
-        </p>
-      </div>
+ 
 
       {/* Status Check */}
       {typeof window !== "undefined" &&
@@ -347,262 +322,50 @@ export default function RegisterPage() {
           </div>
         )}
 
-      {/* Toggle Switcher */}
-      <Tabs
-        value={registrationType}
-        onValueChange={(value) =>
-          setRegistrationType(value as "business" | "professional")
-        }
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8 h-11 bg-slate-100 p-1">
-          <TabsTrigger
-            value="business"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-sm sm:text-base font-medium"
-          >
-            Business
-          </TabsTrigger>
-          <TabsTrigger
-            value="professional"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-sm sm:text-base font-medium"
-          >
-            Professional
-          </TabsTrigger>
-        </TabsList>
+      {/* Cards for Professional and Business */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card
+          className="border-2 transition-all duration-300 rounded-2xl border-primary shadow-lg w-full overflow-hidden cursor-pointer hover:shadow-xl"
+          onClick={() => router.push("/register/professional")}
+        >
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-center text-xl sm:text-2xl">
+              <User className="h-8 w-8 mx-auto mb-2 text-primary" />
+              Register as Professional
+            </CardTitle>
+            <CardDescription className="text-center text-sm sm:text-base">
+              Create your professional profile and showcase your skills.
+            </CardDescription>
+          </CardHeader>
+        </Card>
 
-        <TabsContent value="business" className="mt-0 focus:outline-none">
-          <Card
-            className={`border-2 transition-all duration-300 ${
-              registrationType === "business"
-                ? "border-primary shadow-lg"
-                : "border-border"
-            }`}
-          >
-            <CardHeader>
-              <CardTitle className="text-center text-xl">
-                Business Registration
-              </CardTitle>
-              <CardDescription className="text-center">
-                Create your business profile on DigiSence
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="name-business"
-                    className="text-sm font-medium"
-                  >
-                    Contact Person Name *
-                  </Label>
-                  <Input
-                    id="name-business"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                    disabled={loading}
-                    placeholder="Enter contact person name"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="businessName" className="text-sm font-medium">
-                    Business Name *
-                  </Label>
-                  <Input
-                    id="businessName"
-                    type="text"
-                    value={formData.businessName}
-                    onChange={(e) =>
-                      handleInputChange("businessName", e.target.value)
-                    }
-                    required
-                    disabled={loading}
-                    placeholder="Enter business name"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="location-business"
-                    className="text-sm font-medium"
-                  >
-                    Location
-                  </Label>
-                  <Input
-                    id="location-business"
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) =>
-                      handleInputChange("location", e.target.value)
-                    }
-                    disabled={loading}
-                    placeholder="City, Country"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="email-business"
-                    className="text-sm font-medium"
-                  >
-                    Email *
-                  </Label>
-                  <Input
-                    id="email-business"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                    disabled={loading}
-                    placeholder="Enter business email"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="phone-business"
-                    className="text-sm font-medium"
-                  >
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone-business"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    disabled={loading}
-                    placeholder="+91 8080808080"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 transition-colors h-11 font-medium"
-                  disabled={loading}
-                >
-                  {loading ? "Submitting..." : "Submit Business Registration"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <Card
+          className="border-2 transition-all duration-300 rounded-2xl border-primary shadow-lg w-full overflow-hidden cursor-pointer hover:shadow-xl"
+          onClick={() => router.push("/register/business")}
+        >
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-center text-xl sm:text-2xl">
+              <Briefcase className="h-8 w-8 mx-auto mb-2 text-primary" />
+              Register as Business
+            </CardTitle>
+            <CardDescription className="text-center text-sm sm:text-base">
+              Create your business profile and connect with professionals.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
 
-        <TabsContent value="professional" className="mt-0 focus:outline-none">
-          <Card
-            className={`border-2 transition-all duration-300 ${
-              registrationType === "professional"
-                ? "border-primary shadow-lg"
-                : "border-border"
-            }`}
+      <div className="text-center text-sm text-slate-500 space-y-2">
+        <p>
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-primary hover:underline font-medium transition-all"
           >
-            <CardHeader>
-              <CardTitle className="text-center text-xl">
-                Professional Registration
-              </CardTitle>
-              <CardDescription className="text-center">
-                Create your professional profile on DigiSence
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="name-professional"
-                    className="text-sm font-medium"
-                  >
-                    Full Name *
-                  </Label>
-                  <Input
-                    id="name-professional"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                    disabled={loading}
-                    placeholder="Enter your full name"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="location-professional"
-                    className="text-sm font-medium"
-                  >
-                    Location
-                  </Label>
-                  <Input
-                    id="location-professional"
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) =>
-                      handleInputChange("location", e.target.value)
-                    }
-                    disabled={loading}
-                    placeholder="City, Country"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="email-professional"
-                    className="text-sm font-medium"
-                  >
-                    Email *
-                  </Label>
-                  <Input
-                    id="email-professional"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                    disabled={loading}
-                    placeholder="Enter your email"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="phone-professional"
-                    className="text-sm font-medium"
-                  >
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone-professional"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    disabled={loading}
-                    placeholder="+91 8080808080"
-                    className="h-11 focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 transition-colors h-11 font-medium"
-                  disabled={loading}
-                >
-                  {loading
-                    ? "Submitting..."
-                    : "Submit Professional Registration"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            Login here
+          </Link>
+        </p>
+      </div>
     </ResponsiveLayout>
   );
 }

@@ -28,6 +28,7 @@ model User {
   inquiries Inquiry[]
   professionalInquiries ProfessionalInquiry[]
   assignedBusinessListingInquiries BusinessListingInquiry[]
+  passwordResets PasswordReset[]
 
   @@map("users")
 }
@@ -288,4 +289,17 @@ model Session {
   createdAt DateTime @default(now())
 
   @@map("sessions")
+}
+
+model PasswordReset {
+  id         String   @id @default(cuid()) @map("_id")
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
 }

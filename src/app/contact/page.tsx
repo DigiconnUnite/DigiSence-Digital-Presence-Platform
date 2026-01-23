@@ -206,7 +206,7 @@ export default function ContactPage() {
                             <Input
                               id="firstName"
                               type="text"
-                              placeholder="John"
+                              placeholder="shivam"
                               className="mt-1"
                             />
                           </div>
@@ -220,7 +220,7 @@ export default function ContactPage() {
                             <Input
                               id="lastName"
                               type="text"
-                              placeholder="Doe"
+                              placeholder="thakur"
                               className="mt-1"
                             />
                           </div>
@@ -236,7 +236,7 @@ export default function ContactPage() {
                           <Input
                             id="email"
                             type="email"
-                            placeholder="john.doe@example.com"
+                            placeholder="shivam.thakur@example.com"
                             className="mt-1"
                           />
                         </div>

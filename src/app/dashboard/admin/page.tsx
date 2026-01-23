@@ -387,7 +387,16 @@ export default function SuperAdminDashboard() {
 
   // Authentication check
   useEffect(() => {
+    console.log('[DEBUG] Admin Dashboard - Auth Check:', {
+      loading,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
+      currentPath: window.location.pathname
+    });
     if (!loading && (!user || user.role !== "SUPER_ADMIN")) {
+      console.log('[DEBUG] Admin Dashboard - Redirecting to login:', {
+        reason: !user ? 'No user' : `Wrong role: ${user.role}`,
+        redirectingTo: '/login'
+      });
       router.push("/login");
       return;
     }

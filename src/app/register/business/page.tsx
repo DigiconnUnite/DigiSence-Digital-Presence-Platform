@@ -61,22 +61,28 @@ export default function BusinessRegistrationPage() {
     }
 
     try {
-      // Simulate API call for business registration
-      const response = await fetch("/api/auth/register/business", {
+      // Submit registration inquiry
+      const response = await fetch("/api/registration-inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          type: "BUSINESS",
+          name: formData.businessName,
+          email: formData.email,
+          phone: formData.phone,
+          location: formData.address,
+        }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setSuccess("Business registration successful! Redirecting to login...");
+        setSuccess("Registration request submitted! Our team will review and create your account shortly.");
         setTimeout(() => {
           router.push("/login/business");
-        }, 2000);
+        }, 3000);
       } else {
-        setError(result.error || "Registration failed");
+        setError(result.error || "Registration request failed");
       }
     } catch (error) {
       setError("An unexpected error occurred. Please try again.");

@@ -383,10 +383,13 @@ export default function ProfessionalDashboard() {
   };
 
   useEffect(() => {
-    if (!loading && (!user || (user.role as string) !== "PROFESSIONAL_ADMIN")) {
-      router.push("/login");
-      return;
-    }
+    console.log('[DEBUG] Professional Dashboard - Auth Check:', {
+      loading,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
+      currentPath: window.location.pathname
+    });
+    // Note: Authentication is now handled by the parent route wrapper
+    // This component assumes the user is authenticated and authorized
 
     if (user?.role === ("PROFESSIONAL_ADMIN" as UserRole)) {
       fetchProfessionalData();

@@ -363,7 +363,16 @@ export default function BusinessAdminDashboard() {
   }, [])
 
   useEffect(() => {
+    console.log('[DEBUG] Business Dashboard - Auth Check:', {
+      loading,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
+      currentPath: window.location.pathname
+    });
     if (!loading && (!user || user.role !== 'BUSINESS_ADMIN')) {
+      console.log('[DEBUG] Business Dashboard - Redirecting to login:', {
+        reason: !user ? 'No user' : `Wrong role: ${user.role}`,
+        redirectingTo: '/login'
+      });
       router.push('/login')
       return
     }

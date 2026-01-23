@@ -41,8 +41,8 @@ export default function BusinessLoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
-        // Redirect to business dashboard
-        router.push("/dashboard/business");
+        // Redirect to main dashboard router which will handle role-based routing
+        router.push("/dashboard");
       } else {
         setError(result.error || "Login failed");
         if (
@@ -68,7 +68,7 @@ export default function BusinessLoginPage() {
       const result = await login(email, password, true);
 
       if (result.success) {
-        router.push("/dashboard/business");
+        router.push("/dashboard");
       } else {
         setError(result.error || "Login failed");
       }

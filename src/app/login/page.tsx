@@ -194,7 +194,7 @@ function LoginContent() {
             <span className="font-bold text-xl text-slate-800">DigiSence</span>
           </Link>
           <Button
-            onClick={() => router.push("/login")}
+            onClick={() => router.push("/")}
             variant="ghost"
             className="hover:bg-accent transition-colors"
           >

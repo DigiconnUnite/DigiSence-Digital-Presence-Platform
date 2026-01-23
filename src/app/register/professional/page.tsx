@@ -61,23 +61,29 @@ export default function ProfessionalRegistrationPage() {
     }
 
     try {
-      const response = await fetch("/api/auth/register/professional", {
+      const response = await fetch("/api/registration-inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          type: "PROFESSIONAL",
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone,
+          profession: formData.profession,
+        }),
       });
 
       const result = await response.json();
 
       if (result.success) {
         setSuccess(
-          "Professional registration successful! Redirecting to login...",
+          "Registration request submitted! Our team will review and create your account shortly.",
         );
         setTimeout(() => {
           router.push("/login/professional");
-        }, 2000);
+        }, 3000);
       } else {
-        setError(result.error || "Registration failed");
+        setError(result.error || "Registration request failed");
       }
     } catch (error) {
       setError("An unexpected error occurred. Please try again.");

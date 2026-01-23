@@ -41,8 +41,8 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
-        // Redirect to professional dashboard
-        router.push("/dashboard/professional");
+        // Redirect to main dashboard router which will handle role-based routing
+        router.push("/dashboard");
       } else {
         setError(result.error || "Login failed");
         if (
@@ -68,7 +68,7 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password, true);
 
       if (result.success) {
-        router.push("/dashboard/professional");
+        router.push("/dashboard");
       } else {
         setError(result.error || "Login failed");
       }

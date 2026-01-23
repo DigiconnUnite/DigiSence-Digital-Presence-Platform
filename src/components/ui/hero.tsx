@@ -343,7 +343,7 @@ export default function HeroSectionOne() {
               return (
                 <div
                   key={`marquee-${i}`}
-                  className="relative flex-shrink-0 z-10 rounded-2xl overflow-hidden shadow-2xl border-8 border-white/30 duration-300"
+                  className="relative shrink-0 z-10 rounded-2xl overflow-hidden shadow-2xl border-8 border-white/30 duration-300"
                   style={{
                   
                     width: isPortrait ? "auto" : "40rem",

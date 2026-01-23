@@ -2,16 +2,16 @@ import { generateBusinessCard, ProfessionalData } from './qr-generator';
 
 // Test data
 const testProfessional: ProfessionalData = {
-  name: "John Doe",
+  name: "shivam Doe",
   professionalHeadline: "Senior Software Engineer",
   location: "San Francisco, CA",
   phone: "+91 (555) 123-4567",
-  email: "john.doe@example.com",
-  website: "https://johndoe.dev",
-  facebook: "https://facebook.com/johndoe",
-  twitter: "https://twitter.com/johndoe",
-  instagram: "https://instagram.com/johndoe",
-  linkedin: "https://linkedin.com/in/johndoe"
+  email: "shivam.doe@example.com",
+  website: "https://shivamdoe.dev",
+  facebook: "https://facebook.com/shivamdoe",
+  twitter: "https://twitter.com/shivamdoe",
+  instagram: "https://instagram.com/shivamdoe",
+  linkedin: "https://linkedin.com/in/shivamdoe"
 };
 
 // Simple test function

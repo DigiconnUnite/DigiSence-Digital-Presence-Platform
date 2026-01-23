@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 
 interface RouteParams {
   params: Promise<{
     id: string
   }>
+}
+
+async function getSuperAdmin(request: NextRequest) {
+  const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+
+  if (!token) {
+    return null
+  }
+
+  const payload = verifyToken(token)
+  if (!payload || payload.role !== 'SUPER_ADMIN') {
+    return null
+  }
+
+  return payload
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -83,6 +99,11 @@ async function generateUniqueSlug(baseSlug: string, excludeId?: string): Promise
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
 
@@ -95,7 +116,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const professional = await db.professional.update({
       where: { id },
       data: body,
+      include: {
+        admin: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('professional-updated', {
+        professional: professional,
+        action: 'update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({ professional })
   } catch (error) {
@@ -109,6 +149,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
 
     if (!id) {
@@ -136,6 +181,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         where: { id: existingProfessional.adminId },
       })
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('professional-deleted', {
+        professionalId: id,
+        action: 'delete',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({ message: 'Professional and associated user deleted successfully' })
   } catch (error) {

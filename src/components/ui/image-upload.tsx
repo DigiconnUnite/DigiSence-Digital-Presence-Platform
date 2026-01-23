@@ -11,7 +11,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Cropper, CropperImage, CropperArea, type CropperAreaData } from './cropper'
+import ReactImageCrop, { Crop, PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 
 import {
   Upload,
@@ -19,7 +20,8 @@ import {
   Image as ImageIcon,
   Loader2,
   FileVideo,
-  File
+  File,
+  Ratio
 } from 'lucide-react'
 
 interface ImageUploadProps {
@@ -51,9 +53,23 @@ export default function ImageUpload({
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [mediaUrl, setMediaUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // Ref for the image element inside the cropper to access natural dimensions
+  const imgRef = useRef<HTMLImageElement>(null)
+  
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [croppedArea, setCroppedArea] = useState<CropperAreaData | null>(null)
+  
+  // Initialize crop state
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    x: 25,
+    y: 25,
+    width: 50,
+    height: 50,
+  })
+  
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null)
+  const [selectedAspect, setSelectedAspect] = useState<number>(aspectRatio)
 
   const isPdf = accept.includes('pdf') || accept.includes('application/pdf')
   const mediaAccept = allowVideo ? 'image/*,video/*' : isPdf ? accept : accept
@@ -176,7 +192,7 @@ export default function ImageUpload({
         setTimeout(() => setUploadStatus(''), 3000)
       }
     }
-  }, [onUpload, maxFiles, allowVideo, uploadUrl, uploadType])
+  }, [onUpload, maxFiles, allowVideo, uploadUrl, uploadType, uploadStatus, accept])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -209,57 +225,102 @@ export default function ImageUpload({
     }
   }, [handleFileUpload])
 
-  // New function to handle opening the file dialog
   const openFileDialog = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     fileInputRef.current?.click();
   }, []);
 
-  // Function to clear the uploaded media
   const clearMedia = useCallback(() => {
     setMediaUrl('');
-    // Optional: Call a callback to notify parent component
-    // onClear();
   }, []);
 
-  const cropImage = useCallback(async (file: File, croppedArea: CropperAreaData): Promise<Blob> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
-      const img = new Image()
+  // FIXED CROP FUNCTION
+  const cropImage = useCallback(async (): Promise<Blob> => {
+    const image = imgRef.current
+    if (!image || !croppedAreaPixels) {
+      throw new Error('Crop canvas does not exist')
+    }
 
-      img.onload = () => {
-        canvas.width = croppedArea.width
-        canvas.height = croppedArea.height
-        ctx.drawImage(
-          img,
-          croppedArea.x,
-          croppedArea.y,
-          croppedArea.width,
-          croppedArea.height,
-          0,
-          0,
-          croppedArea.width,
-          croppedArea.height
-        )
-        canvas.toBlob((blob) => {
-          resolve(blob!)
-        }, file.type)
-      }
-      img.src = URL.createObjectURL(file)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) {
+      throw new Error('No 2d context')
+    }
+
+    // Get the actual natural size of the image
+    const naturalWidth = image.naturalWidth
+    const naturalHeight = image.naturalHeight
+
+    // Calculate the scaling factor between the displayed image and the natural image
+    const scaleX = naturalWidth / image.width
+    const scaleY = naturalHeight / image.height
+
+    // Log the natural dimensions and cropped area for debugging
+    console.log('Natural image dimensions:', { width: naturalWidth, height: naturalHeight })
+    console.log('Cropped area pixels:', croppedAreaPixels)
+    console.log('Image display dimensions:', { width: image.width, height: image.height })
+    console.log('Scaling factors:', { scaleX, scaleY })
+
+    // Scale the cropped area coordinates to match the natural image dimensions
+    const scaledCropX = croppedAreaPixels.x * scaleX
+    const scaledCropY = croppedAreaPixels.y * scaleY
+    const scaledCropWidth = croppedAreaPixels.width * scaleX
+    const scaledCropHeight = croppedAreaPixels.height * scaleY
+
+    console.log('Scaled cropped area:', { x: scaledCropX, y: scaledCropY, width: scaledCropWidth, height: scaledCropHeight })
+
+    // Set canvas size to the size of the cropped area in natural pixels
+    canvas.width = scaledCropWidth
+    canvas.height = scaledCropHeight
+
+    // Draw the image using the scaled coordinates
+    ctx.drawImage(
+      image,
+      scaledCropX,
+      scaledCropY,
+      scaledCropWidth,
+      scaledCropHeight,
+      0,
+      0,
+      scaledCropWidth,
+      scaledCropHeight
+    )
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Canvas blob failed')
+        }
+        resolve(blob)
+      }, selectedFile?.type || 'image/jpeg')
     })
-  }, [])
+  }, [croppedAreaPixels, selectedFile])
 
   const handleConfirmCrop = useCallback(async () => {
-    if (!selectedFile || !croppedArea) return;
-    setCropModalOpen(false);
-    const croppedBlob = await cropImage(selectedFile, croppedArea);
-    if (!croppedBlob) return;
-    const croppedFile = new window.File([croppedBlob], selectedFile.name, { type: selectedFile.type });
-    handleFileUpload([croppedFile]);
-    setSelectedFile(null);
-    setCroppedArea(null);
-  }, [selectedFile, croppedArea, cropImage, handleFileUpload]);
+    if (!selectedFile) return;
+    
+    try {
+        const croppedBlob = await cropImage();
+        if (!croppedBlob) return;
+        
+        // Cleanup object URL to free memory
+        if (imgRef.current?.src) {
+            URL.revokeObjectURL(imgRef.current.src);
+        }
+
+        const croppedFile = new window.File([croppedBlob], selectedFile.name, { type: selectedFile.type });
+        
+        setCropModalOpen(false);
+        setSelectedFile(null);
+        setCroppedAreaPixels(null);
+        
+        await handleFileUpload([croppedFile]);
+    } catch (error) {
+        console.error("Error cropping image:", error);
+        alert("Failed to crop image.");
+    }
+  }, [selectedFile, cropImage, handleFileUpload]);
 
   // Determine if the uploaded media is a video
   const isVideo = mediaUrl && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg'));
@@ -384,29 +445,90 @@ export default function ImageUpload({
             <DialogTitle>Crop Image</DialogTitle>
           </DialogHeader>
           {selectedFile && (
-            <div className="h-96 w-full relative">
-              <Cropper
-                key={selectedFile.name}
-                aspectRatio={aspectRatio}
-                onCropComplete={(area, areaPixels) => setCroppedArea(areaPixels)}
-              >
-                <CropperImage src={URL.createObjectURL(selectedFile)} />
-                <CropperArea />
-              </Cropper>
+            <div className="flex flex-col h-[calc(100vh-200px)] max-h-[70vh] w-full">
+              <div className="flex flex-col gap-4 flex-1 overflow-hidden">
+                <div className="flex gap-1 mb-4 flex-wrap">
+                  <Button
+                    variant={selectedAspect === 16/9 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(16/9)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    16:9
+                  </Button>
+                  <Button
+                    variant={selectedAspect === 4/3 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(4/3)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    4:3
+                  </Button>
+                  <Button
+                    variant={selectedAspect === 1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(1)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    1:1
+                  </Button>
+                  <Button
+                    variant={selectedAspect === 3/1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(3/1)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    3:1
+                  </Button>
+                  <Button
+                    variant={selectedAspect === 4/1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(4/1)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    4:1
+                  </Button>
+                  <Button
+                    variant={selectedAspect === aspectRatio ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedAspect(aspectRatio)}
+                  >
+                    <Ratio className="w-3 h-3 mr-1" />
+                    Default
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-hidden relative">
+                  <ReactImageCrop
+                    crop={crop}
+                    onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCroppedAreaPixels(c)}
+                    aspect={selectedAspect}
+                    className="absolute inset-0"
+                  >
+                    <img
+                      ref={imgRef}
+                      src={URL.createObjectURL(selectedFile)}
+                      alt="Crop me"
+                      className="max-h-full max-w-full block"
+                    />
+                  </ReactImageCrop>
+                </div>
+              </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button
               variant="outline"
               onClick={() => {
                 setCropModalOpen(false);
                 setSelectedFile(null);
-                setCroppedArea(null);
+                setCroppedAreaPixels(null);
+                if (imgRef.current?.src) URL.revokeObjectURL(imgRef.current.src);
               }}
             >
               Cancel
             </Button>
-            <Button onClick={handleConfirmCrop} disabled={!croppedArea}>
+            <Button onClick={handleConfirmCrop} disabled={!croppedAreaPixels}>
               Confirm Crop
             </Button>
           </DialogFooter>

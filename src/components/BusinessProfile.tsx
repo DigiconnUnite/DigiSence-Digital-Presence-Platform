@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSocket } from '@/hooks/useSocket'
 
 // Define Business type since Prisma doesn't export it for MongoDB
 interface Business {
@@ -179,6 +180,10 @@ export default function BusinessProfile({ business: initialBusiness, categories:
   const [activeSection, setActiveSection] = useState('home')
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [lastUpdateCheck, setLastUpdateCheck] = useState(Date.now())
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Socket.io connection
+  const { socket, isConnected } = useSocket(business.id)
 
   // Refs for smooth scrolling
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -195,52 +200,52 @@ export default function BusinessProfile({ business: initialBusiness, categories:
     return () => clearTimeout(timer)
   }, [])
 
-  // Real-time synchronization - check for updates every 30 seconds
+  // Listen for Real-time Updates via Socket.io
   useEffect(() => {
-    if (!mounted || !business?.id) return
+    if (!socket) return
 
-    const checkForUpdates = async () => {
-      try {
-        const response = await fetch(`/api/businesses?${business.slug ? `slug=${business.slug}` : `id=${business.id}`}`)
-        if (response.ok) {
-          const data = await response.json()
-          const updatedBusiness = data.business
+    const handleUpdate = (payload: any) => {
+      console.log('Received update:', payload)
 
-          // Check if business data has changed
-          const hasChanged =
-            updatedBusiness.updatedAt !== business.updatedAt ||
-            JSON.stringify(updatedBusiness.heroContent) !== JSON.stringify(business.heroContent) ||
-            JSON.stringify(updatedBusiness.brandContent) !== JSON.stringify(business.brandContent) ||
-            JSON.stringify(updatedBusiness.portfolioContent) !== JSON.stringify(business.portfolioContent) ||
-            updatedBusiness.name !== business.name ||
-            updatedBusiness.description !== business.description ||
-            updatedBusiness.logo !== business.logo ||
-            updatedBusiness.address !== business.address ||
-            updatedBusiness.phone !== business.phone ||
-            updatedBusiness.email !== business.email ||
-            updatedBusiness.website !== business.website ||
-            updatedBusiness.facebook !== business.facebook ||
-            updatedBusiness.twitter !== business.twitter ||
-            updatedBusiness.instagram !== business.instagram ||
-            updatedBusiness.linkedin !== business.linkedin
-
-          if (hasChanged) {
-            setBusiness(updatedBusiness)
-            setLastUpdateCheck(Date.now())
-            console.log('Business data updated from server')
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to check for business updates:', error)
+      if (payload.type === 'BUSINESS_UPDATE') {
+        setBusiness(payload.data)
+        setLastUpdateCheck(Date.now())
+        console.log('Business data updated from server')
+      } else if (payload.type === 'PRODUCT_UPDATE') {
+        setBusiness((prev: any) => ({
+          ...prev,
+          products: prev.products.map((p: any) =>
+            p.id === payload.data.id ? payload.data : p
+          )
+        }))
+        console.log('Product data updated from server')
       }
     }
 
-    // Check immediately and then every 30 seconds
-    checkForUpdates()
-    const interval = setInterval(checkForUpdates, 30000)
+    socket.on('data-updated', handleUpdate)
 
-    return () => clearInterval(interval)
-  }, [mounted, business?.id, business?.slug])
+    return () => {
+      socket.off('data-updated', handleUpdate)
+    }
+  }, [socket])
+
+  const forceRefresh = async () => {
+    setIsRefreshing(true)
+    // Manual refresh by fetching current data
+    try {
+      const response = await fetch(`/api/businesses?${business.slug ? `slug=${business.slug}` : `id=${business.id}`}`, {
+        cache: 'no-store'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setBusiness(data.business)
+        setLastUpdateCheck(Date.now())
+      }
+    } catch (error) {
+      console.warn('Failed to force refresh:', error)
+    }
+    setIsRefreshing(false)
+  }
 
   // Check URL parameters for auto-opening product modal
   useEffect(() => {
@@ -701,13 +706,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                 {business.logo && business.logo.trim() !== '' ? (
                   <img
-                    src={getOptimizedImageUrl(business.logo, {
-                      width: 200,
-                      height: 200,
-                      quality: 85,
-                      format: 'auto',
-                      crop: 'fit'
-                    })}
+                    src={getOptimizedImageUrl(business.logo)}
                     alt={business.name}
                     className="h-10 w-10 rounded-full object-cover"
                     loading="eager"
@@ -888,7 +887,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                               format: 'auto',
                               crop: 'fill',
                               gravity: 'auto'
-                            }) : '/placeholder.png'}
+                            }) : '/placeholder.svg'}
                             srcSet={mediaUrl && mediaUrl.trim() !== '' ? generateSrcSet(mediaUrl) : undefined}
                             sizes={generateSizes(1200)}
                             alt={slide.headline || 'Hero image'}
@@ -897,7 +896,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                             decoding="async"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder.png';
+                              target.src = '/placeholder.svg';
                             }}
                           />
                           {slide.showText !== false && (
@@ -1077,14 +1076,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
                   <div className="shrink-0 flex items-center justify-center">
                     {business.logo && business.logo.trim() !== '' ? (
                       <img
-                        src={getOptimizedImageUrl(business.logo, {
-                          width: 280,
-                          height: 280,
-                          quality: 90,
-                          format: 'auto',
-                          crop: 'fill',
-                          gravity: 'center',
-                        })}
+                        src={getOptimizedImageUrl(business.logo)}
                         srcSet={generateSrcSet(business.logo)}
                         sizes="(max-width: 640px) 80px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                         alt={business.name}
@@ -2267,6 +2259,7 @@ export default function BusinessProfile({ business: initialBusiness, categories:
           )}
         </DialogContent>
       </Dialog>
+
 
     </div>
   )

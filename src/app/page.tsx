@@ -114,7 +114,7 @@ export default function HomePage() {
                     pathname === item.link
                       ? "bg-slate-800 text-white"
                       : "text-gray-700 hover:bg-gray-100"
-                  )}
+                  )}                        
                 >
                   <IconComponent className="mr-3 h-5 w-5" />
                   {item.name}
@@ -423,7 +423,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Users className="h-5 w-5 text-white" />
                     </div>
@@ -436,7 +436,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Shield className="h-5 w-5 text-white" />
                     </div>
@@ -449,7 +449,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Zap className="h-5 w-5 text-white" />
                     </div>
@@ -501,7 +501,7 @@ export default function HomePage() {
                   offers to enhance your digital presence.
                 </p>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <CheckCircle className="h-5 w-5 text-white" />
                     </div>
@@ -514,7 +514,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Users className="h-5 w-5 text-white" />
                     </div>
@@ -527,7 +527,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Shield className="h-5 w-5 text-white" />
                     </div>
@@ -540,7 +540,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-[14px] bg-[#E5F6FF] rounded-[14px] px-[18px] py-[14px]">
+                  <div className="flex items-center gap-3.5 bg-[#E5F6FF] rounded-[14px] px-[18px] py-3.5">
                     <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
                       <Zap className="h-5 w-5 text-white" />
                     </div>

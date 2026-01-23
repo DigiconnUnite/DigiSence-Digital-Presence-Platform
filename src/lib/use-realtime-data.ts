@@ -6,7 +6,6 @@ interface RealtimeDataOptions {
   retryDelay?: number;
   enableSSE?: boolean;
   enableWebSocket?: boolean;
-  cacheTime?: number;
 }
 
 interface RealtimeDataState<T> {
@@ -27,7 +26,6 @@ export function useRealtimeData<T>(
     retryDelay = 1000,
     enableSSE = true,
     enableWebSocket = false,
-    cacheTime = 30000, // 30 seconds
   } = options;
 
   const [state, setState] = useState<RealtimeDataState<T>>({
@@ -38,44 +36,17 @@ export function useRealtimeData<T>(
     isStale: false,
   });
 
-  const cacheRef = useRef<Map<string, { data: T; timestamp: number }>>(new Map());
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const sseRef = useRef<EventSource | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(0);
   const lastFetchRef = useRef<number>(0);
 
-  // Generate cache key
-  const getCacheKey = useCallback(() => {
-    return `${endpoint}_${JSON.stringify(options)}`;
-  }, [endpoint, options]);
 
-  // Check if data is stale
-  const isDataStale = useCallback(() => {
-    if (!state.lastUpdated) return true;
-    return Date.now() - state.lastUpdated.getTime() > cacheTime;
-  }, [state.lastUpdated, cacheTime]);
 
   // Fetch data with retry logic
   const fetchData = useCallback(async (force = false) => {
-    const cacheKey = getCacheKey();
     const now = Date.now();
-
-    // Check cache first
-    if (!force && cacheRef.current.has(cacheKey)) {
-      const cached = cacheRef.current.get(cacheKey)!;
-      if (now - cached.timestamp < cacheTime) {
-        setState(prev => ({
-          ...prev,
-          data: cached.data,
-          loading: false,
-          error: null,
-          lastUpdated: new Date(cached.timestamp),
-          isStale: false,
-        }));
-        return;
-      }
-    }
 
     // Check if we're already fetching
     if (now - lastFetchRef.current < 1000) {
@@ -100,12 +71,6 @@ export function useRealtimeData<T>(
       }
 
       const data = await response.json();
-      
-      // Cache the data
-      cacheRef.current.set(cacheKey, {
-        data,
-        timestamp: now,
-      });
 
       setState(prev => ({
         ...prev,
@@ -119,9 +84,9 @@ export function useRealtimeData<T>(
       retryCountRef.current = 0; // Reset retry count on success
     } catch (error) {
       console.error('Realtime data fetch error:', error);
-      
+
       retryCountRef.current++;
-      
+
       if (retryCountRef.current < retryAttempts) {
         // Retry after delay
         setTimeout(() => fetchData(force), retryDelay * retryCountRef.current);
@@ -134,7 +99,7 @@ export function useRealtimeData<T>(
         }));
       }
     }
-  }, [endpoint, getCacheKey, cacheTime, retryAttempts, retryDelay]);
+  }, [endpoint, retryAttempts, retryDelay]);
 
   // Setup polling
   const setupPolling = useCallback(() => {
@@ -145,11 +110,9 @@ export function useRealtimeData<T>(
     }
 
     pollingRef.current = setInterval(() => {
-      if (isDataStale()) {
-        fetchData();
-      }
+      fetchData();
     }, pollingInterval);
-  }, [pollingInterval, isDataStale, fetchData]);
+  }, [pollingInterval, fetchData]);
 
   // Setup Server-Sent Events
   const setupSSE = useCallback(() => {
@@ -166,12 +129,6 @@ export function useRealtimeData<T>(
       sseRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const cacheKey = getCacheKey();
-          
-          cacheRef.current.set(cacheKey, {
-            data,
-            timestamp: Date.now(),
-          });
 
           setState(prev => ({
             ...prev,
@@ -191,7 +148,7 @@ export function useRealtimeData<T>(
     } catch (error) {
       console.error('Failed to setup SSE:', error);
     }
-  }, [endpoint, enableSSE, getCacheKey]);
+  }, [endpoint, enableSSE, ]);
 
   // Setup WebSocket
   const setupWebSocket = useCallback(() => {
@@ -208,12 +165,6 @@ export function useRealtimeData<T>(
       wsRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const cacheKey = getCacheKey();
-          
-          cacheRef.current.set(cacheKey, {
-            data,
-            timestamp: Date.now(),
-          });
 
           setState(prev => ({
             ...prev,
@@ -242,7 +193,7 @@ export function useRealtimeData<T>(
     } catch (error) {
       console.error('Failed to setup WebSocket:', error);
     }
-  }, [endpoint, enableWebSocket, getCacheKey]);
+  }, [endpoint, enableWebSocket]);
 
   // Initialize data fetching
   useEffect(() => {
@@ -269,17 +220,10 @@ export function useRealtimeData<T>(
     fetchData(true);
   }, [fetchData]);
 
-  // Clear cache function
-  const clearCache = useCallback(() => {
-    cacheRef.current.clear();
-    setState(prev => ({ ...prev, isStale: true }));
-  }, []);
 
   return {
     ...state,
     refresh,
-    clearCache,
-    isStale: state.isStale || isDataStale(),
   };
 }
 

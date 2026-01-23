@@ -235,7 +235,7 @@ export default function ProfessionalProfile({
     };
 
     checkForUpdates();
-    const interval = setInterval(checkForUpdates, 5000);
+    const interval = setInterval(checkForUpdates, 1000);
 
     return () => clearInterval(interval);
   }, [mounted, professional?.id, professional?.slug]);

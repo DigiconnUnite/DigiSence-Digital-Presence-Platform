@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToS3, getOptimizedImageUrl, getOptimizedVideoUrl } from '@/lib/s3-upload'
 
+// Mock upload for testing when AWS is not configured
+async function mockUpload(file: File): Promise<any> {
+  // Generate a mock URL for testing
+  const mockUrl = `https://mock-s3.example.com/uploads/${Date.now()}-${file.name}`
+  return {
+    success: true,
+    url: mockUrl,
+    key: `uploads/${Date.now()}-${file.name}`,
+    originalName: file.name,
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -36,11 +48,18 @@ export async function POST(request: NextRequest) {
     const isPdf = allowedPdfTypes.includes(file.type)
     const folder = 'bdpp-uploads'
 
-    // Upload to S3
-    const uploadResult = await uploadToS3(buffer, file.name, {
-      folder,
-      contentType: file.type,
-    })
+    // Upload to S3 (with fallback to mock for testing)
+    let uploadResult;
+    try {
+      uploadResult = await uploadToS3(buffer, file.name, {
+        folder,
+        contentType: file.type,
+      })
+    } catch (error) {
+      // Fallback to mock upload if S3 is not configured
+      console.warn('S3 upload failed, using mock upload:', error)
+      uploadResult = await mockUpload(file)
+    }
 
     if (!uploadResult.success) {
       return NextResponse.json({

@@ -43,17 +43,27 @@ const updateBusinessSchema = z.object({
 
 async function getSuperAdmin(request: NextRequest) {
   const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
-  
+
   if (!token) {
     return null
   }
-  
+
   const payload = verifyToken(token)
   if (!payload || payload.role !== 'SUPER_ADMIN') {
     return null
   }
-  
+
   return payload
+}
+
+async function generateUniqueSlug(baseSlug: string): Promise<string> {
+  let slug = baseSlug
+  let counter = 1
+  while (await db.business.findFirst({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`
+    counter++
+  }
+  return slug
 }
 
 export async function GET(request: NextRequest) {
@@ -123,20 +133,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create slug from name
-    const slug = createData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    // Generate base slug from name
+    const baseSlug = createData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-    // Check if slug is already taken
-    const slugExists = await db.business.findUnique({
-      where: { slug },
-    })
-
-    if (slugExists) {
-      return NextResponse.json(
-        { error: 'Business with this name already exists' },
-        { status: 400 }
-      )
-    }
+    // Generate unique slug
+    const slug = await generateUniqueSlug(baseSlug)
 
     // Hash password
     const { hashPassword } = await import('@/lib/auth')
@@ -179,11 +180,27 @@ export async function POST(request: NextRequest) {
               name: true,
             },
           },
+          _count: {
+            select: {
+              products: true,
+              inquiries: true,
+            },
+          },
         },
       })
 
       return { user, business }
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-created', {
+        business: result.business,
+        action: 'create',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -212,7 +229,7 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    
+
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
@@ -239,6 +256,16 @@ export async function DELETE(request: NextRequest) {
     await db.business.delete({
       where: { id },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-deleted', {
+        businessId: id,
+        action: 'delete',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -112,9 +112,24 @@ export async function POST(
       },
     })
 
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-updated', {
+        business: business,
+        action: 'update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
+
     return NextResponse.json({
       success: true,
       business,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Business update error:', error)
@@ -215,11 +230,47 @@ export async function PUT(
     const business = await db.business.update({
       where: { id: businessId },
       data: { isActive },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            products: true,
+            inquiries: true,
+          },
+        },
+      },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('business-status-updated', {
+        business: business,
+        action: 'status-update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       success: true,
       business,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Business toggle error:', error)

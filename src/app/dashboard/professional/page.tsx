@@ -145,6 +145,7 @@ export default function ProfessionalDashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [currentView, setCurrentView] = useState("overview");
   const [activeProfileTab, setActiveProfileTab] = useState("basic");
+  const [profileCompletion, setProfileCompletion] = useState(0);
   // Removed sidebarExpanded state as dropdown is removed
 
   const getHeaderTitle = () => {
@@ -326,6 +327,41 @@ export default function ProfessionalDashboard() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
+  const calculateProfileCompletion = () => {
+    if (!professional) return 0;
+
+    let completion = 0;
+    const totalFields = 10; // Total fields to complete
+
+    // Check each field and increment completion
+    if (professional.name) completion++;
+    if (professional.professionalHeadline) completion++;
+    if (professional.aboutMe) completion++;
+    if (professional.profilePicture) completion++;
+    if (professional.banner) completion++;
+    if (professional.location) completion++;
+    if (professional.phone) completion++;
+    if (professional.email) completion++;
+    if (professional.website) completion++;
+
+    // Check social media links
+    if (professional.facebook || professional.twitter || professional.instagram || professional.linkedin) {
+      completion++;
+    }
+
+    // Calculate percentage
+    const percentage = Math.round((completion / totalFields) * 100);
+    return percentage;
+  };
+
+  const getProfileCompletionStatus = (percentage: number) => {
+    if (percentage === 100) return "Complete";
+    if (percentage >= 75) return "Almost Complete";
+    if (percentage >= 50) return "Halfway There";
+    if (percentage >= 25) return "Getting Started";
+    return "Just Beginning";
+  };
+
   useEffect(() => {
     if (!loading && (!user || (user.role as string) !== "PROFESSIONAL_ADMIN")) {
       router.push("/login");
@@ -336,6 +372,13 @@ export default function ProfessionalDashboard() {
       fetchProfessionalData();
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (professional) {
+      const completion = calculateProfileCompletion();
+      setProfileCompletion(completion);
+    }
+  }, [professional]);
 
   // Focus inputs when entering edit mode
   useEffect(() => {
@@ -1129,12 +1172,98 @@ export default function ProfessionalDashboard() {
     switch (currentView) {
       case "overview":
         return (
-          <OverviewView
-            professional={professional}
-            stats={stats}
-            themeSettings={themeSettings}
-            setCurrentView={setCurrentView}
-          />
+          <div
+            className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
+          >
+            <div className="mb-8">
+              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
+                Professional Dashboard Overview
+              </h1>
+              <p className="text-sm md:text-base text-gray-600">
+                Welcome back! Here's your professional profile overview.
+              </p>
+
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
+                title="Profile Views"
+                value="0"
+                subtitle="This month"
+                icon={<Eye className="h-4 w-4 text-gray-400" />}
+              />
+              <StatCard
+                title="Profile Status"
+                value={professional?.isActive ? "Active" : "Inactive"}
+                subtitle="Current status"
+                icon={<UserCheck className="h-4 w-4 text-gray-400" />}
+              />
+              <StatCard
+                title="Profile Completion"
+                value={`${profileCompletion}%`}
+                subtitle={getProfileCompletionStatus(profileCompletion)}
+                icon={<TrendingUp className="h-4 w-4 text-gray-400" />}
+              />
+              <StatCard
+                title="Profile URL"
+                value={professional ? `/pcard/${professional.slug}` : "Not set"}
+                subtitle="Your public profile"
+                icon={<Globe className="h-4 w-4 text-gray-400" />}
+                truncate
+              />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ActionCard
+                title="View My Profile"
+                description="See how your professional profile appears to visitors"
+                icon={<Eye className="h-5 w-5" />}
+                buttonText="View Public Profile"
+                buttonAction={() =>
+                  professional &&
+                  window.open(`/pcard/${professional.slug}`, "_blank")
+                }
+                disabled={!professional}
+              />
+              <ActionCard
+                title="Edit Profile"
+                description="Update your professional information and portfolio"
+                icon={<Edit className="h-5 w-5" />}
+                buttonText="Edit Profile"
+                buttonAction={() => setCurrentView("profile")}
+                variant="outline"
+              />
+            </div>
+
+            {/* Profile Completion Progress */}
+            <div className="mt-8">
+              <Card className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
+                <CardHeader>
+                  <CardTitle>Profile Completion</CardTitle>
+                  <CardDescription>Complete your profile to attract more clients</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Completion: {profileCompletion}%</span>
+                      <span className="text-sm text-gray-500">{getProfileCompletionStatus(profileCompletion)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-amber-600 h-2.5 rounded-full"
+                        style={{ width: `${profileCompletion}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {profileCompletion === 100 ? "Great job! Your profile is complete." : `Complete ${100 - profileCompletion}% more to reach 100%`}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         );
 
       case "profile":
@@ -1314,7 +1443,7 @@ export default function ProfessionalDashboard() {
                                 <CardContent className="p-4">
                                   <div className="flex items-start gap-4">
                                     <div className="shrink-0">
-                                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${item.level === 'beginner' ? 'from-gray-100 to-gray-200' :
+                                      <div className={`w-10 h-10 rounded-lg bg-linear-to-r ${item.level === 'beginner' ? 'from-gray-100 to-gray-200' :
                                         item.level === 'intermediate' ? 'from-blue-100 to-blue-200' :
                                           item.level === 'expert' ? 'from-purple-100 to-purple-200' :
                                             'from-amber-100 to-orange-100'

@@ -133,7 +133,26 @@ export async function POST(request: NextRequest) {
         servicesOffered: null,
         portfolio: null,
       },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
     })
+
+    // Emit Socket.IO event for real-time update
+    if (global.io) {
+      global.io.emit('professional-created', {
+        professional: professional,
+        action: 'create',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      });
+    }
 
     return NextResponse.json({
       user: {

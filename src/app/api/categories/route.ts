@@ -3,8 +3,17 @@ import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
+    // Use optimized query with proper indexing
     const categories = await db.category.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        parentId: true,
+        type: true,
+        createdAt: true,
+        updatedAt: true,
         parent: {
           select: {
             id: true,
@@ -17,16 +26,25 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        // Use a more efficient count query
         _count: {
           select: {
-            businesses: true,
+            businesses: {
+              where: {
+                isActive: true
+              }
+            }
           },
         },
       },
       orderBy: { name: 'asc' },
     })
 
-    return NextResponse.json({ categories })
+    // Add caching headers to response
+    const response = NextResponse.json({ categories })
+    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+    
+    return response
   } catch (error) {
     console.error('Categories fetch error:', error)
     return NextResponse.json(

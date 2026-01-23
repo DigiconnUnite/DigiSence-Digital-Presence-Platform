@@ -57,9 +57,25 @@ export async function PUT(
       data: updates,
     })
 
+    // Notify Frontend via WebSocket
+    const io = (global as any).io
+
+    if (io) {
+      // Emit an event to a specific room (e.g., specific business ID)
+      io.to(product.businessId).emit('data-updated', {
+        type: 'PRODUCT_UPDATE',
+        data: product
+      })
+    }
+
     return NextResponse.json({
       success: true,
       product,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Product update error:', error)
@@ -101,6 +117,11 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Product deleted successfully',
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Invalidate-Cache': 'true', // Custom header to tell frontend to refresh
+      }
     })
   } catch (error) {
     console.error('Product deletion error:', error)

@@ -70,9 +70,19 @@ export async function PUT(
     const body = await request.json()
     const updateData = updateProductSchema.parse(body)
 
+    // Convert empty strings to null for optional fields
+    const cleanedData = {
+      ...updateData,
+      categoryId: updateData.categoryId === '' ? null : updateData.categoryId,
+      brandName: updateData.brandName === '' ? null : updateData.brandName,
+      description: updateData.description === '' ? null : updateData.description,
+      price: updateData.price === '' ? null : updateData.price,
+      image: updateData.image === '' ? null : updateData.image,
+    }
+
     const product = await db.product.update({
       where: { id: productId },
-      data: updateData,
+      data: cleanedData,
     })
 
     return NextResponse.json({

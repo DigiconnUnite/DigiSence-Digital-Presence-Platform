@@ -313,7 +313,7 @@ export default function ProfessionalLoginPage() {
               <img
                 src="/pro-svg.png"
                 alt="Professional Icon"
-                className="h-64 w-auto object-contain opacity-90"
+                className=" w-auto object-contain opacity-90"
               />
             </div>
           </div>

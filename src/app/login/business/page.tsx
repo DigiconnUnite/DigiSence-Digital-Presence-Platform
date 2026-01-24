@@ -285,7 +285,7 @@ export default function BusinessLoginPage() {
               <img
                 src="/bus-svg.png"
                 alt="Business Icon"
-                className="h-64 w-auto object-contain opacity-90"
+                className=" w-auto object-contain opacity-90"
               />
             </div>
           </div>

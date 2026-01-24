@@ -104,7 +104,7 @@ import RichTextEditor from '@/components/ui/rich-text-editor'
 import ImageUpload from '@/components/ui/image-upload'
 
 import HeroBannerManager from '@/components/ui/hero-banner-manager'
-import { BusinessInfoCard } from './components/BusinessInfoCard'
+import { BusinessInfoCard } from '../components/BusinessInfoCard'
 
 interface Product {
   id: string

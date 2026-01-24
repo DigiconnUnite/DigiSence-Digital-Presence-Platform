@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,27 +17,30 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  Eye,
-  EyeOff,
   Building2,
   Mail,
   Phone,
   MapPin,
-  Lock,
   CheckCircle2,
+  Globe,
+  Hash,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function BusinessRegistrationPage() {
   const [formData, setFormData] = useState({
     businessName: "",
     email: "",
-    password: "",
-    confirmPassword: "",
     phone: "",
     address: "",
+    description: "",
+    categoryId: "",
+    gstNumber: "",
+    website: "",
+    termsAccepted: false,
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,9 +57,9 @@ export default function BusinessRegistrationPage() {
     setSuccess("");
     setLoading(true);
 
-    // Basic validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+    // Validation
+    if (!formData.termsAccepted) {
+      setError("You must accept the Terms of Service and Privacy Policy");
       setLoading(false);
       return;
     }
@@ -71,13 +75,21 @@ export default function BusinessRegistrationPage() {
           email: formData.email,
           phone: formData.phone,
           location: formData.address,
+          businessName: formData.businessName,
+          businessDescription: formData.description,
+          gstNumber: formData.gstNumber || undefined,
+          website: formData.website || undefined,
+          termsAccepted: formData.termsAccepted,
+          termsAcceptedAt: new Date().toISOString(),
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setSuccess("Registration request submitted! Our team will review and create your account shortly.");
+        setSuccess(
+          "Registration request submitted successfully! You will receive a confirmation email and our team will review your application within 24 hours. A secure password will be provided upon approval.",
+        );
         setTimeout(() => {
           router.push("/login/business");
         }, 3000);
@@ -92,276 +104,324 @@ export default function BusinessRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
+    // Main Container: Flex Row on Desktop, Flex Col on Mobile
+    <div className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-white">
       {/* --- LEFT SIDE: FORM --- */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center relative bg-white px-4 sm:px-8 lg:px-16 py-12 md:py-0 z-10 overflow-y-auto">
-        {/* Top Header */}
-        <div className="absolute top-0 left-0 w-full px-6 py-6 flex justify-between items-center z-20 ">
+      <div className="flex-1 flex flex-col justify-center relative w-full px-4 sm:px-6 lg:px-12 py-10 lg:py-0 z-10">
+        {/* Top Header - Floating Above Content */}
+        <div className="absolute top-0 left-0 w-full px-4 sm:px-6 lg:px-12 py-4 lg:py-6 flex justify-between items-center z-20">
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-primary/10 p-1.5 rounded-md text-primary">
-              <img
-                src="/logo.svg"
+            <div className="rounded-md text-primary">
+              <Image
+                src="/logo-tranparent.png"
                 alt="DigiSence Logo"
-                className="h-5 w-auto"
+                width={32}
+                height={32}
+                className="h-8 w-auto"
               />
             </div>
-            <span className="font-bold text-xl text-slate-800 ">
+            <span className="font-bold text-xl text-slate-800 tracking-tight hidden sm:block">
               DigiSence
             </span>
           </Link>
           <Button
             onClick={() => router.push("/register")}
             variant="ghost"
-            className="hover:bg-slate-100 text-slate-600 transition-colors font-medium"
+            size="sm"
+            className="hover:bg-slate-100 border rounded-full py-1 px-3 text-slate-600 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
         </div>
 
         {/* Content Wrapper */}
-        <div className="w-full max-w-lg space-y-8 pt-8 md:pt-0">
+        <div className="w-full max-w-md mx-auto space-y-6 sm:space-y-8 mt-12 sm:mt-4">
           {/* Header Text */}
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-extrabold text-slate-800 ">
+          <div className="text-center space-y-2 px-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
               Business Account
             </h1>
-            <p className="text-base text-slate-500">
+            <p className="text-sm sm:text-base text-slate-500">
               Expand your business reach with us
             </p>
           </div>
 
-          {/* Sleek Card */}
-          <Card className="border-slate-200 shadow-none rounded-3xl overflow-hidden bg-white/50 backdrop-blur-sm">
-            <CardContent className="p-6 sm:p-8">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Business Name */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="businessName"
-                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                  >
-                    Business Name
-                  </Label>
-                  <div className="relative group">
-                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="businessName"
-                      type="text"
-                      value={formData.businessName}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                      placeholder="Acme Corporation"
-                      className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="email"
-                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                  >
-                    Email Address
-                  </Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                      placeholder="business@example.com"
-                      className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                  </div>
-                </div>
-
-                {/* Phone & Address Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="phone"
-                      className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                    >
-                      Phone
-                    </Label>
-                    <div className="relative group">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        disabled={loading}
-                        placeholder="+1 234 567 890"
-                        className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="address"
-                      className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                    >
-                      Address
-                    </Label>
-                    <div className="relative group">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                      <Input
-                        id="address"
-                        type="text"
-                        value={formData.address}
-                        onChange={handleChange}
-                        required
-                        disabled={loading}
-                        placeholder="City, Country"
-                        className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="password"
-                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                  >
-                    Password
-                  </Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                      placeholder="••••••••"
-                      className="pl-9 pr-10 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-slate-400 hover:text-slate-600"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={loading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="confirmPassword"
-                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                  >
-                    Confirm Password
-                  </Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                      placeholder="••••••••"
-                      className="pl-9 pr-10 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-slate-400 hover:text-slate-600"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      disabled={loading}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Alerts */}
-                {error && (
-                  <Alert
-                    variant="destructive"
-                    className="py-3 text-sm border-red-100 bg-red-50/50"
-                  >
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {success && (
-                  <Alert className="py-3 text-sm border-green-100 bg-green-50 text-green-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertDescription className="ml-2">
-                      {success}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-11 shadow-none bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5"
-                  disabled={loading}
+          {/* Form Area */}
+          <CardContent className="p-0 space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Business Name */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="businessName"
+                  className="text-xs font-bold uppercase text-slate-500 tracking-wider"
                 >
-                  {loading ? "Creating Account..." : "Create Business Account"}
-                </Button>
-
-                {/* Login Link */}
-                <div className="text-center text-sm text-slate-500 pt-2">
-                  Already have an account?{" "}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
-                    onClick={() => router.push("/login/business")}
-                  >
-                    Log in
-                  </Button>
+                  Business Name
+                </Label>
+                <div className="relative group">
+                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="businessName"
+                    type="text"
+                    value={formData.businessName}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    placeholder="Acme Corporation"
+                    className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
 
-          <p className="text-xs text-center text-slate-400">
-            By creating an account, you agree to our Terms of Service and
-            Privacy Policy.
-          </p>
+              {/* Email */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                >
+                  Email Address
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    placeholder="business@example.com"
+                    className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                </div>
+              </div>
+
+              {/* Phone & Address Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="phone"
+                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                  >
+                    Phone
+                  </Label>
+                  <div className="relative group">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                      placeholder="+1 234 567 890"
+                      className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="address"
+                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                  >
+                    Address
+                  </Label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="address"
+                      type="text"
+                      value={formData.address}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                      placeholder="City, Country"
+                      className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Description */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="description"
+                  className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                >
+                  Business Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  required
+                  disabled={loading}
+                  placeholder="Tell us about your business..."
+                  className="h-24 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 resize-none"
+                />
+              </div>
+
+              {/* Website & GST Number Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="website"
+                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                  >
+                    Website (Optional)
+                  </Label>
+                  <div className="relative group">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="website"
+                      type="url"
+                      value={formData.website}
+                      onChange={handleChange}
+                      disabled={loading}
+                      placeholder="https://yourwebsite.com"
+                      className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="gstNumber"
+                    className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                  >
+                    GST Number (Optional)
+                  </Label>
+                  <div className="relative group">
+                    <Hash className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="gstNumber"
+                      type="text"
+                      value={formData.gstNumber}
+                      onChange={handleChange}
+                      disabled={loading}
+                      placeholder="22AAAAA0000A1Z5"
+                      className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Acceptance */}
+              <div className="flex items-start space-x-3 pt-2">
+                <Checkbox
+                  id="termsAccepted"
+                  checked={formData.termsAccepted}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      termsAccepted: checked as boolean,
+                    }))
+                  }
+                  disabled={loading}
+                  className="mt-1"
+                />
+                <div className="text-sm text-slate-600 leading-snug">
+                  <Label htmlFor="termsAccepted" className="cursor-pointer">
+                    I agree to the{" "}
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-primary hover:text-primary/80 font-semibold px-0"
+                    >
+                      Terms of Service
+                    </Button>{" "}
+                    and{" "}
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-primary hover:text-primary/80 font-semibold px-0"
+                    >
+                      Privacy Policy
+                    </Button>
+                  </Label>
+                </div>
+              </div>
+
+              {/* Alerts */}
+              {error && (
+                <Alert
+                  variant="destructive"
+                  className="py-3 text-sm border-red-100 bg-red-50/50"
+                >
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="py-3 text-sm border-green-100 bg-green-50 text-green-700">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertDescription className="ml-2">
+                    {success}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full h-11 shadow-lg bg-gradient-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Create Business Account"}
+              </Button>
+
+              {/* Login Link */}
+              <div className="text-center text-sm text-slate-500 pt-2">
+                Already have an account?{" "}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
+                  onClick={() => router.push("/login/business")}
+                >
+                  Log in
+                </Button>
+              </div>
+            </form>
+          </CardContent>
         </div>
       </div>
 
-      {/* --- RIGHT SIDE: IMAGE --- */}
-      <div className="hidden md:flex w-full md:w-1/2 relative bg-slate-900 overflow-hidden">
+      {/* --- RIGHT SIDE: IMAGE (Desktop Only) --- */}
+      <div className="hidden lg:flex flex-1 relative bg-slate-900 m-0 lg:m-4 lg:rounded-2xl overflow-hidden shadow-2xl">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out hover:scale-105"
           style={{ backgroundImage: "url('/login-bg.png')" }}
-        ></div>
-        
-        
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/20 to-slate-900/90 pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col justify-between h-full w-full py-16 px-10 xl:px-20">
+          <div className="flex-1"></div>
+
+          <div className="flex items-center justify-center py-10">
+            <div className="flex-shrink-0 drop-shadow-2xl animate-pulse-slow">
+              <img
+                src="/bus-svg.png"
+                alt="Business Icon"
+                className=" w-auto object-contain opacity-90"
+              />
+            </div>
+          </div>
+
+          <div className="text-center mb-12 space-y-4">
+            <h3 className="text-4xl xl:text-5xl font-bold text-white tracking-tight drop-shadow-md">
+              Grow Your Business Online
+            </h3>
+            <p className="text-base text-gray-200 opacity-90 leading-relaxed max-w-lg mx-auto font-light">
+              Join thousands of businesses expanding their digital presence with
+              our powerful tools and analytics.
+            </p>
+          </div>
+          <div className="flex-1"></div>
+        </div>
       </div>
     </div>
   );

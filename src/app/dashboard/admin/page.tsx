@@ -1407,7 +1407,7 @@ export default function SuperAdminDashboard() {
     async (inquiry: any) => {
       if (
         !confirm(
-          `Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}?`
+          `Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}? This will send login credentials to ${inquiry.email}.`
         )
       ) {
         return;
@@ -1416,21 +1416,47 @@ export default function SuperAdminDashboard() {
       setCreatingAccount(inquiry.id);
 
       try {
-        // Generate a password for the new account
+        // First update inquiry status to UNDER_REVIEW
+        const reviewResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "UNDER_REVIEW" }),
+        });
+
+        if (!reviewResponse.ok) {
+          throw new Error("Failed to update inquiry status to under review");
+        }
+
+        // Update inquiry status in local state
+        setRegistrationInquiries((prev) =>
+          prev.map((regInquiry) =>
+            regInquiry.id === inquiry.id
+              ? { ...regInquiry, status: "UNDER_REVIEW" }
+              : regInquiry
+          )
+        );
+
+        // Generate password from stored hash (we'll decrypt or use a new one)
+        // Since we stored the hashed password, we need to generate a new one for sending
         const generatedPassword = generatePassword();
 
         let response;
         let accountData;
         let successMessage;
-        
+
         if (inquiry.type === "BUSINESS") {
           accountData = {
             name: inquiry.businessName || inquiry.name,
             email: inquiry.email,
             password: generatedPassword,
             adminName: inquiry.name,
-            phone: inquiry.phone,
-            address: inquiry.location,
+            description: inquiry.businessDescription || "",
+            phone: inquiry.phone || "",
+            address: inquiry.location || inquiry.address || "",
+            website: inquiry.website || "",
+            categoryId: inquiry.categoryId || "",
           };
           response = await fetch("/api/admin/businesses", {
             method: "POST",
@@ -1446,7 +1472,10 @@ export default function SuperAdminDashboard() {
             email: inquiry.email,
             password: generatedPassword,
             adminName: inquiry.name,
-            phone: inquiry.phone,
+            phone: inquiry.phone || "",
+            location: inquiry.location || "",
+            aboutMe: inquiry.aboutMe || "",
+            profession: inquiry.profession || "",
           };
           response = await fetch("/api/admin/professionals", {
             method: "POST",
@@ -1460,7 +1489,7 @@ export default function SuperAdminDashboard() {
 
         if (response.ok) {
           const result = await response.json();
-          
+
           // Send email notification with credentials
           try {
             const emailResponse = await fetch("/api/notifications", {
@@ -1508,7 +1537,7 @@ export default function SuperAdminDashboard() {
               title: "Success",
               description: `${successMessage} Login credentials sent to ${inquiry.email}`,
             });
-            
+
             // Refresh data to ensure the UI is up to date
             fetchData();
           } else {
@@ -1520,6 +1549,24 @@ export default function SuperAdminDashboard() {
             });
           }
         } else {
+          // Reset inquiry status back to PENDING if account creation failed
+          await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "PENDING" }),
+          });
+
+          // Update local state back
+          setRegistrationInquiries((prev) =>
+            prev.map((regInquiry) =>
+              regInquiry.id === inquiry.id
+                ? { ...regInquiry, status: "PENDING" }
+                : regInquiry
+            )
+          );
+
           const error = await response.json();
           console.error("Account creation failed:", error);
           toast({

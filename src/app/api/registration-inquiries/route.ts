@@ -2,14 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
+import bcrypt from 'bcrypt'
+import { sendInquiryNotification, sendAccountCreationNotification } from '@/lib/email'
 
 const registrationInquirySchema = z.object({
   type: z.enum(['BUSINESS', 'PROFESSIONAL']),
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  businessName: z.string().optional(),
-  location: z.string().optional(),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
+
+  // Business specific fields
+  businessName: z.string().optional(),
+  businessDescription: z.string().optional(),
+  categoryId: z.string().optional(),
+  gstNumber: z.string().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+
+  // Professional specific fields
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  profession: z.string().optional(),
+  aboutMe: z.string().optional(),
+  professionalHeadline: z.string().optional(),
+
+  // Common fields
+  location: z.string().optional(),
+  address: z.string().optional(),
+  termsAccepted: z.boolean().refine(val => val === true, 'Terms must be accepted'),
+  termsAcceptedAt: z.string().optional(),
 })
 
 async function getSuperAdmin(request: NextRequest) {
@@ -52,20 +72,79 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const { type, name, businessName, location, email, phone } = registrationInquirySchema.parse(body)
+    const validatedData = registrationInquirySchema.parse(body)
 
-    // Create inquiry
+    // Check for duplicate email in existing users
+    const existingUser = await db.user.findUnique({
+      where: { email: validatedData.email }
+    })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists. Please try logging in instead.' },
+        { status: 409 }
+      )
+    }
+
+    // Check for duplicate email in pending inquiries
+    const existingInquiry = await db.registrationInquiry.findFirst({
+      where: {
+        email: validatedData.email,
+        status: { in: ['PENDING', 'UNDER_REVIEW'] }
+      }
+    })
+
+    if (existingInquiry) {
+      return NextResponse.json(
+        { error: 'A registration request with this email is already pending review. Please wait for approval or contact support.' },
+        { status: 409 }
+      )
+    }
+
+    // Create inquiry with all fields (password will be generated during admin approval)
     const inquiry = await db.registrationInquiry.create({
       data: {
-        type,
-        name,
-        businessName: businessName || null,
-        location: location || null,
-        email,
-        phone: phone || null,
+        type: validatedData.type,
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone || null,
+
+        // Business specific fields
+        businessName: validatedData.businessName || null,
+        businessDescription: validatedData.businessDescription || null,
+        categoryId: validatedData.categoryId || null,
+        gstNumber: validatedData.gstNumber || null,
+        website: validatedData.website || null,
+
+        // Professional specific fields
+        firstName: validatedData.firstName || null,
+        lastName: validatedData.lastName || null,
+        profession: validatedData.profession || null,
+        aboutMe: validatedData.aboutMe || null,
+        professionalHeadline: validatedData.professionalHeadline || null,
+
+        // Common fields
+        location: validatedData.location || null,
+        address: validatedData.address || null,
+        termsAccepted: validatedData.termsAccepted,
+        termsAcceptedAt: validatedData.termsAcceptedAt ? new Date(validatedData.termsAcceptedAt) : new Date(),
         status: 'PENDING',
       },
     })
+
+    // Send confirmation email to user
+    try {
+      await sendAccountCreationNotification({
+        name: validatedData.name,
+        email: validatedData.email,
+        password: 'Your password will be sent after admin approval',
+        accountType: validatedData.type.toLowerCase() as 'business' | 'professional',
+        loginUrl: `${process.env.NEXT_PUBLIC_API_URL}/login`,
+      })
+    } catch (emailError) {
+      console.error('User confirmation email error:', emailError)
+      // Don't fail the request if email fails
+    }
 
     // Send email notification to admins
     try {
@@ -81,22 +160,20 @@ export async function POST(request: NextRequest) {
       })
 
       if (!response.ok) {
-        console.error('Failed to send email notification')
+        console.error('Failed to send admin email notification')
       }
     } catch (error) {
-      console.error('Email notification error:', error)
+      console.error('Admin email notification error:', error)
     }
 
     return NextResponse.json({
       success: true,
+      message: 'Registration request submitted successfully. You will receive a confirmation email and our team will review your application within 24 hours.',
       inquiry: {
         id: inquiry.id,
         type: inquiry.type,
         name: inquiry.name,
-        businessName: inquiry.businessName,
-        location: inquiry.location,
         email: inquiry.email,
-        phone: inquiry.phone,
         status: inquiry.status,
         createdAt: inquiry.createdAt,
       },
@@ -131,7 +208,7 @@ export async function PUT(
     const { status } = body
 
     // Validate status
-    if (!['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
+    if (!['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
       return NextResponse.json(
         { error: 'Invalid status' },
         { status: 400 }

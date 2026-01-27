@@ -112,9 +112,9 @@ export default function HomePage() {
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                     pathname === item.link
-                      ? "bg-slate-800 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}                        
+                      ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                      : "text-gray-700 hover:bg-gray-100",
+                  )}
                 >
                   <IconComponent className="mr-3 h-5 w-5" />
                   {item.name}

@@ -32,9 +32,10 @@ export default function AdminLoginPage() {
   };
 
   const handleForceLogin = async () => {
-    setLoading(true);
     setError("");
-    
+    setShowForceButton(false);
+    setLoading(true);
+
     try {
       const success = await login(email, password, true);
       if (success) {
@@ -52,9 +53,10 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
-    
+    setShowForceButton(false);
+    setLoading(true);
+
     try {
       const success = await login(email, password);
       if (success) {
@@ -68,7 +70,7 @@ export default function AdminLoginPage() {
           },
           body: JSON.stringify({ email, password }),
         })).json();
-        
+
         if (errorData.error === 'This account is already logged in on another device.') {
           setError("This account is already logged in on another device.");
           setShowForceButton(true);
@@ -172,7 +174,7 @@ export default function AdminLoginPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-10 hover:bg-accent transition-colors text-sm mb-4"
+                    className="w-full h-11 hover:bg-accent transition-colors text-sm"
                     onClick={handleForceLogin}
                     disabled={loading}
                   >

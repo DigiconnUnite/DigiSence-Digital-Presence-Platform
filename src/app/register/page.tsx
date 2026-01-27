@@ -69,7 +69,7 @@ function RegisterContent() {
                 <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
                   {/* Icon Section */}
                   <div className="flex-1 flex items-center justify-center w-full pt-4">
-                    <div className="flex-shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                    <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
                       <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
                         <Image
                           src="/pro-svg.png"
@@ -112,7 +112,7 @@ function RegisterContent() {
                 <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
                   {/* Icon Section */}
                   <div className="flex-1 flex items-center justify-center w-full pt-4">
-                    <div className="flex-shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                    <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
                       <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
                         <Image
                           src="/bus-svg.png"

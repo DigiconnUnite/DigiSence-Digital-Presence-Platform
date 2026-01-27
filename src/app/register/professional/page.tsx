@@ -339,6 +339,7 @@ export default function ProfessionalRegistrationPage() {
                       Privacy Policy
                     </Button>
                   </Label>
+                  
                 </div>
               </div>
 
@@ -364,7 +365,7 @@ export default function ProfessionalRegistrationPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 shadow-lg bg-gradient-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
+                className="w-full h-11 shadow-lg bg-linear-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
                 disabled={loading}
               >
                 {loading
@@ -395,13 +396,13 @@ export default function ProfessionalRegistrationPage() {
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out hover:scale-105"
           style={{ backgroundImage: "url('/login-bg.png')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/20 to-slate-900/90 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/20 to-slate-900/90 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full py-16 px-10 xl:px-20">
           <div className="flex-1"></div>
 
           <div className="flex items-center justify-center py-10">
-            <div className="flex-shrink-0 drop-shadow-2xl animate-pulse-slow">
+            <div className="shrink-0 drop-shadow-2xl animate-pulse-slow">
               <img
                 src="/pro-svg.png"
                 alt="Professional Icon"

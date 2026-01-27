@@ -110,6 +110,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
+import SharedSidebar from '../../components/SharedSidebar';
 
 type ButtonVariant =
   | "link"
@@ -1115,50 +1116,35 @@ export default function ProfessionalDashboard() {
     }
   };
 
+
   const menuItems: MenuItem[] = [
     {
-      title: "Overview",
+      title: "Dashboard",
       icon: BarChart3,
       mobileIcon: Home,
       value: "overview",
       mobileTitle: "Home",
     },
     {
-      title: "My Profile",
+      title: "User Profile",
       icon: User,
       mobileIcon: User,
       value: "profile",
       mobileTitle: "Profile",
     },
+    // {
+    //   title: "Theme Customization",
+    //   icon: Palette,
+    //   mobileIcon: Palette,
+    //   value: "theme",
+    //   mobileTitle: "Theme",
+    // },
     {
       title: "Settings",
       icon: Settings,
       mobileIcon: Cog,
       value: "settings",
       mobileTitle: "Settings",
-    },
-  ];
-
-  const sidebarItems = [
-    {
-      title: "Dashboard",
-      icon: BarChart3,
-      value: "overview",
-    },
-    {
-      title: "User Profile",
-      icon: User,
-      value: "profile",
-    },
-    // {
-    //   title: "Theme Customization",
-    //   icon: Palette,
-    //   value: "theme",
-    // },
-    {
-      title: "Settings",
-      icon: Settings,
-      value: "settings",
     },
   ];
 
@@ -4951,49 +4937,21 @@ export default function ProfessionalDashboard() {
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
-              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-                <div className="flex items-center space-x-2">
-                  <User className="h-6 w-6" />
-                  <span className="font-semibold">Professional</span>
-                </div>
-              </div>
-              <nav className="flex-1 p-4">
-                <ul className="space-y-2">
-                  {sidebarItems.map((item) => (
-                    <li key={item.title}>
-                      <button
-                        onClick={() => {
-                          setCurrentView(item.value);
-                          if (item.value === "profile") setActiveProfileTab("basic");
-                        }}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                          ? "bg-amber-100 text-amber-600"
-                          : "text-gray-700 hover:bg-amber-50"
-                          }`}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              {/* Logout Section */}
-              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
-                <button
-                  onClick={async () => {
-                    await logout();
-                    router.push("/login");
-                  }}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
+            <SharedSidebar
+              navLinks={menuItems}
+              currentView={currentView}
+              onViewChange={(view) => {
+                setCurrentView(view);
+                if (view === "profile") setActiveProfileTab("basic");
+              }}
+              onLogout={async () => {
+                await logout();
+                router.push("/login");
+              }}
+              isMobile={isMobile}
+              headerTitle="Professional"
+              headerIcon={User}
+            />
           )}
 
           {/* Middle Content */}
@@ -5006,31 +4964,6 @@ export default function ProfessionalDashboard() {
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-            <div className="flex justify-around items-center py-2">
-              {menuItems.map((item) => {
-                const MobileIcon = item.mobileIcon;
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setCurrentView(item.value)}
-                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
-                      ? "text-amber-500"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    <MobileIcon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">
-                      {item.mobileTitle}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Image Upload Modals */}
         {/* Banner Image Upload Modal */}

@@ -35,8 +35,14 @@ export async function POST(request: NextRequest) {
     } else {
       // Check for active sessions
       const activeSessions = await getUserActiveSessions(user.id)
+      console.log(`Active sessions for user ${user.email}: ${activeSessions.length}`)
       if (activeSessions.length > 0) {
         console.log(`Login blocked: User ${user.email} already has an active session`)
+        console.log(`Active session details:`, JSON.stringify(activeSessions.map(s => ({
+          id: s.id,
+          expiresAt: s.expiresAt,
+          token: s.token.substring(0, 20) + '...'
+        })), null, 2))
         return NextResponse.json(
           { error: 'This account is already logged in on another device.' },
           { status: 403 }

@@ -134,4 +134,48 @@ const sendAccountCreationNotification = async (data: AccountCreationData) => {
   }
 }
 
-export { sendInquiryNotification, sendAccountCreationNotification }
+const sendPasswordResetEmail = async (email: string, token: string) => {
+  try {
+    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
+    
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: 'Password Reset Request - DigiSence',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h1 style="color: #333333; margin-bottom: 20px;">Password Reset Request</h1>
+
+            <div style="margin-bottom: 20px;">
+              <p>We received a request to reset your password. Click the button below to reset it.</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 30px;">
+              <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Reset Password
+              </a>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <p>If you didn't request a password reset, please ignore this email or contact support if you have questions.</p>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; text-align: center;">
+              <p style="color: #6c757d; font-size: 14px;">
+                If you have any questions, please contact our support team.
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+    }
+
+    await transporter.sendMail(mailOptions)
+    console.log('Password reset email sent to:', email)
+  } catch (error) {
+    console.error('Error sending password reset email:', error)
+  }
+}
+
+export { sendInquiryNotification, sendAccountCreationNotification, sendPasswordResetEmail }

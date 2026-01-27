@@ -504,7 +504,7 @@ export default function ProfessionalsPage() {
           {/* Hero Banner - Keeping exact aspect ratio */}
           <section className="px-3 sm:px-4 md:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-              <div className="relative overflow-hidden rounded-xl md:rounded-2xl lg:rounded-3xl bg-gradient-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+              <div className="relative overflow-hidden rounded-xl md:rounded-2xl lg:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
                 <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                   <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                     Find Top <br /> Professionals
@@ -627,7 +627,7 @@ export default function ProfessionalsPage() {
                             />
                           ) : (
                             <div
-                              className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center"
+                              className="w-full h-full bg-linear-to-r from-gray-100 to-gray-200 flex items-center justify-center"
                               style={{ zIndex: 0 }}
                             >
                               <div className="text-center text-gray-400">
@@ -654,7 +654,7 @@ export default function ProfessionalsPage() {
                           />
                         ) : (
                           <div
-                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md"
+                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md"
                             style={{ zIndex: 20 }}
                           >
                             <User className="h-9 w-9 md:h-11 md:w-11 text-gray-600" />

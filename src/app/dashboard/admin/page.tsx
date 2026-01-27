@@ -51,6 +51,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  Bell,
   Users,
   Building,
   MessageSquare,
@@ -87,6 +88,7 @@ import {
   Instagram,
   Linkedin,
 } from "lucide-react";
+import SharedSidebar from "../components/SharedSidebar";
 import Link from "next/link";
 
 interface Business {
@@ -230,6 +232,7 @@ export default function SuperAdminDashboard() {
   const [forceRerender, setForceRerender] = useState(0);
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<
@@ -387,7 +390,16 @@ export default function SuperAdminDashboard() {
 
   // Authentication check
   useEffect(() => {
+    console.log('[DEBUG] Admin Dashboard - Auth Check:', {
+      loading,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
+      currentPath: window.location.pathname
+    });
     if (!loading && (!user || user.role !== "SUPER_ADMIN")) {
+      console.log('[DEBUG] Admin Dashboard - Redirecting to login:', {
+        reason: !user ? 'No user' : `Wrong role: ${user.role}`,
+        redirectingTo: '/login'
+      });
       router.push("/login");
       return;
     }
@@ -433,8 +445,9 @@ export default function SuperAdminDashboard() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setDataFetchError(null);
-    
+
     try {
+      console.log('[DEBUG] Admin Dashboard - Starting data fetch');
       const [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes] = await Promise.all([
         fetch("/api/admin/businesses"),
         fetch("/api/admin/categories"),
@@ -444,10 +457,29 @@ export default function SuperAdminDashboard() {
         fetch("/api/registration-inquiries"),
       ]);
 
+      console.log('[DEBUG] Admin Dashboard - API responses status:', {
+        businesses: businessesRes.status,
+        categories: categoriesRes.status,
+        inquiries: inquiriesRes.status,
+        professionals: professionalsRes.status,
+        businessListingInquiries: businessListingInquiriesRes.status,
+        registrationInquiries: registrationInquiriesRes.status,
+      });
+
       // Check if all responses are ok
       const allResponsesOk = [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes].every(res => res.ok);
-      
+
       if (!allResponsesOk) {
+        console.error('[DEBUG] Admin Dashboard - Some API calls failed');
+        // Log the failed responses
+        const failedResponses: string[] = [];
+        if (!businessesRes.ok) failedResponses.push(`businesses: ${businessesRes.status} ${await businessesRes.text()}`);
+        if (!categoriesRes.ok) failedResponses.push(`categories: ${categoriesRes.status} ${await categoriesRes.text()}`);
+        if (!inquiriesRes.ok) failedResponses.push(`inquiries: ${inquiriesRes.status} ${await inquiriesRes.text()}`);
+        if (!professionalsRes.ok) failedResponses.push(`professionals: ${professionalsRes.status} ${await professionalsRes.text()}`);
+        if (!businessListingInquiriesRes.ok) failedResponses.push(`businessListingInquiries: ${businessListingInquiriesRes.status} ${await businessListingInquiriesRes.text()}`);
+        if (!registrationInquiriesRes.ok) failedResponses.push(`registrationInquiries: ${registrationInquiriesRes.status} ${await registrationInquiriesRes.text()}`);
+        console.error('[DEBUG] Failed responses:', failedResponses);
         throw new Error("One or more API calls failed");
       }
 
@@ -1398,7 +1430,7 @@ export default function SuperAdminDashboard() {
     async (inquiry: any) => {
       if (
         !confirm(
-          `Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}?`
+          `Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}? This will send login credentials to ${inquiry.email}.`
         )
       ) {
         return;
@@ -1407,21 +1439,47 @@ export default function SuperAdminDashboard() {
       setCreatingAccount(inquiry.id);
 
       try {
-        // Generate a password for the new account
+        // First update inquiry status to UNDER_REVIEW
+        const reviewResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "UNDER_REVIEW" }),
+        });
+
+        if (!reviewResponse.ok) {
+          throw new Error("Failed to update inquiry status to under review");
+        }
+
+        // Update inquiry status in local state
+        setRegistrationInquiries((prev) =>
+          prev.map((regInquiry) =>
+            regInquiry.id === inquiry.id
+              ? { ...regInquiry, status: "UNDER_REVIEW" }
+              : regInquiry
+          )
+        );
+
+        // Generate password from stored hash (we'll decrypt or use a new one)
+        // Since we stored the hashed password, we need to generate a new one for sending
         const generatedPassword = generatePassword();
 
         let response;
         let accountData;
         let successMessage;
-        
+
         if (inquiry.type === "BUSINESS") {
           accountData = {
             name: inquiry.businessName || inquiry.name,
             email: inquiry.email,
             password: generatedPassword,
             adminName: inquiry.name,
-            phone: inquiry.phone,
-            address: inquiry.location,
+            description: inquiry.businessDescription || "",
+            phone: inquiry.phone || "",
+            address: inquiry.location || inquiry.address || "",
+            website: inquiry.website || "",
+            categoryId: inquiry.categoryId || "",
           };
           response = await fetch("/api/admin/businesses", {
             method: "POST",
@@ -1437,7 +1495,10 @@ export default function SuperAdminDashboard() {
             email: inquiry.email,
             password: generatedPassword,
             adminName: inquiry.name,
-            phone: inquiry.phone,
+            phone: inquiry.phone || "",
+            location: inquiry.location || "",
+            aboutMe: inquiry.aboutMe || "",
+            profession: inquiry.profession || "",
           };
           response = await fetch("/api/admin/professionals", {
             method: "POST",
@@ -1451,7 +1512,7 @@ export default function SuperAdminDashboard() {
 
         if (response.ok) {
           const result = await response.json();
-          
+
           // Send email notification with credentials
           try {
             const emailResponse = await fetch("/api/notifications", {
@@ -1499,7 +1560,7 @@ export default function SuperAdminDashboard() {
               title: "Success",
               description: `${successMessage} Login credentials sent to ${inquiry.email}`,
             });
-            
+
             // Refresh data to ensure the UI is up to date
             fetchData();
           } else {
@@ -1511,6 +1572,24 @@ export default function SuperAdminDashboard() {
             });
           }
         } else {
+          // Reset inquiry status back to PENDING if account creation failed
+          await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "PENDING" }),
+          });
+
+          // Update local state back
+          setRegistrationInquiries((prev) =>
+            prev.map((regInquiry) =>
+              regInquiry.id === inquiry.id
+                ? { ...regInquiry, status: "PENDING" }
+                : regInquiry
+            )
+          );
+
           const error = await response.json();
           console.error("Account creation failed:", error);
           toast({
@@ -1632,7 +1711,7 @@ export default function SuperAdminDashboard() {
     },
     {
       title: "Categories",
-      icon: Settings,
+      icon: FolderTree,
       mobileIcon: FolderTree,
       value: "categories",
       mobileTitle: "Category",
@@ -1664,13 +1743,6 @@ export default function SuperAdminDashboard() {
       mobileIcon: LineChart,
       value: "analytics",
       mobileTitle: "Analytics",
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      mobileIcon: Cog,
-      value: "settings",
-      mobileTitle: "Settings",
     },
   ];
 
@@ -1813,8 +1885,7 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900 ">
-                {" "}
+              <h1 className="text-lg font-bold text-gray-900">
                 Admin Dashboard Overview
               </h1>
               <p className="text-md text-gray-600">
@@ -1822,29 +1893,21 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
 
+            {/* 
+         MASTER GRID CONTAINER 
+         - Mobile: 1 column
+         - Laptop (LG): 4 columns
+         - Wide (XL): 8 columns (Your requested layout)
+      */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-8 gap-6">
+              {/* --- ROW 1: 4 Cards (Each spans 2 columns in the 8-grid) --- */}
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Total Businesses
-                  </CardTitle>
-                  <Building className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.totalBusinesses}
-                  </div>
-                  <p className="text-xs text-gray-500">Registered businesses</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
                     Active Businesses
                   </CardTitle>
-                  <UserCheck className="h-4 w-4 text-gray-400" />
+                  <Building className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
@@ -1853,42 +1916,41 @@ export default function SuperAdminDashboard() {
                   <p className="text-xs text-gray-500">Currently active</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
-                    Total Products
+                    Active Professionals
                   </CardTitle>
-                  <Package className="h-4 w-4 text-gray-400" />
+                  <UserCheck className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
-                    {stats.totalProducts}
+                    {stats.activeProfessionals}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    All products & services
-                  </p>
+                  <p className="text-xs text-gray-500">Currently active</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
-                    Total Professionals
+                    Total Inquiries
                   </CardTitle>
-                  <User className="h-4 w-4 text-gray-400" />
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
-                    {stats.totalProfessionals}
+                    {stats.totalInquiries}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Registered professionals
-                  </p>
+                  <p className="text-xs text-gray-500">All inquiries</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
-                    Platform Health
+                    System Status
                   </CardTitle>
                   <Activity className="h-4 w-4 text-gray-400" />
                 </CardHeader>
@@ -1898,7 +1960,202 @@ export default function SuperAdminDashboard() {
                       ? "Excellent"
                       : "Growing"}
                   </div>
-                  <p className="text-xs text-gray-500">System status</p>
+                  <p className="text-xs text-gray-500">Platform health</p>
+                </CardContent>
+              </Card>
+
+              {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">
+                    New Businesses
+                  </CardTitle>
+                  <Building className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Name</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {businesses
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .slice(0, 3)
+                          .map((business) => (
+                            <TableRow key={business.id}>
+                              <TableCell className="text-xs font-medium">
+                                {business.name}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {new Date(business.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={business.isActive ? "default" : "secondary"}
+                                  className="text-xs"
+                                >
+                                  {business.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">
+                    New Professionals
+                  </CardTitle>
+                  <User className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Name</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {professionals
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .slice(0, 3)
+                          .map((professional) => (
+                            <TableRow key={professional.id}>
+                              <TableCell className="text-xs font-medium">
+                                {professional.name}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {new Date(professional.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={professional.isActive ? "default" : "secondary"}
+                                  className="text-xs"
+                                >
+                                  {professional.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">
+                    Latest Contact
+                  </CardTitle>
+                  <Mail className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Name</TableHead>
+                          <TableHead className="text-xs">Email</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inquiries
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .slice(0, 3)
+                          .map((inquiry) => (
+                            <TableRow key={inquiry.id}>
+                              <TableCell className="text-xs font-medium">
+                                {inquiry.name}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {inquiry.email}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {new Date(inquiry.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* --- ROW 3: 2 Cards (Spans: 6, 2) --- */}
+
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-6">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">
+                    Latest Inquiry
+                  </CardTitle>
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Name</TableHead>
+                          <TableHead className="text-xs">Email</TableHead>
+                          <TableHead className="text-xs">Business</TableHead>
+                          <TableHead className="text-xs">Message</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inquiries
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .slice(0, 5)
+                          .map((inquiry) => (
+                            <TableRow key={inquiry.id}>
+                              <TableCell className="text-xs font-medium">
+                                {inquiry.name}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {inquiry.email}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {inquiry.business?.name || "N/A"}
+                              </TableCell>
+                              <TableCell className="text-xs max-w-32 truncate">
+                                {inquiry.message}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {new Date(inquiry.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Added a placeholder to fill the last slot (span-2) to complete the grid */}
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900">
+                    Notifications
+                  </CardTitle>
+                  <Bell className="h-4 w-4 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-gray-600">No new alerts.</div>
                 </CardContent>
               </Card>
             </div>
@@ -1913,7 +2170,9 @@ export default function SuperAdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <span className="text-red-600 font-medium">Data Fetching Error</span>
+                    <span className="text-red-600 font-medium">
+                      Data Fetching Error
+                    </span>
                   </div>
                   <div className="flex space-x-2">
                     <Button
@@ -2024,7 +2283,7 @@ export default function SuperAdminDashboard() {
                                 onClick={() =>
                                   window.open(
                                     `/catalog/${business.slug}`,
-                                    "_blank"
+                                    "_blank",
                                   )
                                 }
                               >
@@ -2082,13 +2341,13 @@ export default function SuperAdminDashboard() {
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
-                  </Button> 
-                  <Select value={filterStatus}  onValueChange={setFilterStatus}>
+                  </Button>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
                       <SelectValue placeholder="Filter by Status: Active" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem  value="all">
+                      <SelectItem value="all">
                         All ({professionals.length})
                       </SelectItem>
                       <SelectItem value="active">
@@ -2182,13 +2441,13 @@ export default function SuperAdminDashboard() {
                                   onClick={() =>
                                     window.open(
                                       `/pcard/${professional.slug}`,
-                                      "_blank"
+                                      "_blank",
                                     )
                                   }
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                      
+
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -2393,7 +2652,7 @@ export default function SuperAdminDashboard() {
                 requests
               </p>
             </div>
-        <div className="">
+            <div className="">
               <div className="">
                 {/* Search and Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -2424,7 +2683,9 @@ export default function SuperAdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <AlertTriangle className="h-5 w-5 text-red-600" />
-                        <span className="text-red-600 font-medium">Data Fetching Error</span>
+                        <span className="text-red-600 font-medium">
+                          Data Fetching Error
+                        </span>
                       </div>
                       <div className="flex space-x-2">
                         <Button
@@ -2439,10 +2700,12 @@ export default function SuperAdminDashboard() {
                         </Button>
                       </div>
                     </div>
-                    <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+                    <p className="text-red-600 text-sm mt-1">
+                      {dataFetchError}
+                    </p>
                   </div>
                 )}
-                
+
                 {/* Empty State */}
                 {registrationInquiries.length === 0 && !isLoading && (
                   <div className="text-center py-12">
@@ -2453,11 +2716,12 @@ export default function SuperAdminDashboard() {
                       No Registration Requests
                     </h3>
                     <p className="text-gray-600">
-                      There are currently no business or professional registration requests to review.
+                      There are currently no business or professional
+                      registration requests to review.
                     </p>
                   </div>
                 )}
-                
+
                 {/* Data Table */}
                 {registrationInquiries.length > 0 && (
                   <div className="overflow-x-auto rounded-2xl bg-white border border-gray-200">
@@ -2469,23 +2733,37 @@ export default function SuperAdminDashboard() {
                           <TableHead className="text-gray-900">
                             Business Name
                           </TableHead>
-                          <TableHead className="text-gray-900">Contact</TableHead>
+                          <TableHead className="text-gray-900">
+                            Contact
+                          </TableHead>
                           <TableHead className="text-gray-900">
                             Location
                           </TableHead>
-                          <TableHead className="text-gray-900">Status</TableHead>
+                          <TableHead className="text-gray-900">
+                            Status
+                          </TableHead>
                           <TableHead className="text-gray-900">Date</TableHead>
-                          <TableHead className="text-gray-900">Actions</TableHead>
+                          <TableHead className="text-gray-900">
+                            Actions
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {registrationInquiries
                           .filter((inquiry) => {
                             const matchesSearch =
-                              inquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              inquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+                              inquiry.name
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase()) ||
+                              inquiry.email
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase()) ||
+                              inquiry.businessName
+                                ?.toLowerCase()
+                                .includes(searchTerm.toLowerCase()) ||
+                              inquiry.location
+                                ?.toLowerCase()
+                                .includes(searchTerm.toLowerCase());
                             return matchesSearch;
                           })
                           .map((inquiry) => (
@@ -2537,7 +2815,9 @@ export default function SuperAdminDashboard() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-gray-900">
-                                {new Date(inquiry.createdAt).toLocaleDateString()}
+                                {new Date(
+                                  inquiry.createdAt,
+                                ).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
                                 <div className="flex space-x-2">
@@ -2548,10 +2828,12 @@ export default function SuperAdminDashboard() {
                                         className="rounded-xl bg-green-600 hover:bg-green-700"
                                         onClick={() =>
                                           handleCreateAccountFromInquiryWithSidebar(
-                                            inquiry
+                                            inquiry,
                                           )
                                         }
-                                        disabled={creatingAccount === inquiry.id}
+                                        disabled={
+                                          creatingAccount === inquiry.id
+                                        }
                                       >
                                         {creatingAccount === inquiry.id ? (
                                           <>
@@ -2569,8 +2851,12 @@ export default function SuperAdminDashboard() {
                                         size="sm"
                                         variant="outline"
                                         className="rounded-xl"
-                                        onClick={() => handleRejectInquiry(inquiry)}
-                                        disabled={creatingAccount === inquiry.id}
+                                        onClick={() =>
+                                          handleRejectInquiry(inquiry)
+                                        }
+                                        disabled={
+                                          creatingAccount === inquiry.id
+                                        }
                                       >
                                         {creatingAccount === inquiry.id ? (
                                           <>
@@ -2620,7 +2906,7 @@ export default function SuperAdminDashboard() {
         return (
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-8">
-             <h1 className="text-lg font-bold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900">
                 BUSINESS LISTING INQUIRIES
               </h1>
               <p className="text-md text-gray-600">
@@ -3419,10 +3705,10 @@ const renderRightPanel = () => {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-4 sm:px-6 py-1">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-2">
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-2xl">
                 <Skeleton className="h-8 w-8" />
@@ -3510,177 +3796,82 @@ const renderRightPanel = () => {
   }
 
   return (
-    <div className="max-h-screen min-h-screen relative flex flex-col">
-      <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
-      {/* Top Header Bar */}
-      <div className="bg-white border  border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-1">
-          <div className="flex items-center ">
-            <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
-            <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div>
-               <span className="font-semibold">Super Admin</span>
-            </div>
-          </div>
-          <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">
-                {user?.name || "Super Admin"}
-              </p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
-            </div>
-            <span className="h-8 border-l border-gray-300 mx-2"></span>
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? 'Real-time connected' : 'Real-time disconnected'}></div>
-              <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
-                <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
+    <div className="max-h-screen min-h-screen relative flex">
+      <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <SharedSidebar
+          navLinks={menuItems}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onLogout={async () => {
+            await logout();
+            router.push("/login");
+          }}
+          onSettings={() => setCurrentView("settings")}
+          onCollapsedChange={setSidebarCollapsed}
+          isMobile={isMobile}
+          headerTitle="Super Admin"
+          headerIcon={Shield}
+        />
+
+        {/* Middle Content with Header */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Header Bar - Now inside content area */}
+          <div className="bg-white border-b border-gray-200 shadow-sm shrink-0 h-13 ">
+            <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+              <div className="hidden md:flex"></div>
+              <div className="flex items-center md:hidden">
+                <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
+                <span className="h-8 border-l border-gray-300 mx-2"></span>
+                <div>
+                  <span className="font-semibold">Super Admin</span>
+                </div>
+              </div>
+              <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.name || "Super Admin"}
+                  </p>
+                  <p className="text-xs text-gray-500">{user?.email}</p>
+                </div>
+                <span className="h-8 border-l border-gray-300 mx-2"></span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8  rounded-full  bg-black  flex items-center justify-center">
+                    <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Layout: Three Column Grid */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Desktop Only */}
-        {!isMobile && (
-          <div className="w-64    bg-white border-r border-gray-200 flex flex-col shadow-sm">
-            <nav className="flex-1 p-4">
-              <ul className="space-y-2">
-                {menuItems.map((item) => (
-                  <li key={item.value}>
-                    <button
-                      onClick={() => setCurrentView(item.value)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${
-                        currentView === item.value
-                          ? " bg-linear-to-r from-orange-400 to-amber-500 text-white"
-                          : "text-gray-700 hover:bg-orange-50"
-                      }`}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            {/* Logout Section */}
-            <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
-              <button
-                onClick={async () => {
-                  await logout();
-                  router.push("/login");
-                }}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Middle Content */}
-        <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
-          <div className="flex-1  p-4 sm:p-6 overflow-auto hide-scrollbar">
-            {renderMiddleContent()}
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
+            <div className="p-4 sm:p-6">{renderMiddleContent()}</div>
           </div>
         </div>
 
         {/* Right Editor Panel - Dialog */}
-        <Dialog open={showRightPanel} onOpenChange={(open) => {
-          if (!open) {
-            setShowRightPanel(false);
-            setRightPanelContent(null);
-            setGeneratedPassword("");
-            setGeneratedUsername("");
-          }
-        }}>
+        <Dialog
+          open={showRightPanel}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowRightPanel(false);
+              setRightPanelContent(null);
+              setGeneratedPassword("");
+              setGeneratedUsername("");
+            }
+          }}
+        >
           <DialogContent className="max-w-4xl w-[95%] h-[90vh] border overflow-hidden  bg-white p-0  top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
             {renderRightPanel()}
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      {isMobile && (
-        <>
-          {/* More Menu Overlay */}
-          {showMoreMenu && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
-              onClick={() => setShowMoreMenu(false)}
-            >
-              <div
-                className="absolute bottom-16 left-0 right-0 bg-white rounded-t-md p-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-2">
-                  {menuItems.slice(4).map((item) => {
-                    const MobileIcon = item.mobileIcon;
-                    return (
-                      <button
-                        key={item.value}
-                        onClick={() => {
-                          setCurrentView(item.value);
-                          setShowMoreMenu(false);
-                        }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 ${
-                          currentView === item.value
-                            ? "bg-orange-100 text-orange-600"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <MobileIcon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* Bottom Navigation Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-            <div className="flex justify-around items-center py-2">
-              {menuItems.slice(0, 4).map((item) => {
-                const MobileIcon = item.mobileIcon;
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setCurrentView(item.value)}
-                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${
-                      currentView === item.value
-                        ? "text-orange-500"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <MobileIcon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">
-                      {item.mobileTitle}
-                    </span>
-                  </button>
-                );
-              })}
-              {/* More button for additional items */}
-              <button
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${
-                  showMoreMenu ||
-                  menuItems.slice(4).some((item) => item.value === currentView)
-                    ? "text-orange-500"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <MoreHorizontal className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">More</span>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
       {/* Business Listing Inquiry Dialog */}
       <Dialog
         open={showBusinessListingInquiryDialog}
@@ -3693,7 +3884,9 @@ const renderRightPanel = () => {
               <DialogHeader className="p-6 border-b shrink-0 space-y-0 bg-white">
                 <div className="flex justify-between items-start w-full">
                   <div className="">
-                    <DialogTitle className="text-md  font-semibold">Business Listing Inquiry Details</DialogTitle>
+                    <DialogTitle className="text-md  font-semibold">
+                      Business Listing Inquiry Details
+                    </DialogTitle>
                     <DialogDescription className="text-xs text-gray-500">
                       Review and manage this business listing inquiry
                     </DialogDescription>
@@ -3706,21 +3899,28 @@ const renderRightPanel = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium">Business Name</Label>
+                      <Label className="text-sm font-medium">
+                        Business Name
+                      </Label>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.businessName || "Not provided"}
+                        {selectedBusinessListingInquiry?.businessName ||
+                          "Not provided"}
                       </p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">Contact Name</Label>
+                      <Label className="text-sm font-medium">
+                        Contact Name
+                      </Label>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.contactName || "Not provided"}
+                        {selectedBusinessListingInquiry?.contactName ||
+                          "Not provided"}
                       </p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Email</Label>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.email || "Not provided"}
+                        {selectedBusinessListingInquiry?.email ||
+                          "Not provided"}
                       </p>
                     </div>
                     <div>
@@ -3739,16 +3939,21 @@ const renderRightPanel = () => {
                       </p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">Inquiry Type</Label>
+                      <Label className="text-sm font-medium">
+                        Inquiry Type
+                      </Label>
                       <p className="text-sm text-gray-600 mt-1">
                         {selectedBusinessListingInquiry?.inquiryType ||
                           "Not specified"}
                       </p>
                     </div>
                     <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">Requirements</Label>
+                      <Label className="text-sm font-medium">
+                        Requirements
+                      </Label>
                       <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
-                        {selectedBusinessListingInquiry?.requirements || "Not provided"}
+                        {selectedBusinessListingInquiry?.requirements ||
+                          "Not provided"}
                       </p>
                     </div>
                   </div>
@@ -3787,7 +3992,9 @@ const renderRightPanel = () => {
                       <div>
                         <Label>Assign To</Label>
                         <Select
-                          value={selectedBusinessListingInquiry.assignedTo || ""}
+                          value={
+                            selectedBusinessListingInquiry.assignedTo || ""
+                          }
                           onValueChange={(value) => {
                             const updated = {
                               ...selectedBusinessListingInquiry,
@@ -3853,7 +4060,7 @@ const renderRightPanel = () => {
                       }
                       handleUpdateBusinessListingInquiry(
                         selectedBusinessListingInquiry?.id,
-                        updates
+                        updates,
                       );
                     }
                   }}

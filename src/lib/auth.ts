@@ -110,6 +110,11 @@ export function isBusinessAdmin(user: AuthUser): boolean {
   return user.role === 'BUSINESS_ADMIN'
 }
 
+export function generatePasswordResetToken(userId: string): string {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '1h' })
+  return token
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 export function generateToken(user: AuthUser): string {

@@ -279,7 +279,7 @@ model RegistrationInquiry {
   // Common fields
   location        String?
   address         String?
-  password        String // Hashed password
+  password        String? // Hashed password
   termsAccepted   Boolean              @default(false)
   termsAcceptedAt DateTime?
 

@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     console.log('Login request body received')
 
     const { email, password, force = false } = loginSchema.parse(body)
-    console.log(`Login attempt for email: ${email}`)
+    console.log(`Login attempt for email: ${email}, force: ${force}`)
 
     const user = await authenticateUser(email, password)
 
@@ -28,10 +28,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log(`User authenticated: ${user.email}, role: ${user.role}`)
+
     // If force logout is requested, invalidate all existing sessions
     if (force) {
+      console.log(`Force login requested for ${user.email}`)
+      const sessionsBefore = await getUserActiveSessions(user.id)
+      console.log(`Sessions before invalidation: ${sessionsBefore.length}`)
       await invalidateUserSessions(user.id)
       console.log(`Force logout: Invalidated all sessions for user ${user.email}`)
+      const sessionsAfter = await getUserActiveSessions(user.id)
+      console.log(`Sessions after invalidation: ${sessionsAfter.length}`)
     } else {
       // Check for active sessions
       const activeSessions = await getUserActiveSessions(user.id)

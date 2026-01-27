@@ -49,18 +49,30 @@ async function getSuperAdmin(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[DEBUG] Registration inquiries GET - Starting')
     const admin = await getSuperAdmin(request)
+    console.log('[DEBUG] Registration inquiries GET - Admin check:', admin ? 'Authorized' : 'Unauthorized')
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const inquiries = await db.registrationInquiry.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+    console.log('[DEBUG] Registration inquiries GET - Fetching from DB')
+    let inquiries = []
+    try {
+      inquiries = await db.registrationInquiry.findMany({
+        orderBy: { createdAt: 'desc' },
+      })
+      console.log('[DEBUG] Registration inquiries GET - Fetched', inquiries.length, 'inquiries')
+    } catch (dbError) {
+      console.error('[DEBUG] Registration inquiries GET - DB Error:', dbError)
+      // If collection doesn't exist, return empty array
+      inquiries = []
+      console.log('[DEBUG] Registration inquiries GET - Returning empty array due to DB error')
+    }
 
     return NextResponse.json({ inquiries })
   } catch (error) {
-    console.error('Registration inquiries fetch error:', error)
+    console.error('[DEBUG] Registration inquiries fetch error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

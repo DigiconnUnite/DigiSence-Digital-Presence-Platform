@@ -163,6 +163,7 @@ export default function ProfessionalDashboard() {
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [currentView, setCurrentView] = useState("overview");
   const [activeProfileTab, setActiveProfileTab] = useState("basic");
@@ -1139,13 +1140,13 @@ export default function ProfessionalDashboard() {
     //   value: "theme",
     //   mobileTitle: "Theme",
     // },
-    {
-      title: "Settings",
-      icon: Settings,
-      mobileIcon: Cog,
-      value: "settings",
-      mobileTitle: "Settings",
-    },
+    // {
+    //   title: "Settings",
+    //   icon: Settings,
+    //   mobileIcon: Cog,
+    //   value: "settings",
+    //   mobileTitle: "Settings",
+    // },
   ];
 
   const renderSkeletonContent = () => {
@@ -4724,9 +4725,7 @@ export default function ProfessionalDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div
-          className={`fixed inset-0 ${getBackgroundClass()} bg-center blur-sm -z-10`}
-        ></div>
+        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -4902,38 +4901,10 @@ export default function ProfessionalDashboard() {
 
   return (
     <ThemeProvider>
-      <div className="max-h-screen min-h-screen ratio-16x9   relative flex flex-col">
-        <div
-          className={`fixed inset-0 ${getBackgroundClass()} bg-center blur-sm -z-10`}
-        ></div>
-        {/* Top Header Bar */}
-        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-3 sm:px-4 py-2">
-            <div className="flex items-center">
-              <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
-              <span className="h-8 border-l border-gray-300 mx-2"></span>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Professional Dashboard
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.name || "Professional"}
-                </p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-              <span className="h-8 border-l border-gray-300 mx-2"></span>
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen flex h-screen  relative">
+        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
 
-        {/* Main Layout: Three Column Grid */}
+        {/* Main Layout: Sidebar + Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
@@ -4948,18 +4919,88 @@ export default function ProfessionalDashboard() {
                 await logout();
                 router.push("/login");
               }}
+              onSettings={() => setCurrentView("settings")}
+              onCollapsedChange={setSidebarCollapsed}
               isMobile={isMobile}
               headerTitle="Professional"
               headerIcon={User}
             />
           )}
 
-          {/* Middle Content */}
-          <div
-            className={`flex-1 overflow-auto hide-scrollbar transition-all duration-300 ease-in-out pb-20 md:pb-0`}
-          >
-            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
-              {renderMiddleContent()}
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <SharedSidebar
+              navLinks={menuItems}
+              currentView={currentView}
+              onViewChange={(view) => {
+                setCurrentView(view);
+                if (view === "profile") setActiveProfileTab("basic");
+              }}
+              onLogout={async () => {
+                await logout();
+                router.push("/login");
+              }}
+              onSettings={() => setCurrentView("settings")}
+              onCollapsedChange={setSidebarCollapsed}
+              isMobile={isMobile}
+              headerTitle="Professional"
+              headerIcon={User}
+            />
+          )}
+
+          {/* Middle Content with Header */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Header Bar - Now inside content area */}
+            <div className="bg-white border-b border-gray-200 shadow-sm shrink-0 h-13 ">
+              <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+                <div className="hidden md:flex"></div>
+                <div className="flex items-center md:hidden">
+                  <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
+                  <span className="h-8 border-l border-gray-300 mx-2"></span>
+                  <div>
+                    <span className="font-semibold">Professional</span>
+                  </div>
+                </div>
+                <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name || "Professional"}
+                    </p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+                  <span className="h-8 border-l border-gray-300 mx-2"></span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
+                      {profilePictureUrl && isValidImageUrl(profilePictureUrl) ? (
+                        <img
+                          src={getOptimizedImageUrl(profilePictureUrl, {
+                            width: 32,
+                            height: 32,
+                            quality: 85,
+                            format: "auto",
+                            crop: "fill",
+                            gravity: "center"
+                          })}
+                          alt={professional?.name || "Profile"}
+                          className="w-full h-full object-cover"
+                          onError={handleImageError}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
+              <div className="p-4 sm:p-6">
+                {renderMiddleContent()}
+              </div>
             </div>
           </div>
         </div>

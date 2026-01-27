@@ -255,16 +255,43 @@ enum CategoryType {
 }
 
 model RegistrationInquiry {
-  id            String               @id @default(cuid()) @map("_id")
-  type          RegistrationType
-  name          String
-  businessName  String?
-  location      String?
-  email         String
-  phone         String?
-  status        RegistrationStatus   @default(PENDING)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id              String               @id @default(cuid()) @map("_id")
+  type            RegistrationType
+  // Basic contact information
+  name            String
+  email           String
+  phone           String?
+
+  // Business specific fields
+  businessName    String?
+  businessDescription String?
+  categoryId      String?
+  gstNumber       String?
+  website         String?
+
+  // Professional specific fields
+  firstName       String?
+  lastName        String?
+  profession      String?
+  aboutMe         String?
+  professionalHeadline String?
+
+  // Common fields
+  location        String?
+  address         String?
+  password        String? // Hashed password
+  termsAccepted   Boolean              @default(false)
+  termsAcceptedAt DateTime?
+
+  // Admin review fields
+  status          RegistrationStatus   @default(PENDING)
+  adminNotes      String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+
+  // Metadata
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   @@map("registration_inquiries")
 }
@@ -276,6 +303,7 @@ enum RegistrationType {
 
 enum RegistrationStatus {
   PENDING
+  UNDER_REVIEW
   APPROVED
   REJECTED
   COMPLETED

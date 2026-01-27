@@ -75,6 +75,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
+import SharedSidebar from '../../components/SharedSidebar';
 
 // Import extracted components
 import InquiriesView from "./components/InquiriesView";
@@ -142,6 +143,7 @@ export default function ProfessionalDashboard() {
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [currentView, setCurrentView] = useState("overview");
   const [activeProfileTab, setActiveProfileTab] = useState("basic");
@@ -363,10 +365,13 @@ export default function ProfessionalDashboard() {
   };
 
   useEffect(() => {
-    if (!loading && (!user || (user.role as string) !== "PROFESSIONAL_ADMIN")) {
-      router.push("/login");
-      return;
-    }
+    console.log('[DEBUG] Professional Dashboard - Auth Check:', {
+      loading,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
+      currentPath: window.location.pathname
+    });
+    // Note: Authentication is now handled by the parent route wrapper
+    // This component assumes the user is authenticated and authorized
 
     if (user?.role === ("PROFESSIONAL_ADMIN" as UserRole)) {
       fetchProfessionalData();
@@ -1092,51 +1097,36 @@ export default function ProfessionalDashboard() {
     }
   };
 
+
   const menuItems: MenuItem[] = [
     {
-      title: "Overview",
+      title: "Dashboard",
       icon: BarChart3,
       mobileIcon: Home,
       value: "overview",
       mobileTitle: "Home",
     },
     {
-      title: "My Profile",
+      title: "User Profile",
       icon: User,
       mobileIcon: User,
       value: "profile",
       mobileTitle: "Profile",
     },
-    {
-      title: "Settings",
-      icon: Settings,
-      mobileIcon: Cog,
-      value: "settings",
-      mobileTitle: "Settings",
-    },
-  ];
-
-  const sidebarItems = [
-    {
-      title: "Dashboard",
-      icon: BarChart3,
-      value: "overview",
-    },
-    {
-      title: "User Profile",
-      icon: User,
-      value: "profile",
-    },
     // {
     //   title: "Theme Customization",
     //   icon: Palette,
+    //   mobileIcon: Palette,
     //   value: "theme",
+    //   mobileTitle: "Theme",
     // },
-    {
-      title: "Settings",
-      icon: Settings,
-      value: "settings",
-    },
+    // {
+    //   title: "Settings",
+    //   icon: Settings,
+    //   mobileIcon: Cog,
+    //   value: "settings",
+    //   mobileTitle: "Settings",
+    // },
   ];
 
   const renderSkeletonContent = () => {
@@ -1176,10 +1166,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
+              <h1 className="text-lg  font-bold text-slate-800">
                 Professional Dashboard Overview
               </h1>
-              <p className="text-sm md:text-base text-gray-600">
+              <p className="text-md text-gray-600">
                 Welcome back! Here's your professional profile overview.
               </p>
 
@@ -2400,10 +2390,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Client Inquiries
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Manage inquiries from potential clients.
               </p>
             </div>
@@ -2535,10 +2525,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Profile Analytics
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Track your profile performance and engagement.
               </p>
             </div>
@@ -2587,10 +2577,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Theme Customization
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Customize the appearance of your dashboard and public profile.
               </p>
             </div>
@@ -4715,9 +4705,7 @@ export default function ProfessionalDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div
-          className={`fixed inset-0 ${getBackgroundClass()} bg-center blur-sm -z-10`}
-        ></div>
+        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -4893,121 +4881,110 @@ export default function ProfessionalDashboard() {
 
   return (
     <ThemeProvider>
-      <div className="max-h-screen min-h-screen ratio-16x9   relative flex flex-col">
-        <div
-          className={`fixed inset-0 ${getBackgroundClass()} bg-center blur-sm -z-10`}
-        ></div>
-        {/* Top Header Bar */}
-        <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center px-3 sm:px-4 py-2">
-            <div className="flex items-center">
-              <img src="/logo.svg" alt="DigiSence" className="h-8 w-auto" />
-              <span className="h-8 border-l border-gray-300 mx-2"></span>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Professional Dashboard
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.name || "Professional"}
-                </p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-              <span className="h-8 border-l border-gray-300 mx-2"></span>
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <User className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen flex h-screen  relative">
+        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
 
-        {/* Main Layout: Three Column Grid */}
+        {/* Main Layout: Sidebar + Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar - Desktop Only */}
           {!isMobile && (
-            <div className="w-64 m-4 border rounded-3xl bg-white border-r border-gray-200 flex flex-col shadow-sm">
-              <div className="p-4 border-b border-gray-200 rounded-t-3xl">
-                <div className="flex items-center space-x-2">
-                  <User className="h-6 w-6" />
-                  <span className="font-semibold">Professional</span>
-                </div>
-              </div>
-              <nav className="flex-1 p-4">
-                <ul className="space-y-2">
-                  {sidebarItems.map((item) => (
-                    <li key={item.title}>
-                      <button
-                        onClick={() => {
-                          setCurrentView(item.value);
-                          if (item.value === "profile") setActiveProfileTab("basic");
-                        }}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors ${currentView === item.value
-                          ? "bg-amber-100 text-amber-600"
-                          : "text-gray-700 hover:bg-amber-50"
-                          }`}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              {/* Logout Section */}
-              <div className="p-4 border-t border-gray-200 mb-5 mt-auto">
-                <button
-                  onClick={async () => {
-                    await logout();
-                    router.push("/login");
-                  }}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-2xl text-left transition-colors text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
+            <SharedSidebar
+              navLinks={menuItems}
+              currentView={currentView}
+              onViewChange={(view) => {
+                setCurrentView(view);
+                if (view === "profile") setActiveProfileTab("basic");
+              }}
+              onLogout={async () => {
+                await logout();
+                router.push("/login");
+              }}
+              onSettings={() => setCurrentView("settings")}
+              onCollapsedChange={setSidebarCollapsed}
+              isMobile={isMobile}
+              headerTitle="Professional"
+              headerIcon={User}
+            />
           )}
 
-          {/* Middle Content */}
-          <div
-            className={`flex-1 overflow-auto hide-scrollbar transition-all duration-300 ease-in-out pb-20 md:pb-0`}
-          >
-            <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
-              {renderMiddleContent()}
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <SharedSidebar
+              navLinks={menuItems}
+              currentView={currentView}
+              onViewChange={(view) => {
+                setCurrentView(view);
+                if (view === "profile") setActiveProfileTab("basic");
+              }}
+              onLogout={async () => {
+                await logout();
+                router.push("/login");
+              }}
+              onSettings={() => setCurrentView("settings")}
+              onCollapsedChange={setSidebarCollapsed}
+              isMobile={isMobile}
+              headerTitle="Professional"
+              headerIcon={User}
+            />
+          )}
+
+          {/* Middle Content with Header */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Header Bar - Now inside content area */}
+            <div className="bg-white border-b border-gray-200 shadow-sm shrink-0 h-13 ">
+              <div className="flex justify-between items-center px-4 sm:px-6 py-2">
+                <div className="hidden md:flex"></div>
+                <div className="flex items-center md:hidden">
+                  <img src="/logo.svg" alt="DigiSense" className="h-8 w-auto" />
+                  <span className="h-8 border-l border-gray-300 mx-2"></span>
+                  <div>
+                    <span className="font-semibold">Professional</span>
+                  </div>
+                </div>
+                <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name || "Professional"}
+                    </p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+                  <span className="h-8 border-l border-gray-300 mx-2"></span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
+                      {profilePictureUrl && isValidImageUrl(profilePictureUrl) ? (
+                        <img
+                          src={getOptimizedImageUrl(profilePictureUrl, {
+                            width: 32,
+                            height: 32,
+                            quality: 85,
+                            format: "auto",
+                            crop: "fill",
+                            gravity: "center"
+                          })}
+                          alt={professional?.name || "Profile"}
+                          className="w-full h-full object-cover"
+                          onError={handleImageError}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
+              <div className="p-4 sm:p-6">
+                {renderMiddleContent()}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
-            <div className="flex justify-around items-center py-2">
-              {menuItems.map((item) => {
-                const MobileIcon = item.mobileIcon;
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setCurrentView(item.value)}
-                    className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${currentView === item.value
-                      ? "text-amber-500"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    <MobileIcon className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">
-                      {item.mobileTitle}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Image Upload Modals */}
         {/* Banner Image Upload Modal */}

@@ -275,7 +275,7 @@ export default function HeroSectionOne() {
       />
 
 
-      <div className="absolute inset-0 w-full h-full backdrop-blur-[5px] z-10 pointer-events-none bg-white/5"></div>
+      <div className="absolute inset-0 w-full h-full z-10 pointer-events-none bg-white/5"></div>
 
       {/* LAYER 3: Content (z-20 & z-30) */}
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4 z-20">

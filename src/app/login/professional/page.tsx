@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 export default function ProfessionalLoginPage() {
   const [email, setEmail] = useState("");
@@ -24,7 +25,7 @@ export default function ProfessionalLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForceButton, setShowForceButton] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
 
   const handleGoogleLogin = () => {
@@ -41,8 +42,32 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
-        // Redirect to professional dashboard
-        router.push("/dashboard/professional");
+        // Fetch professional data and redirect directly to professional dashboard
+        try {
+          const response = await fetch("/api/professionals");
+          if (response.ok) {
+            const data = await response.json();
+            const userProfessional = data.professionals?.find(
+              (p: any) => p.adminId === result.user?.id,
+            );
+
+            if (userProfessional) {
+              router.push(`/dashboard/professional/${userProfessional.slug}`);
+            } else {
+              setError(
+                "Professional profile not found. Please contact support.",
+              );
+            }
+          } else {
+            setError(
+              "Failed to load professional dashboard. Please try again.",
+            );
+          }
+        } catch (fetchError) {
+          setError(
+            "Connection failed. Please check your internet and try again.",
+          );
+        }
       } else {
         setError(result.error || "Login failed");
         if (
@@ -68,7 +93,32 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password, true);
 
       if (result.success) {
-        router.push("/dashboard/professional");
+        // Fetch professional data and redirect directly to professional dashboard
+        try {
+          const response = await fetch("/api/professionals");
+          if (response.ok) {
+            const data = await response.json();
+            const userProfessional = data.professionals?.find(
+              (p: any) => p.adminId === result.user?.id,
+            );
+
+            if (userProfessional) {
+              router.push(`/dashboard/professional/${userProfessional.slug}`);
+            } else {
+              setError(
+                "Professional profile not found. Please contact support.",
+              );
+            }
+          } else {
+            setError(
+              "Failed to load professional dashboard. Please try again.",
+            );
+          }
+        } catch (fetchError) {
+          setError(
+            "Connection failed. Please check your internet and try again.",
+          );
+        }
       } else {
         setError(result.error || "Login failed");
       }
@@ -84,215 +134,201 @@ export default function ProfessionalLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-white">
       {/* --- LEFT SIDE: FORM --- */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center relative bg-white px-4 sm:px-8 lg:px-16 py-12 md:py-0 z-10 overflow-y-auto">
+      <div className="flex-1 flex flex-col justify-center relative w-full px-4 sm:px-6 lg:px-12 py-10 lg:py-0 z-10">
         {/* Top Header */}
-        <div className="absolute top-0 left-0 w-full px-6 py-6 flex justify-between items-center z-20 ">
+        <div className="absolute top-0 left-0 w-full px-4 sm:px-6 lg:px-12 py-4 lg:py-6 flex justify-between items-center z-20">
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-primary/10 p-1.5 rounded-md text-primary">
-              <img
-                src="/logo.svg"
+            <div className="rounded-md text-primary">
+              <Image
+                src="/logo-tranparent.png"
                 alt="DigiSence Logo"
-                className="h-5 w-auto"
+                width={32}
+                height={32}
+                className="h-8 w-auto"
               />
             </div>
-            <span className="font-bold text-xl text-slate-800 tracking-tight">
+            <span className="font-bold text-xl text-slate-800 tracking-tight hidden sm:block">
               DigiSence
             </span>
           </Link>
           <Button
             onClick={() => router.push("/login")}
             variant="ghost"
-            className="hover:bg-slate-100 text-slate-600 transition-colors font-medium"
+            size="sm"
+            className="hover:bg-slate-100 border rounded-full py-1 px-3 text-slate-600 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
         </div>
 
         {/* Content Wrapper */}
-        <div className="w-full max-w-lg space-y-8 pt-8 md:pt-0">
+        <div className="w-full max-w-md mx-auto space-y-6 sm:space-y-8 mt-12 sm:mt-4">
           {/* Header Text */}
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-extrabold text-slate-800 ">
+          <div className="text-center space-y-2 px-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
               Professional Login
             </h1>
-            <p className="text-base text-slate-500">
-              Enter your credentials to access your workspace
+            <p className="text-sm sm:text-base text-slate-500">
+              Welcome back! Enter your credentials to access your workspace
             </p>
           </div>
 
-          {/* Sleek Card */}
-          <Card className="border-slate-200 shadow-none rounded-3xl overflow-hidden bg-white/50 backdrop-blur-sm">
-            <CardContent className="p-6 sm:p-8">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Email Input */}
-                <div className="space-y-2">
+          {/* Form Area */}
+          <CardContent className="p-0 space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-bold uppercase text-slate-500 tracking-wider"
+                >
+                  Email Address
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    placeholder="professional@example.com"
+                    className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <Label
-                    htmlFor="email"
+                    htmlFor="password"
                     className="text-xs font-bold uppercase text-slate-500 tracking-wider"
                   >
-                    Email Address
+                    Password
                   </Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={loading}
-                      placeholder="professional@example.com"
-                      className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                  </div>
-                </div>
-
-                {/* Password Input */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label
-                      htmlFor="password"
-                      className="text-xs font-bold uppercase text-slate-500 tracking-wider"
-                    >
-                      Password
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="p-0 h-auto text-xs text-primary hover:text-primary/80 font-medium"
-                      onClick={handleForgotPassword}
-                    >
-                      Forgot Password?
-                    </Button>
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="pl-9 pr-10 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20 border-slate-200"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-slate-400 hover:text-slate-600"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={loading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Error Alert */}
-                {error && (
-                  <Alert
-                    variant="destructive"
-                    className="py-3 text-sm border-red-100 bg-red-50/50"
-                  >
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Force Login Button */}
-                {showForceButton && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-10 hover:bg-accent transition-colors text-sm"
-                    onClick={handleForceLogin}
-                    disabled={loading}
-                  >
-                    {loading ? "Processing..." : "Force Logout Everywhere"}
-                  </Button>
-                )}
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-11 shadow-none bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5"
-                  disabled={loading}
-                >
-                  {loading
-                    ? "Logging in..."
-                    : "Login to Professional Dashboard"}
-                </Button>
-
-                {/* Divider */}
-                {/* <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-slate-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div> */}
-
-                {/* Google Login */}
-                {/* <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-10 border-slate-200 hover:bg-slate-50 transition-colors"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    aria-hidden="true"
-                    focusable="false"
-                    data-prefix="fab"
-                    data-icon="google"
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 488 512"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                    ></path>
-                  </svg>
-                  Google
-                </Button> */}
-
-                {/* Register Link */}
-                <div className="text-center text-sm text-slate-500 pt-2">
-                  Don't have a professional account?{" "}
                   <Button
                     type="button"
                     variant="link"
-                    className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
-                    onClick={() => router.push("/register/professional")}
+                    className="p-0 h-auto text-xs text-primary hover:text-primary/80 font-medium"
+                    onClick={handleForgotPassword}
                   >
-                    Register here
+                    Forgot Password?
                   </Button>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="pl-9 pr-10 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-slate-400 hover:text-slate-600"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Error Alert */}
+              {error && (
+                <Alert
+                  variant="destructive"
+                  className="py-3 text-sm border-red-100 bg-red-50/50"
+                >
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Force Login Button */}
+              {showForceButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 hover:bg-accent transition-colors text-sm"
+                  onClick={handleForceLogin}
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : "Force Logout Everywhere"}
+                </Button>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full h-11 shadow-lg bg-linear-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
+                disabled={loading}
+              >
+                {loading ? "Logging in..." : "Login to Professional Dashboard"}
+              </Button>
+
+              {/* Register Link */}
+              <div className="text-center text-sm text-slate-500 pt-2">
+                Don't have a professional account?{" "}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="p-0 h-auto text-primary hover:text-primary/80 font-semibold"
+                  onClick={() => router.push("/register/professional")}
+                >
+                  Register here
+                </Button>
+              </div>
+            </form>
+          </CardContent>
         </div>
       </div>
 
-      {/* --- RIGHT SIDE: IMAGE --- */}
-      <div className="hidden md:flex w-full md:w-1/2 relative bg-slate-900 overflow-hidden">
+      {/* --- RIGHT SIDE: IMAGE (Desktop Only) --- */}
+      <div className="hidden lg:flex flex-1 relative bg-slate-900 m-0 lg:m-4 lg:rounded-2xl overflow-hidden shadow-2xl">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out hover:scale-105"
           style={{ backgroundImage: "url('/login-bg.png')" }}
-        ></div>
-        
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/20 to-slate-900/90 pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col justify-between h-full w-full py-16 px-10 xl:px-20">
+          <div className="flex-1"></div>
+
+          <div className="flex items-center justify-center py-10">
+            <div className="shrink-0 drop-shadow-2xl animate-pulse-slow">
+              <img
+                src="/pro-svg.png"
+                alt="Professional Icon"
+                className=" w-auto object-contain opacity-90"
+              />
+            </div>
+          </div>
+
+          <div className="text-center mb-12 space-y-4">
+            <h3 className="text-4xl xl:text-5xl font-bold text-white tracking-tight drop-shadow-md">
+              Grow Your Professional Presence Online
+            </h3>
+            <p className="text-base text-gray-200 opacity-90 leading-relaxed max-w-lg mx-auto font-light">
+              Join thousands of professionals expanding their digital presence
+              with our powerful tools and analytics.
+            </p>
+          </div>
+          <div className="flex-1"></div>
+        </div>
       </div>
     </div>
   );

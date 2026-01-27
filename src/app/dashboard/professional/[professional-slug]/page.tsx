@@ -1186,10 +1186,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-lg md:text-xl font-bold text-slate-800 mb-2">
+              <h1 className="text-lg  font-bold text-slate-800">
                 Professional Dashboard Overview
               </h1>
-              <p className="text-sm md:text-base text-gray-600">
+              <p className="text-md text-gray-600">
                 Welcome back! Here's your professional profile overview.
               </p>
 
@@ -2410,10 +2410,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Client Inquiries
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Manage inquiries from potential clients.
               </p>
             </div>
@@ -2545,10 +2545,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Profile Analytics
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Track your profile performance and engagement.
               </p>
             </div>
@@ -2597,10 +2597,10 @@ export default function ProfessionalDashboard() {
             className={`space-y-6 pb-20 md:pb-0 animate-fadeIn ${themeSettings.gap}`}
           >
             <div className="mb-8">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <h1 className="text-lg font-bold text-gray-900">
                 Theme Customization
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-md text-gray-600">
                 Customize the appearance of your dashboard and public profile.
               </p>
             </div>

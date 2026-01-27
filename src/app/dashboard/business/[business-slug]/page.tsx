@@ -1315,14 +1315,15 @@ export default function BusinessAdminDashboard() {
                 <>
                   <div className="  mx-auto">
                     <div className="mb-8">
-                      <h1 className="text-xl font-bold text-gray-900 mb-2">
+                      <h1 className="text-lg  font-bold text-gray-900">
                         Dashboard Overview
                       </h1>
-                      <p className="text-xl text-gray-600">
+                      <p className="text-md text-gray-600">
                         Welcome back! Here's what's happening with your
                         business.
                       </p>
                     </div>
+                    
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1516,10 +1517,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "info" && (
                 <div className=" mx-auto">
                   <div className="mb-6">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Business Info
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Manage your business information
                     </p>
                   </div>
@@ -1567,10 +1568,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "hero" && (
                 <div className=" mx-auto">
                   <div className="mb-6">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Hero Banner
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Manage your hero section
                     </p>
                   </div>
@@ -1615,10 +1616,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "brands" && (
                 <div className=" mx-auto">
                   <div className="mb-6">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Brand Slider
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Manage your brand slider
                     </p>
                   </div>
@@ -1972,10 +1973,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "portfolio" && (
                 <div className=" mx-auto">
                   <div className="mb-6">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Portfolio Manager
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Manage your portfolio images
                     </p>
                   </div>
@@ -2278,10 +2279,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "categories" && (
                 <div className=" mx-auto">
                   <div className="mb-6">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Category Manager
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Configure business categories and classifications
                     </p>
                   </div>
@@ -2563,10 +2564,10 @@ export default function BusinessAdminDashboard() {
                 <div className=" mx-auto">
                   <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                      <h1 className="text-xl font-bold text-gray-900 mb-2">
+                      <h1 className="text-lg font-bold text-gray-900">
                         Products & Services
                       </h1>
-                      <p className="text-xl text-gray-600">
+                      <p className="text-md text-gray-600">
                         Manage your product offerings
                       </p>
                     </div>
@@ -3007,10 +3008,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "inquiries" && (
                 <div className=" mx-auto">
                   <div className="mb-8">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Customer Inquiries
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       View and respond to customer inquiries
                     </p>
                   </div>
@@ -3422,10 +3423,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "analytics" && (
                 <div className=" mx-auto">
                   <div className="mb-8">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Analytics
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Track your business performance
                     </p>
                   </div>
@@ -3446,10 +3447,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "inquiries" && (
                 <div className=" mx-auto">
                   <div className="mb-8">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Customer Inquiries
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       View and respond to customer inquiries
                     </p>
                   </div>
@@ -3676,10 +3677,10 @@ export default function BusinessAdminDashboard() {
               {activeSection === "settings" && (
                 <div className=" mx-auto">
                   <div className="mb-8">
-                    <h1 className="text-xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-lg font-bold text-gray-900">
                       Settings
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-md text-gray-600">
                       Manage your account and preferences
                     </p>
                   </div>

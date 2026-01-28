@@ -44,11 +44,13 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogFooter } from "@/components/ui/dialog";
+import { UnifiedModal } from "@/components/ui/UnifiedModal";
 
 import {
   Plus,
   Edit,
   Trash2,
+  Copy,
   Eye,
   EyeOff,
   Bell,
@@ -82,12 +84,21 @@ import {
   GraduationCap,
   Award,
   Wrench,
+  Zap,
   Image,
   Facebook,
   Twitter,
   Instagram,
   Linkedin,
+  Phone,
+  Globe,
+  MapPin,
+  Type,
+  Hash,
+  Lock,
+  UserPlus,
 } from "lucide-react";
+import { Pagination, BulkActionsToolbar } from "@/components/ui/pagination";
 import SharedSidebar from "../components/SharedSidebar";
 import Link from "next/link";
 
@@ -116,6 +127,26 @@ interface Business {
   _count: {
     products: number;
     inquiries: number;
+  };
+}
+
+// Pagination, Sorting, and Selection State for Businesses
+interface BusinessQueryParams {
+  page: number;
+  limit: number;
+  search: string;
+  status: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
+interface BusinessApiResponse {
+  businesses: Business[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -233,6 +264,25 @@ export default function SuperAdminDashboard() {
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // Business management state
+  const [businessQuery, setBusinessQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [businessData, setBusinessData] = useState<BusinessApiResponse | null>(null);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  
+  // Debounce search term
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  
+  // Professional form state
 
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<
@@ -249,7 +299,24 @@ export default function SuperAdminDashboard() {
     linkedin: "",
   });
 
-  // Responsive design hook
+  // Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
+
+// Responsive design hook
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -405,7 +472,7 @@ export default function SuperAdminDashboard() {
     }
   }, [user, loading, router]);
 
-  // Memoized filtered data
+  // Memoized filtered data (for backwards compatibility)
   const filteredBusinesses = useMemo(() => {
     return businesses.filter((business) => {
       const matchesSearch =
@@ -440,6 +507,191 @@ export default function SuperAdminDashboard() {
     };
   }, [filteredBusinesses]);
 
+
+  // Fetch businesses with pagination, search, and sorting
+  const fetchBusinesses = useCallback(async () => {
+    setBusinessLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: businessQuery.page.toString(),
+        limit: businessQuery.limit.toString(),
+        search: businessQuery.search,
+        status: businessQuery.status,
+        sortBy: businessQuery.sortBy,
+        sortOrder: businessQuery.sortOrder,
+      });
+      
+      const response = await fetch(`/api/admin/businesses?${params}`);
+      if (response.ok) {
+        const data: BusinessApiResponse = await response.json();
+        setBusinessData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch businesses:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch businesses',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusinessLoading(false);
+    }
+  }, [businessQuery, toast]);
+  
+  // Fetch businesses when query changes
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
+  
+  // Update query when debounced search changes
+  useEffect(() => {
+    setBusinessQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
+
+  // Handle sort change
+  const handleSort = (column: string) => {
+    setBusinessQuery(prev => ({
+      ...prev,
+      sortBy: column,
+      sortOrder: prev.sortBy === column && prev.sortOrder === 'desc' ? 'asc' : 'desc',
+      page: 1,
+    }));
+  };
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setBusinessQuery(prev => ({ ...prev, page }));
+  };
+  
+  // Handle items per page change
+  const handleLimitChange = (limit: number) => {
+    setBusinessQuery(prev => ({ ...prev, limit, page: 1 }));
+  };
+  
+  // Handle selection
+  const handleSelectBusiness = (businessId: string) => {
+    setSelectedBusinessIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(businessId)) {
+        newSet.delete(businessId);
+      } else {
+        newSet.add(businessId);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSelectAll = () => {
+    if (businessData?.businesses) {
+      const allIds = businessData.businesses.map(b => b.id);
+      setSelectedBusinessIds(new Set(allIds));
+    }
+  };
+  
+  const handleDeselectAll = () => {
+    setSelectedBusinessIds(new Set());
+  };
+  
+  // Bulk actions
+  const handleBulkActivate = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: true }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses activated` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to activate businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  const handleBulkDeactivate = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: false }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses suspended` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to suspend businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  const handleBulkDelete = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+  
+  const confirmBulkDelete = async () => {
+    setBulkActionLoading(true);
+    setShowBulkDeleteDialog(false);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds) }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses deleted` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  // Export to CSV
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/admin/businesses/export?format=csv');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Success', description: 'Businesses exported successfully' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to export businesses', variant: 'destructive' });
+    }
+  };
+  
+  // Get sort icon
+  const getSortIcon = (column: string) => {
+    if (businessQuery.sortBy !== column) return <div className="w-4 h-4 opacity-30">↕</div>;
+    return businessQuery.sortOrder === 'asc' ? 
+      <div className="w-4 h-4">↑</div> : 
+      <div className="w-4 h-4">↓</div>;
+  };
 
   // Data fetching function
   const fetchData = useCallback(async () => {
@@ -533,11 +785,6 @@ export default function SuperAdminDashboard() {
       setBusinessListingInquiries(businessListingInquiriesArray);
       setRegistrationInquiries(registrationInquiriesArray);
 
-      // Calculate stats safely
-      const totalInquiries = businessesArray.reduce(
-        (sum: number, b: Business) => sum + (b._count?.inquiries || 0),
-        0
-      );
       const totalProducts = businessesArray.reduce(
         (sum: number, b: Business) => sum + (b._count?.products || 0),
         0
@@ -555,7 +802,7 @@ export default function SuperAdminDashboard() {
 
       setStats({
         totalBusinesses: businessesData.length,
-        totalInquiries,
+        totalInquiries: registrationInquiriesArray.length,
         totalUsers,
         activeBusinesses,
         totalProducts,
@@ -820,6 +1067,9 @@ export default function SuperAdminDashboard() {
           // Force re-render to ensure UI updates
           setForceRerender((prev) => prev + 1);
 
+          // Also refresh paginated data
+          fetchBusinesses();
+
           // Show success message with enhanced details
           toast({
             title: "Success",
@@ -845,7 +1095,7 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [toast]
+    [toast, fetchBusinesses]
   );
 
   // Handle toggle business status
@@ -892,6 +1142,9 @@ export default function SuperAdminDashboard() {
           // Force re-render to ensure UI updates
           setForceRerender((prev) => prev + 1);
 
+          // Also refresh paginated data
+          fetchBusinesses();
+
           toast({
             title: "Success",
             description: `Business ${!business.isActive ? 'activated' : 'suspended'} successfully`,
@@ -916,7 +1169,60 @@ export default function SuperAdminDashboard() {
         });
       }
     },
-    [toast]
+    [toast, fetchBusinesses]
+  );
+
+  // Handle duplicate business
+  const handleDuplicateBusiness = useCallback(
+    async (business: Business) => {
+      if (
+        !confirm(
+          `Create a duplicate of "${business.name}"? A new business with a new admin account will be created.`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        console.log("Duplicating business:", business.id, business.name);
+        const response = await fetch(`/api/admin/businesses/${business.id}/duplicate`, {
+          method: "POST",
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("Business duplication successful:", result);
+          
+          // Refresh data to show the new business
+          fetchBusinesses();
+          fetchData();
+
+          toast({
+            title: "Success",
+            description: `Business duplicated successfully! Login credentials for new admin:\nEmail: ${result.loginCredentials.email}\nPassword: ${result.loginCredentials.password}`,
+            duration: 10000,
+          });
+        } else {
+          const error = await response.json();
+          console.error("Business duplication failed:", error);
+          toast({
+            title: "Error",
+            description: `Failed to duplicate business: ${
+              error.error || "Unknown error"
+            }`,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Business duplication error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to duplicate business. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, fetchBusinesses, fetchData]
   );
 
   // Handle edit professional
@@ -1687,6 +1993,150 @@ export default function SuperAdminDashboard() {
     [toast]
   );
 
+  // Helper function to get right panel title
+  const getRightPanelTitle = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "Add New Business";
+      case "edit-business":
+        return "Edit Business";
+      case "add-professional":
+        return "Add Professional";
+      case "edit-professional":
+        return "Edit Professional";
+      case "add-category":
+        return "Add Category";
+      case "edit-category":
+        return "Edit Category";
+      case "create-account-from-inquiry":
+        return "Create Account";
+      default:
+        return "Panel";
+    }
+  };
+
+  // Helper function to get right panel description
+  const getRightPanelDescription = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "Create a new business account and listing.";
+      case "edit-business":
+        return "Update business details and category.";
+      case "add-professional":
+        return "Register a new professional profile.";
+      case "edit-professional":
+        return "Update professional details.";
+      case "add-category":
+        return "Create a new business category.";
+      case "edit-category":
+        return "Update category details.";
+      case "create-account-from-inquiry":
+        return "Complete account setup from registration request.";
+      default:
+        return "";
+    }
+  };
+
+  // Common close handler
+  const closePanel = () => {
+    setShowRightPanel(false);
+    setRightPanelContent(null);
+    setGeneratedPassword("");
+    setGeneratedUsername("");
+    setEditingBusiness(null);
+    setEditingProfessional(null);
+    setCreatingAccount(null);
+  };
+
+  // Helper function to get right panel footer
+  const getRightPanelFooter = () => {
+    const formId = getFormId();
+    
+    switch (rightPanelContent) {
+      case "add-business":
+      case "edit-business":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-business" ? "Create Business" : "Save Changes"}
+            </Button>
+          </>
+        );
+      case "add-professional":
+      case "edit-professional":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-professional" ? "Create Profile" : "Save Changes"}
+            </Button>
+          </>
+        );
+      case "add-category":
+      case "edit-category":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-category" ? "Create Category" : "Update Category"}
+            </Button>
+          </>
+        );
+      case "create-account-from-inquiry":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1" disabled={creatingAccount !== null}>
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-green-600 text-white hover:bg-green-700" disabled={creatingAccount !== null}>
+              {creatingAccount ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Create Account
+                </>
+              )}
+            </Button>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Helper function to get form ID
+  const getFormId = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "add-business-form";
+      case "edit-business":
+        return "edit-business-form";
+      case "add-professional":
+        return "add-professional-form";
+      case "edit-professional":
+        return "edit-professional-form";
+      case "add-category":
+        return "add-category-form";
+      case "edit-category":
+        return "edit-category-form";
+      case "create-account-from-inquiry":
+        return "inquiry-account-form";
+      default:
+        return undefined;
+    }
+  };
+
   const menuItems = [
     {
       title: "Dashboard",
@@ -1893,12 +2343,6 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
 
-            {/* 
-         MASTER GRID CONTAINER 
-         - Mobile: 1 column
-         - Laptop (LG): 4 columns
-         - Wide (XL): 8 columns (Your requested layout)
-      */}
             <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-8 gap-6">
               {/* --- ROW 1: 4 Cards (Each spans 2 columns in the 8-grid) --- */}
 
@@ -1935,15 +2379,15 @@ export default function SuperAdminDashboard() {
               <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
-                    Total Inquiries
+                    Registration Requests
                   </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <UserCheck className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
                     {stats.totalInquiries}
                   </div>
-                  <p className="text-xs text-gray-500">All inquiries</p>
+                  <p className="text-xs text-gray-500">Pending requests</p>
                 </CardContent>
               </Card>
 
@@ -1966,196 +2410,409 @@ export default function SuperAdminDashboard() {
 
               {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+              {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
+
+              {/* Card 1: New Businesses */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     New Businesses
                   </CardTitle>
-                  <Building className="h-4 w-4 text-gray-400" />
+                  <Building className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {businesses
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((business) => (
-                            <TableRow key={business.id}>
-                              <TableCell className="text-xs font-medium">
-                                {business.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(business.createdAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={business.isActive ? "default" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  {business.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {businesses.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs flex-1">
+                              Name
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Category
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Status
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Date
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {businesses
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((business) => (
+                              <TableRow key={business.id}>
+                                <TableCell className="text-xs font-medium flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {business.logo ? (
+                                      <img
+                                        src={business.logo}
+                                        alt={`${business.name} logo`}
+                                        className="h-8 w-8 rounded-full object-cover shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Building className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <span className="truncate">
+                                      {business.name}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {business.category?.name || "N/A"}
+                                </TableCell>
+                                <TableCell className="w-auto">
+                                  <div
+                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
+                                      business.isActive
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        business.isActive
+                                          ? "bg-lime-500"
+                                          : "bg-gray-500"
+                                      }`}
+                                    ></span>
+                                    {business.isActive ? "Active" : "Inactive"}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {new Date(
+                                    business.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <Building className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+              {/* Card 2: New Professionals (Updated Style) */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     New Professionals
                   </CardTitle>
-                  <User className="h-4 w-4 text-gray-400" />
+                  <User className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {professionals
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((professional) => (
-                            <TableRow key={professional.id}>
-                              <TableCell className="text-xs font-medium">
-                                {professional.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(professional.createdAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={professional.isActive ? "default" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  {professional.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {professionals.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs flex-1">
+                              Name
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Profession
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Status
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Date
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {professionals
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((professional) => (
+                              <TableRow key={professional.id}>
+                                <TableCell className="text-xs font-medium flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {professional.profilePicture ? (
+                                      <img
+                                        src={professional.profilePicture}
+                                        alt={`${professional.name} profile`}
+                                        className="h-8 w-8 rounded-full object-cover shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                        <User className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <span className="truncate">
+                                      {professional.name}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto max-w-[150px] truncate">
+                                  {professional.professionalHeadline || "N/A"}
+                                </TableCell>
+                                <TableCell className="w-auto">
+                                  <div
+                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
+                                      professional.isActive
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        professional.isActive
+                                          ? "bg-lime-500"
+                                          : "bg-gray-500"
+                                      }`}
+                                    ></span>
+                                    {professional.isActive
+                                      ? "Active"
+                                      : "Inactive"}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {new Date(
+                                    professional.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <User className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+              {/* Card 3: Latest Contact (Updated Style) */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     Latest Contact
                   </CardTitle>
-                  <Mail className="h-4 w-4 text-gray-400" />
+                  <Mail className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Email</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {inquiries
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell className="text-xs font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.email}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(inquiry.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {inquiries.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs">Name</TableHead>
+                            <TableHead className="text-xs">Email</TableHead>
+                            <TableHead className="text-xs">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {inquiries
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((inquiry) => (
+                              <TableRow key={inquiry.id}>
+                                <TableCell className="text-xs font-medium">
+                                  {inquiry.name}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {inquiry.email}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {new Date(
+                                    inquiry.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <Mail className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
               {/* --- ROW 3: 2 Cards (Spans: 6, 2) --- */}
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-6">
+              {/* Card 4: Latest Registration Requests (Updated Style) */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Latest Inquiry
+                  <CardTitle className="text-sm font-medium text-white">
+                    Latest Registration Requests
                   </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <UserCheck className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Email</TableHead>
-                          <TableHead className="text-xs">Business</TableHead>
-                          <TableHead className="text-xs">Message</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {inquiries
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 5)
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell className="text-xs font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.email}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.business?.name || "N/A"}
-                              </TableCell>
-                              <TableCell className="text-xs max-w-32 truncate">
-                                {inquiry.message}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(inquiry.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {registrationInquiries.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs">Type</TableHead>
+                            <TableHead className="text-xs">Name</TableHead>
+                            <TableHead className="text-xs">
+                              Business/Profession
+                            </TableHead>
+                            <TableHead className="text-xs">Email</TableHead>
+                            <TableHead className="text-xs">Status</TableHead>
+                            <TableHead className="text-xs">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {registrationInquiries
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 5)
+                            .map((inquiry) => (
+                              <TableRow  key={inquiry.id}>
+                                <TableCell >
+                                  <div
+                                    className={`flex  items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit  ${
+                                      inquiry.type === "BUSINESS"
+                                        ? "bg-blue-500/10 border-blue-500/30 text-blue-700"
+                                        : "bg-purple-500/10 border-purple-500/30 text-purple-700"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        inquiry.type === "BUSINESS"
+                                          ? "bg-blue-500"
+                                          : "bg-purple-500"
+                                      }`}
+                                    ></span>
+                                    {inquiry.type}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs  font-medium">
+                                  {inquiry.name}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {inquiry.type === "BUSINESS"
+                                    ? inquiry.businessName || "N/A"
+                                    : inquiry.profession || "N/A"}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {inquiry.email}
+                                </TableCell>
+                                <TableCell>
+                                  <div
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit  ${
+                                      inquiry.status === "PENDING"
+                                        ? "bg-amber-500/10 border-amber-500/30 text-amber-700"
+                                        : inquiry.status === "COMPLETED"
+                                          ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                          : inquiry.status === "REJECTED"
+                                            ? "bg-red-500/10 border-red-500/30 text-red-700"
+                                            : "bg-blue-500/10 border-blue-500/30 text-blue-700"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        inquiry.status === "PENDING"
+                                          ? "bg-amber-500"
+                                          : inquiry.status === "COMPLETED"
+                                            ? "bg-lime-500"
+                                            : inquiry.status === "REJECTED"
+                                              ? "bg-red-500"
+                                              : "bg-blue-500"
+                                      }`}
+                                    ></span>
+                                    {inquiry.status}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {new Date(
+                                    inquiry.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <UserCheck className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">
+                          No Registration Requests
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Added a placeholder to fill the last slot (span-2) to complete the grid */}
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+              {/* Card 3: Quick Actions with card-bg */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Notifications
+                  <CardTitle className="text-sm font-medium text-white">
+                    Quick Actions
                   </CardTitle>
-                  <Bell className="h-4 w-4 text-gray-400" />
+                  <Zap className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-600">No new alerts.</div>
+                <CardContent className="flex-1 px-0  flex flex-col">
+                  <div className="space-y-3 p-4">
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-business");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 cursor-pointer px-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <Building className="h-4 w-4 mr-2" />
+                      Create Business
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-professional");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 px-4  cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Create Professional
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-category");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 px-4 cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <FolderTree className="h-4 w-4 mr-2" />
+                      Create Category
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -2180,6 +2837,7 @@ export default function SuperAdminDashboard() {
                       variant="outline"
                       onClick={() => {
                         fetchData();
+                        fetchBusinesses();
                       }}
                       className="rounded-2xl"
                     >
@@ -2192,127 +2850,348 @@ export default function SuperAdminDashboard() {
             )}
 
             <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900 ">
+              <h1 className="text-lg font-bold text-gray-900">
                 Add Businesses
               </h1>
               <p className="text-md text-gray-600">
                 Manage and monitor your businesses from this dashboard section.
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Button
-                    onClick={() => {
-                      setRightPanelContent("add-business");
-                      setShowRightPanel(true);
-                    }}
-                    className="bg-black hover:bg-gray-800 text-white rounded-2xl"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                  </Button>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
-                      <SelectValue placeholder="Filter by Status: Active" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        All ({filteredStats.total})
-                      </SelectItem>
-                      <SelectItem value="active">
-                        Active ({filteredStats.active})
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        Inactive ({filteredStats.inactive})
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="rounded-2xl">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Data
-                  </Button>
+            <div className="p-4 sm:p-6 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <Button
+                  onClick={() => {
+                    setRightPanelContent("add-business");
+                    setShowRightPanel(true);
+                  }}
+                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 rounded-full shadow-lg"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New
+                </Button>
+
+                {/* Search Input with Debounce */}
+                <div className="relative bg-white/10 backdrop-blur-sm rounded-full border border-white/20 flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
+                  <Input
+                    placeholder="Search businesses..."
+                    className="pl-10 w-full rounded-full bg-transparent border-none text-white placeholder:text-white/50 focus-visible:ring-0"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
 
-                <div className="overflow-x-auto hide-scrollbar bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader className="bg-amber-100">
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Business Name
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Admin Email
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Category
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredBusinesses.map((business) => (
-                        <TableRow key={business.id}>
-                          <TableCell className="text-gray-900 font-medium">
-                            {business.name}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {business.admin.email}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {business.category?.name || "None"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                business.isActive ? "default" : "secondary"
-                              }
-                              className="rounded-full"
-                            >
-                              {business.isActive ? "Active" : "Suspended"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() =>
-                                  window.open(
-                                    `/catalog/${business.slug}`,
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => handleEditBusiness(business)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="rounded-xl"
-                                onClick={() => handleDeleteBusiness(business)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                {/* Status Filter */}
+                <Select
+                  value={businessQuery.status}
+                  onValueChange={(value) => {
+                    setBusinessQuery((prev) => ({
+                      ...prev,
+                      status: value,
+                      page: 1,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full focus-visible:ring-0">
+                    <SelectValue
+                      placeholder="Filter by Status"
+                      className="text-white"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-gray-900">
+                      All (
+                      {businessData?.pagination.totalItems ||
+                        filteredBusinesses.length}
+                      )
+                    </SelectItem>
+                    <SelectItem value="active" className="text-gray-900">
+                      Active (
+                      {filteredBusinesses.filter((b) => b.isActive).length})
+                    </SelectItem>
+                    <SelectItem value="inactive" className="text-gray-900">
+                      Inactive (
+                      {filteredBusinesses.filter((b) => !b.isActive).length})
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Export Button */}
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  className="rounded-full border-white/20 text-white hover:bg-white/10 bg-white/10"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
               </div>
+
+              {/* Bulk Actions Toolbar */}
+              {selectedBusinessIds.size > 0 && (
+                <div className="mb-4">
+                  <BulkActionsToolbar
+                    selectedCount={selectedBusinessIds.size}
+                    totalCount={
+                      businessData?.pagination.totalItems ||
+                      filteredBusinesses.length
+                    }
+                    onSelectAll={handleSelectAll}
+                    onDeselectAll={handleDeselectAll}
+                    onBulkActivate={handleBulkActivate}
+                    onBulkDeactivate={handleBulkDeactivate}
+                    onBulkDelete={handleBulkDelete}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white overflow-hidden border-none shadow-sm rounded-xl">
+              {/* Data Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="text-white w-12">
+                        <Checkbox
+                          checked={
+                            businessData?.businesses.every((b) =>
+                              selectedBusinessIds.has(b.id),
+                            ) || false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) handleSelectAll();
+                            else handleDeselectAll();
+                          }}
+                          className="border-gray-400"
+                        />
+                      </TableHead>
+                      <TableHead
+                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => handleSort("name")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Business Name
+                          {getSortIcon("name")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white w-12">Logo</TableHead>
+                      <TableHead className="text-white">Admin Email</TableHead>
+                      <TableHead
+                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => handleSort("category")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Category
+                          {getSortIcon("category")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white text-center"></TableHead>
+                      <TableHead className="text-white text-center"></TableHead>
+                      <TableHead
+                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => handleSort("isActive")}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Status
+                          {getSortIcon("isActive")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => handleSort("createdAt")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Date
+                          {getSortIcon("createdAt")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white text-right">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {businessLoading
+                      ? // Loading skeleton
+                        Array.from({ length: businessQuery.limit }).map(
+                          (_, i) => (
+                            <TableRow key={i}>
+                              <TableCell>
+                                <Skeleton className="h-4 w-4" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-32" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-40" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-24" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-12" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-12" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-6 w-16 rounded-full" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-20" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2 justify-end">
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )
+                      : businessData?.businesses.map((business) => (
+                          <TableRow key={business.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedBusinessIds.has(business.id)}
+                                onCheckedChange={() =>
+                                  handleSelectBusiness(business.id)
+                                }
+                                className="border-gray-400"
+                              />
+                            </TableCell>
+                            <TableCell className="text-gray-900 font-medium">
+                              {business.name}
+                            </TableCell>
+                            <TableCell>
+                              {business.logo ? (
+                                <img
+                                  src={business.logo}
+                                  alt={`${business.name} logo`}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                  <Building className="h-4 w-4 text-gray-400" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {business.admin.email}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {business.category?.name || "None"}
+                            </TableCell>
+                            <TableCell className="text-gray-900 text-center">
+                              <Badge
+                                variant="outline"
+                                className="rounded-full bg-amber-50 border-amber-200"
+                              >
+                                {business._count.products}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-gray-900 text-center">
+                              <Badge
+                                variant="outline"
+                                className="rounded-full bg-blue-50 border-blue-200"
+                              >
+                                {business._count.inquiries}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div
+                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit mx-auto ${
+                                  business.isActive
+                                    ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                    : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                }`}
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    business.isActive
+                                      ? "bg-lime-500"
+                                      : "bg-gray-500"
+                                  }`}
+                                ></span>
+                                {business.isActive ? "Active" : "Suspended"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {new Date(
+                                business.createdAt,
+                              ).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2 justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
+                                  onClick={() =>
+                                    window.open(
+                                      `/catalog/${business.slug}`,
+                                      "_blank",
+                                    )
+                                  }
+                                  title="View Business"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
+                                  onClick={() => handleEditBusiness(business)}
+                                  title="Edit Business"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
+                                  onClick={() =>
+                                    handleDuplicateBusiness(business)
+                                  }
+                                  title="Duplicate Business"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="rounded-xl"
+                                  onClick={() => handleDeleteBusiness(business)}
+                                  title="Delete Business"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {businessData && (
+                <div className="p-4 sm:p-6 pt-4">
+                  <Pagination
+                    currentPage={businessData.pagination.page}
+                    totalPages={businessData.pagination.totalPages}
+                    totalItems={businessData.pagination.totalItems}
+                    itemsPerPage={businessData.pagination.limit}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleLimitChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -3108,87 +3987,29 @@ const renderRightPanel = () => {
   // Ensure categories is always an array
   const safeCategories = Array.isArray(categories) ? categories : [];
 
-  // Common close handler
-  const closePanel = () => {
-    setShowRightPanel(false);
-    setRightPanelContent(null);
-    setGeneratedPassword("");
-    setGeneratedUsername("");
-    setEditingBusiness(null);
-    setEditingProfessional(null);
-    setCreatingAccount(null);
-  };
-
-  // Helper to render standard modal structure
-  const ModalLayout = ({
-    title,
-    description,
-    children,
-    footerContent,
-    formId,
-  }: {
-    title: string;
-    description: string;
-    children: React.ReactNode;
-    footerContent: React.ReactNode;
-    formId?: string;
-  }) => (
-    <div className="flex flex-col h-[90vh]  bg-white relative">
-      {/* Fixed Header - shrink-0 ensures it doesn't get squashed */}
-      <DialogHeader className="px-6 pt-4 pb-2 border-b shrink-0 space-y-1.5 bg-white z-10">
-        <div className="flex justify-between items-start w-full">
-          <div className="">
-            <DialogTitle className="text-md font-semibold leading-none tracking-tight">{title}</DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 font-normal">
-              {description}
-            </DialogDescription>
-          </div>
-        </div>
-      </DialogHeader>
-
-      {/* Scrollable Body - flex-1 makes it fill space, overflow-y-auto enables scrolling */}
-      <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-4">
-        {children}
-      </div>
-
-      {/* Fixed Footer - shrink-0 keeps it at bottom, border-t separates it */}
-      <DialogFooter className="px-6 py-2  flex flex-row justify-center  border-t  bg-white z-10">
-        {footerContent}
-      </DialogFooter>
-    </div>
-  );
-
   // --- ADD BUSINESS ---
   if (rightPanelContent === "add-business") {
     return (
-      <ModalLayout
-        title="Add New Business"
-        description="Create a new business account and listing."
-        formId="add-business-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-full w-auto flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-business-form" className="rounded-full w-auto flex-1">
-              Create Business
-            </Button>
-          </>
-        }
-      >
-        <form id="add-business-form" onSubmit={handleAddBusiness} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Business Name</Label>
-            <Input name="name" required className="rounded-xl" placeholder="e.g. Acme Corp" />
+      <form id="add-business-form" onSubmit={handleAddBusiness} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Business Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="e.g. Acme Corp" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" className="rounded-xl" placeholder="Brief business description..." />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" className="pl-10 rounded-md" placeholder="Brief business description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <div className="relative">
             <Select name="categoryId" required>
-              <SelectTrigger className="rounded-xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -3199,189 +4020,44 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input name="phone" className="rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input name="website" className="rounded-xl" />
-            </div>
-          </div>
-          
-          <Separator />
-          <div>
-            <h4 className="font-medium text-sm mb-4">Admin Account Details</h4>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Admin Name</Label>
-                  <Input name="adminName" required className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Admin Email</Label>
-                  <Input name="email" type="email" required className="rounded-xl" />
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const form = document.getElementById("add-business-form") as HTMLFormElement;
-                  const businessName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
-                  const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
-                  handleGenerateCredentials(businessName, adminName);
-                }}
-                className="w-full rounded-xl"
-              >
-                <Key className="h-4 w-4 mr-2" /> Generate Credentials
-              </Button>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Username</Label>
-                  <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <div className="relative">
-                    <Input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={generatedPassword}
-                      onChange={(e) => setGeneratedPassword(e.target.value)}
-                      className="pr-10 rounded-2xl"
-                      placeholder="Generated or manual password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-2xl"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </ModalLayout>
-    );
-  }
-
-  // --- EDIT BUSINESS ---
-  if (rightPanelContent === "edit-business" && editingBusiness) {
-    return (
-      <ModalLayout
-        title="Edit Business"
-        description="Update business details and category."
-        formId="edit-business-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-business-form" className="rounded-2xl">
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-business-form" onSubmit={handleUpdateBusiness} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Business Name</Label>
-            <Input name="name" defaultValue={editingBusiness.name} required className="rounded-2xl" />
-          </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" defaultValue={editingBusiness.description} className="rounded-2xl" />
-          </div>
-          <div className="space-y-2">
-            <Label>Logo URL</Label>
-            <Input name="logo" defaultValue={editingBusiness.logo} className="rounded-2xl" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input name="address" defaultValue={editingBusiness.address} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input name="phone" defaultValue={editingBusiness.phone} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input name="website" defaultValue={editingBusiness.website} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Admin Email</Label>
-              <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="rounded-2xl" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select name="categoryId" defaultValue={editingBusiness.category?.id || ""}>
-              <SelectTrigger className="rounded-2xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </form>
-      </ModalLayout>
-    );
-  }
-
-  // --- ADD PROFESSIONAL ---
-  if (rightPanelContent === "add-professional") {
-    return (
-      <ModalLayout
-        title="Add Professional"
-        description="Register a new professional profile."
-        formId="add-professional-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-professional-form" className="rounded-2xl">
-              Create Profile
-            </Button>
-          </>
-        }
-      >
-        <form id="add-professional-form" onSubmit={handleAddProfessional} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Professional Name</Label>
-            <Input name="name" required className="rounded-2xl" placeholder="Full Name" />
-          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Phone</Label>
-            <Input name="phone" placeholder="+91 8080808080" className="rounded-2xl" />
+            <div className="relative">
+              <Input name="phone" className="pl-10 rounded-md" placeholder="+91 8080808080" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
           </div>
-
-          <Separator />
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <div className="relative">
+              <Input name="website" className="pl-10 rounded-md" placeholder="https://example.com" />
+              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        </div>
+        
+        <Separator />
+        <div>
+          <h4 className="font-medium text-sm mb-4">Admin Account Details</h4>
           <div className="space-y-4">
-            <h4 className="font-medium text-sm">Login Credentials</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Admin Name</Label>
-                <Input name="adminName" required className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="adminName" required className="pl-10 rounded-md" placeholder="Full Name" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input name="email" type="email" required className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="email" type="email" required className="pl-10 rounded-md" placeholder="admin@example.com" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
             </div>
             <Button
@@ -3389,19 +4065,22 @@ const renderRightPanel = () => {
               variant="outline"
               onClick={(e) => {
                 e.preventDefault();
-                const form = e.currentTarget.closest("form") as HTMLFormElement;
-                const professionalName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+                const form = document.getElementById("add-business-form") as HTMLFormElement;
+                const businessName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
                 const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
-                handleGenerateCredentials(professionalName, adminName);
+                handleGenerateCredentials(businessName, adminName);
               }}
-              className="w-full rounded-2xl"
+              className="w-full rounded-md"
             >
               <Key className="h-4 w-4 mr-2" /> Generate Credentials
             </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="pl-10 rounded-md" placeholder="Auto-generated" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
@@ -3411,87 +4090,240 @@ const renderRightPanel = () => {
                     type={showPassword ? "text" : "password"}
                     value={generatedPassword}
                     onChange={(e) => setGeneratedPassword(e.target.value)}
-                    className="pr-10 rounded-2xl"
+                    className="pl-10 pr-10 rounded-md"
+                    placeholder="Generated or manual password"
                   />
-                  <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-md"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
             </div>
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
+    );
+  }
+
+  // --- EDIT BUSINESS ---
+  if (rightPanelContent === "edit-business" && editingBusiness) {
+    return (
+      <form id="edit-business-form" onSubmit={handleUpdateBusiness} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Business Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingBusiness.name} required className="pl-10 rounded-md" placeholder="Business name" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" defaultValue={editingBusiness.description} className="pl-10 rounded-md" placeholder="Business description" />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Logo URL</Label>
+          <div className="relative">
+            <Input name="logo" defaultValue={editingBusiness.logo} className="pl-10 rounded-md" placeholder="https://example.com/logo.png" />
+            <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Address</Label>
+            <div className="relative">
+              <Input name="address" defaultValue={editingBusiness.address} className="pl-10 rounded-md" placeholder="Business address" />
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <div className="relative">
+              <Input name="phone" defaultValue={editingBusiness.phone} className="pl-10 rounded-md" placeholder="+91 8080808080" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <div className="relative">
+              <Input name="website" defaultValue={editingBusiness.website} className="pl-10 rounded-md" placeholder="https://example.com" />
+              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Admin Email</Label>
+            <div className="relative">
+              <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="pl-10 rounded-md" placeholder="admin@example.com" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <div className="relative">
+            <Select name="categoryId" defaultValue={editingBusiness.category?.id || ""}>
+              <SelectTrigger className="pl-10 rounded-md">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  // --- ADD PROFESSIONAL ---
+  if (rightPanelContent === "add-professional") {
+    return (
+      <form id="add-professional-form" onSubmit={handleAddProfessional} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Professional Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="Full Name" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <div className="relative">
+            <Input name="phone" placeholder="+91 8080808080" className="pl-10 rounded-md" />
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+
+        <Separator />
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Login Credentials</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Admin Name</Label>
+              <div className="relative">
+                <Input name="adminName" required className="pl-10 rounded-md" placeholder="Admin name" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Admin Email</Label>
+              <div className="relative">
+                <Input name="email" type="email" required className="pl-10 rounded-md" placeholder="admin@example.com" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              const form = e.currentTarget.closest("form") as HTMLFormElement;
+              const professionalName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+              const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
+              handleGenerateCredentials(professionalName, adminName);
+            }}
+            className="w-full rounded-md"
+          >
+            <Key className="h-4 w-4 mr-2" /> Generate Credentials
+          </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <div className="relative">
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="pl-10 rounded-md" placeholder="Auto-generated" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="relative">
+                <Input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={generatedPassword}
+                  onChange={(e) => setGeneratedPassword(e.target.value)}
+                  className="pl-10 pr-10 rounded-md"
+                  placeholder="Generated or manual password"
+                />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
     );
   }
 
   // --- EDIT PROFESSIONAL ---
   if (rightPanelContent === "edit-professional" && editingProfessional) {
     return (
-      <ModalLayout
-        title="Edit Professional"
-        description="Update professional details."
-        formId="edit-professional-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-professional-form" className="rounded-2xl">
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-professional-form" onSubmit={handleUpdateProfessional} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Professional Name</Label>
-            <Input name="name" defaultValue={editingProfessional.name} required className="rounded-2xl" />
+      <form id="edit-professional-form" onSubmit={handleUpdateProfessional} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Professional Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingProfessional.name} required className="pl-10 rounded-md" placeholder="Full Name" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Phone</Label>
-            <Input name="phone" defaultValue={editingProfessional.phone || ""} className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <div className="relative">
+            <Input name="phone" defaultValue={editingProfessional.phone || ""} className="pl-10 rounded-md" placeholder="+91 8080808080" />
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input name="email" defaultValue={editingProfessional.email || ""} type="email" className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Email</Label>
+          <div className="relative">
+            <Input name="email" defaultValue={editingProfessional.email || ""} type="email" className="pl-10 rounded-md" placeholder="email@example.com" />
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
   // --- ADD CATEGORY ---
   if (rightPanelContent === "add-category") {
     return (
-      <ModalLayout
-        title="Add Category"
-        description="Create a new business category."
-        formId="add-category-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-category-form" className="rounded-2xl">
-              Create Category
-            </Button>
-          </>
-        }
-      >
-        <form id="add-category-form" onSubmit={handleAddCategory} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Category Name</Label>
-            <Input name="name" required className="rounded-2xl" />
+      <form id="add-category-form" onSubmit={handleAddCategory} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Category Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="Category name" />
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" className="pl-10 rounded-md" placeholder="Category description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Parent Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Parent Category</Label>
+          <div className="relative">
             <Select name="parentId">
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select parent category (optional)" />
               </SelectTrigger>
               <SelectContent>
@@ -3503,43 +4335,36 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
   // --- EDIT CATEGORY ---
   if (rightPanelContent === "edit-category" && editingCategory) {
     return (
-      <ModalLayout
-        title="Edit Category"
-        description="Update category details."
-        formId="edit-category-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-category-form" className="rounded-2xl">
-              Update Category
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-category-form" onSubmit={handleUpdateCategory} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Category Name</Label>
-            <Input name="name" defaultValue={editingCategory.name} required className="rounded-2xl" />
+      <form id="edit-category-form" onSubmit={handleUpdateCategory} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Category Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingCategory.name} required className="pl-10 rounded-md" placeholder="Category name" />
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" defaultValue={editingCategory.description} className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" defaultValue={editingCategory.description} className="pl-10 rounded-md" placeholder="Category description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Parent Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Parent Category</Label>
+          <div className="relative">
             <Select name="parentId" defaultValue={editingCategory.parentId || "none"}>
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select parent category (optional)" />
               </SelectTrigger>
               <SelectContent>
@@ -3551,9 +4376,10 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
@@ -3565,135 +4391,135 @@ const renderRightPanel = () => {
     if (!inquiry) return null;
 
     return (
-      <ModalLayout
-        title="Create Account"
-        description="Complete account setup from registration request."
-        formId="inquiry-account-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl" disabled={creatingAccount !== null}>
-              Cancel
-            </Button>
-            <Button type="submit" form="inquiry-account-form" className="rounded-2xl bg-green-600 hover:bg-green-700" disabled={creatingAccount !== null}>
-              {creatingAccount ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <UserCheck className="h-4 w-4 mr-2" />}
-              Create Account
-            </Button>
-          </>
-        }
-      >
-        <form id="inquiry-account-form" onSubmit={async (e) => { 
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const manualPassword = formData.get("password") as string;
-            const password = manualPassword || generatedPassword || generatePassword();
+      <form id="inquiry-account-form" onSubmit={async (e) => { 
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          const manualPassword = formData.get("password") as string;
+          const password = manualPassword || generatedPassword || generatePassword();
 
-            const accountData = {
-              name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
-              email: inquiry.email,
-              password: password,
-              adminName: (formData.get("adminName") as string) || inquiry.name,
-              phone: inquiry.phone,
-              ...(isBusiness && {
-                address: (inquiry as any).location,
-                description: (formData.get("description") as string),
-                categoryId: (formData.get("categoryId") as string),
-              }),
-            };
+          const accountData = {
+            name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
+            email: inquiry.email,
+            password: password,
+            adminName: (formData.get("adminName") as string) || inquiry.name,
+            phone: inquiry.phone,
+            ...(isBusiness && {
+              address: (inquiry as any).location,
+              description: (formData.get("description") as string),
+              categoryId: (formData.get("categoryId") as string),
+            }),
+          };
 
-            try {
-              const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(accountData),
+          try {
+            const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(accountData),
+            });
+
+            if (response.ok) {
+              try {
+                  await fetch("/api/notifications", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          type: "accountCreation", name: inquiry.name, email: inquiry.email,
+                          password: password, accountType: isBusiness ? "business" : "professional",
+                          loginUrl: `${window.location.origin}/login`,
+                      }),
+                  });
+              } catch (err) { console.error(err); }
+
+              await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "COMPLETED" }),
               });
 
-              if (response.ok) {
-                try {
-                    await fetch("/api/notifications", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            type: "accountCreation", name: inquiry.name, email: inquiry.email,
-                            password: password, accountType: isBusiness ? "business" : "professional",
-                            loginUrl: `${window.location.origin}/login`,
-                        }),
-                    });
-                } catch (err) { console.error(err); }
-
-                await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-                  method: "PUT", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: "COMPLETED" }),
-                });
-
-                setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
-                toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
-                closePanel();
-                fetchData();
-              }
-            } catch (error) {
-                console.error(error);
-                toast({ title: "Error", description: "Failed to create account.", variant: "destructive" });
+              setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
+              toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
+              closePanel();
+              fetchData();
             }
-          }} className="space-y-5">
-          
-          <div className="bg-gray-50 p-4 rounded-2xl border">
-            <h4 className="font-medium text-sm mb-2">Inquiry Details</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-              <div>Type: <span className="font-medium text-gray-900">{isBusiness ? "Business" : "Professional"}</span></div>
-              <div>Name: <span className="font-medium text-gray-900">{inquiry.name}</span></div>
-              <div>Email: <span className="font-medium text-gray-900">{inquiry.email}</span></div>
-              <div>Location: <span className="font-medium text-gray-900">{(inquiry as any).location || "N/A"}</span></div>
-            </div>
+          } catch (error) {
+              console.error(error);
+              toast({ title: "Error", description: "Failed to create account.", variant: "destructive" });
+          }
+        }} className="space-y-4">
+        
+        <div className="bg-gray-50 p-4 rounded-md border">
+          <h4 className="font-medium text-sm mb-2">Inquiry Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+            <div>Type: <span className="font-medium text-gray-900">{isBusiness ? "Business" : "Professional"}</span></div>
+            <div>Name: <span className="font-medium text-gray-900">{inquiry.name}</span></div>
+            <div>Email: <span className="font-medium text-gray-900">{inquiry.email}</span></div>
+            <div>Location: <span className="font-medium text-gray-900">{(inquiry as any).location || "N/A"}</span></div>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Account Configuration</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Admin Name</Label>
-                <Input name="adminName" defaultValue={inquiry.name} required className="rounded-2xl" />
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Account Configuration</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Admin Name</Label>
+              <div className="relative">
+                <Input name="adminName" defaultValue={inquiry.name} required className="pl-10 rounded-md" placeholder="Admin name" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
-              {isBusiness && (
-                <>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Business Name</Label>
-                    <Input name="businessName" defaultValue={(inquiry as any).businessName || inquiry.name} required className="rounded-2xl" />
+            </div>
+            {isBusiness && (
+              <>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Business Name</Label>
+                  <div className="relative">
+                    <Input name="businessName" defaultValue={(inquiry as any).businessName || inquiry.name} required className="pl-10 rounded-md" placeholder="Business name" />
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Description</Label>
-                    <Textarea name="description" placeholder="Brief description..." className="rounded-2xl" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Description</Label>
+                  <div className="relative">
+                    <Textarea name="description" placeholder="Brief description..." className="pl-10 rounded-md" />
+                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Category</Label>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Category</Label>
+                  <div className="relative">
                     <Select name="categoryId">
-                      <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectTrigger className="pl-10 rounded-md">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
                       <SelectContent>
                           {safeCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Login Credentials</h4>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <div className="flex gap-2">
-                  <div className="relative flex-1">
-                      <Input name="password" type={showPassword ? "text" : "password"} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" placeholder="Generated or manual password" />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                  </div>
-                  <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }}>Generate</Button>
-              </div>
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Login Credentials</h4>
+          <div className="space-y-2">
+            <Label>Password</Label>
+            <div className="flex gap-2">
+                <div className="relative flex-1">
+                    <Input name="password" type={showPassword ? "text" : "password"} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pl-10 pr-10 rounded-md" placeholder="Generated or manual password" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+                <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }} className="rounded-md">
+                  <Key className="h-4 w-4 mr-2" />Generate
+                </Button>
             </div>
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
@@ -3705,7 +4531,8 @@ const renderRightPanel = () => {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -3797,7 +4624,8 @@ const renderRightPanel = () => {
 
   return (
     <div className="max-h-screen min-h-screen relative flex">
-      <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+      <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+      <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden">
@@ -3853,10 +4681,10 @@ const renderRightPanel = () => {
           </div>
         </div>
 
-        {/* Right Editor Panel - Dialog */}
-        <Dialog
-          open={showRightPanel}
-          onOpenChange={(open) => {
+        {/* Right Editor Panel - UnifiedModal */}
+        <UnifiedModal
+          isOpen={showRightPanel}
+          onClose={(open) => {
             if (!open) {
               setShowRightPanel(false);
               setRightPanelContent(null);
@@ -3864,213 +4692,264 @@ const renderRightPanel = () => {
               setGeneratedUsername("");
             }
           }}
+          title={getRightPanelTitle()}
+          description={getRightPanelDescription()}
+          footer={getRightPanelFooter()}
         >
-          <DialogContent className="max-w-4xl w-[95%] h-[90vh] border overflow-hidden  bg-white p-0  top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
-            {renderRightPanel()}
-          </DialogContent>
-        </Dialog>
+          {renderRightPanel()}
+        </UnifiedModal>
       </div>
 
 
-      {/* Business Listing Inquiry Dialog */}
-      <Dialog
-        open={showBusinessListingInquiryDialog}
-        onOpenChange={setShowBusinessListingInquiryDialog}
+      {/* Business Listing Inquiry Dialog - Now uses UnifiedModal */}
+      <UnifiedModal
+        isOpen={showBusinessListingInquiryDialog}
+        onClose={(open) => {
+          if (!open) {
+            setShowBusinessListingInquiryDialog(false);
+            setSelectedBusinessListingInquiry(null);
+          }
+        }}
+        title="Business Listing Inquiry Details"
+        description="Review and manage this business listing inquiry"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBusinessListingInquiryDialog(false);
+                setSelectedBusinessListingInquiry(null);
+              }}
+              className="rounded-md w-auto px-6"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedBusinessListingInquiry) {
+                  const updates: any = {
+                    status: selectedBusinessListingInquiry?.status,
+                    notes: selectedBusinessListingInquiry?.notes,
+                  };
+                  if (selectedBusinessListingInquiry?.assignedTo) {
+                    updates.assignedTo =
+                      selectedBusinessListingInquiry.assignedTo;
+                  }
+                  handleUpdateBusinessListingInquiry(
+                    selectedBusinessListingInquiry?.id,
+                    updates,
+                  );
+                }
+              }}
+              className="rounded-md w-auto px-6 bg-black text-white hover:bg-gray-800"
+            >
+              Save Changes
+            </Button>
+          </>
+        }
       >
-        <DialogContent className="max-w-4xl  p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
-          {selectedBusinessListingInquiry && (
-            <div className="flex flex-col h-full relative">
-              {/* Fixed Header */}
-              <DialogHeader className="p-6 border-b shrink-0 space-y-0 bg-white">
-                <div className="flex justify-between items-start w-full">
-                  <div className="">
-                    <DialogTitle className="text-md  font-semibold">
-                      Business Listing Inquiry Details
-                    </DialogTitle>
-                    <DialogDescription className="text-xs text-gray-500">
-                      Review and manage this business listing inquiry
-                    </DialogDescription>
+        {selectedBusinessListingInquiry && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Business Name
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.businessName ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Contact Name
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.contactName ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Email
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.email ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Phone
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry.phone || "Not provided"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-gray-900">
+                  Business Description
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.businessDescription ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Inquiry Type
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.inquiryType ||
+                    "Not specified"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-gray-900">
+                  Requirements
+                </Label>
+                <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                  {selectedBusinessListingInquiry?.requirements ||
+                    "Not provided"}
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Update Status</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Status</Label>
+                  <div className="relative">
+                    <Select
+                      value={selectedBusinessListingInquiry.status}
+                      onValueChange={(value) => {
+                        const updated = {
+                          ...selectedBusinessListingInquiry,
+                          status: value,
+                        };
+                        setSelectedBusinessListingInquiry(updated);
+                      }}
+                    >
+                      <SelectTrigger className="rounded-md pl-10">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="UNDER_REVIEW">
+                          Under Review
+                        </SelectItem>
+                        <SelectItem value="APPROVED">Approved</SelectItem>
+                        <SelectItem value="REJECTED">Rejected</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Activity className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-              </DialogHeader>
-
-              {/* Scrollable Body */}
-              <div className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-16">
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Business Name
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.businessName ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Contact Name
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.contactName ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Email</Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.email ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Phone</Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry.phone || "Not provided"}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">
-                        Business Description
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.businessDescription ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Inquiry Type
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.inquiryType ||
-                          "Not specified"}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">
-                        Requirements
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
-                        {selectedBusinessListingInquiry?.requirements ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Update Status</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Status</Label>
-                        <Select
-                          value={selectedBusinessListingInquiry.status}
-                          onValueChange={(value) => {
-                            const updated = {
-                              ...selectedBusinessListingInquiry,
-                              status: value,
-                            };
-                            setSelectedBusinessListingInquiry(updated);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="PENDING">Pending</SelectItem>
-                            <SelectItem value="UNDER_REVIEW">
-                              Under Review
-                            </SelectItem>
-                            <SelectItem value="APPROVED">Approved</SelectItem>
-                            <SelectItem value="REJECTED">Rejected</SelectItem>
-                            <SelectItem value="COMPLETED">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Assign To</Label>
-                        <Select
-                          value={
-                            selectedBusinessListingInquiry.assignedTo || ""
-                          }
-                          onValueChange={(value) => {
-                            const updated = {
-                              ...selectedBusinessListingInquiry,
-                              assignedTo: value || null,
-                            };
-                            setSelectedBusinessListingInquiry(updated);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select user or leave unassigned" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
-                            {/* You would fetch users here */}
-                            <SelectItem value="admin1">Admin 1</SelectItem>
-                            <SelectItem value="admin2">Admin 2</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Notes</Label>
-                      <Textarea
-                        value={selectedBusinessListingInquiry?.notes || ""}
-                        onChange={(e) => {
-                          const updated = {
-                            ...selectedBusinessListingInquiry,
-                            notes: e.target.value,
-                          };
-                          setSelectedBusinessListingInquiry(updated);
-                        }}
-                        placeholder="Add internal notes..."
-                        className="min-h-[100px]"
-                      />
-                    </div>
+                <div>
+                  <Label>Assign To</Label>
+                  <div className="relative">
+                    <Select
+                      value={
+                        selectedBusinessListingInquiry.assignedTo || ""
+                      }
+                      onValueChange={(value) => {
+                        const updated = {
+                          ...selectedBusinessListingInquiry,
+                          assignedTo: value || null,
+                        };
+                        setSelectedBusinessListingInquiry(updated);
+                      }}
+                    >
+                      <SelectTrigger className="rounded-md pl-10">
+                        <SelectValue placeholder="Select user or leave unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {/* You would fetch users here */}
+                        <SelectItem value="admin1">Admin 1</SelectItem>
+                        <SelectItem value="admin2">Admin 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
-              {/* Absolute Footer */}
-              <DialogFooter className="px-6 w-full flex flex-col py-2 border-t absolute bottom-0 left-0 right-0 bg-white z-10">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowBusinessListingInquiryDialog(false);
-                    setSelectedBusinessListingInquiry(null);
+              <div>
+                <Label>Notes</Label>
+                <Textarea
+                  value={selectedBusinessListingInquiry?.notes || ""}
+                  onChange={(e) => {
+                    const updated = {
+                      ...selectedBusinessListingInquiry,
+                      notes: e.target.value,
+                    };
+                    setSelectedBusinessListingInquiry(updated);
                   }}
-                  className="rounded-2xl w-auto "
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (selectedBusinessListingInquiry) {
-                      const updates: any = {
-                        status: selectedBusinessListingInquiry?.status,
-                        notes: selectedBusinessListingInquiry?.notes,
-                      };
-                      if (selectedBusinessListingInquiry?.assignedTo) {
-                        updates.assignedTo =
-                          selectedBusinessListingInquiry.assignedTo;
-                      }
-                      handleUpdateBusinessListingInquiry(
-                        selectedBusinessListingInquiry?.id,
-                        updates,
-                      );
-                    }
-                  }}
-                  className="rounded-2xl w-auto"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
+                  placeholder="Add internal notes..."
+                  className="min-h-[100px] rounded-md pl-3"
+                />
+              </div>
             </div>
-          )}
+          </div>
+        )}
+      </UnifiedModal>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Confirm Bulk Delete
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedBusinessIds.size} businesses? 
+              This action cannot be undone and will permanently remove all selected businesses and their associated users.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>All selected business accounts</li>
+              <li>Associated admin users</li>
+              <li>All business data (products, inquiries, etc.)</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBulkDeleteDialog(false)}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmBulkDelete}
+              disabled={bulkActionLoading}
+              className="rounded-2xl"
+            >
+              {bulkActionLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete {selectedBusinessIds.size} Businesses
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -27,69 +28,71 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { login, refreshAuth } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    console.log('[DEBUG] Admin Login - Starting login attempt for:', email);
+
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, force: forceLogout }),
-      });
+      const result = await login(email, password, forceLogout);
 
-      const data = await response.json();
+      console.log('[DEBUG] Admin Login - AuthContext login result:', result);
 
-      if (!response.ok) {
-        setError(data.error || "Login failed");
+      if (!result.success) {
+        setError(result.error || "Login failed");
+      } else if (!result.user) {
+        setError("Login failed - no user data");
       } else {
+        console.log('[DEBUG] Admin Login - Login successful, user data:', result.user);
         // Check if user is admin
-        if (data.user.role !== "SUPER_ADMIN") {
+        if (result.user.role !== "SUPER_ADMIN") {
+          console.log('[DEBUG] Admin Login - User role check failed:', result.user.role);
           setError("Access denied. Admin privileges required.");
           return;
         }
+        console.log('[DEBUG] Admin Login - Refreshing auth');
+        await refreshAuth();
+        console.log('[DEBUG] Admin Login - Auth refreshed, redirecting');
         router.push("/dashboard/admin");
       }
     } catch (error) {
+      console.error('[DEBUG] Admin Login - Error:', error);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
-      {/* --- LEFT SIDE: FORM --- */}
-      <div className="w-full flex flex-col justify-center items-center relative bg-white px-4 sm:px-8 lg:px-16 py-12 md:py-0 z-10 overflow-y-auto">
-        {/* Top Header */}
-        <div className="absolute top-0 left-0 w-full px-6 py-6 flex justify-between items-center z-20">
+    <div className="min-h-screen relative w-full flex flex-col md:flex-row bg-slate-50 font-sans">
+      <div className="flex-1 flex flex-col justify-center relative w-full px-4 sm:px-6 lg:px-12 py-10 lg:py-0 z-10">
+        <div className="w-full absolute top-0 left-0 right-0 max-w-7xl mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-primary/10 p-1.5 rounded-md text-primary">
-              <img
-                src="/logo.svg"
-                alt="DigiSence Logo"
-                className="h-5 w-auto"
-              />
-            </div>
-            <span className="font-bold text-xl text-slate-800 tracking-tight">
+            <Image
+              src="/logo.svg"
+              alt="DigiSence Logo"
+              width={32}
+              height={32}
+              className="h-8 w-auto"
+            />
+            <span className="font-bold text-xl sm:text-2xl text-slate-800 tracking-tight">
               DigiSence
             </span>
           </Link>
           <Button
             onClick={() => router.push("/")}
             variant="ghost"
-            className="hover:bg-slate-100 text-slate-600 transition-colors font-medium"
+            size="sm"
+            className="hover:bg-slate-100 rounded-full py-0 px-0 border  cursor-pointer text-slate-600 hover:text-slate-900 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Home
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
         </div>
-
-        {/* Content Wrapper */}
-        <div className="w-full max-w-lg space-y-8 pt-8 md:pt-0">
+   
+        <div className="w-full max-w-md mx-auto space-y-6 sm:space-y-8 mt-12 sm:mt-4">
           {/* Header Text */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-extrabold text-slate-800">
@@ -151,7 +154,11 @@ export default function AdminLoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3 h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -161,7 +168,9 @@ export default function AdminLoginPage() {
                 <Checkbox
                   id="force-logout"
                   checked={forceLogout}
-                  onCheckedChange={(checked) => setForceLogout(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setForceLogout(checked as boolean)
+                  }
                   disabled={loading}
                 />
                 <Label

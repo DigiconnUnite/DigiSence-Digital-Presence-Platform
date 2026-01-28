@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string, force?: boolean) => Promise<{ success: boolean; error?: string; user?: AuthUser }>
   logout: () => Promise<void>
   loading: boolean
+  refreshAuth: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const checkAuth = useCallback(async () => {
     try {
+      console.log('[DEBUG] AuthContext - checkAuth starting');
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
 
@@ -25,18 +27,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signal: controller.signal,
         headers: {
           'Cache-Control': 'no-cache'
-        }
+        },
+        credentials: 'include'
       })
 
       clearTimeout(timeoutId)
 
+      console.log('[DEBUG] AuthContext - /api/auth/me response:', response.ok, response.status);
+
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
+        console.log('[DEBUG] AuthContext - User set to:', data.user);
       } else {
         setUser(null)
+        console.log('[DEBUG] AuthContext - No valid auth, user set to null');
       }
     } catch (error) {
+      console.log('[DEBUG] AuthContext - checkAuth error:', error);
       setUser(null)
     } finally {
       setLoading(false)
@@ -47,6 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [checkAuth])
 
+  const refreshAuth = useCallback(async () => {
+    await checkAuth()
+  }, [checkAuth])
+
   const login = useCallback(async (email: string, password: string, force = false) => {
     try {
       const response = await fetch('/api/auth/login', {
@@ -55,11 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password, force }),
+        credentials: 'include'
       })
 
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
         return { success: true, user: data.user }
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Login failed' }))
@@ -81,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   )

@@ -122,6 +122,7 @@ type ButtonVariant =
   | null
   | undefined;
 
+
 interface Professional {
   id: string;
   name: string;
@@ -4725,7 +4726,8 @@ export default function ProfessionalDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -4902,7 +4904,8 @@ export default function ProfessionalDashboard() {
   return (
     <ThemeProvider>
       <div className="min-h-screen flex h-screen  relative">
-        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
 
         {/* Main Layout: Sidebar + Content */}
         <div className="flex flex-1 overflow-hidden">
@@ -4971,7 +4974,8 @@ export default function ProfessionalDashboard() {
                   <span className="h-8 border-l border-gray-300 mx-2"></span>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
-                      {profilePictureUrl && isValidImageUrl(profilePictureUrl) ? (
+                      {profilePictureUrl &&
+                      isValidImageUrl(profilePictureUrl) ? (
                         <img
                           src={getOptimizedImageUrl(profilePictureUrl, {
                             width: 32,
@@ -4979,7 +4983,7 @@ export default function ProfessionalDashboard() {
                             quality: 85,
                             format: "auto",
                             crop: "fill",
-                            gravity: "center"
+                            gravity: "center",
                           })}
                           alt={professional?.name || "Profile"}
                           className="w-full h-full object-cover"
@@ -4998,13 +5002,10 @@ export default function ProfessionalDashboard() {
 
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-auto hide-scrollbar pb-20 md:pb-0">
-              <div className="p-4 sm:p-6">
-                {renderMiddleContent()}
-              </div>
+              <div className="p-4 sm:p-6">{renderMiddleContent()}</div>
             </div>
           </div>
         </div>
-
 
         {/* Image Upload Modals */}
         {/* Banner Image Upload Modal */}
@@ -5046,7 +5047,19 @@ export default function ProfessionalDashboard() {
                   <h4 className="font-medium text-gray-900">Current Banner</h4>
                   <div className="relative">
                     <img
-                      src={professional.banner && isValidImageUrl(professional.banner) ? getOptimizedImageUrl(professional.banner, { width: 800, height: 200, quality: 85, format: "auto", crop: "fill", gravity: "center" }) : professional.banner}
+                      src={
+                        professional.banner &&
+                        isValidImageUrl(professional.banner)
+                          ? getOptimizedImageUrl(professional.banner, {
+                              width: 800,
+                              height: 200,
+                              quality: 85,
+                              format: "auto",
+                              crop: "fill",
+                              gravity: "center",
+                            })
+                          : professional.banner
+                      }
                       alt="Current banner"
                       className="w-full h-32 object-cover rounded-xl border"
                       onError={handleImageError}
@@ -5113,7 +5126,22 @@ export default function ProfessionalDashboard() {
                   <div className="flex justify-center">
                     <div className="relative">
                       <img
-                        src={professional.profilePicture && isValidImageUrl(professional.profilePicture) ? getOptimizedImageUrl(professional.profilePicture, { width: 128, height: 128, quality: 85, format: "auto", crop: "fill", gravity: "center" }) : professional.profilePicture}
+                        src={
+                          professional.profilePicture &&
+                          isValidImageUrl(professional.profilePicture)
+                            ? getOptimizedImageUrl(
+                                professional.profilePicture,
+                                {
+                                  width: 128,
+                                  height: 128,
+                                  quality: 85,
+                                  format: "auto",
+                                  crop: "fill",
+                                  gravity: "center",
+                                },
+                              )
+                            : professional.profilePicture
+                        }
                         alt="Current profile picture"
                         className="w-32 h-32 object-cover rounded-full border-4 border-white shadow-lg"
                         onError={handleImageError}

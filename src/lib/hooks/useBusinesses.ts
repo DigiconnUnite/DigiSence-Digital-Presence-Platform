@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { invalidateBusinesses, invalidateCategories } from '@/lib/cacheInvalidation';
 
 // Types
 export interface Business {
@@ -171,7 +172,7 @@ export function useBusinesses(params: BusinessQueryParams) {
   return useQuery({
     queryKey: businessKeys.list(params),
     queryFn: () => fetchBusinesses(params),
-    staleTime: 30 * 1000, // 30 seconds - data is fresh for 30 seconds
+    staleTime: 10 * 1000, // 10 seconds - reduced for faster updates
     gcTime: 2 * 60 * 1000, // 2 minutes - cache persists for 2 minutes
     refetchOnWindowFocus: true,
     retry: 1,

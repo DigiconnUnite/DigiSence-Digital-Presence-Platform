@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useSocket } from "@/hooks/useSocket";
+import { useSocket } from "@/lib/hooks/useSocket";
 import {
   Card,
   CardContent,
@@ -97,6 +97,9 @@ import {
   Hash,
   Lock,
   UserPlus,
+  Filter,
+  CheckCircle,
+  Power,
 } from "lucide-react";
 import { Pagination, BulkActionsToolbar } from "@/components/ui/pagination";
 import SharedSidebar from "../components/SharedSidebar";
@@ -142,6 +145,16 @@ interface BusinessQueryParams {
 
 interface BusinessApiResponse {
   businesses: Business[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
+interface ProfessionalApiResponse {
+  professionals: Professional[];
   pagination: {
     page: number;
     limit: number;
@@ -251,6 +264,8 @@ export default function SuperAdminDashboard() {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([]);
   const [deleteBusiness, setDeleteBusiness] = useState<Business | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showDeleteBusinessDialog, setShowDeleteBusinessDialog] = useState(false);
+  const [deletingBusiness, setDeletingBusiness] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -278,6 +293,10 @@ export default function SuperAdminDashboard() {
   const [businessLoading, setBusinessLoading] = useState(false);
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [addBusinessLoading, setAddBusinessLoading] = useState(false);
+  const [editBusinessLoading, setEditBusinessLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState<string | null>(null);
   
   // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -298,6 +317,30 @@ export default function SuperAdminDashboard() {
     instagram: "",
     linkedin: "",
   });
+  
+  // Professional management state with pagination and selection
+  const [professionalQuery, setProfessionalQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [professionalData, setProfessionalData] = useState<ProfessionalApiResponse | null>(null);
+  const [professionalLoading, setProfessionalLoading] = useState(false);
+  const [selectedProfessionalIds, setSelectedProfessionalIds] = useState<Set<string>>(new Set());
+  const [professionalBulkActionLoading, setProfessionalBulkActionLoading] = useState(false);
+  const [professionalExportLoading, setProfessionalExportLoading] = useState(false);
+  const [addProfessionalLoading, setAddProfessionalLoading] = useState(false);
+  const [editProfessionalLoading, setEditProfessionalLoading] = useState(false);
+  const [professionalToggleLoading, setProfessionalToggleLoading] = useState<string | null>(null);
+  const [showProfessionalBulkDeleteDialog, setShowProfessionalBulkDeleteDialog] = useState(false);
+  const [deletingProfessional, setDeletingProfessional] = useState(false);
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  const [showDeleteProfessionalDialog, setShowDeleteProfessionalDialog] = useState(false);
+  const [professionalSortBy, setProfessionalSortBy] = useState('createdAt');
+  const [professionalSortOrder, setProfessionalSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -342,6 +385,15 @@ function useDebounce<T>(value: T, delay: number): T {
     const handleBusinessCreated = (data: any) => {
       console.log('Business created via Socket.IO:', data);
       setBusinesses(prev => [data.business, ...prev]);
+      // Also update businessData if it exists
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: [data.business, ...prev.businesses],
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems + 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalBusinesses: prev.totalBusinesses + 1,
@@ -355,9 +407,16 @@ function useDebounce<T>(value: T, delay: number): T {
 
     const handleBusinessUpdated = (data: any) => {
       console.log('Business updated via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
       ));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.map(biz =>
+          biz.id === data.business.id ? { ...biz, ...data.business } : biz
+        )
+      } : null);
       toast({
         title: "Business Updated",
         description: `${data.business.name} has been updated.`,
@@ -366,7 +425,16 @@ function useDebounce<T>(value: T, delay: number): T {
 
     const handleBusinessDeleted = (data: any) => {
       console.log('Business deleted via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.filter(biz => biz.id !== data.businessId));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.filter(biz => biz.id !== data.businessId),
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems - 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalBusinesses: prev.totalBusinesses - 1,
@@ -381,9 +449,16 @@ function useDebounce<T>(value: T, delay: number): T {
 
     const handleBusinessStatusUpdated = (data: any) => {
       console.log('Business status updated via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
       ));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.map(biz =>
+          biz.id === data.business.id ? { ...biz, ...data.business } : biz
+        )
+      } : null);
       setStats(prev => ({
         ...prev,
         activeBusinesses: data.business.isActive
@@ -399,6 +474,15 @@ function useDebounce<T>(value: T, delay: number): T {
     const handleProfessionalCreated = (data: any) => {
       console.log('Professional created via Socket.IO:', data);
       setProfessionals(prev => [data.professional, ...prev]);
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: [data.professional, ...prev.professionals],
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems + 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalProfessionals: prev.totalProfessionals + 1,
@@ -414,6 +498,13 @@ function useDebounce<T>(value: T, delay: number): T {
       setProfessionals(prev => prev.map(pro =>
         pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
       ));
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.map(pro =>
+          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+        )
+      } : null);
       toast({
         title: "Professional Updated",
         description: `${data.professional.name} has been updated.`,
@@ -423,6 +514,15 @@ function useDebounce<T>(value: T, delay: number): T {
     const handleProfessionalDeleted = (data: any) => {
       console.log('Professional deleted via Socket.IO:', data);
       setProfessionals(prev => prev.filter(pro => pro.id !== data.professionalId));
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.filter(pro => pro.id !== data.professionalId),
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems - 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalProfessionals: prev.totalProfessionals - 1,
@@ -434,6 +534,30 @@ function useDebounce<T>(value: T, delay: number): T {
       });
     };
 
+    const handleProfessionalStatusUpdated = (data: any) => {
+      console.log('Professional status updated via Socket.IO:', data);
+      setProfessionals(prev => prev.map(pro =>
+        pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+      ));
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.map(pro =>
+          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+        )
+      } : null);
+      setStats(prev => ({
+        ...prev,
+        activeProfessionals: data.professional.isActive
+          ? prev.activeProfessionals + 1
+          : prev.activeProfessionals - 1,
+      }));
+      toast({
+        title: "Professional Status Updated",
+        description: `${data.professional.name} is now ${data.professional.isActive ? 'active' : 'inactive'}.`,
+      });
+    };
+
     // Register event listeners
     socket.on('business-created', handleBusinessCreated);
     socket.on('business-updated', handleBusinessUpdated);
@@ -442,6 +566,7 @@ function useDebounce<T>(value: T, delay: number): T {
     socket.on('professional-created', handleProfessionalCreated);
     socket.on('professional-updated', handleProfessionalUpdated);
     socket.on('professional-deleted', handleProfessionalDeleted);
+    socket.on('professional-status-updated', handleProfessionalStatusUpdated);
 
     // Cleanup listeners on unmount
     return () => {
@@ -452,6 +577,7 @@ function useDebounce<T>(value: T, delay: number): T {
       socket.off('professional-created', handleProfessionalCreated);
       socket.off('professional-updated', handleProfessionalUpdated);
       socket.off('professional-deleted', handleProfessionalDeleted);
+      socket.off('professional-status-updated', handleProfessionalStatusUpdated);
     };
   }, [socket, isConnected, toast]);
 
@@ -666,6 +792,7 @@ function useDebounce<T>(value: T, delay: number): T {
   
   // Export to CSV
   const handleExport = async () => {
+    setExportLoading(true);
     try {
       const response = await fetch('/api/admin/businesses/export?format=csv');
       if (response.ok) {
@@ -682,6 +809,8 @@ function useDebounce<T>(value: T, delay: number): T {
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to export businesses', variant: 'destructive' });
+    } finally {
+      setExportLoading(false);
     }
   };
   
@@ -692,6 +821,306 @@ function useDebounce<T>(value: T, delay: number): T {
       <div className="w-4 h-4">↑</div> : 
       <div className="w-4 h-4">↓</div>;
   };
+
+  // Get professional sort icon
+  const getProfessionalSortIcon = (column: string) => {
+    if (professionalSortBy !== column) return <div className="w-4 h-4 opacity-30">↕</div>;
+    return professionalSortOrder === 'asc' ? 
+      <div className="w-4 h-4">↑</div> : 
+      <div className="w-4 h-4">↓</div>;
+  };
+
+  // Fetch professionals with pagination, search, and sorting
+  const fetchProfessionals = useCallback(async () => {
+    setProfessionalLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: professionalQuery.page.toString(),
+        limit: professionalQuery.limit.toString(),
+        search: professionalQuery.search,
+        status: professionalQuery.status,
+        sortBy: professionalSortBy,
+        sortOrder: professionalSortOrder,
+      });
+      
+      const response = await fetch(`/api/admin/professionals?${params}`);
+      if (response.ok) {
+        const data: ProfessionalApiResponse = await response.json();
+        setProfessionalData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch professionals:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch professionals',
+        variant: 'destructive',
+      });
+    } finally {
+      setProfessionalLoading(false);
+    }
+  }, [professionalQuery, professionalSortBy, professionalSortOrder, toast]);
+  
+  // Fetch professionals when query changes
+  useEffect(() => {
+    if (currentView === 'professionals') {
+      fetchProfessionals();
+    }
+  }, [fetchProfessionals, currentView]);
+  
+  // Update professional query when debounced search changes
+  useEffect(() => {
+    setProfessionalQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
+
+  // Handle professional sort change
+  const handleProfessionalSort = (column: string) => {
+    if (professionalSortBy === column) {
+      setProfessionalSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setProfessionalSortBy(column);
+      setProfessionalSortOrder('desc');
+    }
+    setProfessionalQuery(prev => ({ ...prev, page: 1 }));
+  };
+  
+  // Handle professional page change
+  const handleProfessionalPageChange = (page: number) => {
+    setProfessionalQuery(prev => ({ ...prev, page }));
+  };
+  
+  // Handle professional items per page change
+  const handleProfessionalLimitChange = (limit: number) => {
+    setProfessionalQuery(prev => ({ ...prev, limit, page: 1 }));
+  };
+  
+  // Handle professional selection
+  const handleSelectProfessional = (professionalId: string) => {
+    setSelectedProfessionalIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(professionalId)) {
+        newSet.delete(professionalId);
+      } else {
+        newSet.add(professionalId);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSelectAllProfessionals = () => {
+    if (professionalData?.professionals) {
+      const allIds = professionalData.professionals.map(p => p.id);
+      setSelectedProfessionalIds(new Set(allIds));
+    }
+  };
+  
+  const handleDeselectAllProfessionals = () => {
+    setSelectedProfessionalIds(new Set());
+  };
+  
+  // Professional bulk actions
+  const handleProfessionalBulkActivate = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setProfessionalBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: true }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals activated` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to activate professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  const handleProfessionalBulkDeactivate = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setProfessionalBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: false }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deactivated` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to deactivate professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  const handleProfessionalBulkDelete = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setShowProfessionalBulkDeleteDialog(true);
+  };
+  
+  const confirmProfessionalBulkDelete = async () => {
+    setProfessionalBulkActionLoading(true);
+    setShowProfessionalBulkDeleteDialog(false);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds) }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deleted` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  // Professional export to CSV
+  const handleProfessionalExport = async () => {
+    setProfessionalExportLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/export?format=csv');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `professionals-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Success', description: 'Professionals exported successfully' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to export professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalExportLoading(false);
+    }
+  };
+  
+  // Handle toggle professional status
+  const handleToggleProfessionalStatus = useCallback(
+    async (e: React.MouseEvent, professional: Professional) => {
+      e.preventDefault();
+      setProfessionalToggleLoading(professional.id);
+      try {
+        const response = await fetch(`/api/admin/professionals/${professional.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: !professional.isActive }),
+        });
+
+        if (response.ok) {
+          // Update the professional in the professionalData state immediately
+          setProfessionalData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  professionals: prev.professionals.map((prof) =>
+                    prof.id === professional.id
+                      ? { ...prof, isActive: !prof.isActive }
+                      : prof
+                  ),
+                }
+              : null
+          );
+          setStats((prev) => ({
+            ...prev,
+            activeProfessionals: !professional.isActive
+              ? prev.activeProfessionals + 1
+              : prev.activeProfessionals - 1,
+          }));
+          fetchProfessionals();
+          toast({
+            title: 'Success',
+            description: `Professional ${!professional.isActive ? 'activated' : 'deactivated'} successfully`,
+          });
+        } else {
+          const error = await response.json();
+          toast({ title: 'Error', description: `Failed to update status: ${error.error || 'Unknown error'}`, variant: 'destructive' });
+        }
+      } catch (error) {
+        toast({ title: 'Error', description: 'Failed to toggle status', variant: 'destructive' });
+      } finally {
+        setProfessionalToggleLoading(null);
+      }
+    },
+    [toast, fetchProfessionals]
+  );
+  
+  // Handle delete professional with dialog
+  const handleDeleteProfessional = useCallback(
+    async (professional: Professional) => {
+      setProfessionalToDelete(professional);
+      setShowDeleteProfessionalDialog(true);
+    },
+    []
+  );
+  
+  // Confirm delete professional
+  const confirmDeleteProfessional = useCallback(async () => {
+    if (!professionalToDelete) return;
+    
+    setDeletingProfessional(true);
+    setShowDeleteProfessionalDialog(false);
+    
+    try {
+      const response = await fetch(`/api/admin/professionals/${professionalToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Update the professional in the professionalData state immediately
+        setProfessionalData((prev) =>
+          prev
+            ? {
+                ...prev,
+                professionals: prev.professionals.filter(
+                  (prof) => prof.id !== professionalToDelete.id
+                ),
+                pagination: {
+                  ...prev.pagination,
+                  totalItems: prev.pagination.totalItems - 1,
+                },
+              }
+            : null
+        );
+        setStats((prev) => ({
+          ...prev,
+          totalProfessionals: prev.totalProfessionals - 1,
+          activeProfessionals: professionalToDelete.isActive ? prev.activeProfessionals - 1 : prev.activeProfessionals,
+        }));
+        fetchProfessionals();
+        toast({
+          title: 'Success',
+          description: 'Professional deleted successfully',
+        });
+      } else {
+        const error = await response.json();
+        toast({ title: 'Error', description: `Failed to delete professional: ${error.error || 'Unknown error'}`, variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete professional', variant: 'destructive' });
+    } finally {
+      setDeletingProfessional(false);
+      setProfessionalToDelete(null);
+    }
+  }, [professionalToDelete, toast, fetchProfessionals]);
 
   // Data fetching function
   const fetchData = useCallback(async () => {
@@ -868,6 +1297,7 @@ function useDebounce<T>(value: T, delay: number): T {
   const handleAddBusiness = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setAddBusinessLoading(true);
       const formData = new FormData(e.currentTarget);
 
       const manualUsername = formData.get("username") as string;
@@ -879,10 +1309,10 @@ function useDebounce<T>(value: T, delay: number): T {
         password: manualPassword || generatedPassword || generatePassword(),
         adminName: formData.get("adminName") as string,
         categoryId: formData.get("categoryId") as string,
-        description: formData.get("description") as string,
-        address: formData.get("address") as string,
-        phone: formData.get("phone") as string,
-        website: formData.get("website") as string,
+        description: (formData.get("description") as string) || "",
+        address: (formData.get("address") as string) || "",
+        phone: (formData.get("phone") as string) || "",
+        website: (formData.get("website") as string) || "",
       };
 
       console.log("Creating business:", businessData);
@@ -911,7 +1341,9 @@ function useDebounce<T>(value: T, delay: number): T {
           if (e.currentTarget) {
             e.currentTarget.reset();
           }
-          // Refresh data to show the new business
+          // Refresh paginated data to show the new business
+          fetchBusinesses();
+          // Also refresh full data
           fetchData();
         } else {
           const error = await response.json();
@@ -931,6 +1363,8 @@ function useDebounce<T>(value: T, delay: number): T {
           description: "Failed to create business. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setAddBusinessLoading(false);
       }
     },
     [generatedPassword, generatePassword, toast]
@@ -949,17 +1383,17 @@ function useDebounce<T>(value: T, delay: number): T {
       e.preventDefault();
       if (!editingBusiness) return;
 
-      setIsLoading(true);
+      setEditBusinessLoading(true);
       const formData = new FormData(e.currentTarget);
 
       const updateData = {
         name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        logo: formData.get("logo") as string,
-        address: formData.get("address") as string,
-        phone: formData.get("phone") as string,
+        description: (formData.get("description") as string) || "",
+        logo: (formData.get("logo") as string) || "",
+        address: (formData.get("address") as string) || "",
+        phone: (formData.get("phone") as string) || "",
         email: formData.get("email") as string,
-        website: formData.get("website") as string,
+        website: (formData.get("website") as string) || "",
         categoryId: formData.get("categoryId") as string,
       };
 
@@ -992,6 +1426,9 @@ function useDebounce<T>(value: T, delay: number): T {
           // Force re-render to ensure UI updates
           setForceRerender((prev) => prev + 1);
 
+          // Also refresh paginated data to ensure consistency
+          fetchBusinesses();
+
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -1017,90 +1454,99 @@ function useDebounce<T>(value: T, delay: number): T {
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setEditBusinessLoading(false);
       }
     },
-    [editingBusiness, toast]
+    [editingBusiness, toast, fetchBusinesses]
   );
 
   // Handle delete business with improved error handling
   const handleDeleteBusiness = useCallback(
     async (business: Business) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete "${business.name}"? This action cannot be undone.`
-        )
-      ) {
-        return;
-      }
+      // Show dialog instead of browser alert
+      setDeleteBusiness(business);
+      setShowDeleteBusinessDialog(true);
+    },
+    []
+  );
 
-      try {
-        console.log("Deleting business:", business.id, business.name);
-        const response = await fetch(`/api/admin/businesses/${business.id}`, {
-          method: "DELETE",
+  // Confirm and perform delete business
+  const confirmDeleteBusiness = useCallback(async () => {
+    if (!deleteBusiness) return;
+    
+    setDeletingBusiness(true);
+    setShowDeleteBusinessDialog(false);
+    
+    try {
+      console.log("Deleting business:", deleteBusiness.id, deleteBusiness.name);
+      const response = await fetch(`/api/admin/businesses/${deleteBusiness.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        console.log("Business deletion successful, updating state...");
+
+        // Remove the deleted business from the local state immediately
+        setBusinesses((prev) => {
+          const updatedBusinesses = prev.filter((biz) => biz.id !== deleteBusiness.id);
+          console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
+          return updatedBusinesses;
         });
 
-        if (response.ok) {
-          console.log("Business deletion successful, updating state...");
+        // Update stats immediately
+        setStats((prev) => ({
+          ...prev,
+          totalBusinesses: prev.totalBusinesses - 1,
+          totalUsers: prev.totalUsers - 1,
+          activeBusinesses: deleteBusiness.isActive
+            ? prev.activeBusinesses - 1
+            : prev.activeBusinesses,
+          totalProducts: prev.totalProducts - deleteBusiness._count.products,
+          totalActiveProducts: deleteBusiness.isActive
+            ? prev.totalActiveProducts - deleteBusiness._count.products
+            : prev.totalActiveProducts,
+        }));
 
-          // Remove the deleted business from the local state immediately
-          setBusinesses((prev) => {
-            const updatedBusinesses = prev.filter((biz) => biz.id !== business.id);
-            console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
-            return updatedBusinesses;
-          });
+        // Force re-render to ensure UI updates
+        setForceRerender((prev) => prev + 1);
 
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            totalBusinesses: prev.totalBusinesses - 1,
-            totalUsers: prev.totalUsers - 1,
-            activeBusinesses: business.isActive
-              ? prev.activeBusinesses - 1
-              : prev.activeBusinesses,
-            totalProducts: prev.totalProducts - business._count.products,
-            totalActiveProducts: business.isActive
-              ? prev.totalActiveProducts - business._count.products
-              : prev.totalActiveProducts,
-          }));
+        // Also refresh paginated data
+        fetchBusinesses();
 
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          // Also refresh paginated data
-          fetchBusinesses();
-
-          // Show success message with enhanced details
-          toast({
-            title: "Success",
-            description: "Business and associated user deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Business deletion failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete business: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Business deletion error:", error);
+        // Show success message with enhanced details
+        toast({
+          title: "Success",
+          description: "Business and associated user deleted successfully",
+        });
+      } else {
+        const error = await response.json();
+        console.error("Business deletion failed:", error);
         toast({
           title: "Error",
-          description: "Failed to delete business. Please try again.",
+          description: `Failed to delete business: ${
+            error.error || "Unknown error"
+          }`,
           variant: "destructive",
         });
       }
-    },
-    [toast, fetchBusinesses]
-  );
+    } catch (error) {
+      console.error("Business deletion error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete business. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingBusiness(false);
+      setDeleteBusiness(null);
+    }
+  }, [deleteBusiness, toast, fetchBusinesses]);
 
   // Handle toggle business status
   const handleToggleBusinessStatus = useCallback(
-    async (business: Business) => {
+    async (e: React.MouseEvent, business: Business) => {
+      e.preventDefault();
+      setToggleLoading(business.id);
       console.log(
         "Toggling business status for:",
         business.id,
@@ -1167,6 +1613,8 @@ function useDebounce<T>(value: T, delay: number): T {
           description: "Failed to toggle business status. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setToggleLoading(null);
       }
     },
     [toast, fetchBusinesses]
@@ -1232,141 +1680,7 @@ function useDebounce<T>(value: T, delay: number): T {
     setShowRightPanel(true);
   }, []);
 
-  // Handle delete professional with improved error handling
-  const handleDeleteProfessional = useCallback(
-    async (id: string) => {
-      if (
-        !confirm(
-          "Are you sure you want to delete this professional profile? This action cannot be undone."
-        )
-      ) {
-        return;
-      }
 
-      try {
-        console.log("Deleting professional:", id);
-        const response = await fetch(`/api/professionals/${id}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          console.log("Professional deletion successful, updating state...");
-
-          // Remove the deleted professional from the local state immediately
-          setProfessionals((prev) => {
-            const updatedProfessionals = prev.filter((prof) => prof.id !== id);
-            console.log("Updated professionals list:", updatedProfessionals.length, "professionals remaining");
-            return updatedProfessionals;
-          });
-
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            totalProfessionals: prev.totalProfessionals - 1,
-            activeProfessionals: prev.activeProfessionals - 1,
-          }));
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          // Show success message with enhanced details
-          toast({
-            title: "Success",
-            description: "Professional and associated user deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Professional deletion failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete professional: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Professional deletion error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete professional. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle toggle professional status
-  const handleToggleProfessionalStatus = useCallback(
-    async (professional: Professional) => {
-      console.log(
-        "Toggling professional status for:",
-        professional.id,
-        "current isActive:",
-        professional.isActive
-      );
-      try {
-        const response = await fetch(`/api/professionals/${professional.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ isActive: !professional.isActive }),
-        });
-
-        if (response.ok) {
-          console.log("Toggle successful, updating state...");
-          
-          // Update the professional in the local state immediately
-          setProfessionals((prev) =>
-            prev.map((prof) =>
-              prof.id === professional.id
-                ? { ...prof, isActive: !prof.isActive }
-                : prof
-            )
-          );
-
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            activeProfessionals: !professional.isActive
-              ? prev.activeProfessionals + 1
-              : prev.activeProfessionals - 1,
-          }));
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          toast({
-            title: "Success",
-            description: `Professional ${!professional.isActive ? 'activated' : 'deactivated'} successfully`,
-          });
-        } else {
-          const error = await response.json();
-          console.error("Toggle failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to update professional status: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Toggle error:", error);
-        toast({
-          title: "Error",
-          description:
-            "Failed to toggle professional status. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle add professional with improved error handling
   const handleAddProfessional = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -1457,7 +1771,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
       try {
         const response = await fetch(
-          `/api/professionals/${editingProfessional.id}`,
+          `/api/admin/professionals/${editingProfessional.id}`,
           {
             method: "PUT",
             headers: {
@@ -1470,17 +1784,22 @@ function useDebounce<T>(value: T, delay: number): T {
         if (response.ok) {
           console.log("Account update successful, updating state...");
           
-          // Update the professional in the local state immediately
-          setProfessionals((prev) =>
-            prev.map((prof) =>
-              prof.id === editingProfessional.id
-                ? { ...prof, ...updateData }
-                : prof
-            )
+          // Update the professional in the professionalData state immediately
+          setProfessionalData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  professionals: prev.professionals.map((prof) =>
+                    prof.id === editingProfessional.id
+                      ? { ...prof, ...updateData }
+                      : prof
+                  ),
+                }
+              : null
           );
 
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
+          // Refresh from API to ensure consistency
+          fetchProfessionals();
 
           setShowRightPanel(false);
           setRightPanelContent(null);
@@ -1511,7 +1830,7 @@ function useDebounce<T>(value: T, delay: number): T {
         setIsLoading(false);
       }
     },
-    [editingProfessional, toast]
+    [editingProfessional, toast, fetchProfessionals]
   );
 
   // Handle add category with improved error handling
@@ -2060,8 +2379,26 @@ function useDebounce<T>(value: T, delay: number): T {
             <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
               Cancel
             </Button>
-            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
-              {rightPanelContent === "add-business" ? "Create Business" : "Save Changes"}
+            <Button type="submit" form={formId} disabled={rightPanelContent === "add-business" ? addBusinessLoading : editBusinessLoading} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-business" ? (
+                addBusinessLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  "Create Business"
+                )
+              ) : (
+                editBusinessLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )
+              )}
             </Button>
           </>
         );
@@ -2476,14 +2813,14 @@ function useDebounce<T>(value: T, delay: number): T {
                                     className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
                                       business.isActive
                                         ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                        : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
                                     }`}
                                   >
                                     <span
                                       className={`w-2 h-2 rounded-full ${
                                         business.isActive
                                           ? "bg-lime-500"
-                                          : "bg-gray-500"
+                                          : "bg-red-500"
                                       }`}
                                     ></span>
                                     {business.isActive ? "Active" : "Inactive"}
@@ -2823,7 +3160,7 @@ function useDebounce<T>(value: T, delay: number): T {
           <div className="space-y-6 pb-20 md:pb-0">
             {/* Data Fetching Status */}
             {dataFetchError && (
-              <div className="bg-red-50 border border-red-200 rounded-3xl p-4">
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -2839,7 +3176,7 @@ function useDebounce<T>(value: T, delay: number): T {
                         fetchData();
                         fetchBusinesses();
                       }}
-                      className="rounded-2xl"
+                      className="rounded-xl"
                     >
                       Retry
                     </Button>
@@ -2849,39 +3186,20 @@ function useDebounce<T>(value: T, delay: number): T {
               </div>
             )}
 
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                Add Businesses
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Businesses
               </h1>
-              <p className="text-md text-gray-600">
-                Manage and monitor your businesses from this dashboard section.
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all registered businesses
               </p>
             </div>
-            <div className="p-4 sm:p-6 pt-4">
-              <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                <Button
-                  onClick={() => {
-                    setRightPanelContent("add-business");
-                    setShowRightPanel(true);
-                  }}
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 rounded-full shadow-lg"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New
-                </Button>
 
-                {/* Search Input with Debounce */}
-                <div className="relative bg-white/10 backdrop-blur-sm rounded-full border border-white/20 flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
-                  <Input
-                    placeholder="Search businesses..."
-                    className="pl-10 w-full rounded-full bg-transparent border-none text-white placeholder:text-white/50 focus-visible:ring-0"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
-                {/* Status Filter */}
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
+              <div className="flex gap-2">
+                {/* Status Filter - With text on desktop */}
                 <Select
                   value={businessQuery.status}
                   onValueChange={(value) => {
@@ -2892,67 +3210,104 @@ function useDebounce<T>(value: T, delay: number): T {
                     }));
                   }}
                 >
-                  <SelectTrigger className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full focus-visible:ring-0">
-                    <SelectValue
-                      placeholder="Filter by Status"
-                      className="text-white"
-                    />
+                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-gray-900">
-                      All (
-                      {businessData?.pagination.totalItems ||
-                        filteredBusinesses.length}
-                      )
+                    <SelectItem value="all">
+                      All ({businessData?.pagination.totalItems || filteredBusinesses.length})
                     </SelectItem>
-                    <SelectItem value="active" className="text-gray-900">
-                      Active (
-                      {filteredBusinesses.filter((b) => b.isActive).length})
+                    <SelectItem value="active">
+                      Active ({filteredBusinesses.filter((b) => b.isActive).length})
                     </SelectItem>
-                    <SelectItem value="inactive" className="text-gray-900">
-                      Inactive (
-                      {filteredBusinesses.filter((b) => !b.isActive).length})
+                    <SelectItem value="inactive">
+                      Inactive ({filteredBusinesses.filter((b) => !b.isActive).length})
                     </SelectItem>
                   </SelectContent>
                 </Select>
 
-                {/* Export Button */}
+                {/* Export Button - With text on desktop */}
                 <Button
                   variant="outline"
                   onClick={handleExport}
-                  className="rounded-full border-white/20 text-white hover:bg-white/10 bg-white/10"
+                  disabled={exportLoading}
+                  className="rounded-xl border-gray-200"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
+                  {exportLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 text-gray-500 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {exportLoading ? 'Exporting...' : 'Export'}
+                  </span>
+                  <span className="sm:hidden">
+                    {exportLoading ? '...' : ''}
+                  </span>
+                </Button>
+
+                {/* Add New Button - With text on desktop */}
+                <Button
+                  onClick={() => {
+                    setRightPanelContent("add-business");
+                    setShowRightPanel(true);
+                  }}
+                  disabled={addBusinessLoading}
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                >
+                  {addBusinessLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {addBusinessLoading ? 'Opening...' : 'Add Business'}
+                  </span>
+                  <span className="sm:hidden">
+                    {addBusinessLoading ? '...' : 'Add'}
+                  </span>
                 </Button>
               </div>
 
-              {/* Bulk Actions Toolbar */}
-              {selectedBusinessIds.size > 0 && (
-                <div className="mb-4">
-                  <BulkActionsToolbar
-                    selectedCount={selectedBusinessIds.size}
-                    totalCount={
-                      businessData?.pagination.totalItems ||
-                      filteredBusinesses.length
-                    }
-                    onSelectAll={handleSelectAll}
-                    onDeselectAll={handleDeselectAll}
-                    onBulkActivate={handleBulkActivate}
-                    onBulkDeactivate={handleBulkDeactivate}
-                    onBulkDelete={handleBulkDelete}
-                  />
-                </div>
-              )}
+              {/* Row 2: Search bar - Full width */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search businesses..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300 "
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="bg-white overflow-hidden border-none shadow-sm rounded-xl">
-              {/* Data Table */}
+            {/* Bulk Actions Toolbar */}
+            {selectedBusinessIds.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedBusinessIds.size}
+                  totalCount={
+                    businessData?.pagination.totalItems ||
+                    filteredBusinesses.length
+                  }
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                  onBulkActivate={handleBulkActivate}
+                  onBulkDeactivate={handleBulkDeactivate}
+                  onBulkDelete={handleBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
                     <TableRow>
-                      <TableHead className="text-white w-12">
+                      <TableHead className="w-12 text-white font-medium">
                         <Checkbox
                           checked={
                             businessData?.businesses.every((b) =>
@@ -2966,47 +3321,25 @@ function useDebounce<T>(value: T, delay: number): T {
                           className="border-gray-400"
                         />
                       </TableHead>
-                      <TableHead
-                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => handleSort("name")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Business Name
-                          {getSortIcon("name")}
-                        </div>
+                      <TableHead className="w-14 text-white font-medium">
+                        SN.
                       </TableHead>
-                      <TableHead className="text-white w-12">Logo</TableHead>
-                      <TableHead className="text-white">Admin Email</TableHead>
-                      <TableHead
-                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => handleSort("category")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Category
-                          {getSortIcon("category")}
-                        </div>
+                      <TableHead className="text-white font-medium">
+                        Business
                       </TableHead>
-                      <TableHead className="text-white text-center"></TableHead>
-                      <TableHead className="text-white text-center"></TableHead>
-                      <TableHead
-                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => handleSort("isActive")}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          Status
-                          {getSortIcon("isActive")}
-                        </div>
+                      <TableHead className="text-white font-medium">
+                        Admin Email
                       </TableHead>
-                      <TableHead
-                        className="text-white cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => handleSort("createdAt")}
-                      >
-                        <div className="flex items-center gap-2">
-                          Date
-                          {getSortIcon("createdAt")}
-                        </div>
+                      <TableHead className="text-white font-medium">
+                        Category
                       </TableHead>
-                      <TableHead className="text-white text-right">
+                      <TableHead className="text-center text-white font-medium">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Date
+                      </TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -3021,10 +3354,13 @@ function useDebounce<T>(value: T, delay: number): T {
                                 <Skeleton className="h-4 w-4" />
                               </TableCell>
                               <TableCell>
-                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-4 w-8" />
                               </TableCell>
                               <TableCell>
-                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <div className="flex items-center gap-3">
+                                  <Skeleton className="h-10 w-10 rounded-full" />
+                                  <Skeleton className="h-4 w-32" />
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <Skeleton className="h-4 w-40" />
@@ -3033,19 +3369,15 @@ function useDebounce<T>(value: T, delay: number): T {
                                 <Skeleton className="h-4 w-24" />
                               </TableCell>
                               <TableCell>
-                                <Skeleton className="h-4 w-12" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-12" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-6 w-16 rounded-full" />
+                                <div className="flex justify-center">
+                                  <Skeleton className="h-6 w-16 rounded-full" />
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <Skeleton className="h-4 w-20" />
                               </TableCell>
                               <TableCell>
-                                <div className="flex space-x-2 justify-end">
+                                <div className="flex justify-end space-x-2">
                                   <Skeleton className="h-8 w-8" />
                                   <Skeleton className="h-8 w-8" />
                                   <Skeleton className="h-8 w-8" />
@@ -3054,8 +3386,11 @@ function useDebounce<T>(value: T, delay: number): T {
                             </TableRow>
                           ),
                         )
-                      : businessData?.businesses.map((business) => (
-                          <TableRow key={business.id}>
+                      : businessData?.businesses.map((business, index) => (
+                          <TableRow
+                            key={business.id}
+                            className="hover:bg-gray-50"
+                          >
                             <TableCell>
                               <Checkbox
                                 checked={selectedBusinessIds.has(business.id)}
@@ -3065,73 +3400,100 @@ function useDebounce<T>(value: T, delay: number): T {
                                 className="border-gray-400"
                               />
                             </TableCell>
-                            <TableCell className="text-gray-900 font-medium">
-                              {business.name}
+                            <TableCell className="text-gray-500 font-medium">
+                              {(businessData.pagination.page - 1) *
+                                businessData.pagination.limit +
+                                index +
+                                1}
                             </TableCell>
                             <TableCell>
-                              {business.logo ? (
-                                <img
-                                  src={business.logo}
-                                  alt={`${business.name} logo`}
-                                  className="h-8 w-8 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                  <Building className="h-4 w-4 text-gray-400" />
-                                </div>
-                              )}
+                              <div className="flex items-center gap-3">
+                                {business.logo ? (
+                                  <img
+                                    src={business.logo}
+                                    alt={`${business.name} logo`}
+                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                    <Building className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
+                                  {business.name}
+                                </span>
+                              </div>
                             </TableCell>
-                            <TableCell className="text-gray-900">
+                            <TableCell className="text-gray-600 truncate">
                               {business.admin.email}
                             </TableCell>
-                            <TableCell className="text-gray-900">
-                              {business.category?.name || "None"}
-                            </TableCell>
-                            <TableCell className="text-gray-900 text-center">
+                            <TableCell className="text-gray-600">
                               <Badge
                                 variant="outline"
-                                className="rounded-full bg-amber-50 border-amber-200"
+                                className="rounded-lg bg-gray-50 border-gray-200 truncate max-w-[120px]"
                               >
-                                {business._count.products}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-gray-900 text-center">
-                              <Badge
-                                variant="outline"
-                                className="rounded-full bg-blue-50 border-blue-200"
-                              >
-                                {business._count.inquiries}
+                                {business.category?.name || "None"}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               <div
-                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit mx-auto ${
+                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${
                                   business.isActive
-                                    ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                    : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
                                 }`}
                               >
                                 <span
                                   className={`w-2 h-2 rounded-full ${
                                     business.isActive
                                       ? "bg-lime-500"
-                                      : "bg-gray-500"
+                                      : "bg-red-500"
                                   }`}
                                 ></span>
-                                {business.isActive ? "Active" : "Suspended"}
+                                {business.isActive ? "Active" : "Inactive"}
                               </div>
                             </TableCell>
-                            <TableCell className="text-gray-900">
-                              {new Date(
-                                business.createdAt,
-                              ).toLocaleDateString()}
+                            <TableCell className="text-gray-600">
+                              {new Date(business.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex space-x-2 justify-end">
+                              <div className="flex justify-end space-x-1">
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
+                                  variant="ghost"
+                                  className={`h-8 w-8 p-0 rounded-lg ${
+                                    business.isActive
+                                      ? "hover:bg-orange-50"
+                                      : "hover:bg-green-50"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleToggleBusinessStatus(e, business);
+                                  }}
+                                  disabled={toggleLoading === business.id}
+                                  title={business.isActive ? "Suspend Business" : "Activate Business"}
+                                >
+                                  {toggleLoading === business.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <Power className={`h-4 w-4 ${
+                                      business.isActive
+                                        ? "text-orange-500"
+                                        : "text-green-500"
+                                    }`} />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
                                   onClick={() =>
                                     window.open(
                                       `/catalog/${business.slug}`,
@@ -3140,36 +3502,25 @@ function useDebounce<T>(value: T, delay: number): T {
                                   }
                                   title="View Business"
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-4 w-4 text-gray-500" />
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
                                   onClick={() => handleEditBusiness(business)}
                                   title="Edit Business"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-4 w-4 text-gray-500" />
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="rounded-xl border-gray-200 hover:bg-gray-50"
-                                  onClick={() =>
-                                    handleDuplicateBusiness(business)
-                                  }
-                                  title="Duplicate Business"
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="rounded-xl"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
                                   onClick={() => handleDeleteBusiness(business)}
                                   title="Delete Business"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -3179,9 +3530,40 @@ function useDebounce<T>(value: T, delay: number): T {
                 </Table>
               </div>
 
+              {/* Empty State */}
+              {!businessLoading &&
+                (!businessData?.businesses ||
+                  businessData.businesses.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <Building className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No businesses found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || businessQuery.status !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Get started by adding your first business"}
+                    </p>
+                    {!searchTerm && businessQuery.status === "all" && (
+                      <Button
+                        onClick={() => {
+                          setRightPanelContent("add-business");
+                          setShowRightPanel(true);
+                        }}
+                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Business
+                      </Button>
+                    )}
+                  </div>
+                )}
+
               {/* Pagination */}
-              {businessData && (
-                <div className="p-4 sm:p-6 pt-4">
+              {businessData && businessData.businesses.length > 0 && (
+                <div className="p-2 border-t">
                   <Pagination
                     currentPage={businessData.pagination.page}
                     totalPages={businessData.pagination.totalPages}
@@ -3198,163 +3580,437 @@ function useDebounce<T>(value: T, delay: number): T {
       case "professionals":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900 ">
-                Professionals
+            {/* Data Fetching Status */}
+            {dataFetchError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <span className="text-red-600 font-medium">
+                      Data Fetching Error
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        fetchData();
+                        fetchProfessionals();
+                      }}
+                      className="rounded-xl"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Professionals
               </h1>
-              <p className="text-md text-gray-600">
-                Manage and monitor your professionals from this dashboard
-                section.
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all registered professionals
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Button
-                    onClick={() => {
-                      setRightPanelContent("add-professional");
-                      setShowRightPanel(true);
-                    }}
-                    className="bg-black hover:bg-gray-800 text-white rounded-2xl"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                  </Button>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
-                      <SelectValue placeholder="Filter by Status: Active" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        All ({professionals.length})
-                      </SelectItem>
-                      <SelectItem value="active">
-                        Active ({professionals.filter((p) => p.isActive).length}
-                        )
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        Inactive (
-                        {professionals.filter((p) => !p.isActive).length})
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="rounded-2xl">
-                    <Download className="h-4 bg-white w-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
 
-                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader className="bg-amber-100">
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Professional Name
-                        </TableHead>
-                        <TableHead className="text-gray-900">Email</TableHead>
-                        <TableHead className="text-gray-900">
-                          Headline
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Location
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {professionals
-                        .filter((professional) => {
-                          const matchesSearch =
-                            professional.name
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase()) ||
-                            professional.admin?.email
-                              ?.toLowerCase()
-                              .includes(searchTerm.toLowerCase()) ||
-                            professional.professionalHeadline
-                              ?.toLowerCase()
-                              .includes(searchTerm.toLowerCase());
-                          const matchesStatus =
-                            filterStatus === "all" ||
-                            (filterStatus === "active" &&
-                              professional.isActive) ||
-                            (filterStatus === "inactive" &&
-                              !professional.isActive);
-                          return matchesSearch && matchesStatus;
-                        })
-                        .map((professional) => (
-                          <TableRow key={professional.id}>
-                            <TableCell className="text-gray-900 font-medium">
-                              {professional.name}
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
+              <div className="flex gap-2">
+                {/* Status Filter - With text on desktop */}
+                <Select
+                  value={professionalQuery.status}
+                  onValueChange={(value) => {
+                    setProfessionalQuery((prev) => ({
+                      ...prev,
+                      status: value,
+                      page: 1,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      All ({professionalData?.pagination.totalItems || professionals.length})
+                    </SelectItem>
+                    <SelectItem value="active">
+                      Active ({professionals.filter((p) => p.isActive).length})
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      Inactive ({professionals.filter((p) => !p.isActive).length})
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Export Button - With text on desktop */}
+                <Button
+                  variant="outline"
+                  onClick={handleProfessionalExport}
+                  disabled={professionalExportLoading}
+                  className="rounded-xl border-gray-200"
+                >
+                  {professionalExportLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 text-gray-500 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {professionalExportLoading ? 'Exporting...' : 'Export'}
+                  </span>
+                  <span className="sm:hidden">
+                    {professionalExportLoading ? '...' : ''}
+                  </span>
+                </Button>
+
+                {/* Add New Button - With text on desktop */}
+                <Button
+                  onClick={() => {
+                    setRightPanelContent("add-professional");
+                    setShowRightPanel(true);
+                  }}
+                  disabled={addProfessionalLoading}
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                >
+                  {addProfessionalLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {addProfessionalLoading ? 'Opening...' : 'Add Professional'}
+                  </span>
+                  <span className="sm:hidden">
+                    {addProfessionalLoading ? '...' : 'Add'}
+                  </span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar - Full width */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search professionals..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300 "
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedProfessionalIds.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedProfessionalIds.size}
+                  totalCount={
+                    professionalData?.pagination.totalItems ||
+                    professionals.length
+                  }
+                  onSelectAll={handleSelectAllProfessionals}
+                  onDeselectAll={handleDeselectAllProfessionals}
+                  onBulkActivate={handleProfessionalBulkActivate}
+                  onBulkDeactivate={handleProfessionalBulkDeactivate}
+                  onBulkDelete={handleProfessionalBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="w-12 text-white font-medium">
+                        <Checkbox
+                          checked={
+                            professionalData?.professionals.every((p) =>
+                              selectedProfessionalIds.has(p.id),
+                            ) || false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) handleSelectAllProfessionals();
+                            else handleDeselectAllProfessionals();
+                          }}
+                          className="border-gray-400"
+                        />
+                      </TableHead>
+                      <TableHead className="w-14 text-white font-medium">
+                        SN.
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('name')}>
+                        <div className="flex items-center gap-1">
+                          Professional {getProfessionalSortIcon('name')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('email')}>
+                        <div className="flex items-center gap-1">
+                          Email {getProfessionalSortIcon('email')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('professionalHeadline')}>
+                        <div className="flex items-center gap-1">
+                          Headline {getProfessionalSortIcon('professionalHeadline')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Location
+                      </TableHead>
+                      <TableHead className="text-center text-white font-medium">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('createdAt')}>
+                        <div className="flex items-center gap-1">
+                          Date {getProfessionalSortIcon('createdAt')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {professionalLoading
+                      ? // Loading skeleton
+                        Array.from({ length: professionalQuery.limit }).map(
+                          (_, i) => (
+                            <TableRow key={i}>
+                              <TableCell>
+                                <Skeleton className="h-4 w-4" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-8" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Skeleton className="h-10 w-10 rounded-full" />
+                                  <Skeleton className="h-4 w-32" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-40" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-32" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-24" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center">
+                                  <Skeleton className="h-6 w-16 rounded-full" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-20" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-end space-x-2">
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )
+                      : professionalData?.professionals.map((professional, index) => (
+                          <TableRow
+                            key={professional.id}
+                            className="hover:bg-gray-50"
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedProfessionalIds.has(professional.id)}
+                                onCheckedChange={() =>
+                                  handleSelectProfessional(professional.id)
+                                }
+                                className="border-gray-400"
+                              />
                             </TableCell>
-                            <TableCell className="text-gray-900">
+                            <TableCell className="text-gray-500 font-medium">
+                              {(professionalData.pagination.page - 1) *
+                                professionalData.pagination.limit +
+                                index +
+                                1}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {professional.profilePicture ? (
+                                  <img
+                                    src={professional.profilePicture}
+                                    alt={`${professional.name} profile`}
+                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                    <User className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
+                                  {professional.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600 truncate">
                               {professional.email || "N/A"}
                             </TableCell>
-                            <TableCell className="text-gray-900 max-w-xs truncate">
-                              {professional.professionalHeadline ||
-                                "No headline"}
+                            <TableCell className="text-gray-600 truncate max-w-[150px]">
+                              {professional.professionalHeadline || "No headline"}
                             </TableCell>
-                            <TableCell className="text-gray-900">
-                              {professional.location || "Not specified"}
+                            <TableCell className="text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3 text-gray-400" />
+                                {professional.location || "Not specified"}
+                              </div>
                             </TableCell>
                             <TableCell>
-                              <Badge
-                                variant={
+                              <div
+                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${
                                   professional.isActive
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className="rounded-full"
+                                    ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                    : "bg-red-500/10 border-red-500/30 text-red-600"
+                                }`}
                               >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    professional.isActive
+                                      ? "bg-lime-500"
+                                      : "bg-red-500"
+                                  }`}
+                                ></span>
                                 {professional.isActive ? "Active" : "Inactive"}
-                              </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {new Date(professional.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex space-x-2">
+                              <div className="flex justify-end space-x-1">
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
+                                  variant="ghost"
+                                  className={`h-8 w-8 p-0 rounded-lg ${
+                                    professional.isActive
+                                      ? "hover:bg-orange-50"
+                                      : "hover:bg-green-50"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleToggleProfessionalStatus(e, professional);
+                                  }}
+                                  disabled={professionalToggleLoading === professional.id}
+                                  title={professional.isActive ? "Deactivate Professional" : "Activate Professional"}
+                                >
+                                  {professionalToggleLoading === professional.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <Power className={`h-4 w-4 ${
+                                      professional.isActive
+                                        ? "text-orange-500"
+                                        : "text-green-500"
+                                    }`} />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
                                   onClick={() =>
                                     window.open(
                                       `/pcard/${professional.slug}`,
                                       "_blank",
                                     )
                                   }
+                                  title="View Profile"
                                 >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleEditProfessional(professional)
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
+                                  <Eye className="h-4 w-4 text-gray-500" />
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="destructive"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleDeleteProfessional(professional.id)
-                                  }
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                  onClick={() => handleEditProfessional(professional)}
+                                  title="Edit Professional"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Edit className="h-4 w-4 text-gray-500" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                                  onClick={() => handleDeleteProfessional(professional)}
+                                  title="Delete Professional"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                  </TableBody>
+                </Table>
               </div>
+
+              {/* Empty State */}
+              {!professionalLoading &&
+                (!professionalData?.professionals ||
+                  professionalData.professionals.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <User className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No professionals found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || professionalQuery.status !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Get started by adding your first professional"}
+                    </p>
+                    {!searchTerm && professionalQuery.status === "all" && (
+                      <Button
+                        onClick={() => {
+                          setRightPanelContent("add-professional");
+                          setShowRightPanel(true);
+                        }}
+                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Professional
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+              {/* Pagination */}
+              {professionalData && professionalData.professionals.length > 0 && (
+                <div className="p-2 border-t">
+                  <Pagination
+                    currentPage={professionalData.pagination.page}
+                    totalPages={professionalData.pagination.totalPages}
+                    totalItems={professionalData.pagination.totalItems}
+                    itemsPerPage={professionalData.pagination.limit}
+                    onPageChange={handleProfessionalPageChange}
+                    onItemsPerPageChange={handleProfessionalLimitChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -4946,6 +5602,62 @@ const renderRightPanel = () => {
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete {selectedBusinessIds.size} Businesses
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Business Confirmation Dialog */}
+      <Dialog open={showDeleteBusinessDialog} onOpenChange={setShowDeleteBusinessDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Business
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteBusiness?.name}"? This action cannot be undone and will permanently remove the business and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Business account and listing</li>
+              <li>Associated admin user</li>
+              <li>All business products and inquiries</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteBusinessDialog(false);
+                setDeleteBusiness(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteBusiness}
+              disabled={deletingBusiness}
+              className="rounded-2xl"
+            >
+              {deletingBusiness ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Business
                 </>
               )}
             </Button>

@@ -76,13 +76,14 @@ export function Pagination({
   }
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
+    <div className={`flex flex-row items-center  justify-between gap-4 ${className}`}>
       {/* Items per page selector */}
       {onItemsPerPageChange && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span>Show</span>
           <select
             value={itemsPerPage}
+            
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
             className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
           >
@@ -96,18 +97,18 @@ export function Pagination({
       )}
 
       {/* Pagination info */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm hidden sm:flex text-gray-600">
         Showing {startItem} to {endItem} of {totalItems} entries
       </div>
 
       {/* Page navigation */}
       <div className="flex items-center gap-1">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="rounded-lg"
+          className="rounded-lg bg-none"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="hidden sm:inline ml-1">Previous</span>
@@ -123,12 +124,12 @@ export function Pagination({
                 </span>
               ) : (
                 <Button
-                  variant={currentPage === page ? "default" : "outline"}
+                  variant={currentPage === page ? "ghost" : "outline"}
                   size="sm"
                   onClick={() => onPageChange(page as number)}
                   className={`w-8 h-8 p-0 rounded-lg ${
                     currentPage === page
-                      ? "bg-black text-white hover:bg-gray-800"
+                      ? "border-2 text-gray-800 bg-none"
                       : ""
                   }`}
                 >
@@ -140,7 +141,7 @@ export function Pagination({
         </div>
 
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}

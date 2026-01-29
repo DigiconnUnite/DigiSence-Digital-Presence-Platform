@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
+import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -159,6 +160,8 @@ export async function GET(request: NextRequest) {
         status,
         categoryId,
       }
+    }, {
+      headers: getNoStoreHeaders(),
     })
   } catch (error) {
     console.error('Businesses fetch error:', error)
@@ -266,6 +269,11 @@ export async function POST(request: NextRequest) {
       loginCredentials: {
         email: createData.email,
         password: createData.password,
+      },
+    }, {
+      headers: {
+        ...getNoStoreHeaders(),
+        ...getInvalidationHeaders('create'),
       },
     })
   } catch (error) {

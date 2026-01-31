@@ -331,3 +331,40 @@ model PasswordReset {
 
   @@map("password_resets")
 }
+
+model AuditLog {
+  id          String      @id @default(cuid()) @map("_id")
+  action      AuditAction
+  entityType  String
+  entityId    String
+  userId      String
+  userEmail   String?
+  userName    String?
+  oldData     Json?
+  newData     Json?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+  BULK_DELETE
+  DUPLICATE
+  STATUS_CHANGE
+  PASSWORD_CHANGE
+}

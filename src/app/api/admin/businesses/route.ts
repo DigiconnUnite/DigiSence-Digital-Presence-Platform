@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
+import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -73,7 +74,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    
+    // Pagination params
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
+    
+    // Search params
+    const search = searchParams.get('search') || ''
+    
+    // Sort params
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
+    
+    // Filter params
+    const status = searchParams.get('status') || 'all'
+    const categoryId = searchParams.get('categoryId') || ''
+
+    // Build where clause
+    const where: any = {}
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+        { admin: { email: { contains: search, mode: 'insensitive' } } },
+      ]
+    }
+    
+    if (status !== 'all') {
+      where.isActive = status === 'active'
+    }
+    
+    if (categoryId) {
+      where.categoryId = categoryId
+    }
+
+    // Get total count for pagination
+    const total = await db.business.count({ where })
+    
+    // Get businesses with pagination and sorting
     const businesses = await db.business.findMany({
+      where,
       include: {
         admin: {
           select: {
@@ -95,13 +138,31 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [sortBy]: sortOrder },
+      skip: (page - 1) * limit,
+      take: limit,
     })
 
-    console.log('Admin API returning businesses:', businesses.length)
-    console.log('Businesses data:', businesses.map(b => ({ id: b.id, name: b.name, isActive: b.isActive })))
+    console.log('Admin API returning businesses:', businesses.length, 'of', total)
 
-    return NextResponse.json({ businesses })
+    return NextResponse.json({
+      businesses,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      filters: {
+        search,
+        sortBy,
+        sortOrder,
+        status,
+        categoryId,
+      }
+    }, {
+      headers: getNoStoreHeaders(),
+    })
   } catch (error) {
     console.error('Businesses fetch error:', error)
     return NextResponse.json(
@@ -209,6 +270,11 @@ export async function POST(request: NextRequest) {
         email: createData.email,
         password: createData.password,
       },
+    }, {
+      headers: {
+        ...getNoStoreHeaders(),
+        ...getInvalidationHeaders('create'),
+      },
     })
   } catch (error) {
     console.error('Business creation error:', error)
@@ -315,6 +381,95 @@ export async function PUT(
     })
   } catch (error) {
     console.error('Business toggle error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Bulk actions endpoints
+const bulkStatusSchema = z.object({
+  businessIds: z.array(z.string()).min(1),
+  isActive: z.boolean(),
+})
+
+const bulkDeleteSchema = z.object({
+  businessIds: z.array(z.string()).min(1),
+})
+
+// PATCH /api/admin/businesses/bulk/status - Bulk update status
+export async function PATCH(request: NextRequest) {
+  try {
+    const admin = await getSuperAdmin(request)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    
+    // Check if it's a bulk action or single status update
+    if (body.businessIds && Array.isArray(body.businessIds)) {
+      // Bulk operation
+      const parseResult = bulkStatusSchema.safeParse(body)
+      if (!parseResult.success) {
+        return NextResponse.json({ error: 'Invalid request data' }, { status: 400 })
+      }
+
+      const { businessIds, isActive } = parseResult.data
+
+      // Update all businesses
+      await db.business.updateMany({
+        where: { id: { in: businessIds } },
+        data: { isActive },
+      })
+
+      // Emit Socket.IO event for real-time update
+      if (global.io) {
+        global.io.emit('business-status-updated', {
+          businessIds,
+          isActive,
+          action: 'bulk-status-update',
+          timestamp: new Date().toISOString(),
+          adminId: admin.userId
+        })
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Updated ${businessIds.length} businesses`,
+        updatedCount: businessIds.length,
+      })
+    } else {
+      // Single status update (backward compatible)
+      const { id, isActive } = body
+      if (!id) {
+        return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+      }
+
+      const business = await db.business.update({
+        where: { id },
+        data: { isActive },
+        include: {
+          admin: { select: { id: true, email: true, name: true } },
+          category: { select: { id: true, name: true } },
+          _count: { select: { products: true, inquiries: true } },
+        },
+      })
+
+      if (global.io) {
+        global.io.emit('business-status-updated', {
+          business,
+          action: 'status-update',
+          timestamp: new Date().toISOString(),
+          adminId: admin.userId
+        })
+      }
+
+      return NextResponse.json({ success: true, business })
+    }
+  } catch (error) {
+    console.error('Bulk status update error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

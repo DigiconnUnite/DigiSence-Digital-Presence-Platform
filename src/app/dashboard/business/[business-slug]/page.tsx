@@ -1088,7 +1088,8 @@ export default function BusinessAdminDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen flex flex-col relative">
-        <div className="fixed inset-0 bg-linear-to-b from-blue-400 to-white bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -1147,7 +1148,9 @@ export default function BusinessAdminDashboard() {
           )}
 
           {/* Middle Content */}
-          <div className={`flex-1  bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}>
+          <div
+            className={`flex-1  bg-white/50 backdrop-blur-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 ease-in-out pb-20 md:pb-0`}
+          >
             <div className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
               {renderSkeletonContent()}
             </div>
@@ -1159,7 +1162,10 @@ export default function BusinessAdminDashboard() {
           <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl border-t border-gray-200 z-40">
             <div className="flex justify-around items-center py-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex flex-col items-center justify-center py-2 px-3 rounded-xl">
+                <div
+                  key={i}
+                  className="flex flex-col items-center justify-center py-2 px-3 rounded-xl"
+                >
                   <Skeleton className="h-5 w-5 mb-1" />
                   <Skeleton className="h-3 w-12" />
                 </div>
@@ -1168,7 +1174,7 @@ export default function BusinessAdminDashboard() {
           </div>
         )}
       </div>
-    )
+    );
   }
 
   if (!user || user.role !== 'BUSINESS_ADMIN' || !business) {
@@ -1240,7 +1246,8 @@ export default function BusinessAdminDashboard() {
 
   return (
     <div className="min-h-screen flex h-screen  relative">
-      <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+      <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+      <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden">
@@ -1323,7 +1330,6 @@ export default function BusinessAdminDashboard() {
                         business.
                       </p>
                     </div>
-                    
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

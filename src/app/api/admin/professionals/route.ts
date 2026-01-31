@@ -4,6 +4,7 @@ import { hashPassword } from '@/lib/auth'
 import type { UserRole } from '@/lib/auth'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
+import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 
 const createProfessionalSchema = z.object({
   name: z.string().min(2),
@@ -35,7 +36,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const search = searchParams.get('search') || ''
+    const status = searchParams.get('status') || 'all'
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
+
+    const skip = (page - 1) * limit
+
+    // Build where clause
+    const whereClause: any = {}
+    
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { professionalHeadline: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    
+    if (status === 'active') {
+      whereClause.isActive = true
+    } else if (status === 'inactive') {
+      whereClause.isActive = false
+    }
+
+    // Get total count
+    const totalItems = await db.professional.count({ where: whereClause })
+    const totalPages = Math.ceil(totalItems / limit)
+
+    // Get paginated professionals
     const professionals = await db.professional.findMany({
+      where: whereClause,
       include: {
         admin: {
           select: {
@@ -44,14 +79,30 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        _count: {
+          select: {
+            inquiries: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
     })
 
-    console.log('Admin API returning professionals:', professionals.length)
-    console.log('Professionals data:', professionals.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })))
+    console.log('Admin API returning professionals:', professionals.length, 'page:', page, 'total:', totalItems)
 
-    return NextResponse.json({ professionals })
+    return NextResponse.json({
+      professionals,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+      }
+    }, {
+      headers: getNoStoreHeaders(),
+    })
   } catch (error) {
     console.error('Professionals fetch error:', error)
     return NextResponse.json(
@@ -170,7 +221,13 @@ export async function POST(request: NextRequest) {
         isActive: professional.isActive,
         createdAt: professional.createdAt,
       },
-    }, { status: 201 })
+    }, {
+      status: 201,
+      headers: {
+        ...getNoStoreHeaders(),
+        ...getInvalidationHeaders('create'),
+      },
+    })
   } catch (error) {
     console.error('Professional creation error:', error)
     console.error('Error stack:', (error as any).stack)

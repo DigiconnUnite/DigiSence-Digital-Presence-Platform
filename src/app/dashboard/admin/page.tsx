@@ -4,7 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useSocket } from "@/hooks/useSocket";
+import { useSocket } from "@/lib/hooks/useSocket";
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateCategories } from '@/lib/cacheInvalidation';
 import {
   Card,
   CardContent,
@@ -44,11 +46,13 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogFooter } from "@/components/ui/dialog";
+import { UnifiedModal } from "@/components/ui/UnifiedModal";
 
 import {
   Plus,
   Edit,
   Trash2,
+  Copy,
   Eye,
   EyeOff,
   Bell,
@@ -82,14 +86,30 @@ import {
   GraduationCap,
   Award,
   Wrench,
+  Zap,
   Image,
   Facebook,
   Twitter,
   Instagram,
   Linkedin,
+  Phone,
+  Globe,
+  MapPin,
+  Type,
+  Hash,
+  Lock,
+  UserPlus,
+  Filter,
+  CheckCircle,
+  Power,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
+import { Pagination, BulkActionsToolbar } from "@/components/ui/pagination";
 import SharedSidebar from "../components/SharedSidebar";
 import Link from "next/link";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { AdminTable } from "@/components/admin/AdminTable";
 
 interface Business {
   id: string;
@@ -116,6 +136,36 @@ interface Business {
   _count: {
     products: number;
     inquiries: number;
+  };
+}
+
+// Pagination, Sorting, and Selection State for Businesses
+interface BusinessQueryParams {
+  page: number;
+  limit: number;
+  search: string;
+  status: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
+interface BusinessApiResponse {
+  businesses: Business[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
+interface ProfessionalApiResponse {
+  professionals: Professional[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -177,6 +227,7 @@ export default function SuperAdminDashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -220,6 +271,8 @@ export default function SuperAdminDashboard() {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([]);
   const [deleteBusiness, setDeleteBusiness] = useState<Business | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showDeleteBusinessDialog, setShowDeleteBusinessDialog] = useState(false);
+  const [deletingBusiness, setDeletingBusiness] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -233,6 +286,29 @@ export default function SuperAdminDashboard() {
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // Business management state
+  const [businessQuery, setBusinessQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [businessData, setBusinessData] = useState<BusinessApiResponse | null>(null);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [addBusinessLoading, setAddBusinessLoading] = useState(false);
+  const [editBusinessLoading, setEditBusinessLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState<string | null>(null);
+  
+  // Debounce search term
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  
+  // Professional form state
 
   // Professional form state
   const [professionalWorkExperience, setProfessionalWorkExperience] = useState<
@@ -248,8 +324,219 @@ export default function SuperAdminDashboard() {
     instagram: "",
     linkedin: "",
   });
+  
+  // Professional management state with pagination and selection
+  const [professionalQuery, setProfessionalQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [professionalData, setProfessionalData] = useState<ProfessionalApiResponse | null>(null);
+  const [professionalLoading, setProfessionalLoading] = useState(false);
+  const [selectedProfessionalIds, setSelectedProfessionalIds] = useState<Set<string>>(new Set());
+  const [professionalBulkActionLoading, setProfessionalBulkActionLoading] = useState(false);
+  const [professionalExportLoading, setProfessionalExportLoading] = useState(false);
+  const [addProfessionalLoading, setAddProfessionalLoading] = useState(false);
+  const [editProfessionalLoading, setEditProfessionalLoading] = useState(false);
+  const [professionalToggleLoading, setProfessionalToggleLoading] = useState<string | null>(null);
+  const [showProfessionalBulkDeleteDialog, setShowProfessionalBulkDeleteDialog] = useState(false);
+  const [deletingProfessional, setDeletingProfessional] = useState(false);
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  const [showDeleteProfessionalDialog, setShowDeleteProfessionalDialog] = useState(false);
+  const [professionalSortBy, setProfessionalSortBy] = useState('createdAt');
+  const [professionalSortOrder, setProfessionalSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Inquiries management state
+  const [inquiryToDelete, setInquiryToDelete] = useState<any>(null);
+  const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
+  const [selectedInquiries, setSelectedInquiries] = useState<Set<string>>(new Set());
+  const [inquiryQuery, setInquiryQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [inquiryPagination, setInquiryPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
 
-  // Responsive design hook
+  // Registration management state
+  const [selectedRegistrations, setSelectedRegistrations] = useState<Set<string>>(new Set());
+  const [registrationQuery, setRegistrationQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [registrationPagination, setRegistrationPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+
+  // Business Listing management state
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [categoryQuery, setCategoryQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [categoryPagination, setCategoryPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
+  
+  // Reject inquiry dialog state
+  const [showRejectInquiryDialog, setShowRejectInquiryDialog] = useState(false);
+  const [inquiryToReject, setInquiryToReject] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  
+  const [businessListingQuery, setBusinessListingQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [businessListingPagination, setBusinessListingPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+  const [selectedBusinessListings, setSelectedBusinessListings] = useState<Set<string>>(new Set());
+
+  // Handle view inquiry
+  const handleViewInquiry = (inquiry: any) => {
+    console.log('View inquiry:', inquiry);
+    // Could open a modal or navigate to detail view
+    toast({
+      title: 'Inquiry Details',
+      description: `From: ${inquiry.name} (${inquiry.email})`,
+    });
+  };
+
+  // Handle reply inquiry
+  const handleReplyInquiry = (inquiry: any) => {
+    console.log('Reply to inquiry:', inquiry);
+    // Could open email composer
+    toast({
+      title: 'Reply to Inquiry',
+      description: `Opening email client for ${inquiry.email}`,
+    });
+  };
+
+  // Handle delete inquiry with dialog
+  const handleDeleteInquiry = useCallback((inquiry: any) => {
+    setInquiryToDelete(inquiry);
+    setShowDeleteInquiryDialog(true);
+  }, []);
+
+  // Confirm delete inquiry
+  const confirmDeleteInquiry = useCallback(() => {
+    if (!inquiryToDelete) return;
+    setInquiries(prev => prev.filter(i => i.id !== inquiryToDelete.id));
+    setShowDeleteInquiryDialog(false);
+    setInquiryToDelete(null);
+    toast({
+      title: 'Inquiry Deleted',
+      description: 'The inquiry has been removed.',
+    });
+  }, [inquiryToDelete, toast]);
+
+  // Inquiry bulk action handlers
+  const handleSelectAllInquiries = () => {
+    setSelectedInquiries(new Set(inquiries.map(i => i.id)));
+  };
+
+  const handleDeselectAllInquiries = () => {
+    setSelectedInquiries(new Set());
+  };
+
+  const handleInquiryBulkActivate = async () => {
+    if (selectedInquiries.size === 0) return;
+    const ids = Array.from(selectedInquiries);
+    try {
+      await Promise.all(ids.map(async (id) => {
+        await fetch(`/api/inquiries/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'REPLIED' }),
+        });
+      }));
+      setInquiries(prev => prev.map(i => 
+        selectedInquiries.has(i.id) ? { ...i, status: 'REPLIED' } : i
+      ));
+      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as REPLIED` });
+      setSelectedInquiries(new Set());
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
+    }
+  };
+
+  const handleInquiryBulkSuspend = async () => {
+    if (selectedInquiries.size === 0) return;
+    const ids = Array.from(selectedInquiries);
+    try {
+      await Promise.all(ids.map(async (id) => {
+        await fetch(`/api/inquiries/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'PENDING' }),
+        });
+      }));
+      setInquiries(prev => prev.map(i => 
+        selectedInquiries.has(i.id) ? { ...i, status: 'PENDING' } : i
+      ));
+      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as PENDING` });
+      setSelectedInquiries(new Set());
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
+    }
+  };
+
+  const handleInquiryBulkDelete = () => {
+    if (selectedInquiries.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+
+  // Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
+
+// Responsive design hook
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -275,6 +562,15 @@ export default function SuperAdminDashboard() {
     const handleBusinessCreated = (data: any) => {
       console.log('Business created via Socket.IO:', data);
       setBusinesses(prev => [data.business, ...prev]);
+      // Also update businessData if it exists
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: [data.business, ...prev.businesses],
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems + 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalBusinesses: prev.totalBusinesses + 1,
@@ -288,9 +584,16 @@ export default function SuperAdminDashboard() {
 
     const handleBusinessUpdated = (data: any) => {
       console.log('Business updated via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
       ));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.map(biz =>
+          biz.id === data.business.id ? { ...biz, ...data.business } : biz
+        )
+      } : null);
       toast({
         title: "Business Updated",
         description: `${data.business.name} has been updated.`,
@@ -299,7 +602,16 @@ export default function SuperAdminDashboard() {
 
     const handleBusinessDeleted = (data: any) => {
       console.log('Business deleted via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.filter(biz => biz.id !== data.businessId));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.filter(biz => biz.id !== data.businessId),
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems - 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalBusinesses: prev.totalBusinesses - 1,
@@ -314,9 +626,16 @@ export default function SuperAdminDashboard() {
 
     const handleBusinessStatusUpdated = (data: any) => {
       console.log('Business status updated via Socket.IO:', data);
+      // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
       ));
+      setBusinessData(prev => prev ? {
+        ...prev,
+        businesses: prev.businesses.map(biz =>
+          biz.id === data.business.id ? { ...biz, ...data.business } : biz
+        )
+      } : null);
       setStats(prev => ({
         ...prev,
         activeBusinesses: data.business.isActive
@@ -332,6 +651,15 @@ export default function SuperAdminDashboard() {
     const handleProfessionalCreated = (data: any) => {
       console.log('Professional created via Socket.IO:', data);
       setProfessionals(prev => [data.professional, ...prev]);
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: [data.professional, ...prev.professionals],
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems + 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalProfessionals: prev.totalProfessionals + 1,
@@ -347,6 +675,13 @@ export default function SuperAdminDashboard() {
       setProfessionals(prev => prev.map(pro =>
         pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
       ));
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.map(pro =>
+          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+        )
+      } : null);
       toast({
         title: "Professional Updated",
         description: `${data.professional.name} has been updated.`,
@@ -356,6 +691,15 @@ export default function SuperAdminDashboard() {
     const handleProfessionalDeleted = (data: any) => {
       console.log('Professional deleted via Socket.IO:', data);
       setProfessionals(prev => prev.filter(pro => pro.id !== data.professionalId));
+      // Also update professionalData if it exists
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.filter(pro => pro.id !== data.professionalId),
+        pagination: {
+          ...prev.pagination,
+          totalItems: prev.pagination.totalItems - 1
+        }
+      } : null);
       setStats(prev => ({
         ...prev,
         totalProfessionals: prev.totalProfessionals - 1,
@@ -367,6 +711,57 @@ export default function SuperAdminDashboard() {
       });
     };
 
+    const handleProfessionalStatusUpdated = (data: any) => {
+      console.log('Professional status updated via Socket.IO:', data);
+      setProfessionals(prev => prev.map(pro =>
+        pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+      ));
+      setProfessionalData(prev => prev ? {
+        ...prev,
+        professionals: prev.professionals.map(pro =>
+          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
+        )
+      } : null);
+      setStats(prev => ({
+        ...prev,
+        activeProfessionals: data.professional.isActive
+          ? prev.activeProfessionals + 1
+          : prev.activeProfessionals - 1,
+      }));
+      toast({
+        title: "Professional Status Updated",
+        description: `${data.professional.name} is now ${data.professional.isActive ? 'active' : 'inactive'}.`,
+      });
+    };
+
+    const handleRegistrationInquiryUpdated = (data: any) => {
+      console.log('Registration inquiry updated via Socket.IO:', data);
+      setRegistrationInquiries(prev => prev.map(inquiry =>
+        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
+      ));
+      toast({
+        title: "Registration Inquiry Updated",
+        description: `Request from ${data.inquiry.name} has been updated.`,
+      });
+    };
+
+    const handleRegistrationInquiryStatusUpdated = (data: any) => {
+      console.log('Registration inquiry status updated via Socket.IO:', data);
+      setRegistrationInquiries(prev => prev.map(inquiry =>
+        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
+      ));
+      setStats(prev => ({
+        ...prev,
+        totalInquiries: data.inquiry.status === 'PENDING' 
+          ? prev.totalInquiries + 1 
+          : Math.max(0, prev.totalInquiries - 1),
+      }));
+      toast({
+        title: "Registration Request Status Updated",
+        description: `${data.inquiry.name}'s request is now ${data.inquiry.status}.`,
+      });
+    };
+
     // Register event listeners
     socket.on('business-created', handleBusinessCreated);
     socket.on('business-updated', handleBusinessUpdated);
@@ -375,6 +770,9 @@ export default function SuperAdminDashboard() {
     socket.on('professional-created', handleProfessionalCreated);
     socket.on('professional-updated', handleProfessionalUpdated);
     socket.on('professional-deleted', handleProfessionalDeleted);
+    socket.on('professional-status-updated', handleProfessionalStatusUpdated);
+    socket.on('registration-inquiry-updated', handleRegistrationInquiryUpdated);
+    socket.on('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
 
     // Cleanup listeners on unmount
     return () => {
@@ -385,6 +783,9 @@ export default function SuperAdminDashboard() {
       socket.off('professional-created', handleProfessionalCreated);
       socket.off('professional-updated', handleProfessionalUpdated);
       socket.off('professional-deleted', handleProfessionalDeleted);
+      socket.off('professional-status-updated', handleProfessionalStatusUpdated);
+      socket.off('registration-inquiry-updated', handleRegistrationInquiryUpdated);
+      socket.off('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
     };
   }, [socket, isConnected, toast]);
 
@@ -405,7 +806,7 @@ export default function SuperAdminDashboard() {
     }
   }, [user, loading, router]);
 
-  // Memoized filtered data
+  // Memoized filtered data (for backwards compatibility)
   const filteredBusinesses = useMemo(() => {
     return businesses.filter((business) => {
       const matchesSearch =
@@ -441,80 +842,560 @@ export default function SuperAdminDashboard() {
   }, [filteredBusinesses]);
 
 
-  // Data fetching function
+  // Fetch businesses with pagination, search, and sorting
+  const fetchBusinesses = useCallback(async () => {
+    setBusinessLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: businessQuery.page.toString(),
+        limit: businessQuery.limit.toString(),
+        search: businessQuery.search,
+        status: businessQuery.status,
+        sortBy: businessQuery.sortBy,
+        sortOrder: businessQuery.sortOrder,
+      });
+      
+      const response = await fetch(`/api/admin/businesses?${params}`);
+      if (response.ok) {
+        const data: BusinessApiResponse = await response.json();
+        setBusinessData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch businesses:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch businesses',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusinessLoading(false);
+    }
+  }, [businessQuery, toast]);
+  
+  // Fetch businesses when query changes
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
+  
+  // Update query when debounced search changes
+  useEffect(() => {
+    setBusinessQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
+
+  // Handle sort change
+  const handleSort = (column: string) => {
+    setBusinessQuery(prev => ({
+      ...prev,
+      sortBy: column,
+      sortOrder: prev.sortBy === column && prev.sortOrder === 'desc' ? 'asc' : 'desc',
+      page: 1,
+    }));
+  };
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setBusinessQuery(prev => ({ ...prev, page }));
+  };
+  
+  // Handle items per page change
+  const handleLimitChange = (limit: number) => {
+    setBusinessQuery(prev => ({ ...prev, limit, page: 1 }));
+  };
+  
+  // Handle selection
+  const handleSelectBusiness = (businessId: string) => {
+    setSelectedBusinessIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(businessId)) {
+        newSet.delete(businessId);
+      } else {
+        newSet.add(businessId);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSelectAll = () => {
+    if (businessData?.businesses) {
+      const allIds = businessData.businesses.map(b => b.id);
+      setSelectedBusinessIds(new Set(allIds));
+    }
+  };
+  
+  const handleDeselectAll = () => {
+    setSelectedBusinessIds(new Set());
+  };
+  
+  // Bulk actions
+  const handleBulkActivate = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: true }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses activated` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to activate businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  const handleBulkDeactivate = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: false }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses suspended` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to suspend businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  const handleBulkDelete = async () => {
+    if (selectedBusinessIds.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+  
+  const confirmBulkDelete = async () => {
+    setBulkActionLoading(true);
+    setShowBulkDeleteDialog(false);
+    try {
+      const response = await fetch('/api/admin/businesses/bulk/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedBusinessIds) }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses deleted` });
+        setSelectedBusinessIds(new Set());
+        fetchBusinesses();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete businesses', variant: 'destructive' });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+  
+  // Export to CSV
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      const response = await fetch('/api/admin/businesses/export?format=csv');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Success', description: 'Businesses exported successfully' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to export businesses', variant: 'destructive' });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+  
+  // Get sort icon
+  const getSortIcon = (column: string) => {
+    if (businessQuery.sortBy !== column) return <div className="w-4 h-4 opacity-30">↕</div>;
+    return businessQuery.sortOrder === 'asc' ? 
+      <div className="w-4 h-4">↑</div> : 
+      <div className="w-4 h-4">↓</div>;
+  };
+
+  // Get professional sort icon
+  const getProfessionalSortIcon = (column: string) => {
+    if (professionalSortBy !== column) return <div className="w-4 h-4 opacity-30">↕</div>;
+    return professionalSortOrder === 'asc' ? 
+      <div className="w-4 h-4">↑</div> : 
+      <div className="w-4 h-4">↓</div>;
+  };
+
+  // Fetch professionals with pagination, search, and sorting
+  const fetchProfessionals = useCallback(async () => {
+    setProfessionalLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: professionalQuery.page.toString(),
+        limit: professionalQuery.limit.toString(),
+        search: professionalQuery.search,
+        status: professionalQuery.status,
+        sortBy: professionalSortBy,
+        sortOrder: professionalSortOrder,
+      });
+      
+      const response = await fetch(`/api/admin/professionals?${params}`);
+      if (response.ok) {
+        const data: ProfessionalApiResponse = await response.json();
+        setProfessionalData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch professionals:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch professionals',
+        variant: 'destructive',
+      });
+    } finally {
+      setProfessionalLoading(false);
+    }
+  }, [professionalQuery, professionalSortBy, professionalSortOrder, toast]);
+  
+  // Fetch professionals when query changes
+  useEffect(() => {
+    if (currentView === 'professionals') {
+      fetchProfessionals();
+    }
+  }, [fetchProfessionals, currentView]);
+  
+  // Update professional query when debounced search changes
+  useEffect(() => {
+    setProfessionalQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
+
+  // Handle professional sort change
+  const handleProfessionalSort = (column: string) => {
+    if (professionalSortBy === column) {
+      setProfessionalSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setProfessionalSortBy(column);
+      setProfessionalSortOrder('desc');
+    }
+    setProfessionalQuery(prev => ({ ...prev, page: 1 }));
+  };
+  
+  // Handle professional page change
+  const handleProfessionalPageChange = (page: number) => {
+    setProfessionalQuery(prev => ({ ...prev, page }));
+  };
+  
+  // Handle professional items per page change
+  const handleProfessionalLimitChange = (limit: number) => {
+    setProfessionalQuery(prev => ({ ...prev, limit, page: 1 }));
+  };
+  
+  // Handle professional selection
+  const handleSelectProfessional = (professionalId: string) => {
+    setSelectedProfessionalIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(professionalId)) {
+        newSet.delete(professionalId);
+      } else {
+        newSet.add(professionalId);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSelectAllProfessionals = () => {
+    if (professionalData?.professionals) {
+      const allIds = professionalData.professionals.map(p => p.id);
+      setSelectedProfessionalIds(new Set(allIds));
+    }
+  };
+  
+  const handleDeselectAllProfessionals = () => {
+    setSelectedProfessionalIds(new Set());
+  };
+  
+  // Professional bulk actions
+  const handleProfessionalBulkActivate = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setProfessionalBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: true }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals activated` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to activate professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  const handleProfessionalBulkDeactivate = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setProfessionalBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: false }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deactivated` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to deactivate professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  const handleProfessionalBulkDelete = async () => {
+    if (selectedProfessionalIds.size === 0) return;
+    setShowProfessionalBulkDeleteDialog(true);
+  };
+  
+  const confirmProfessionalBulkDelete = async () => {
+    setProfessionalBulkActionLoading(true);
+    setShowProfessionalBulkDeleteDialog(false);
+    try {
+      const response = await fetch('/api/admin/professionals/bulk/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds) }),
+      });
+      if (response.ok) {
+        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deleted` });
+        setSelectedProfessionalIds(new Set());
+        fetchProfessionals();
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalBulkActionLoading(false);
+    }
+  };
+  
+  // Professional export to CSV
+  const handleProfessionalExport = async () => {
+    setProfessionalExportLoading(true);
+    try {
+      const response = await fetch('/api/admin/professionals/export?format=csv');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `professionals-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Success', description: 'Professionals exported successfully' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to export professionals', variant: 'destructive' });
+    } finally {
+      setProfessionalExportLoading(false);
+    }
+  };
+  
+  // Handle toggle professional status
+  const handleToggleProfessionalStatus = useCallback(
+    async (e: React.MouseEvent, professional: Professional) => {
+      e.preventDefault();
+      setProfessionalToggleLoading(professional.id);
+      try {
+        const response = await fetch(`/api/admin/professionals/${professional.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: !professional.isActive }),
+        });
+
+        if (response.ok) {
+          // Update the professional in the professionalData state immediately
+          setProfessionalData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  professionals: prev.professionals.map((prof) =>
+                    prof.id === professional.id
+                      ? { ...prof, isActive: !prof.isActive }
+                      : prof
+                  ),
+                }
+              : null
+          );
+          setStats((prev) => ({
+            ...prev,
+            activeProfessionals: !professional.isActive
+              ? prev.activeProfessionals + 1
+              : prev.activeProfessionals - 1,
+          }));
+          fetchProfessionals();
+          toast({
+            title: 'Success',
+            description: `Professional ${!professional.isActive ? 'activated' : 'deactivated'} successfully`,
+          });
+        } else {
+          const error = await response.json();
+          toast({ title: 'Error', description: `Failed to update status: ${error.error || 'Unknown error'}`, variant: 'destructive' });
+        }
+      } catch (error) {
+        toast({ title: 'Error', description: 'Failed to toggle status', variant: 'destructive' });
+      } finally {
+        setProfessionalToggleLoading(null);
+      }
+    },
+    [toast, fetchProfessionals]
+  );
+  
+  // Handle delete professional with dialog
+  const handleDeleteProfessional = useCallback(
+    async (professional: Professional) => {
+      setProfessionalToDelete(professional);
+      setShowDeleteProfessionalDialog(true);
+    },
+    []
+  );
+  
+  // Confirm delete professional
+  const confirmDeleteProfessional = useCallback(async () => {
+    if (!professionalToDelete) return;
+    
+    setDeletingProfessional(true);
+    setShowDeleteProfessionalDialog(false);
+    
+    try {
+      const response = await fetch(`/api/admin/professionals/${professionalToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Update the professional in the professionalData state immediately
+        setProfessionalData((prev) =>
+          prev
+            ? {
+                ...prev,
+                professionals: prev.professionals.filter(
+                  (prof) => prof.id !== professionalToDelete.id
+                ),
+                pagination: {
+                  ...prev.pagination,
+                  totalItems: prev.pagination.totalItems - 1,
+                },
+              }
+            : null
+        );
+        setStats((prev) => ({
+          ...prev,
+          totalProfessionals: prev.totalProfessionals - 1,
+          activeProfessionals: professionalToDelete.isActive ? prev.activeProfessionals - 1 : prev.activeProfessionals,
+        }));
+        fetchProfessionals();
+        toast({
+          title: 'Success',
+          description: 'Professional deleted successfully',
+        });
+      } else {
+        const error = await response.json();
+        toast({ title: 'Error', description: `Failed to delete professional: ${error.error || 'Unknown error'}`, variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete professional', variant: 'destructive' });
+    } finally {
+      setDeletingProfessional(false);
+      setProfessionalToDelete(null);
+    }
+  }, [professionalToDelete, toast, fetchProfessionals]);
+
+  // Data fetching function - Fixed to handle individual API failures gracefully
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setDataFetchError(null);
 
     try {
       console.log('[DEBUG] Admin Dashboard - Starting data fetch');
-      const [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes] = await Promise.all([
-        fetch("/api/admin/businesses"),
-        fetch("/api/admin/categories"),
-        fetch("/api/inquiries"),
-        fetch("/api/admin/professionals"),
-        fetch("/api/business-listing-inquiries"),
-        fetch("/api/registration-inquiries"),
-      ]);
+      
+      // Fetch each API separately to avoid Promise.all failure
+      const fetchPromises = [
+        { name: 'businesses', url: "/api/admin/businesses" },
+        { name: 'categories', url: "/api/admin/categories" },
+        { name: 'inquiries', url: "/api/inquiries" },
+        { name: 'professionals', url: "/api/admin/professionals" },
+        { name: 'businessListingInquiries', url: "/api/business-listing-inquiries" },
+        { name: 'registrationInquiries', url: "/api/registration-inquiries" },
+      ];
 
-      console.log('[DEBUG] Admin Dashboard - API responses status:', {
-        businesses: businessesRes.status,
-        categories: categoriesRes.status,
-        inquiries: inquiriesRes.status,
-        professionals: professionalsRes.status,
-        businessListingInquiries: businessListingInquiriesRes.status,
-        registrationInquiries: registrationInquiriesRes.status,
-      });
+      const results: Record<string, any> = {};
+      
+      // Fetch all data individually
+      await Promise.all(
+        fetchPromises.map(async (item) => {
+          try {
+            const response = await fetch(item.url);
+            if (response.ok) {
+              results[item.name] = await response.json();
+            } else {
+              console.error(`[DEBUG] ${item.name} API failed:`, response.status);
+              results[item.name] = null;
+            }
+          } catch (error) {
+            console.error(`[DEBUG] ${item.name} fetch error:`, error);
+            results[item.name] = null;
+          }
+        })
+      );
 
-      // Check if all responses are ok
-      const allResponsesOk = [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes].every(res => res.ok);
-
-      if (!allResponsesOk) {
-        console.error('[DEBUG] Admin Dashboard - Some API calls failed');
-        // Log the failed responses
-        const failedResponses: string[] = [];
-        if (!businessesRes.ok) failedResponses.push(`businesses: ${businessesRes.status} ${await businessesRes.text()}`);
-        if (!categoriesRes.ok) failedResponses.push(`categories: ${categoriesRes.status} ${await categoriesRes.text()}`);
-        if (!inquiriesRes.ok) failedResponses.push(`inquiries: ${inquiriesRes.status} ${await inquiriesRes.text()}`);
-        if (!professionalsRes.ok) failedResponses.push(`professionals: ${professionalsRes.status} ${await professionalsRes.text()}`);
-        if (!businessListingInquiriesRes.ok) failedResponses.push(`businessListingInquiries: ${businessListingInquiriesRes.status} ${await businessListingInquiriesRes.text()}`);
-        if (!registrationInquiriesRes.ok) failedResponses.push(`registrationInquiries: ${registrationInquiriesRes.status} ${await registrationInquiriesRes.text()}`);
-        console.error('[DEBUG] Failed responses:', failedResponses);
-        throw new Error("One or more API calls failed");
-      }
-
-      const businessesData = await businessesRes.json();
-      const categoriesData = await categoriesRes.json();
-      const inquiriesData = await inquiriesRes.json();
-      const professionalsData = await professionalsRes.json();
-      const businessListingInquiriesData = await businessListingInquiriesRes.json();
-      const registrationInquiriesData = await registrationInquiriesRes.json();
-
-      // Debug logging
-      console.log('API Responses:', {
-        businessesData,
-        categoriesData,
-        inquiriesData,
-        professionalsData,
-        businessListingInquiriesData,
-        registrationInquiriesData
+      console.log('[DEBUG] Admin Dashboard - API results:', {
+        businesses: !!results.businesses,
+        categories: !!results.categories,
+        inquiries: !!results.inquiries,
+        professionals: !!results.professionals,
+        businessListingInquiries: !!results.businessListingInquiries,
+        registrationInquiries: !!results.registrationInquiries,
       });
 
       // Extract data from API responses with proper error handling
-      const businessesArray = Array.isArray(businessesData.businesses) ? businessesData.businesses : [];
-      const categoriesArray = Array.isArray(categoriesData.categories) ? categoriesData.categories : [];
-      const inquiriesArray = Array.isArray(inquiriesData.inquiries) ? inquiriesData.inquiries : [];
-      const professionalsArray = Array.isArray(professionalsData.professionals) ? professionalsData.professionals : [];
-      const businessListingInquiriesArray = Array.isArray(businessListingInquiriesData.businessListingInquiries) ? businessListingInquiriesData.businessListingInquiries : [];
+      const businessesArray = Array.isArray(results.businesses?.businesses) ? results.businesses.businesses : [];
+      const categoriesArray = Array.isArray(results.categories?.categories) ? results.categories.categories : [];
+      const inquiriesArray = Array.isArray(results.inquiries?.inquiries) ? results.inquiries.inquiries : [];
+      const professionalsArray = Array.isArray(results.professionals?.professionals) ? results.professionals.professionals : [];
+      const businessListingInquiriesArray = Array.isArray(results.businessListingInquiries?.businessListingInquiries) 
+        ? results.businessListingInquiries.businessListingInquiries 
+        : [];
       
       // Fix: Handle registration inquiries response properly
       let registrationInquiriesArray: any[] = [];
-      if (registrationInquiriesData && Array.isArray(registrationInquiriesData.inquiries)) {
-        registrationInquiriesArray = registrationInquiriesData.inquiries;
-      } else if (Array.isArray(registrationInquiriesData)) {
-        registrationInquiriesArray = registrationInquiriesData;
-      } else if (registrationInquiriesData && registrationInquiriesData.inquiries) {
-        registrationInquiriesArray = registrationInquiriesData.inquiries;
+      if (results.registrationInquiries) {
+        if (Array.isArray(results.registrationInquiries.inquiries)) {
+          registrationInquiriesArray = results.registrationInquiries.inquiries;
+        } else if (Array.isArray(results.registrationInquiries)) {
+          registrationInquiriesArray = results.registrationInquiries;
+        } else if (results.registrationInquiries.inquiries) {
+          registrationInquiriesArray = results.registrationInquiries.inquiries;
+        }
       }
 
       console.log('Extracted arrays:', {
@@ -533,11 +1414,6 @@ export default function SuperAdminDashboard() {
       setBusinessListingInquiries(businessListingInquiriesArray);
       setRegistrationInquiries(registrationInquiriesArray);
 
-      // Calculate stats safely
-      const totalInquiries = businessesArray.reduce(
-        (sum: number, b: Business) => sum + (b._count?.inquiries || 0),
-        0
-      );
       const totalProducts = businessesArray.reduce(
         (sum: number, b: Business) => sum + (b._count?.products || 0),
         0
@@ -554,13 +1430,13 @@ export default function SuperAdminDashboard() {
       ).length;
 
       setStats({
-        totalBusinesses: businessesData.length,
-        totalInquiries,
+        totalBusinesses: businessesArray.length,
+        totalInquiries: registrationInquiriesArray.length,
         totalUsers,
         activeBusinesses,
         totalProducts,
         totalActiveProducts,
-        totalProfessionals: professionalsData.length,
+        totalProfessionals: professionalsArray.length,
         activeProfessionals,
       });
     } catch (error) {
@@ -621,6 +1497,7 @@ export default function SuperAdminDashboard() {
   const handleAddBusiness = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setAddBusinessLoading(true);
       const formData = new FormData(e.currentTarget);
 
       const manualUsername = formData.get("username") as string;
@@ -632,10 +1509,10 @@ export default function SuperAdminDashboard() {
         password: manualPassword || generatedPassword || generatePassword(),
         adminName: formData.get("adminName") as string,
         categoryId: formData.get("categoryId") as string,
-        description: formData.get("description") as string,
-        address: formData.get("address") as string,
-        phone: formData.get("phone") as string,
-        website: formData.get("website") as string,
+        description: (formData.get("description") as string) || "",
+        address: (formData.get("address") as string) || "",
+        phone: (formData.get("phone") as string) || "",
+        website: (formData.get("website") as string) || "",
       };
 
       console.log("Creating business:", businessData);
@@ -664,7 +1541,9 @@ export default function SuperAdminDashboard() {
           if (e.currentTarget) {
             e.currentTarget.reset();
           }
-          // Refresh data to show the new business
+          // Refresh paginated data to show the new business
+          fetchBusinesses();
+          // Also refresh full data
           fetchData();
         } else {
           const error = await response.json();
@@ -684,6 +1563,8 @@ export default function SuperAdminDashboard() {
           description: "Failed to create business. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setAddBusinessLoading(false);
       }
     },
     [generatedPassword, generatePassword, toast]
@@ -702,17 +1583,17 @@ export default function SuperAdminDashboard() {
       e.preventDefault();
       if (!editingBusiness) return;
 
-      setIsLoading(true);
+      setEditBusinessLoading(true);
       const formData = new FormData(e.currentTarget);
 
       const updateData = {
         name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        logo: formData.get("logo") as string,
-        address: formData.get("address") as string,
-        phone: formData.get("phone") as string,
+        description: (formData.get("description") as string) || "",
+        logo: (formData.get("logo") as string) || "",
+        address: (formData.get("address") as string) || "",
+        phone: (formData.get("phone") as string) || "",
         email: formData.get("email") as string,
-        website: formData.get("website") as string,
+        website: (formData.get("website") as string) || "",
         categoryId: formData.get("categoryId") as string,
       };
 
@@ -745,6 +1626,9 @@ export default function SuperAdminDashboard() {
           // Force re-render to ensure UI updates
           setForceRerender((prev) => prev + 1);
 
+          // Also refresh paginated data to ensure consistency
+          fetchBusinesses();
+
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -770,87 +1654,99 @@ export default function SuperAdminDashboard() {
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setEditBusinessLoading(false);
       }
     },
-    [editingBusiness, toast]
+    [editingBusiness, toast, fetchBusinesses]
   );
 
   // Handle delete business with improved error handling
   const handleDeleteBusiness = useCallback(
     async (business: Business) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete "${business.name}"? This action cannot be undone.`
-        )
-      ) {
-        return;
-      }
+      // Show dialog instead of browser alert
+      setDeleteBusiness(business);
+      setShowDeleteBusinessDialog(true);
+    },
+    []
+  );
 
-      try {
-        console.log("Deleting business:", business.id, business.name);
-        const response = await fetch(`/api/admin/businesses/${business.id}`, {
-          method: "DELETE",
+  // Confirm and perform delete business
+  const confirmDeleteBusiness = useCallback(async () => {
+    if (!deleteBusiness) return;
+    
+    setDeletingBusiness(true);
+    setShowDeleteBusinessDialog(false);
+    
+    try {
+      console.log("Deleting business:", deleteBusiness.id, deleteBusiness.name);
+      const response = await fetch(`/api/admin/businesses/${deleteBusiness.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        console.log("Business deletion successful, updating state...");
+
+        // Remove the deleted business from the local state immediately
+        setBusinesses((prev) => {
+          const updatedBusinesses = prev.filter((biz) => biz.id !== deleteBusiness.id);
+          console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
+          return updatedBusinesses;
         });
 
-        if (response.ok) {
-          console.log("Business deletion successful, updating state...");
+        // Update stats immediately
+        setStats((prev) => ({
+          ...prev,
+          totalBusinesses: prev.totalBusinesses - 1,
+          totalUsers: prev.totalUsers - 1,
+          activeBusinesses: deleteBusiness.isActive
+            ? prev.activeBusinesses - 1
+            : prev.activeBusinesses,
+          totalProducts: prev.totalProducts - deleteBusiness._count.products,
+          totalActiveProducts: deleteBusiness.isActive
+            ? prev.totalActiveProducts - deleteBusiness._count.products
+            : prev.totalActiveProducts,
+        }));
 
-          // Remove the deleted business from the local state immediately
-          setBusinesses((prev) => {
-            const updatedBusinesses = prev.filter((biz) => biz.id !== business.id);
-            console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
-            return updatedBusinesses;
-          });
+        // Force re-render to ensure UI updates
+        setForceRerender((prev) => prev + 1);
 
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            totalBusinesses: prev.totalBusinesses - 1,
-            totalUsers: prev.totalUsers - 1,
-            activeBusinesses: business.isActive
-              ? prev.activeBusinesses - 1
-              : prev.activeBusinesses,
-            totalProducts: prev.totalProducts - business._count.products,
-            totalActiveProducts: business.isActive
-              ? prev.totalActiveProducts - business._count.products
-              : prev.totalActiveProducts,
-          }));
+        // Also refresh paginated data
+        fetchBusinesses();
 
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          // Show success message with enhanced details
-          toast({
-            title: "Success",
-            description: "Business and associated user deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Business deletion failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete business: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Business deletion error:", error);
+        // Show success message with enhanced details
+        toast({
+          title: "Success",
+          description: "Business and associated user deleted successfully",
+        });
+      } else {
+        const error = await response.json();
+        console.error("Business deletion failed:", error);
         toast({
           title: "Error",
-          description: "Failed to delete business. Please try again.",
+          description: `Failed to delete business: ${
+            error.error || "Unknown error"
+          }`,
           variant: "destructive",
         });
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Business deletion error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete business. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingBusiness(false);
+      setDeleteBusiness(null);
+    }
+  }, [deleteBusiness, toast, fetchBusinesses]);
 
   // Handle toggle business status
   const handleToggleBusinessStatus = useCallback(
-    async (business: Business) => {
+    async (e: React.MouseEvent, business: Business) => {
+      e.preventDefault();
+      setToggleLoading(business.id);
       console.log(
         "Toggling business status for:",
         business.id,
@@ -892,6 +1788,9 @@ export default function SuperAdminDashboard() {
           // Force re-render to ensure UI updates
           setForceRerender((prev) => prev + 1);
 
+          // Also refresh paginated data
+          fetchBusinesses();
+
           toast({
             title: "Success",
             description: `Business ${!business.isActive ? 'activated' : 'suspended'} successfully`,
@@ -914,9 +1813,64 @@ export default function SuperAdminDashboard() {
           description: "Failed to toggle business status. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setToggleLoading(null);
       }
     },
-    [toast]
+    [toast, fetchBusinesses]
+  );
+
+  // Handle duplicate business
+  const handleDuplicateBusiness = useCallback(
+    async (business: Business) => {
+      if (
+        !confirm(
+          `Create a duplicate of "${business.name}"? A new business with a new admin account will be created.`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        console.log("Duplicating business:", business.id, business.name);
+        const response = await fetch(`/api/admin/businesses/${business.id}/duplicate`, {
+          method: "POST",
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("Business duplication successful:", result);
+          
+          // Refresh data to show the new business
+          fetchBusinesses();
+          fetchData();
+
+          toast({
+            title: "Success",
+            description: `Business duplicated successfully! Login credentials for new admin:\nEmail: ${result.loginCredentials.email}\nPassword: ${result.loginCredentials.password}`,
+            duration: 10000,
+          });
+        } else {
+          const error = await response.json();
+          console.error("Business duplication failed:", error);
+          toast({
+            title: "Error",
+            description: `Failed to duplicate business: ${
+              error.error || "Unknown error"
+            }`,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Business duplication error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to duplicate business. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, fetchBusinesses, fetchData]
   );
 
   // Handle edit professional
@@ -926,141 +1880,7 @@ export default function SuperAdminDashboard() {
     setShowRightPanel(true);
   }, []);
 
-  // Handle delete professional with improved error handling
-  const handleDeleteProfessional = useCallback(
-    async (id: string) => {
-      if (
-        !confirm(
-          "Are you sure you want to delete this professional profile? This action cannot be undone."
-        )
-      ) {
-        return;
-      }
 
-      try {
-        console.log("Deleting professional:", id);
-        const response = await fetch(`/api/professionals/${id}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          console.log("Professional deletion successful, updating state...");
-
-          // Remove the deleted professional from the local state immediately
-          setProfessionals((prev) => {
-            const updatedProfessionals = prev.filter((prof) => prof.id !== id);
-            console.log("Updated professionals list:", updatedProfessionals.length, "professionals remaining");
-            return updatedProfessionals;
-          });
-
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            totalProfessionals: prev.totalProfessionals - 1,
-            activeProfessionals: prev.activeProfessionals - 1,
-          }));
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          // Show success message with enhanced details
-          toast({
-            title: "Success",
-            description: "Professional and associated user deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Professional deletion failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete professional: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Professional deletion error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete professional. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle toggle professional status
-  const handleToggleProfessionalStatus = useCallback(
-    async (professional: Professional) => {
-      console.log(
-        "Toggling professional status for:",
-        professional.id,
-        "current isActive:",
-        professional.isActive
-      );
-      try {
-        const response = await fetch(`/api/professionals/${professional.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ isActive: !professional.isActive }),
-        });
-
-        if (response.ok) {
-          console.log("Toggle successful, updating state...");
-          
-          // Update the professional in the local state immediately
-          setProfessionals((prev) =>
-            prev.map((prof) =>
-              prof.id === professional.id
-                ? { ...prof, isActive: !prof.isActive }
-                : prof
-            )
-          );
-
-          // Update stats immediately
-          setStats((prev) => ({
-            ...prev,
-            activeProfessionals: !professional.isActive
-              ? prev.activeProfessionals + 1
-              : prev.activeProfessionals - 1,
-          }));
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
-
-          toast({
-            title: "Success",
-            description: `Professional ${!professional.isActive ? 'activated' : 'deactivated'} successfully`,
-          });
-        } else {
-          const error = await response.json();
-          console.error("Toggle failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to update professional status: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Toggle error:", error);
-        toast({
-          title: "Error",
-          description:
-            "Failed to toggle professional status. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle add professional with improved error handling
   const handleAddProfessional = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -1104,6 +1924,8 @@ export default function SuperAdminDashboard() {
           }
           // Refresh data to show the new professional
           fetchData();
+          fetchProfessionals();
+          setProfessionalQuery(prev => ({ ...prev, page: 1 }));
         } else {
           const error = await response.json();
           console.error("Professional creation failed:", error);
@@ -1151,9 +1973,9 @@ export default function SuperAdminDashboard() {
 
       try {
         const response = await fetch(
-          `/api/professionals/${editingProfessional.id}`,
+          `/api/admin/professionals/${editingProfessional.id}`,
           {
-            method: "PUT",
+            method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
@@ -1164,17 +1986,22 @@ export default function SuperAdminDashboard() {
         if (response.ok) {
           console.log("Account update successful, updating state...");
           
-          // Update the professional in the local state immediately
-          setProfessionals((prev) =>
-            prev.map((prof) =>
-              prof.id === editingProfessional.id
-                ? { ...prof, ...updateData }
-                : prof
-            )
+          // Update the professional in the professionalData state immediately
+          setProfessionalData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  professionals: prev.professionals.map((prof) =>
+                    prof.id === editingProfessional.id
+                      ? { ...prof, ...updateData }
+                      : prof
+                  ),
+                }
+              : null
           );
 
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
+          // Refresh from API to ensure consistency
+          fetchProfessionals();
 
           setShowRightPanel(false);
           setRightPanelContent(null);
@@ -1205,7 +2032,7 @@ export default function SuperAdminDashboard() {
         setIsLoading(false);
       }
     },
-    [editingProfessional, toast]
+    [editingProfessional, toast, fetchProfessionals]
   );
 
   // Handle add category with improved error handling
@@ -1232,6 +2059,18 @@ export default function SuperAdminDashboard() {
 
         if (response.ok) {
           const result = await response.json();
+          
+          // Update local state immediately for better UX
+          if (result.category) {
+            setCategories(prev => [...prev, result.category]);
+          }
+          
+          // Invalidate React Query cache to ensure all components get fresh data
+          invalidateCategories(queryClient);
+          
+          // Refresh data from server to ensure consistency
+          fetchData();
+          
           toast({
             title: "Success",
             description: "Category created successfully!",
@@ -1297,7 +2136,22 @@ export default function SuperAdminDashboard() {
         );
 
         if (response.ok) {
+          const result = await response.json();
           console.log("Category update successful");
+          
+          // Update local state immediately for better UX
+          if (result.category && editingCategory) {
+            setCategories(prev =>
+              prev.map(c => c.id === editingCategory.id ? result.category : c)
+            );
+          }
+          
+          // Invalidate React Query cache to ensure all components get fresh data
+          invalidateCategories(queryClient);
+          
+          // Refresh data from server to ensure consistency
+          fetchData();
+          
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -1327,52 +2181,58 @@ export default function SuperAdminDashboard() {
     [editingCategory, toast]
   );
 
-  // Handle delete category with improved error handling
-  const handleDeleteCategory = useCallback(
-    async (category: Category) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete "${category.name}"? This action cannot be undone.`
-        )
-      ) {
-        return;
-      }
+  // Handle delete category with dialog
+  const handleDeleteCategory = useCallback((category: Category) => {
+    setCategoryToDelete(category);
+    setShowDeleteCategoryDialog(true);
+  }, []);
 
-      console.log("Deleting category:", category.id);
+  // Confirm delete category
+  const confirmDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return;
+    
+    console.log("Deleting category:", categoryToDelete.id);
 
-      try {
-        const response = await fetch(`/api/admin/categories/${category.id}`, {
-          method: "DELETE",
+    try {
+      const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        console.log("Category delete successful");
+        // IMMEDIATE STATE REMOVAL - Remove deleted category from local state immediately
+        setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id));
+        setShowDeleteCategoryDialog(false);
+        setCategoryToDelete(null);
+        
+        // Invalidate React Query cache to ensure all components get fresh data
+        invalidateCategories(queryClient);
+        
+        fetchData();
+        toast({
+          title: "Success",
+          description: "Category deleted successfully",
         });
-
-        if (response.ok) {
-          console.log("Category delete successful");
-          toast({
-            title: "Success",
-            description: "Category deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Category delete failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete category: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Category delete error:", error);
+      } else {
+        const error = await response.json();
+        console.error("Category delete failed:", error);
         toast({
           title: "Error",
-          description: "Failed to delete category. Please try again.",
+          description: `Failed to delete category: ${
+            error.error || "Unknown error"
+          }`,
           variant: "destructive",
         });
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Category delete error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [categoryToDelete, toast, fetchData]);
 
   // Handle update business listing inquiry with improved error handling
   const handleUpdateBusinessListingInquiry = useCallback(
@@ -1628,64 +2488,240 @@ export default function SuperAdminDashboard() {
     []
   );
 
-  // Handle reject inquiry with improved error handling
+  // Handle reject inquiry with improved error handling - now uses dialog
   const handleRejectInquiry = useCallback(
-    async (inquiry: any) => {
-      if (!confirm("Reject this registration request?")) {
-        return;
-      }
+    (inquiry: any) => {
+      setInquiryToReject(inquiry);
+      setRejectReason("");
+      setShowRejectInquiryDialog(true);
+    },
+    []
+  );
 
-      setCreatingAccount(inquiry.id);
+  // Confirm reject inquiry with reason
+  const confirmRejectInquiry = useCallback(async () => {
+    if (!inquiryToReject) return;
+    
+    setCreatingAccount(inquiryToReject.id);
+    setShowRejectInquiryDialog(false);
 
-      try {
-        const response = await fetch(
-          `/api/registration-inquiries/${inquiry.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "REJECTED" }),
-          }
+    try {
+      const response = await fetch(
+        `/api/registration-inquiries/${inquiryToReject.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            status: "REJECTED",
+            rejectReason: rejectReason || "No reason provided"
+          }),
+        }
+      );
+
+      if (response.ok) {
+        // Update the inquiry in the list immediately
+        setRegistrationInquiries((prev) =>
+          prev.map((regInquiry) =>
+            regInquiry.id === inquiryToReject.id
+              ? { ...regInquiry, status: "REJECTED", rejectReason: rejectReason || "No reason provided" }
+              : regInquiry
+          )
         );
 
-        if (response.ok) {
-          // Update the inquiry in the list immediately
-          setRegistrationInquiries((prev) =>
-            prev.map((regInquiry) =>
-              regInquiry.id === inquiry.id
-                ? { ...regInquiry, status: "REJECTED" }
-                : regInquiry
-            )
-          );
+        toast({
+          title: "Success",
+          description: "Registration request rejected.",
+        });
 
-          toast({
-            title: "Success",
-            description: "Registration request rejected.",
-          });
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to reject inquiry: ${
-              error.error || error.message || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to reject inquiry:", error);
+        // Refresh data from server to ensure consistency
+        fetchData();
+      } else {
+        const error = await response.json();
         toast({
           title: "Error",
-          description: "Failed to reject inquiry. Please try again.",
+          description: `Failed to reject inquiry: ${
+            error.error || error.message || "Unknown error"
+          }`,
           variant: "destructive",
         });
-      } finally {
-        setCreatingAccount(null);
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Failed to reject inquiry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingAccount(null);
+      setInquiryToReject(null);
+      setRejectReason("");
+    }
+  }, [inquiryToReject, rejectReason, toast, fetchData]);
+
+  // Helper function to get right panel title
+  const getRightPanelTitle = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "Add New Business";
+      case "edit-business":
+        return "Edit Business";
+      case "add-professional":
+        return "Add Professional";
+      case "edit-professional":
+        return "Edit Professional";
+      case "add-category":
+        return "Add Category";
+      case "edit-category":
+        return "Edit Category";
+      case "create-account-from-inquiry":
+        return "Create Account";
+      default:
+        return "Panel";
+    }
+  };
+
+  // Helper function to get right panel description
+  const getRightPanelDescription = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "Create a new business account and listing.";
+      case "edit-business":
+        return "Update business details and category.";
+      case "add-professional":
+        return "Register a new professional profile.";
+      case "edit-professional":
+        return "Update professional details.";
+      case "add-category":
+        return "Create a new business category.";
+      case "edit-category":
+        return "Update category details.";
+      case "create-account-from-inquiry":
+        return "Complete account setup from registration request.";
+      default:
+        return "";
+    }
+  };
+
+  // Common close handler
+  const closePanel = () => {
+    setShowRightPanel(false);
+    setRightPanelContent(null);
+    setGeneratedPassword("");
+    setGeneratedUsername("");
+    setEditingBusiness(null);
+    setEditingProfessional(null);
+    setCreatingAccount(null);
+  };
+
+  // Helper function to get right panel footer
+  const getRightPanelFooter = () => {
+    const formId = getFormId();
+    
+    switch (rightPanelContent) {
+      case "add-business":
+      case "edit-business":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} disabled={rightPanelContent === "add-business" ? addBusinessLoading : editBusinessLoading} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-business" ? (
+                addBusinessLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  "Create Business"
+                )
+              ) : (
+                editBusinessLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )
+              )}
+            </Button>
+          </>
+        );
+      case "add-professional":
+      case "edit-professional":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-professional" ? "Create Profile" : "Save Changes"}
+            </Button>
+          </>
+        );
+      case "add-category":
+      case "edit-category":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-black text-white hover:bg-gray-800">
+              {rightPanelContent === "add-category" ? "Create Category" : "Update Category"}
+            </Button>
+          </>
+        );
+      case "create-account-from-inquiry":
+        return (
+          <>
+            <Button type="button" variant="outline" onClick={closePanel} className="rounded-md w-auto flex-1" disabled={creatingAccount !== null}>
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} className="rounded-md w-auto flex-1 bg-green-600 text-white hover:bg-green-700" disabled={creatingAccount !== null}>
+              {creatingAccount ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Create Account
+                </>
+              )}
+            </Button>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Helper function to get form ID
+  const getFormId = () => {
+    switch (rightPanelContent) {
+      case "add-business":
+        return "add-business-form";
+      case "edit-business":
+        return "edit-business-form";
+      case "add-professional":
+        return "add-professional-form";
+      case "edit-professional":
+        return "edit-professional-form";
+      case "add-category":
+        return "add-category-form";
+      case "edit-category":
+        return "edit-category-form";
+      case "create-account-from-inquiry":
+        return "inquiry-account-form";
+      default:
+        return undefined;
+    }
+  };
 
   const menuItems = [
     {
@@ -1717,7 +2753,7 @@ export default function SuperAdminDashboard() {
       mobileTitle: "Category",
     },
     {
-      title: "Inquiries",
+      title: "Contact Inquiry",
       icon: MessageSquare,
       mobileIcon: MessageCircle,
       value: "inquiries",
@@ -1729,13 +2765,6 @@ export default function SuperAdminDashboard() {
       mobileIcon: UserCheck,
       value: "registration-requests",
       mobileTitle: "Registrations",
-    },
-    {
-      title: "Business Listings",
-      icon: FileText,
-      mobileIcon: FileText,
-      value: "business-listings",
-      mobileTitle: "Listings",
     },
     {
       title: "Analytics",
@@ -1893,12 +2922,6 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
 
-            {/* 
-         MASTER GRID CONTAINER 
-         - Mobile: 1 column
-         - Laptop (LG): 4 columns
-         - Wide (XL): 8 columns (Your requested layout)
-      */}
             <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-8 gap-6">
               {/* --- ROW 1: 4 Cards (Each spans 2 columns in the 8-grid) --- */}
 
@@ -1935,15 +2958,15 @@ export default function SuperAdminDashboard() {
               <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-900">
-                    Total Inquiries
+                    Registration Requests
                   </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <UserCheck className="h-4 w-4 text-gray-400" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900">
                     {stats.totalInquiries}
                   </div>
-                  <p className="text-xs text-gray-500">All inquiries</p>
+                  <p className="text-xs text-gray-500">Pending requests</p>
                 </CardContent>
               </Card>
 
@@ -1964,198 +2987,386 @@ export default function SuperAdminDashboard() {
                 </CardContent>
               </Card>
 
-              {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+              {/* Card 1: New Businesses */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     New Businesses
                   </CardTitle>
-                  <Building className="h-4 w-4 text-gray-400" />
+                  <Building className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {businesses
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((business) => (
-                            <TableRow key={business.id}>
-                              <TableCell className="text-xs font-medium">
-                                {business.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(business.createdAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={business.isActive ? "default" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  {business.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {businesses.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs flex-1">
+                              Name
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Category
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Status
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Date
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {businesses
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((business) => (
+                              <TableRow key={business.id}>
+                                <TableCell className="text-xs font-medium flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {business.logo ? (
+                                      <img
+                                        src={business.logo}
+                                        alt={`${business.name} logo`}
+                                        className="h-8 w-8 rounded-full object-cover shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Building className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <span className="truncate">
+                                      {business.name}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {business.category?.name || "N/A"}
+                                </TableCell>
+                                <TableCell className="w-auto">
+                                  <div
+                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
+                                      business.isActive
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        business.isActive
+                                          ? "bg-lime-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    {business.isActive ? "Active" : "Inactive"}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {new Date(
+                                    business.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <Building className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-3">
+              {/* Card 2: New Professionals (Updated Style) */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     New Professionals
                   </CardTitle>
-                  <User className="h-4 w-4 text-gray-400" />
+                  <User className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {professionals
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((professional) => (
-                            <TableRow key={professional.id}>
-                              <TableCell className="text-xs font-medium">
-                                {professional.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(professional.createdAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={professional.isActive ? "default" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  {professional.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {professionals.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs flex-1">
+                              Name
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Profession
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Status
+                            </TableHead>
+                            <TableHead className="text-xs w-auto">
+                              Date
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {professionals
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((professional) => (
+                              <TableRow key={professional.id}>
+                                <TableCell className="text-xs font-medium flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {professional.profilePicture ? (
+                                      <img
+                                        src={professional.profilePicture}
+                                        alt={`${professional.name} profile`}
+                                        className="h-8 w-8 rounded-full object-cover shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                        <User className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <span className="truncate">
+                                      {professional.name}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto max-w-[150px] truncate">
+                                  {professional.professionalHeadline || "N/A"}
+                                </TableCell>
+                                <TableCell className="w-auto">
+                                  <div
+                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
+                                      professional.isActive
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        professional.isActive
+                                          ? "bg-lime-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    {professional.isActive
+                                      ? "Active"
+                                      : "Inactive"}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs w-auto">
+                                  {new Date(
+                                    professional.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <User className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+              {/* Card 3: Latest Contact (Updated Style) */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
+                  <CardTitle className="text-sm font-medium text-white">
                     Latest Contact
                   </CardTitle>
-                  <Mail className="h-4 w-4 text-gray-400" />
+                  <Mail className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Email</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {inquiries
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 3)
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell className="text-xs font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.email}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(inquiry.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {inquiries.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs">Name</TableHead>
+                            <TableHead className="text-xs">Email</TableHead>
+                            <TableHead className="text-xs">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {inquiries
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 4)
+                            .map((inquiry) => (
+                              <TableRow key={inquiry.id}>
+                                <TableCell className="text-xs font-medium">
+                                  {inquiry.name}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {inquiry.email}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {new Date(
+                                    inquiry.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <Mail className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No Data</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* --- ROW 3: 2 Cards (Spans: 6, 2) --- */}
-
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-6">
+          
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Latest Inquiry
+                  <CardTitle className="text-sm font-medium text-white">
+                    Latest Registration Requests
                   </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <UserCheck className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Email</TableHead>
-                          <TableHead className="text-xs">Business</TableHead>
-                          <TableHead className="text-xs">Message</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {inquiries
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .slice(0, 5)
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell className="text-xs font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.email}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {inquiry.business?.name || "N/A"}
-                              </TableCell>
-                              <TableCell className="text-xs max-w-32 truncate">
-                                {inquiry.message}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {new Date(inquiry.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="flex-1 px-0 bg-white flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    {registrationInquiries.length > 0 ? (
+                      <Table>
+                        <TableHeader className="">
+                          <TableRow>
+                            <TableHead className="text-xs">Type</TableHead>
+                            <TableHead className="text-xs">Name</TableHead>
+                            <TableHead className="text-xs">
+                              Business/Profession
+                            </TableHead>
+                            <TableHead className="text-xs">Email</TableHead>
+                            <TableHead className="text-xs">Status</TableHead>
+                            <TableHead className="text-xs">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {registrationInquiries
+                            .sort(
+                              (a, b) =>
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime(),
+                            )
+                            .slice(0, 5)
+                            .map((inquiry) => (
+                              <TableRow  key={inquiry.id}>
+                                <TableCell >
+                                  <div
+                                    className={`flex  items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit  ${
+                                      inquiry.type === "BUSINESS"
+                                        ? "bg-blue-500/10 border-blue-500/30 text-blue-700"
+                                        : "bg-purple-500/10 border-purple-500/30 text-purple-700"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        inquiry.type === "BUSINESS"
+                                          ? "bg-blue-500"
+                                          : "bg-purple-500"
+                                      }`}
+                                    ></span>
+                                    {inquiry.type}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs font-medium truncate">
+                                  {inquiry.name}
+                                </TableCell>
+                                <TableCell className="text-xs truncate">
+                                  {inquiry.businessName || "N/A"}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {inquiry.email}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex justify-center">
+                                    <StatusBadge
+                                      status={inquiry.status}
+                                      variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
+                                    />
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {new Date(
+                                    inquiry.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
+                        <UserCheck className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-xs font-medium">
+                          No Registration Requests
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Added a placeholder to fill the last slot (span-2) to complete the grid */}
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
+              {/* Card 3: Quick Actions with card-bg */}
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Notifications
+                  <CardTitle className="text-sm font-medium text-white">
+                    Quick Actions
                   </CardTitle>
-                  <Bell className="h-4 w-4 text-gray-400" />
+                  <Zap className="h-4 w-4 text-white" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-600">No new alerts.</div>
+                <CardContent className="flex-1 px-0  flex flex-col">
+                  <div className="space-y-3 p-4">
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-business");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 cursor-pointer px-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <Building className="h-4 w-4 mr-2" />
+                      Create Business
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-professional");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 px-4  cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Create Professional
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRightPanelContent("add-category");
+                        setShowRightPanel(true);
+                      }}
+                      className="w-full py-2.5 px-4 cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
+                    >
+                      <FolderTree className="h-4 w-4 mr-2" />
+                      Create Category
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -2166,7 +3377,7 @@ export default function SuperAdminDashboard() {
           <div className="space-y-6 pb-20 md:pb-0">
             {/* Data Fetching Status */}
             {dataFetchError && (
-              <div className="bg-red-50 border border-red-200 rounded-3xl p-4">
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -2180,8 +3391,9 @@ export default function SuperAdminDashboard() {
                       variant="outline"
                       onClick={() => {
                         fetchData();
+                        fetchBusinesses();
                       }}
-                      className="rounded-2xl"
+                      className="rounded-xl"
                     >
                       Retry
                     </Button>
@@ -2191,389 +3403,1046 @@ export default function SuperAdminDashboard() {
               </div>
             )}
 
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900 ">
-                Add Businesses
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Businesses
               </h1>
-              <p className="text-md text-gray-600">
-                Manage and monitor your businesses from this dashboard section.
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all registered businesses
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Button
-                    onClick={() => {
-                      setRightPanelContent("add-business");
-                      setShowRightPanel(true);
-                    }}
-                    className="bg-black hover:bg-gray-800 text-white rounded-2xl"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                  </Button>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
-                      <SelectValue placeholder="Filter by Status: Active" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        All ({filteredStats.total})
-                      </SelectItem>
-                      <SelectItem value="active">
-                        Active ({filteredStats.active})
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        Inactive ({filteredStats.inactive})
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="rounded-2xl">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
 
-                <div className="overflow-x-auto hide-scrollbar bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader className="bg-amber-100">
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Business Name
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Admin Email
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Category
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredBusinesses.map((business) => (
-                        <TableRow key={business.id}>
-                          <TableCell className="text-gray-900 font-medium">
-                            {business.name}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {business.admin.email}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {business.category?.name || "None"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                business.isActive ? "default" : "secondary"
-                              }
-                              className="rounded-full"
-                            >
-                              {business.isActive ? "Active" : "Suspended"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() =>
-                                  window.open(
-                                    `/catalog/${business.slug}`,
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => handleEditBusiness(business)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="rounded-xl"
-                                onClick={() => handleDeleteBusiness(business)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
+              <div className="flex gap-2">
+                {/* Status Filter - With text on desktop */}
+                <Select
+                  value={businessQuery.status}
+                  onValueChange={(value) => {
+                    setBusinessQuery((prev) => ({
+                      ...prev,
+                      status: value,
+                      page: 1,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      All ({businessData?.pagination.totalItems || filteredBusinesses.length})
+                    </SelectItem>
+                    <SelectItem value="active">
+                      Active ({filteredBusinesses.filter((b) => b.isActive).length})
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      Inactive ({filteredBusinesses.filter((b) => !b.isActive).length})
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Export Button - With text on desktop */}
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  disabled={exportLoading}
+                  className="rounded-xl border-gray-200"
+                >
+                  {exportLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 text-gray-500 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {exportLoading ? 'Exporting...' : 'Export'}
+                  </span>
+                  <span className="sm:hidden">
+                    {exportLoading ? '...' : ''}
+                  </span>
+                </Button>
+
+                {/* Add New Button - With text on desktop */}
+                <Button
+                  onClick={() => {
+                    setRightPanelContent("add-business");
+                    setShowRightPanel(true);
+                  }}
+                  disabled={addBusinessLoading}
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                >
+                  {addBusinessLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {addBusinessLoading ? 'Opening...' : 'Add Business'}
+                  </span>
+                  <span className="sm:hidden">
+                    {addBusinessLoading ? '...' : 'Add'}
+                  </span>
+                </Button>
               </div>
+
+              {/* Row 2: Search bar - Full width */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search businesses..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300 "
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedBusinessIds.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedBusinessIds.size}
+                  totalCount={
+                    businessData?.pagination.totalItems ||
+                    filteredBusinesses.length
+                  }
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                  onBulkActivate={handleBulkActivate}
+                  onBulkDeactivate={handleBulkDeactivate}
+                  onBulkDelete={handleBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="w-12 text-white font-medium">
+                        <Checkbox
+                          checked={
+                            businessData?.businesses.every((b) =>
+                              selectedBusinessIds.has(b.id),
+                            ) || false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) handleSelectAll();
+                            else handleDeselectAll();
+                          }}
+                          className="border-gray-400"
+                        />
+                      </TableHead>
+                      <TableHead className="w-14 text-white font-medium">
+                        SN.
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Business
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Admin Email
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Category
+                      </TableHead>
+                      <TableHead className="text-center text-white font-medium">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-white font-medium">
+                        Date
+                      </TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {businessLoading
+                      ? // Loading skeleton
+                        Array.from({ length: businessQuery.limit }).map(
+                          (_, i) => (
+                            <TableRow key={i}>
+                              <TableCell>
+                                <Skeleton className="h-4 w-4" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-8" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Skeleton className="h-10 w-10 rounded-full" />
+                                  <Skeleton className="h-4 w-32" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-40" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-24" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center">
+                                  <Skeleton className="h-6 w-16 rounded-full" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-20" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-end space-x-2">
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )
+                      : businessData?.businesses.map((business, index) => (
+                          <TableRow
+                            key={business.id}
+                            className="hover:bg-gray-50"
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedBusinessIds.has(business.id)}
+                                onCheckedChange={() =>
+                                  handleSelectBusiness(business.id)
+                                }
+                                className="border-gray-400"
+                              />
+                            </TableCell>
+                            <TableCell className="text-gray-500 font-medium">
+                              {(businessData.pagination.page - 1) *
+                                businessData.pagination.limit +
+                                index +
+                                1}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {business.logo ? (
+                                  <img
+                                    src={business.logo}
+                                    alt={`${business.name} logo`}
+                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                    <Building className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
+                                  {business.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600 truncate">
+                              {business.admin.email}
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              <Badge
+                                variant="outline"
+                                className="rounded-lg bg-gray-50 border-gray-200 truncate max-w-[120px]"
+                              >
+                                {business.category?.name || "None"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div
+                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${
+                                  business.isActive
+                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
+                                }`}
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    business.isActive
+                                      ? "bg-lime-500"
+                                      : "bg-red-500"
+                                  }`}
+                                ></span>
+                                {business.isActive ? "Active" : "Inactive"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {new Date(business.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-end space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className={`h-8 w-8 p-0 rounded-lg ${
+                                    business.isActive
+                                      ? "hover:bg-orange-50"
+                                      : "hover:bg-green-50"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleToggleBusinessStatus(e, business);
+                                  }}
+                                  disabled={toggleLoading === business.id}
+                                  title={business.isActive ? "Suspend Business" : "Activate Business"}
+                                >
+                                  {toggleLoading === business.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <Power className={`h-4 w-4 ${
+                                      business.isActive
+                                        ? "text-orange-500"
+                                        : "text-green-500"
+                                    }`} />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                  onClick={() =>
+                                    window.open(
+                                      `/catalog/${business.slug}`,
+                                      "_blank",
+                                    )
+                                  }
+                                  title="View Business"
+                                >
+                                  <Eye className="h-4 w-4 text-gray-500" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                  onClick={() => handleEditBusiness(business)}
+                                  title="Edit Business"
+                                >
+                                  <Edit className="h-4 w-4 text-gray-500" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                                  onClick={() => handleDeleteBusiness(business)}
+                                  title="Delete Business"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Empty State */}
+              {!businessLoading &&
+                (!businessData?.businesses ||
+                  businessData.businesses.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <Building className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No businesses found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || businessQuery.status !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Get started by adding your first business"}
+                    </p>
+                    {!searchTerm && businessQuery.status === "all" && (
+                      <Button
+                        onClick={() => {
+                          setRightPanelContent("add-business");
+                          setShowRightPanel(true);
+                        }}
+                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Business
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+              {/* Pagination */}
+              {businessData && businessData.businesses.length > 0 && (
+                <div className="p-2 border-t">
+                  <Pagination
+                    currentPage={businessData.pagination.page}
+                    totalPages={businessData.pagination.totalPages}
+                    totalItems={businessData.pagination.totalItems}
+                    itemsPerPage={businessData.pagination.limit}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleLimitChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
       case "professionals":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900 ">
-                Professionals
+            {/* Data Fetching Status */}
+            {dataFetchError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <span className="text-red-600 font-medium">
+                      Data Fetching Error
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        fetchData();
+                        fetchProfessionals();
+                      }}
+                      className="rounded-xl"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Professionals
               </h1>
-              <p className="text-md text-gray-600">
-                Manage and monitor your professionals from this dashboard
-                section.
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all registered professionals
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Button
-                    onClick={() => {
-                      setRightPanelContent("add-professional");
-                      setShowRightPanel(true);
-                    }}
-                    className="bg-black hover:bg-gray-800 text-white rounded-2xl"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                  </Button>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full bg-white sm:w-48 rounded-2xl">
-                      <SelectValue placeholder="Filter by Status: Active" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        All ({professionals.length})
-                      </SelectItem>
-                      <SelectItem value="active">
-                        Active ({professionals.filter((p) => p.isActive).length}
-                        )
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        Inactive (
-                        {professionals.filter((p) => !p.isActive).length})
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="rounded-2xl">
-                    <Download className="h-4 bg-white w-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
 
-                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader className="bg-amber-100">
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Professional Name
-                        </TableHead>
-                        <TableHead className="text-gray-900">Email</TableHead>
-                        <TableHead className="text-gray-900">
-                          Headline
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Location
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {professionals
-                        .filter((professional) => {
-                          const matchesSearch =
-                            professional.name
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase()) ||
-                            professional.admin?.email
-                              ?.toLowerCase()
-                              .includes(searchTerm.toLowerCase()) ||
-                            professional.professionalHeadline
-                              ?.toLowerCase()
-                              .includes(searchTerm.toLowerCase());
-                          const matchesStatus =
-                            filterStatus === "all" ||
-                            (filterStatus === "active" &&
-                              professional.isActive) ||
-                            (filterStatus === "inactive" &&
-                              !professional.isActive);
-                          return matchesSearch && matchesStatus;
-                        })
-                        .map((professional) => (
-                          <TableRow key={professional.id}>
-                            <TableCell className="text-gray-900 font-medium">
-                              {professional.name}
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
+              <div className="flex gap-2">
+                {/* Status Filter - With text on desktop */}
+                <Select
+                  value={professionalQuery.status}
+                  onValueChange={(value) => {
+                    setProfessionalQuery((prev) => ({
+                      ...prev,
+                      status: value,
+                      page: 1,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      All ({professionalData?.pagination.totalItems || professionals.length})
+                    </SelectItem>
+                    <SelectItem value="active">
+                      Active ({professionals.filter((p) => p.isActive).length})
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      Inactive ({professionals.filter((p) => !p.isActive).length})
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Export Button - With text on desktop */}
+                <Button
+                  variant="outline"
+                  onClick={handleProfessionalExport}
+                  disabled={professionalExportLoading}
+                  className="rounded-xl border-gray-200"
+                >
+                  {professionalExportLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 text-gray-500 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {professionalExportLoading ? 'Exporting...' : 'Export'}
+                  </span>
+                  <span className="sm:hidden">
+                    {professionalExportLoading ? '...' : ''}
+                  </span>
+                </Button>
+
+                {/* Add New Button - With text on desktop */}
+                <Button
+                  onClick={() => {
+                    setRightPanelContent("add-professional");
+                    setShowRightPanel(true);
+                  }}
+                  disabled={addProfessionalLoading}
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                >
+                  {addProfessionalLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {addProfessionalLoading ? 'Opening...' : 'Add Professional'}
+                  </span>
+                  <span className="sm:hidden">
+                    {addProfessionalLoading ? '...' : 'Add'}
+                  </span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar - Full width */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search professionals..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300 "
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedProfessionalIds.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedProfessionalIds.size}
+                  totalCount={
+                    professionalData?.pagination.totalItems ||
+                    professionals.length
+                  }
+                  onSelectAll={handleSelectAllProfessionals}
+                  onDeselectAll={handleDeselectAllProfessionals}
+                  onBulkActivate={handleProfessionalBulkActivate}
+                  onBulkDeactivate={handleProfessionalBulkDeactivate}
+                  onBulkDelete={handleProfessionalBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="w-12 text-white font-medium">
+                        <Checkbox
+                          checked={
+                            professionalData?.professionals.every((p) =>
+                              selectedProfessionalIds.has(p.id),
+                            ) || false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) handleSelectAllProfessionals();
+                            else handleDeselectAllProfessionals();
+                          }}
+                          className="border-gray-400"
+                        />
+                      </TableHead>
+                      <TableHead className="w-14 text-white font-medium">
+                        SN.
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('name')}>
+                        <div className="flex items-center gap-1">
+                          Professional {getProfessionalSortIcon('name')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('email')}>
+                        <div className="flex items-center gap-1">
+                          Email {getProfessionalSortIcon('email')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('professionalHeadline')}>
+                        <div className="flex items-center gap-1">
+                          Headline {getProfessionalSortIcon('professionalHeadline')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-white  truncate font-medium">
+                        Location
+                      </TableHead>
+                      <TableHead className="text-center text-white font-medium">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('createdAt')}>
+                        <div className="flex items-center gap-1">
+                          Date {getProfessionalSortIcon('createdAt')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {professionalLoading
+                      ? // Loading skeleton
+                        Array.from({ length: professionalQuery.limit }).map(
+                          (_, i) => (
+                            <TableRow key={i}>
+                              <TableCell>
+                                <Skeleton className="h-4 w-4" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-8" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Skeleton className="h-10 w-10 rounded-full" />
+                                  <Skeleton className="h-4 w-32" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-40" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-32" />
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-24" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center">
+                                  <Skeleton className="h-6 w-16 rounded-full" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Skeleton className="h-4 w-20" />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-end space-x-2">
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                  <Skeleton className="h-8 w-8" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )
+                      : professionalData?.professionals.map((professional, index) => (
+                          <TableRow
+                            key={professional.id}
+                            className="hover:bg-gray-50"
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedProfessionalIds.has(professional.id)}
+                                onCheckedChange={() =>
+                                  handleSelectProfessional(professional.id)
+                                }
+                                className="border-gray-400"
+                              />
                             </TableCell>
-                            <TableCell className="text-gray-900">
+                            <TableCell className="text-gray-500 font-medium">
+                              {(professionalData.pagination.page - 1) *
+                                professionalData.pagination.limit +
+                                index +
+                                1}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {professional.profilePicture ? (
+                                  <img
+                                    src={professional.profilePicture}
+                                    alt={`${professional.name} profile`}
+                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                    <User className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
+                                  {professional.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600 truncate">
                               {professional.email || "N/A"}
                             </TableCell>
-                            <TableCell className="text-gray-900 max-w-xs truncate">
-                              {professional.professionalHeadline ||
-                                "No headline"}
+                            <TableCell className="text-gray-600 truncate max-w-[150px]">
+                              {professional.professionalHeadline || "No headline"}
                             </TableCell>
-                            <TableCell className="text-gray-900">
-                              {professional.location || "Not specified"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  professional.isActive
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className="rounded-full"
-                              >
-                                {professional.isActive ? "Active" : "Inactive"}
-                              </Badge>
+                            <TableCell className="text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3 text-gray-400" />
+                                {professional.location || "Not specified"}
+                              </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex space-x-2">
+                              <div className="flex justify-center">
+                                <StatusBadge
+                                  status={professional.isActive ? "ACTIVE" : "SUSPENDED"}
+                                  variant={professional.isActive ? "success" : "error"}
+                                />
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {new Date(professional.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-end space-x-1">
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
+                                  variant="ghost"
+                                  className={`h-8 w-8 p-0 rounded-lg ${
+                                    professional.isActive
+                                      ? "hover:bg-orange-50"
+                                      : "hover:bg-green-50"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleToggleProfessionalStatus(e, professional);
+                                  }}
+                                  disabled={professionalToggleLoading === professional.id}
+                                  title={professional.isActive ? "Deactivate Professional" : "Activate Professional"}
+                                >
+                                  {professionalToggleLoading === professional.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <Power className={`h-4 w-4 ${
+                                      professional.isActive
+                                        ? "text-orange-500"
+                                        : "text-green-500"
+                                    }`} />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
                                   onClick={() =>
                                     window.open(
                                       `/pcard/${professional.slug}`,
                                       "_blank",
                                     )
                                   }
+                                  title="View Profile"
                                 >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleEditProfessional(professional)
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
+                                  <Eye className="h-4 w-4 text-gray-500" />
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="destructive"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleDeleteProfessional(professional.id)
-                                  }
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                  onClick={() => handleEditProfessional(professional)}
+                                  title="Edit Professional"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Edit className="h-4 w-4 text-gray-500" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                                  onClick={() => handleDeleteProfessional(professional)}
+                                  title="Delete Professional"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                  </TableBody>
+                </Table>
               </div>
+
+              {/* Empty State */}
+              {!professionalLoading &&
+                (!professionalData?.professionals ||
+                  professionalData.professionals.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <User className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No professionals found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || professionalQuery.status !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Get started by adding your first professional"}
+                    </p>
+                    {!searchTerm && professionalQuery.status === "all" && (
+                      <Button
+                        onClick={() => {
+                          setRightPanelContent("add-professional");
+                          setShowRightPanel(true);
+                        }}
+                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Professional
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+              {/* Pagination */}
+              {professionalData && professionalData.professionals.length > 0 && (
+                <div className="p-2 border-t">
+                  <Pagination
+                    currentPage={professionalData.pagination.page}
+                    totalPages={professionalData.pagination.totalPages}
+                    totalItems={professionalData.pagination.totalItems}
+                    itemsPerPage={professionalData.pagination.limit}
+                    onPageChange={handleProfessionalPageChange}
+                    onItemsPerPageChange={handleProfessionalLimitChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
       case "categories":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                {" "}
-                Category Manager
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Categories
               </h1>
-              <p className="text-md text-gray-600">
-                Configure business categories and classifications
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all business categories
               </p>
             </div>
-            <div className="">
-              <div className="">
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                {/* Add Category Button */}
                 <Button
                   onClick={() => {
                     setRightPanelContent("add-category");
                     setShowRightPanel(true);
                   }}
-                  variant="outline"
-                  className="mb-6 bg-slate-900 border-none text-white rounded-2xl"
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
                 >
-                  <Plus className="h-4  w-4 mr-2" />
-                  Add New Category
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Add Category</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
 
-                <div className="space-y-4">
-                  {safeCategories
-                    .filter((c) => !c.parentId)
-                    .map((parentCategory) => (
-                      <div key={parentCategory.id}>
-                        <div className="flex items-center space-x-2 p-4 border rounded-2xl bg-gray-50">
-                          <span className="text-lg">📁</span>
-                          <span className="font-medium">
-                            {parentCategory.name}
-                          </span>
-                          <div className="ml-auto flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="rounded-xl"
-                              onClick={() => handleEditCategory(parentCategory)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="rounded-xl"
-                              onClick={() =>
-                                handleDeleteCategory(parentCategory)
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search categories..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedCategories.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedCategories.size}
+                  totalCount={safeCategories.length}
+                  onSelectAll={() => {
+                    const allIds = filteredCategories.map(c => c.id);
+                    setSelectedCategories(new Set(allIds));
+                  }}
+                  onDeselectAll={() => setSelectedCategories(new Set())}
+                  onBulkActivate={() => {
+                    toast({ title: 'Info', description: 'Bulk activate not applicable for categories' });
+                  }}
+                  onBulkDeactivate={() => {
+                    toast({ title: 'Info', description: 'Bulk deactivate not applicable for categories' });
+                  }}
+                  onBulkDelete={() => {
+                    // Bulk delete handler would go here
+                    toast({
+                      title: 'Bulk Delete',
+                      description: `Selected ${selectedCategories.size} categories`,
+                    });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <AdminTable title="Categories">
+                  <Table>
+                    <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                      <TableRow>
+                        <TableHead className="w-12 text-white font-medium">
+                          <Checkbox
+                            checked={filteredCategories.length > 0 && selectedCategories.size === filteredCategories.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedCategories(new Set(filteredCategories.map(c => c.id)));
+                              } else {
+                                setSelectedCategories(new Set());
                               }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        {safeCategories
-                          .filter((c) => c.parentId === parentCategory.id)
-                          .map((childCategory) => (
-                            <div
-                              key={childCategory.id}
-                              className="ml-8 flex items-center space-x-2 p-3 border-l-2 border-gray-200"
-                            >
-                              <span className="text-sm">📄</span>
-                              <span className="text-sm">
-                                {childCategory.name}
-                              </span>
-                              <div className="ml-auto flex space-x-2">
+                            }}
+                            className="border-gray-400"
+                          />
+                        </TableHead>
+                        <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                        <TableHead className="text-white font-medium">Category Name</TableHead>
+                        <TableHead className="text-white font-medium">Slug</TableHead>
+                        <TableHead className="text-white font-medium">Parent Category</TableHead>
+                        <TableHead className="text-center text-white font-medium">Item Count</TableHead>
+                        <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCategories.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-12">
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <FolderTree className="h-12 w-12 mb-3 opacity-30" />
+                              <p className="text-base font-medium">No categories found</p>
+                              <p className="text-sm text-gray-400 mt-1">
+                                {searchTerm ? 'Try adjusting your search' : 'Get started by adding your first category'}
+                              </p>
+                              {!searchTerm && (
                                 <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleEditCategory(childCategory)
-                                  }
+                                  onClick={() => {
+                                    setRightPanelContent("add-category");
+                                    setShowRightPanel(true);
+                                  }}
+                                  className="mt-4 bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Category
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleDeleteCategory(childCategory)
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              )}
                             </div>
-                          ))}
-                      </div>
-                    ))}
-                </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredCategories.map((category, index) => {
+                          const parentCategory = category.parentId 
+                            ? safeCategories.find(c => c.id === category.parentId) 
+                            : null;
+                          
+                          return (
+                            <TableRow
+                              key={category.id}
+                              className={`hover:bg-gray-50 ${category.parentId ? 'bg-gray-50/50' : ''}`}
+                            >
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedCategories.has(category.id)}
+                                  onCheckedChange={() => {
+                                    setSelectedCategories(prev => {
+                                      const newSet = new Set(prev);
+                                      if (newSet.has(category.id)) {
+                                        newSet.delete(category.id);
+                                      } else {
+                                        newSet.add(category.id);
+                                      }
+                                      return newSet;
+                                    });
+                                  }}
+                                  className="border-gray-400"
+                                />
+                              </TableCell>
+                              <TableCell className="text-gray-500 font-medium">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className={category.parentId ? 'text-sm' : 'font-medium'}>
+                                    {category.name}
+                                  </span>
+                                  {category.parentId && (
+                                    <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200 text-purple-700">
+                                      Sub
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-gray-600 text-sm">
+                                <code className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                  {category.slug}
+                                </code>
+                              </TableCell>
+                              <TableCell className="text-gray-600">
+                                {parentCategory ? (
+                                  <span className="text-sm">{parentCategory.name}</span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary" className="rounded-full">
+                                  {category._count?.businesses || 0}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-end space-x-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                                    onClick={() => handleEditCategory(category)}
+                                    title="Edit Category"
+                                  >
+                                    <Edit className="h-4 w-4 text-gray-500" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
+                                    onClick={() => handleDeleteCategory(category)}
+                                    title="Delete Category"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </AdminTable>
               </div>
             </div>
           </div>
@@ -2581,445 +4450,635 @@ export default function SuperAdminDashboard() {
       case "inquiries":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
                 Inquiries Management
               </h1>
-              <p className="text-md text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 View and manage customer inquiries
               </p>
             </div>
-            <div className="">
-              <div className="">
-                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Customer
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Business
-                        </TableHead>
-                        <TableHead className="text-gray-900">Message</TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {inquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id}>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">{inquiry.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {inquiry.email}
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                {/* Status Filter */}
+                <Select
+                  value={inquiryQuery?.status || "all"}
+                  onValueChange={(value) => {
+                    if (setInquiryQuery) {
+                      setInquiryQuery((prev: any) => ({ ...prev, status: value, page: 1 }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className="rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({inquiries.length})</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="REPLIED">Replied</SelectItem>
+                    <SelectItem value="CLOSED">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search inquiries..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedInquiries.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedInquiries.size}
+                  totalCount={inquiries.length}
+                  onSelectAll={handleSelectAllInquiries}
+                  onDeselectAll={handleDeselectAllInquiries}
+                  onBulkActivate={handleInquiryBulkActivate}
+                  onBulkDeactivate={handleInquiryBulkSuspend}
+                  onBulkDelete={handleInquiryBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                      <TableHead className="text-white font-medium">Customer</TableHead>
+                      <TableHead className="text-white font-medium">Business</TableHead>
+                      <TableHead className="text-white font-medium">Message</TableHead>
+                      <TableHead className="text-center text-white font-medium">Status</TableHead>
+                      <TableHead className="text-white font-medium">Date</TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inquiries
+                      .filter((inquiry) => {
+                        const matchesSearch =
+                          inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          inquiry.message?.toLowerCase().includes(searchTerm.toLowerCase());
+                        return matchesSearch;
+                      })
+                      .map((inquiry, index) => (
+                        <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                          <TableCell className="text-gray-500 font-medium">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <User className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{inquiry.name}</div>
+                                <div className="text-sm text-gray-500">{inquiry.email}</div>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.business?.name}
+                          <TableCell className="text-gray-600">
+                            {inquiry.business?.name || "N/A"}
                           </TableCell>
-                          <TableCell className="text-gray-900 max-w-xs truncate">
+                          <TableCell className="text-gray-600 max-w-xs truncate">
                             {inquiry.message}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="rounded-full">
-                              {inquiry.status}
-                            </Badge>
+                            <div className="flex justify-center">
+                              <StatusBadge
+                                status={inquiry.status}
+                                variant={inquiry.status === 'PENDING' ? 'warning' : inquiry.status === 'REPLIED' ? 'success' : 'neutral'}
+                              />
+                            </div>
                           </TableCell>
-                          <TableCell className="text-gray-900">
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
+                          <TableCell className="text-gray-600">
+                            {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end space-x-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                onClick={() => handleViewInquiry(inquiry)}
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4 text-gray-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                onClick={() => handleReplyInquiry(inquiry)}
+                                title="Reply"
+                              >
+                                <Mail className="h-4 w-4 text-gray-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                                onClick={() => handleDeleteInquiry(inquiry)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                  </TableBody>
+                </Table>
               </div>
+
+              {/* Empty State */}
+              {inquiries.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <MessageSquare className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No inquiries found
+                  </h3>
+                  <p className="text-gray-500">
+                    {searchTerm ? "Try adjusting your search" : "There are no customer inquiries yet"}
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {inquiries.length > 0 && (
+                <div className="p-2 border-t">
+                  <Pagination
+                    currentPage={inquiryPagination?.page || 1}
+                    totalPages={inquiryPagination?.totalPages || 1}
+                    totalItems={inquiries.length}
+                    itemsPerPage={inquiryPagination?.limit || 10}
+                    onPageChange={(page) => {
+                      if (setInquiryQuery) {
+                        setInquiryQuery((prev: any) => ({ ...prev, page }));
+                      }
+                    }}
+                    onItemsPerPageChange={(limit) => {
+                      if (setInquiryQuery) {
+                        setInquiryQuery((prev: any) => ({ ...prev, limit, page: 1 }));
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
       case "registration-requests":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                REGISTRATION REQUESTS
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Registration Requests
               </h1>
-              <p className="text-md text-gray-600">
-                Review and approve business and professional registration
-                requests
+              <p className="text-sm text-gray-600 mt-1">
+                Review and approve business and professional registration requests
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Actions */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="relative bg-white rounded-2xl border border-gray-200 flex-1">
-                    <Search className="absolute left-3 top-1/2 transform  -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search registration requests..."
-                      className="pl-10 w-full rounded-2xl"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      fetchData();
-                    }}
-                    className="rounded-2xl"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Refresh Data
-                  </Button>
-                </div>
 
-                {/* Data Fetching Status for Registration Requests */}
-                {dataFetchError && (
-                  <div className="bg-red-50 border border-red-200 rounded-3xl p-4 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <AlertTriangle className="h-5 w-5 text-red-600" />
-                        <span className="text-red-600 font-medium">
-                          Data Fetching Error
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            fetchData();
-                          }}
-                          className="rounded-2xl"
-                        >
-                          Retry
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-red-600 text-sm mt-1">
-                      {dataFetchError}
-                    </p>
-                  </div>
-                )}
+            {/* Toolbar */}
+            <div className="space-y-3">
+            
 
-                {/* Empty State */}
-                {registrationInquiries.length === 0 && !isLoading && (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 mb-4">
-                      <UserCheck className="h-16 w-16 mx-auto mb-4" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No Registration Requests
-                    </h3>
-                    <p className="text-gray-600">
-                      There are currently no business or professional
-                      registration requests to review.
-                    </p>
-                  </div>
-                )}
-
-                {/* Data Table */}
-                {registrationInquiries.length > 0 && (
-                  <div className="overflow-x-auto rounded-2xl bg-white border border-gray-200">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-900">Type</TableHead>
-                          <TableHead className="text-gray-900">Name</TableHead>
-                          <TableHead className="text-gray-900">
-                            Business Name
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Contact
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Location
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Status
-                          </TableHead>
-                          <TableHead className="text-gray-900">Date</TableHead>
-                          <TableHead className="text-gray-900">
-                            Actions
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {registrationInquiries
-                          .filter((inquiry) => {
-                            const matchesSearch =
-                              inquiry.name
-                                .toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.email
-                                .toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.businessName
-                                ?.toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.location
-                                ?.toLowerCase()
-                                .includes(searchTerm.toLowerCase());
-                            return matchesSearch;
-                          })
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    inquiry.type === "BUSINESS"
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                  className="rounded-full"
-                                >
-                                  {inquiry.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-gray-900 font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {inquiry.businessName || "N/A"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                <div>
-                                  <div className="text-sm">{inquiry.email}</div>
-                                  {inquiry.phone && (
-                                    <div className="text-sm text-gray-500">
-                                      {inquiry.phone}
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {inquiry.location || "Not specified"}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    inquiry.status === "REJECTED"
-                                      ? "destructive"
-                                      : "outline"
-                                  }
-                                  className="rounded-full"
-                                >
-                                  {inquiry.status}
-                                  {inquiry.status === "REJECTED" && (
-                                    <AlertTriangle className="h-3 w-3 ml-1" />
-                                  )}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {new Date(
-                                  inquiry.createdAt,
-                                ).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  {inquiry.status === "PENDING" && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        className="rounded-xl bg-green-600 hover:bg-green-700"
-                                        onClick={() =>
-                                          handleCreateAccountFromInquiryWithSidebar(
-                                            inquiry,
-                                          )
-                                        }
-                                        disabled={
-                                          creatingAccount === inquiry.id
-                                        }
-                                      >
-                                        {creatingAccount === inquiry.id ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1"></div>
-                                            Creating...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <UserCheck className="h-4 w-4 mr-1" />
-                                            Create Account
-                                          </>
-                                        )}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="rounded-xl"
-                                        onClick={() =>
-                                          handleRejectInquiry(inquiry)
-                                        }
-                                        disabled={
-                                          creatingAccount === inquiry.id
-                                        }
-                                      >
-                                        {creatingAccount === inquiry.id ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
-                                            Processing...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <AlertTriangle className="h-4 w-4 mr-1" />
-                                            Reject
-                                          </>
-                                        )}
-                                      </Button>
-                                    </>
-                                  )}
-                                  {inquiry.status === "COMPLETED" && (
-                                    <Badge
-                                      variant="default"
-                                      className="rounded-full"
-                                    >
-                                      <UserCheck className="h-3 w-3 mr-1" />
-                                      Account Created
-                                    </Badge>
-                                  )}
-                                  {inquiry.status === "REJECTED" && (
-                                    <Badge
-                                      variant="destructive"
-                                      className="rounded-full"
-                                    >
-                                      <AlertTriangle className="h-3 w-3 mr-1" />
-                                      Rejected
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search registration requests..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
+
+            {/* Data Fetching Status */}
+            {dataFetchError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <span className="text-red-600 font-medium">
+                      Data Fetching Error
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fetchData()}
+                      className="rounded-xl"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {registrationInquiries.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <UserCheck className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Registration Requests
+                </h3>
+                <p className="text-gray-500">
+                  There are currently no business or professional registration requests to review.
+                </p>
+              </div>
+            )}
+
+            {/* Data Table */}
+            {registrationInquiries.length > 0 && (
+              <AdminTable title="Registration Requests">
+                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableRow>
+                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                    <TableHead className="text-white font-medium">Type</TableHead>
+                    <TableHead className="text-white font-medium">Name</TableHead>
+                    <TableHead className="text-white font-medium">Business Name</TableHead>
+                    <TableHead className="text-white font-medium">Contact</TableHead>
+                    <TableHead className="text-white    font-medium">Location</TableHead>
+                    <TableHead className="text-center text-white font-medium">Status</TableHead>
+                    <TableHead className="text-white font-medium">Date</TableHead>
+                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {registrationInquiries
+                    .filter((inquiry) => {
+                      const matchesSearch =
+                        inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+                      return matchesSearch;
+                    })
+                    .map((inquiry, index) => (
+                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                        <TableCell className="text-gray-500 font-medium">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={inquiry.type === "BUSINESS" ? "default" : "secondary"}
+                            className="rounded-full"
+                          >
+                            {inquiry.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-gray-900 font-medium">
+                          {inquiry.name}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.businessName || "N/A"}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          <div>
+                            <div className="text-sm">{inquiry.email}</div>
+                            {inquiry.phone && (
+                              <div className="text-sm text-gray-500">
+                                {inquiry.phone}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600 w-auto max-w-[150px] truncate ">
+                          {inquiry.location || "Not specified"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <StatusBadge
+                              status={inquiry.status}
+                              variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            {inquiry.status === "PENDING" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-md hover:bg-green-50"
+                                  onClick={() => handleCreateAccountFromInquiryWithSidebar(inquiry)}
+                                  disabled={creatingAccount === inquiry.id}
+                                  title="Create Account"
+                                >
+                                  {creatingAccount === inquiry.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <UserCheck className="h-4 w-4 text-green-600" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
+                                  onClick={() => handleRejectInquiry(inquiry)}
+                                  disabled={creatingAccount === inquiry.id}
+                                  title="Reject"
+                                >
+                                  {creatingAccount === inquiry.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                toast({
+                                  title: 'Request Details',
+                                  description: `${inquiry.type} request from ${inquiry.name}`,
+                                });
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </AdminTable>
+            )}
           </div>
         );
       case "business-listings":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                BUSINESS LISTING INQUIRIES
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Business Listing Inquiries
               </h1>
-              <p className="text-md text-gray-600">
-                Manage business listing requests and digital presence
-                enhancement inquiries
+              <p className="text-sm text-gray-600 mt-1">
+                Manage business listing requests and digital presence enhancement inquiries
               </p>
             </div>
-            <div className="">
-              <div className="">
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Business
-                        </TableHead>
-                        <TableHead className="text-gray-900">Contact</TableHead>
-                        <TableHead className="text-gray-900">
-                          Requirements
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Inquiry Type
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">
-                          Assigned To
-                        </TableHead>
-                        <TableHead className="text-gray-900">Date</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {businessListingInquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id}>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">
-                                {inquiry.businessName}
-                              </div>
-                              {inquiry.businessDescription && (
-                                <div className="text-sm text-gray-500 max-w-xs truncate">
-                                  {inquiry.businessDescription}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">
-                                {inquiry.contactName}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {inquiry.email}
-                              </div>
-                              {inquiry.phone && (
-                                <div className="text-sm text-gray-500">
-                                  {inquiry.phone}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-900 max-w-xs truncate">
-                            {inquiry.requirements}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.inquiryType || "Not specified"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="rounded-full">
-                              {inquiry.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.assignedUser
-                              ? inquiry.assignedUser.name
-                              : "Unassigned"}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => {
-                                  setSelectedBusinessListingInquiry(inquiry);
-                                  setShowBusinessListingInquiryDialog(true);
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => {
-                                  setSelectedBusinessListingInquiry(inquiry);
-                                  setShowBusinessListingInquiryDialog(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search business listings..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedBusinessListings.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedBusinessListings.size}
+                  totalCount={businessListingInquiries.length}
+                  onSelectAll={() => setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)))}
+                  onDeselectAll={() => setSelectedBusinessListings(new Set())}
+                  onBulkActivate={() => {
+                    toast({ title: 'Info', description: 'Bulk activate not implemented for listings' });
+                  }}
+                  onBulkDeactivate={() => {
+                    toast({ title: 'Info', description: 'Bulk deactivate not implemented for listings' });
+                  }}
+                  onBulkDelete={() => {
+                    toast({ title: 'Info', description: 'Bulk delete not implemented for listings' });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            {businessListingInquiries.length > 0 ? (
+              <AdminTable title="Business Listings">
+                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableRow>
+                    <TableHead className="w-12 text-white font-medium">
+                      <Checkbox
+                        checked={businessListingInquiries.length > 0 && selectedBusinessListings.size === businessListingInquiries.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)));
+                          } else {
+                            setSelectedBusinessListings(new Set());
+                          }
+                        }}
+                        className="border-gray-400"
+                      />
+                    </TableHead>
+                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                    <TableHead className="text-white font-medium">Business</TableHead>
+                    <TableHead className="text-white font-medium">Contact</TableHead>
+                    <TableHead className="text-white font-medium">Requirements</TableHead>
+                    <TableHead className="text-white font-medium">Inquiry Type</TableHead>
+                    <TableHead className="text-center text-white font-medium">Status</TableHead>
+                    <TableHead className="text-white font-medium">Assigned To</TableHead>
+                    <TableHead className="text-white font-medium">Date</TableHead>
+                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {businessListingInquiries
+                    .filter((inquiry) => {
+                      const matchesSearch =
+                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.requirements?.toLowerCase().includes(searchTerm.toLowerCase());
+                      return matchesSearch;
+                    })
+                    .map((inquiry, index) => (
+                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedBusinessListings.has(inquiry.id)}
+                            onCheckedChange={() => {
+                              setSelectedBusinessListings(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(inquiry.id)) {
+                                  newSet.delete(inquiry.id);
+                                } else {
+                                  newSet.add(inquiry.id);
+                                }
+                                return newSet;
+                              });
+                            }}
+                            className="border-gray-400"
+                          />
+                        </TableCell>
+                        <TableCell className="text-gray-500 font-medium">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {inquiry.businessName}
+                            </div>
+                            {inquiry.businessDescription && (
+                              <div className="text-sm text-gray-500 max-w-xs truncate">
+                                {inquiry.businessDescription}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {inquiry.contactName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {inquiry.email}
+                            </div>
+                            {inquiry.phone && (
+                              <div className="text-sm text-gray-500">
+                                {inquiry.phone}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600 max-w-xs truncate">
+                          {inquiry.requirements}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.inquiryType || "Not specified"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <StatusBadge
+                              status={inquiry.status}
+                              variant={
+                                inquiry.status === "PENDING" ? "warning" :
+                                inquiry.status === "REVIEWING" || inquiry.status === "UNDER_REVIEW" ? "info" :
+                                inquiry.status === "APPROVED" ? "success" :
+                                inquiry.status === "REJECTED" ? "error" : "neutral"
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.assignedUser?.name || "Unassigned"}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                setSelectedBusinessListingInquiry(inquiry);
+                                setShowBusinessListingInquiryDialog(true);
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                setSelectedBusinessListingInquiry(inquiry);
+                                setShowBusinessListingInquiryDialog(true);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </AdminTable>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
+                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <Building className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Business Listings Found
+                </h3>
+                <p className="text-gray-500">
+                  There are currently no business listing inquiries to review.
+                </p>
+              </div>
+            )}
           </div>
         );
       case "analytics":
@@ -3032,38 +5091,6 @@ export default function SuperAdminDashboard() {
               <p className="text-md text-gray-600">
                 Detailed analytics and insights
               </p>
-            </div>
-            <div className="    rounded-3xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Total Inquiries</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{inquiries.length}</div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Active Businesses</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {stats.activeBusinesses}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Total Products</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {stats.totalProducts}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </div>
           </div>
         );
@@ -3108,87 +5135,29 @@ const renderRightPanel = () => {
   // Ensure categories is always an array
   const safeCategories = Array.isArray(categories) ? categories : [];
 
-  // Common close handler
-  const closePanel = () => {
-    setShowRightPanel(false);
-    setRightPanelContent(null);
-    setGeneratedPassword("");
-    setGeneratedUsername("");
-    setEditingBusiness(null);
-    setEditingProfessional(null);
-    setCreatingAccount(null);
-  };
-
-  // Helper to render standard modal structure
-  const ModalLayout = ({
-    title,
-    description,
-    children,
-    footerContent,
-    formId,
-  }: {
-    title: string;
-    description: string;
-    children: React.ReactNode;
-    footerContent: React.ReactNode;
-    formId?: string;
-  }) => (
-    <div className="flex flex-col h-[90vh]  bg-white relative">
-      {/* Fixed Header - shrink-0 ensures it doesn't get squashed */}
-      <DialogHeader className="px-6 pt-4 pb-2 border-b shrink-0 space-y-1.5 bg-white z-10">
-        <div className="flex justify-between items-start w-full">
-          <div className="">
-            <DialogTitle className="text-md font-semibold leading-none tracking-tight">{title}</DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 font-normal">
-              {description}
-            </DialogDescription>
-          </div>
-        </div>
-      </DialogHeader>
-
-      {/* Scrollable Body - flex-1 makes it fill space, overflow-y-auto enables scrolling */}
-      <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-4">
-        {children}
-      </div>
-
-      {/* Fixed Footer - shrink-0 keeps it at bottom, border-t separates it */}
-      <DialogFooter className="px-6 py-2  flex flex-row justify-center  border-t  bg-white z-10">
-        {footerContent}
-      </DialogFooter>
-    </div>
-  );
-
   // --- ADD BUSINESS ---
   if (rightPanelContent === "add-business") {
     return (
-      <ModalLayout
-        title="Add New Business"
-        description="Create a new business account and listing."
-        formId="add-business-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-full w-auto flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-business-form" className="rounded-full w-auto flex-1">
-              Create Business
-            </Button>
-          </>
-        }
-      >
-        <form id="add-business-form" onSubmit={handleAddBusiness} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Business Name</Label>
-            <Input name="name" required className="rounded-xl" placeholder="e.g. Acme Corp" />
+      <form id="add-business-form" onSubmit={handleAddBusiness} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Business Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="e.g. Acme Corp" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" className="rounded-xl" placeholder="Brief business description..." />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" className="pl-10 rounded-md" placeholder="Brief business description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <div className="relative">
             <Select name="categoryId" required>
-              <SelectTrigger className="rounded-xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -3199,189 +5168,44 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input name="phone" className="rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input name="website" className="rounded-xl" />
-            </div>
-          </div>
-          
-          <Separator />
-          <div>
-            <h4 className="font-medium text-sm mb-4">Admin Account Details</h4>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Admin Name</Label>
-                  <Input name="adminName" required className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Admin Email</Label>
-                  <Input name="email" type="email" required className="rounded-xl" />
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const form = document.getElementById("add-business-form") as HTMLFormElement;
-                  const businessName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
-                  const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
-                  handleGenerateCredentials(businessName, adminName);
-                }}
-                className="w-full rounded-xl"
-              >
-                <Key className="h-4 w-4 mr-2" /> Generate Credentials
-              </Button>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Username</Label>
-                  <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <div className="relative">
-                    <Input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={generatedPassword}
-                      onChange={(e) => setGeneratedPassword(e.target.value)}
-                      className="pr-10 rounded-2xl"
-                      placeholder="Generated or manual password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-2xl"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </ModalLayout>
-    );
-  }
-
-  // --- EDIT BUSINESS ---
-  if (rightPanelContent === "edit-business" && editingBusiness) {
-    return (
-      <ModalLayout
-        title="Edit Business"
-        description="Update business details and category."
-        formId="edit-business-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-business-form" className="rounded-2xl">
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-business-form" onSubmit={handleUpdateBusiness} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Business Name</Label>
-            <Input name="name" defaultValue={editingBusiness.name} required className="rounded-2xl" />
-          </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" defaultValue={editingBusiness.description} className="rounded-2xl" />
-          </div>
-          <div className="space-y-2">
-            <Label>Logo URL</Label>
-            <Input name="logo" defaultValue={editingBusiness.logo} className="rounded-2xl" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input name="address" defaultValue={editingBusiness.address} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input name="phone" defaultValue={editingBusiness.phone} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input name="website" defaultValue={editingBusiness.website} className="rounded-2xl" />
-            </div>
-            <div className="space-y-2">
-              <Label>Admin Email</Label>
-              <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="rounded-2xl" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select name="categoryId" defaultValue={editingBusiness.category?.id || ""}>
-              <SelectTrigger className="rounded-2xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </form>
-      </ModalLayout>
-    );
-  }
-
-  // --- ADD PROFESSIONAL ---
-  if (rightPanelContent === "add-professional") {
-    return (
-      <ModalLayout
-        title="Add Professional"
-        description="Register a new professional profile."
-        formId="add-professional-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-professional-form" className="rounded-2xl">
-              Create Profile
-            </Button>
-          </>
-        }
-      >
-        <form id="add-professional-form" onSubmit={handleAddProfessional} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Professional Name</Label>
-            <Input name="name" required className="rounded-2xl" placeholder="Full Name" />
-          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Phone</Label>
-            <Input name="phone" placeholder="+91 8080808080" className="rounded-2xl" />
+            <div className="relative">
+              <Input name="phone" className="pl-10 rounded-md" placeholder="+91 8080808080" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
           </div>
-
-          <Separator />
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <div className="relative">
+              <Input name="website" className="pl-10 rounded-md" placeholder="https://example.com" />
+              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        </div>
+        
+        <Separator />
+        <div>
+          <h4 className="font-medium text-sm mb-4">Admin Account Details</h4>
           <div className="space-y-4">
-            <h4 className="font-medium text-sm">Login Credentials</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Admin Name</Label>
-                <Input name="adminName" required className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="adminName" required className="pl-10 rounded-md" placeholder="Full Name" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Admin Email</Label>
-                <Input name="email" type="email" required className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="email" type="email" required className="pl-10 rounded-md" placeholder="admin@example.com" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
             </div>
             <Button
@@ -3389,19 +5213,22 @@ const renderRightPanel = () => {
               variant="outline"
               onClick={(e) => {
                 e.preventDefault();
-                const form = e.currentTarget.closest("form") as HTMLFormElement;
-                const professionalName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+                const form = document.getElementById("add-business-form") as HTMLFormElement;
+                const businessName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
                 const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
-                handleGenerateCredentials(professionalName, adminName);
+                handleGenerateCredentials(businessName, adminName);
               }}
-              className="w-full rounded-2xl"
+              className="w-full rounded-md"
             >
               <Key className="h-4 w-4 mr-2" /> Generate Credentials
             </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="rounded-2xl" />
+                <div className="relative">
+                  <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="pl-10 rounded-md" placeholder="Auto-generated" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
@@ -3411,87 +5238,240 @@ const renderRightPanel = () => {
                     type={showPassword ? "text" : "password"}
                     value={generatedPassword}
                     onChange={(e) => setGeneratedPassword(e.target.value)}
-                    className="pr-10 rounded-2xl"
+                    className="pl-10 pr-10 rounded-md"
+                    placeholder="Generated or manual password"
                   />
-                  <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-md"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
             </div>
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
+    );
+  }
+
+  // --- EDIT BUSINESS ---
+  if (rightPanelContent === "edit-business" && editingBusiness) {
+    return (
+      <form id="edit-business-form" onSubmit={handleUpdateBusiness} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Business Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingBusiness.name} required className="pl-10 rounded-md" placeholder="Business name" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" defaultValue={editingBusiness.description} className="pl-10 rounded-md" placeholder="Business description" />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Logo URL</Label>
+          <div className="relative">
+            <Input name="logo" defaultValue={editingBusiness.logo} className="pl-10 rounded-md" placeholder="https://example.com/logo.png" />
+            <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Address</Label>
+            <div className="relative">
+              <Input name="address" defaultValue={editingBusiness.address} className="pl-10 rounded-md" placeholder="Business address" />
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <div className="relative">
+              <Input name="phone" defaultValue={editingBusiness.phone} className="pl-10 rounded-md" placeholder="+91 8080808080" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <div className="relative">
+              <Input name="website" defaultValue={editingBusiness.website} className="pl-10 rounded-md" placeholder="https://example.com" />
+              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Admin Email</Label>
+            <div className="relative">
+              <Input name="email" defaultValue={editingBusiness.admin.email} type="email" className="pl-10 rounded-md" placeholder="admin@example.com" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <div className="relative">
+            <Select name="categoryId" defaultValue={editingBusiness.category?.id || ""}>
+              <SelectTrigger className="pl-10 rounded-md">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  // --- ADD PROFESSIONAL ---
+  if (rightPanelContent === "add-professional") {
+    return (
+      <form id="add-professional-form" onSubmit={handleAddProfessional} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Professional Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="Full Name" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <div className="relative">
+            <Input name="phone" placeholder="+91 8080808080" className="pl-10 rounded-md" />
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+
+        <Separator />
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Login Credentials</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Admin Name</Label>
+              <div className="relative">
+                <Input name="adminName" required className="pl-10 rounded-md" placeholder="Admin name" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Admin Email</Label>
+              <div className="relative">
+                <Input name="email" type="email" required className="pl-10 rounded-md" placeholder="admin@example.com" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              const form = e.currentTarget.closest("form") as HTMLFormElement;
+              const professionalName = (form?.querySelector('input[name="name"]') as HTMLInputElement)?.value || "";
+              const adminName = (form?.querySelector('input[name="adminName"]') as HTMLInputElement)?.value || "";
+              handleGenerateCredentials(professionalName, adminName);
+            }}
+            className="w-full rounded-md"
+          >
+            <Key className="h-4 w-4 mr-2" /> Generate Credentials
+          </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <div className="relative">
+                <Input name="username" value={generatedUsername} onChange={(e) => setGeneratedUsername(e.target.value)} className="pl-10 rounded-md" placeholder="Auto-generated" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="relative">
+                <Input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={generatedPassword}
+                  onChange={(e) => setGeneratedPassword(e.target.value)}
+                  className="pl-10 pr-10 rounded-md"
+                  placeholder="Generated or manual password"
+                />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
     );
   }
 
   // --- EDIT PROFESSIONAL ---
   if (rightPanelContent === "edit-professional" && editingProfessional) {
     return (
-      <ModalLayout
-        title="Edit Professional"
-        description="Update professional details."
-        formId="edit-professional-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-professional-form" className="rounded-2xl">
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-professional-form" onSubmit={handleUpdateProfessional} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Professional Name</Label>
-            <Input name="name" defaultValue={editingProfessional.name} required className="rounded-2xl" />
+      <form id="edit-professional-form" onSubmit={handleUpdateProfessional} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Professional Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingProfessional.name} required className="pl-10 rounded-md" placeholder="Full Name" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Phone</Label>
-            <Input name="phone" defaultValue={editingProfessional.phone || ""} className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <div className="relative">
+            <Input name="phone" defaultValue={editingProfessional.phone || ""} className="pl-10 rounded-md" placeholder="+91 8080808080" />
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input name="email" defaultValue={editingProfessional.email || ""} type="email" className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Email</Label>
+          <div className="relative">
+            <Input name="email" defaultValue={editingProfessional.email || ""} type="email" className="pl-10 rounded-md" placeholder="email@example.com" />
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
   // --- ADD CATEGORY ---
   if (rightPanelContent === "add-category") {
     return (
-      <ModalLayout
-        title="Add Category"
-        description="Create a new business category."
-        formId="add-category-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="add-category-form" className="rounded-2xl">
-              Create Category
-            </Button>
-          </>
-        }
-      >
-        <form id="add-category-form" onSubmit={handleAddCategory} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Category Name</Label>
-            <Input name="name" required className="rounded-2xl" />
+      <form id="add-category-form" onSubmit={handleAddCategory} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Category Name</Label>
+          <div className="relative">
+            <Input name="name" required className="pl-10 rounded-md" placeholder="Category name" />
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" className="pl-10 rounded-md" placeholder="Category description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Parent Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Parent Category</Label>
+          <div className="relative">
             <Select name="parentId">
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select parent category (optional)" />
               </SelectTrigger>
               <SelectContent>
@@ -3503,43 +5483,36 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
   // --- EDIT CATEGORY ---
   if (rightPanelContent === "edit-category" && editingCategory) {
     return (
-      <ModalLayout
-        title="Edit Category"
-        description="Update category details."
-        formId="edit-category-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl">
-              Cancel
-            </Button>
-            <Button type="submit" form="edit-category-form" className="rounded-2xl">
-              Update Category
-            </Button>
-          </>
-        }
-      >
-        <form id="edit-category-form" onSubmit={handleUpdateCategory} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Category Name</Label>
-            <Input name="name" defaultValue={editingCategory.name} required className="rounded-2xl" />
+      <form id="edit-category-form" onSubmit={handleUpdateCategory} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Category Name</Label>
+          <div className="relative">
+            <Input name="name" defaultValue={editingCategory.name} required className="pl-10 rounded-md" placeholder="Category name" />
+            <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea name="description" defaultValue={editingCategory.description} className="rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <div className="relative">
+            <Textarea name="description" defaultValue={editingCategory.description} className="pl-10 rounded-md" placeholder="Category description..." />
+            <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
-          <div className="space-y-2">
-            <Label>Parent Category</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Parent Category</Label>
+          <div className="relative">
             <Select name="parentId" defaultValue={editingCategory.parentId || "none"}>
-              <SelectTrigger className="rounded-2xl">
+              <SelectTrigger className="pl-10 rounded-md">
                 <SelectValue placeholder="Select parent category (optional)" />
               </SelectTrigger>
               <SelectContent>
@@ -3551,9 +5524,10 @@ const renderRightPanel = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
@@ -3565,135 +5539,135 @@ const renderRightPanel = () => {
     if (!inquiry) return null;
 
     return (
-      <ModalLayout
-        title="Create Account"
-        description="Complete account setup from registration request."
-        formId="inquiry-account-form"
-        footerContent={
-          <>
-            <Button type="button" variant="outline" onClick={closePanel} className="rounded-2xl" disabled={creatingAccount !== null}>
-              Cancel
-            </Button>
-            <Button type="submit" form="inquiry-account-form" className="rounded-2xl bg-green-600 hover:bg-green-700" disabled={creatingAccount !== null}>
-              {creatingAccount ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <UserCheck className="h-4 w-4 mr-2" />}
-              Create Account
-            </Button>
-          </>
-        }
-      >
-        <form id="inquiry-account-form" onSubmit={async (e) => { 
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const manualPassword = formData.get("password") as string;
-            const password = manualPassword || generatedPassword || generatePassword();
+      <form id="inquiry-account-form" onSubmit={async (e) => { 
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          const manualPassword = formData.get("password") as string;
+          const password = manualPassword || generatedPassword || generatePassword();
 
-            const accountData = {
-              name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
-              email: inquiry.email,
-              password: password,
-              adminName: (formData.get("adminName") as string) || inquiry.name,
-              phone: inquiry.phone,
-              ...(isBusiness && {
-                address: (inquiry as any).location,
-                description: (formData.get("description") as string),
-                categoryId: (formData.get("categoryId") as string),
-              }),
-            };
+          const accountData = {
+            name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
+            email: inquiry.email,
+            password: password,
+            adminName: (formData.get("adminName") as string) || inquiry.name,
+            phone: inquiry.phone,
+            ...(isBusiness && {
+              address: (inquiry as any).location,
+              description: (formData.get("description") as string),
+              categoryId: (formData.get("categoryId") as string),
+            }),
+          };
 
-            try {
-              const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(accountData),
+          try {
+            const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(accountData),
+            });
+
+            if (response.ok) {
+              try {
+                  await fetch("/api/notifications", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          type: "accountCreation", name: inquiry.name, email: inquiry.email,
+                          password: password, accountType: isBusiness ? "business" : "professional",
+                          loginUrl: `${window.location.origin}/login`,
+                      }),
+                  });
+              } catch (err) { console.error(err); }
+
+              await fetch(`/api/registration-inquiries/${inquiry.id}`, {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "COMPLETED" }),
               });
 
-              if (response.ok) {
-                try {
-                    await fetch("/api/notifications", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            type: "accountCreation", name: inquiry.name, email: inquiry.email,
-                            password: password, accountType: isBusiness ? "business" : "professional",
-                            loginUrl: `${window.location.origin}/login`,
-                        }),
-                    });
-                } catch (err) { console.error(err); }
-
-                await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-                  method: "PUT", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: "COMPLETED" }),
-                });
-
-                setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
-                toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
-                closePanel();
-                fetchData();
-              }
-            } catch (error) {
-                console.error(error);
-                toast({ title: "Error", description: "Failed to create account.", variant: "destructive" });
+              setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
+              toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
+              closePanel();
+              fetchData();
             }
-          }} className="space-y-5">
-          
-          <div className="bg-gray-50 p-4 rounded-2xl border">
-            <h4 className="font-medium text-sm mb-2">Inquiry Details</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-              <div>Type: <span className="font-medium text-gray-900">{isBusiness ? "Business" : "Professional"}</span></div>
-              <div>Name: <span className="font-medium text-gray-900">{inquiry.name}</span></div>
-              <div>Email: <span className="font-medium text-gray-900">{inquiry.email}</span></div>
-              <div>Location: <span className="font-medium text-gray-900">{(inquiry as any).location || "N/A"}</span></div>
-            </div>
+          } catch (error) {
+              console.error(error);
+              toast({ title: "Error", description: "Failed to create account.", variant: "destructive" });
+          }
+        }} className="space-y-4">
+        
+        <div className="bg-gray-50 p-4 rounded-md border">
+          <h4 className="font-medium text-sm mb-2">Inquiry Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+            <div>Type: <span className="font-medium text-gray-900">{isBusiness ? "Business" : "Professional"}</span></div>
+            <div>Name: <span className="font-medium text-gray-900">{inquiry.name}</span></div>
+            <div>Email: <span className="font-medium text-gray-900">{inquiry.email}</span></div>
+            <div>Location: <span className="font-medium text-gray-900">{(inquiry as any).location || "N/A"}</span></div>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Account Configuration</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Admin Name</Label>
-                <Input name="adminName" defaultValue={inquiry.name} required className="rounded-2xl" />
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Account Configuration</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Admin Name</Label>
+              <div className="relative">
+                <Input name="adminName" defaultValue={inquiry.name} required className="pl-10 rounded-md" placeholder="Admin name" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
-              {isBusiness && (
-                <>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Business Name</Label>
-                    <Input name="businessName" defaultValue={(inquiry as any).businessName || inquiry.name} required className="rounded-2xl" />
+            </div>
+            {isBusiness && (
+              <>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Business Name</Label>
+                  <div className="relative">
+                    <Input name="businessName" defaultValue={(inquiry as any).businessName || inquiry.name} required className="pl-10 rounded-md" placeholder="Business name" />
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Description</Label>
-                    <Textarea name="description" placeholder="Brief description..." className="rounded-2xl" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Description</Label>
+                  <div className="relative">
+                    <Textarea name="description" placeholder="Brief description..." className="pl-10 rounded-md" />
+                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Category</Label>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Category</Label>
+                  <div className="relative">
                     <Select name="categoryId">
-                      <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectTrigger className="pl-10 rounded-md">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
                       <SelectContent>
                           {safeCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <FolderTree className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Login Credentials</h4>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <div className="flex gap-2">
-                  <div className="relative flex-1">
-                      <Input name="password" type={showPassword ? "text" : "password"} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pr-10 rounded-2xl" placeholder="Generated or manual password" />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                  </div>
-                  <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }}>Generate</Button>
-              </div>
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Login Credentials</h4>
+          <div className="space-y-2">
+            <Label>Password</Label>
+            <div className="flex gap-2">
+                <div className="relative flex-1">
+                    <Input name="password" type={showPassword ? "text" : "password"} value={generatedPassword} onChange={(e) => setGeneratedPassword(e.target.value)} className="pl-10 pr-10 rounded-md" placeholder="Generated or manual password" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+                <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }} className="rounded-md">
+                  <Key className="h-4 w-4 mr-2" />Generate
+                </Button>
             </div>
           </div>
-        </form>
-      </ModalLayout>
+        </div>
+      </form>
     );
   }
 
@@ -3705,7 +5679,8 @@ const renderRightPanel = () => {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -3797,7 +5772,8 @@ const renderRightPanel = () => {
 
   return (
     <div className="max-h-screen min-h-screen relative flex">
-      <div className="fixed inset-0 bg-[#F2F0FF] bg-center blur-sm -z-10"></div>
+      <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
+      <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden">
@@ -3853,10 +5829,10 @@ const renderRightPanel = () => {
           </div>
         </div>
 
-        {/* Right Editor Panel - Dialog */}
-        <Dialog
-          open={showRightPanel}
-          onOpenChange={(open) => {
+        {/* Right Editor Panel - UnifiedModal */}
+        <UnifiedModal
+          isOpen={showRightPanel}
+          onClose={(open) => {
             if (!open) {
               setShowRightPanel(false);
               setRightPanelContent(null);
@@ -3864,213 +5840,494 @@ const renderRightPanel = () => {
               setGeneratedUsername("");
             }
           }}
+          title={getRightPanelTitle()}
+          description={getRightPanelDescription()}
+          footer={getRightPanelFooter()}
         >
-          <DialogContent className="max-w-4xl w-[95%] h-[90vh] border overflow-hidden  bg-white p-0  top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
-            {renderRightPanel()}
-          </DialogContent>
-        </Dialog>
+          {renderRightPanel()}
+        </UnifiedModal>
       </div>
 
 
-      {/* Business Listing Inquiry Dialog */}
-      <Dialog
-        open={showBusinessListingInquiryDialog}
-        onOpenChange={setShowBusinessListingInquiryDialog}
+      {/* Business Listing Inquiry Dialog - Now uses UnifiedModal */}
+      <UnifiedModal
+        isOpen={showBusinessListingInquiryDialog}
+        onClose={(open) => {
+          if (!open) {
+            setShowBusinessListingInquiryDialog(false);
+            setSelectedBusinessListingInquiry(null);
+          }
+        }}
+        title="Business Listing Inquiry Details"
+        description="Review and manage this business listing inquiry"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBusinessListingInquiryDialog(false);
+                setSelectedBusinessListingInquiry(null);
+              }}
+              className="rounded-md w-auto px-6"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedBusinessListingInquiry) {
+                  const updates: any = {
+                    status: selectedBusinessListingInquiry?.status,
+                    notes: selectedBusinessListingInquiry?.notes,
+                  };
+                  if (selectedBusinessListingInquiry?.assignedTo) {
+                    updates.assignedTo =
+                      selectedBusinessListingInquiry.assignedTo;
+                  }
+                  handleUpdateBusinessListingInquiry(
+                    selectedBusinessListingInquiry?.id,
+                    updates,
+                  );
+                }
+              }}
+              className="rounded-md w-auto px-6 bg-black text-white hover:bg-gray-800"
+            >
+              Save Changes
+            </Button>
+          </>
+        }
       >
-        <DialogContent className="max-w-4xl  p-0 overflow-hidden top-4 bottom-4 left-1/2 translate-x-[-50%] translate-y-0">
-          {selectedBusinessListingInquiry && (
-            <div className="flex flex-col h-full relative">
-              {/* Fixed Header */}
-              <DialogHeader className="p-6 border-b shrink-0 space-y-0 bg-white">
-                <div className="flex justify-between items-start w-full">
-                  <div className="">
-                    <DialogTitle className="text-md  font-semibold">
-                      Business Listing Inquiry Details
-                    </DialogTitle>
-                    <DialogDescription className="text-xs text-gray-500">
-                      Review and manage this business listing inquiry
-                    </DialogDescription>
+        {selectedBusinessListingInquiry && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Business Name
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.businessName ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Contact Name
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.contactName ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Email
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.email ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Phone
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry.phone || "Not provided"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-gray-900">
+                  Business Description
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.businessDescription ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-900">
+                  Inquiry Type
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBusinessListingInquiry?.inquiryType ||
+                    "Not specified"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium text-gray-900">
+                  Requirements
+                </Label>
+                <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                  {selectedBusinessListingInquiry?.requirements ||
+                    "Not provided"}
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Update Status</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Status</Label>
+                  <div className="relative">
+                    <Select
+                      value={selectedBusinessListingInquiry.status}
+                      onValueChange={(value) => {
+                        const updated = {
+                          ...selectedBusinessListingInquiry,
+                          status: value,
+                        };
+                        setSelectedBusinessListingInquiry(updated);
+                      }}
+                    >
+                      <SelectTrigger className="rounded-md pl-10">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="UNDER_REVIEW">
+                          Under Review
+                        </SelectItem>
+                        <SelectItem value="APPROVED">Approved</SelectItem>
+                        <SelectItem value="REJECTED">Rejected</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Activity className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-              </DialogHeader>
-
-              {/* Scrollable Body */}
-              <div className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-16">
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Business Name
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.businessName ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Contact Name
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.contactName ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Email</Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.email ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Phone</Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry.phone || "Not provided"}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">
-                        Business Description
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.businessDescription ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Inquiry Type
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedBusinessListingInquiry?.inquiryType ||
-                          "Not specified"}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">
-                        Requirements
-                      </Label>
-                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
-                        {selectedBusinessListingInquiry?.requirements ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Update Status</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Status</Label>
-                        <Select
-                          value={selectedBusinessListingInquiry.status}
-                          onValueChange={(value) => {
-                            const updated = {
-                              ...selectedBusinessListingInquiry,
-                              status: value,
-                            };
-                            setSelectedBusinessListingInquiry(updated);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="PENDING">Pending</SelectItem>
-                            <SelectItem value="UNDER_REVIEW">
-                              Under Review
-                            </SelectItem>
-                            <SelectItem value="APPROVED">Approved</SelectItem>
-                            <SelectItem value="REJECTED">Rejected</SelectItem>
-                            <SelectItem value="COMPLETED">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Assign To</Label>
-                        <Select
-                          value={
-                            selectedBusinessListingInquiry.assignedTo || ""
-                          }
-                          onValueChange={(value) => {
-                            const updated = {
-                              ...selectedBusinessListingInquiry,
-                              assignedTo: value || null,
-                            };
-                            setSelectedBusinessListingInquiry(updated);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select user or leave unassigned" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
-                            {/* You would fetch users here */}
-                            <SelectItem value="admin1">Admin 1</SelectItem>
-                            <SelectItem value="admin2">Admin 2</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Notes</Label>
-                      <Textarea
-                        value={selectedBusinessListingInquiry?.notes || ""}
-                        onChange={(e) => {
-                          const updated = {
-                            ...selectedBusinessListingInquiry,
-                            notes: e.target.value,
-                          };
-                          setSelectedBusinessListingInquiry(updated);
-                        }}
-                        placeholder="Add internal notes..."
-                        className="min-h-[100px]"
-                      />
-                    </div>
+                <div>
+                  <Label>Assign To</Label>
+                  <div className="relative">
+                    <Select
+                      value={
+                        selectedBusinessListingInquiry.assignedTo || ""
+                      }
+                      onValueChange={(value) => {
+                        const updated = {
+                          ...selectedBusinessListingInquiry,
+                          assignedTo: value || null,
+                        };
+                        setSelectedBusinessListingInquiry(updated);
+                      }}
+                    >
+                      <SelectTrigger className="rounded-md pl-10">
+                        <SelectValue placeholder="Select user or leave unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {/* You would fetch users here */}
+                        <SelectItem value="admin1">Admin 1</SelectItem>
+                        <SelectItem value="admin2">Admin 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
-              {/* Absolute Footer */}
-              <DialogFooter className="px-6 w-full flex flex-col py-2 border-t absolute bottom-0 left-0 right-0 bg-white z-10">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowBusinessListingInquiryDialog(false);
-                    setSelectedBusinessListingInquiry(null);
+              <div>
+                <Label>Notes</Label>
+                <Textarea
+                  value={selectedBusinessListingInquiry?.notes || ""}
+                  onChange={(e) => {
+                    const updated = {
+                      ...selectedBusinessListingInquiry,
+                      notes: e.target.value,
+                    };
+                    setSelectedBusinessListingInquiry(updated);
                   }}
-                  className="rounded-2xl w-auto "
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (selectedBusinessListingInquiry) {
-                      const updates: any = {
-                        status: selectedBusinessListingInquiry?.status,
-                        notes: selectedBusinessListingInquiry?.notes,
-                      };
-                      if (selectedBusinessListingInquiry?.assignedTo) {
-                        updates.assignedTo =
-                          selectedBusinessListingInquiry.assignedTo;
-                      }
-                      handleUpdateBusinessListingInquiry(
-                        selectedBusinessListingInquiry?.id,
-                        updates,
-                      );
-                    }
-                  }}
-                  className="rounded-2xl w-auto"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
+                  placeholder="Add internal notes..."
+                  className="min-h-[100px] rounded-md pl-3"
+                />
+              </div>
             </div>
-          )}
+          </div>
+        )}
+      </UnifiedModal>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Confirm Bulk Delete
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedBusinessIds.size} businesses? 
+              This action cannot be undone and will permanently remove all selected businesses and their associated users.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>All selected business accounts</li>
+              <li>Associated admin users</li>
+              <li>All business data (products, inquiries, etc.)</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBulkDeleteDialog(false)}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmBulkDelete}
+              disabled={bulkActionLoading}
+              className="rounded-2xl"
+            >
+              {bulkActionLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete {selectedBusinessIds.size} Businesses
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Business Confirmation Dialog */}
+      <Dialog open={showDeleteBusinessDialog} onOpenChange={setShowDeleteBusinessDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Business
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteBusiness?.name}"? This action cannot be undone and will permanently remove the business and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Business account and listing</li>
+              <li>Associated admin user</li>
+              <li>All business products and inquiries</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteBusinessDialog(false);
+                setDeleteBusiness(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteBusiness}
+              disabled={deletingBusiness}
+              className="rounded-2xl"
+            >
+              {deletingBusiness ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Business
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Professional Confirmation Dialog */}
+      <Dialog open={showDeleteProfessionalDialog} onOpenChange={setShowDeleteProfessionalDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Professional
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{professionalToDelete?.name}"? This action cannot be undone and will permanently remove the professional profile and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Professional profile and account</li>
+              <li>All associated skills, education, and experience</li>
+              <li>Portfolio items and services offered</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteProfessionalDialog(false);
+                setProfessionalToDelete(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteProfessional}
+              disabled={deletingProfessional}
+              className="rounded-2xl"
+            >
+              {deletingProfessional ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Professional
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Category Confirmation Dialog */}
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Category
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{categoryToDelete?.name}"? This action cannot be undone and will permanently remove the category and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Category and its subcategories</li>
+              <li>All businesses associated with this category</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteCategoryDialog(false);
+                setCategoryToDelete(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteCategory}
+              className="rounded-2xl"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Registration Request Dialog */}
+      <Dialog open={showRejectInquiryDialog} onOpenChange={setShowRejectInquiryDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Reject Registration Request
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject the registration request from "{inquiryToReject?.name}"? This will send a rejection notification to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-500">Type:</span>
+                  <span className="font-medium text-gray-900 ml-2">{inquiryToReject?.type}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Email:</span>
+                  <span className="font-medium text-gray-900 ml-2">{inquiryToReject?.email}</span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rejectReason" className="text-sm font-medium text-gray-900">
+                Reason for Rejection (optional)
+              </Label>
+              <Textarea
+                id="rejectReason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter a reason for rejection..."
+                className="rounded-xl resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRejectInquiryDialog(false);
+                setInquiryToReject(null);
+                setRejectReason("");
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmRejectInquiry}
+              disabled={creatingAccount === inquiryToReject?.id}
+              className="rounded-2xl"
+            >
+              {creatingAccount === inquiryToReject?.id ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Rejecting...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject Request
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

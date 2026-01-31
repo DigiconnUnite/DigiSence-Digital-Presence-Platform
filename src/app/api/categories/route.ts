@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' },
     })
 
-    // Add caching headers to response
+    // Add caching headers to response - disable caching for fresh data
     const response = NextResponse.json({ categories })
-    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     
     return response
   } catch (error) {

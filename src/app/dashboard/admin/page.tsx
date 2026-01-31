@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSocket } from "@/lib/hooks/useSocket";
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateCategories } from '@/lib/cacheInvalidation';
 import {
   Card,
   CardContent,
@@ -100,10 +102,14 @@ import {
   Filter,
   CheckCircle,
   Power,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
 import { Pagination, BulkActionsToolbar } from "@/components/ui/pagination";
 import SharedSidebar from "../components/SharedSidebar";
 import Link from "next/link";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { AdminTable } from "@/components/admin/AdminTable";
 
 interface Business {
   id: string;
@@ -221,6 +227,7 @@ export default function SuperAdminDashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -341,6 +348,176 @@ export default function SuperAdminDashboard() {
   const [showDeleteProfessionalDialog, setShowDeleteProfessionalDialog] = useState(false);
   const [professionalSortBy, setProfessionalSortBy] = useState('createdAt');
   const [professionalSortOrder, setProfessionalSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Inquiries management state
+  const [inquiryToDelete, setInquiryToDelete] = useState<any>(null);
+  const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
+  const [selectedInquiries, setSelectedInquiries] = useState<Set<string>>(new Set());
+  const [inquiryQuery, setInquiryQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [inquiryPagination, setInquiryPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+
+  // Registration management state
+  const [selectedRegistrations, setSelectedRegistrations] = useState<Set<string>>(new Set());
+  const [registrationQuery, setRegistrationQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [registrationPagination, setRegistrationPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+
+  // Business Listing management state
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [categoryQuery, setCategoryQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [categoryPagination, setCategoryPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
+  
+  // Reject inquiry dialog state
+  const [showRejectInquiryDialog, setShowRejectInquiryDialog] = useState(false);
+  const [inquiryToReject, setInquiryToReject] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  
+  const [businessListingQuery, setBusinessListingQuery] = useState<BusinessQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    status: 'all',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [businessListingPagination, setBusinessListingPagination] = useState<{
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  } | null>(null);
+  const [selectedBusinessListings, setSelectedBusinessListings] = useState<Set<string>>(new Set());
+
+  // Handle view inquiry
+  const handleViewInquiry = (inquiry: any) => {
+    console.log('View inquiry:', inquiry);
+    // Could open a modal or navigate to detail view
+    toast({
+      title: 'Inquiry Details',
+      description: `From: ${inquiry.name} (${inquiry.email})`,
+    });
+  };
+
+  // Handle reply inquiry
+  const handleReplyInquiry = (inquiry: any) => {
+    console.log('Reply to inquiry:', inquiry);
+    // Could open email composer
+    toast({
+      title: 'Reply to Inquiry',
+      description: `Opening email client for ${inquiry.email}`,
+    });
+  };
+
+  // Handle delete inquiry with dialog
+  const handleDeleteInquiry = useCallback((inquiry: any) => {
+    setInquiryToDelete(inquiry);
+    setShowDeleteInquiryDialog(true);
+  }, []);
+
+  // Confirm delete inquiry
+  const confirmDeleteInquiry = useCallback(() => {
+    if (!inquiryToDelete) return;
+    setInquiries(prev => prev.filter(i => i.id !== inquiryToDelete.id));
+    setShowDeleteInquiryDialog(false);
+    setInquiryToDelete(null);
+    toast({
+      title: 'Inquiry Deleted',
+      description: 'The inquiry has been removed.',
+    });
+  }, [inquiryToDelete, toast]);
+
+  // Inquiry bulk action handlers
+  const handleSelectAllInquiries = () => {
+    setSelectedInquiries(new Set(inquiries.map(i => i.id)));
+  };
+
+  const handleDeselectAllInquiries = () => {
+    setSelectedInquiries(new Set());
+  };
+
+  const handleInquiryBulkActivate = async () => {
+    if (selectedInquiries.size === 0) return;
+    const ids = Array.from(selectedInquiries);
+    try {
+      await Promise.all(ids.map(async (id) => {
+        await fetch(`/api/inquiries/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'REPLIED' }),
+        });
+      }));
+      setInquiries(prev => prev.map(i => 
+        selectedInquiries.has(i.id) ? { ...i, status: 'REPLIED' } : i
+      ));
+      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as REPLIED` });
+      setSelectedInquiries(new Set());
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
+    }
+  };
+
+  const handleInquiryBulkSuspend = async () => {
+    if (selectedInquiries.size === 0) return;
+    const ids = Array.from(selectedInquiries);
+    try {
+      await Promise.all(ids.map(async (id) => {
+        await fetch(`/api/inquiries/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'PENDING' }),
+        });
+      }));
+      setInquiries(prev => prev.map(i => 
+        selectedInquiries.has(i.id) ? { ...i, status: 'PENDING' } : i
+      ));
+      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as PENDING` });
+      setSelectedInquiries(new Set());
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
+    }
+  };
+
+  const handleInquiryBulkDelete = () => {
+    if (selectedInquiries.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
 
   // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -539,7 +716,6 @@ function useDebounce<T>(value: T, delay: number): T {
       setProfessionals(prev => prev.map(pro =>
         pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
       ));
-      // Also update professionalData if it exists
       setProfessionalData(prev => prev ? {
         ...prev,
         professionals: prev.professionals.map(pro =>
@@ -558,6 +734,34 @@ function useDebounce<T>(value: T, delay: number): T {
       });
     };
 
+    const handleRegistrationInquiryUpdated = (data: any) => {
+      console.log('Registration inquiry updated via Socket.IO:', data);
+      setRegistrationInquiries(prev => prev.map(inquiry =>
+        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
+      ));
+      toast({
+        title: "Registration Inquiry Updated",
+        description: `Request from ${data.inquiry.name} has been updated.`,
+      });
+    };
+
+    const handleRegistrationInquiryStatusUpdated = (data: any) => {
+      console.log('Registration inquiry status updated via Socket.IO:', data);
+      setRegistrationInquiries(prev => prev.map(inquiry =>
+        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
+      ));
+      setStats(prev => ({
+        ...prev,
+        totalInquiries: data.inquiry.status === 'PENDING' 
+          ? prev.totalInquiries + 1 
+          : Math.max(0, prev.totalInquiries - 1),
+      }));
+      toast({
+        title: "Registration Request Status Updated",
+        description: `${data.inquiry.name}'s request is now ${data.inquiry.status}.`,
+      });
+    };
+
     // Register event listeners
     socket.on('business-created', handleBusinessCreated);
     socket.on('business-updated', handleBusinessUpdated);
@@ -567,6 +771,8 @@ function useDebounce<T>(value: T, delay: number): T {
     socket.on('professional-updated', handleProfessionalUpdated);
     socket.on('professional-deleted', handleProfessionalDeleted);
     socket.on('professional-status-updated', handleProfessionalStatusUpdated);
+    socket.on('registration-inquiry-updated', handleRegistrationInquiryUpdated);
+    socket.on('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
 
     // Cleanup listeners on unmount
     return () => {
@@ -578,6 +784,8 @@ function useDebounce<T>(value: T, delay: number): T {
       socket.off('professional-updated', handleProfessionalUpdated);
       socket.off('professional-deleted', handleProfessionalDeleted);
       socket.off('professional-status-updated', handleProfessionalStatusUpdated);
+      socket.off('registration-inquiry-updated', handleRegistrationInquiryUpdated);
+      socket.off('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
     };
   }, [socket, isConnected, toast]);
 
@@ -1122,80 +1330,72 @@ function useDebounce<T>(value: T, delay: number): T {
     }
   }, [professionalToDelete, toast, fetchProfessionals]);
 
-  // Data fetching function
+  // Data fetching function - Fixed to handle individual API failures gracefully
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setDataFetchError(null);
 
     try {
       console.log('[DEBUG] Admin Dashboard - Starting data fetch');
-      const [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes] = await Promise.all([
-        fetch("/api/admin/businesses"),
-        fetch("/api/admin/categories"),
-        fetch("/api/inquiries"),
-        fetch("/api/admin/professionals"),
-        fetch("/api/business-listing-inquiries"),
-        fetch("/api/registration-inquiries"),
-      ]);
+      
+      // Fetch each API separately to avoid Promise.all failure
+      const fetchPromises = [
+        { name: 'businesses', url: "/api/admin/businesses" },
+        { name: 'categories', url: "/api/admin/categories" },
+        { name: 'inquiries', url: "/api/inquiries" },
+        { name: 'professionals', url: "/api/admin/professionals" },
+        { name: 'businessListingInquiries', url: "/api/business-listing-inquiries" },
+        { name: 'registrationInquiries', url: "/api/registration-inquiries" },
+      ];
 
-      console.log('[DEBUG] Admin Dashboard - API responses status:', {
-        businesses: businessesRes.status,
-        categories: categoriesRes.status,
-        inquiries: inquiriesRes.status,
-        professionals: professionalsRes.status,
-        businessListingInquiries: businessListingInquiriesRes.status,
-        registrationInquiries: registrationInquiriesRes.status,
-      });
+      const results: Record<string, any> = {};
+      
+      // Fetch all data individually
+      await Promise.all(
+        fetchPromises.map(async (item) => {
+          try {
+            const response = await fetch(item.url);
+            if (response.ok) {
+              results[item.name] = await response.json();
+            } else {
+              console.error(`[DEBUG] ${item.name} API failed:`, response.status);
+              results[item.name] = null;
+            }
+          } catch (error) {
+            console.error(`[DEBUG] ${item.name} fetch error:`, error);
+            results[item.name] = null;
+          }
+        })
+      );
 
-      // Check if all responses are ok
-      const allResponsesOk = [businessesRes, categoriesRes, inquiriesRes, professionalsRes, businessListingInquiriesRes, registrationInquiriesRes].every(res => res.ok);
-
-      if (!allResponsesOk) {
-        console.error('[DEBUG] Admin Dashboard - Some API calls failed');
-        // Log the failed responses
-        const failedResponses: string[] = [];
-        if (!businessesRes.ok) failedResponses.push(`businesses: ${businessesRes.status} ${await businessesRes.text()}`);
-        if (!categoriesRes.ok) failedResponses.push(`categories: ${categoriesRes.status} ${await categoriesRes.text()}`);
-        if (!inquiriesRes.ok) failedResponses.push(`inquiries: ${inquiriesRes.status} ${await inquiriesRes.text()}`);
-        if (!professionalsRes.ok) failedResponses.push(`professionals: ${professionalsRes.status} ${await professionalsRes.text()}`);
-        if (!businessListingInquiriesRes.ok) failedResponses.push(`businessListingInquiries: ${businessListingInquiriesRes.status} ${await businessListingInquiriesRes.text()}`);
-        if (!registrationInquiriesRes.ok) failedResponses.push(`registrationInquiries: ${registrationInquiriesRes.status} ${await registrationInquiriesRes.text()}`);
-        console.error('[DEBUG] Failed responses:', failedResponses);
-        throw new Error("One or more API calls failed");
-      }
-
-      const businessesData = await businessesRes.json();
-      const categoriesData = await categoriesRes.json();
-      const inquiriesData = await inquiriesRes.json();
-      const professionalsData = await professionalsRes.json();
-      const businessListingInquiriesData = await businessListingInquiriesRes.json();
-      const registrationInquiriesData = await registrationInquiriesRes.json();
-
-      // Debug logging
-      console.log('API Responses:', {
-        businessesData,
-        categoriesData,
-        inquiriesData,
-        professionalsData,
-        businessListingInquiriesData,
-        registrationInquiriesData
+      console.log('[DEBUG] Admin Dashboard - API results:', {
+        businesses: !!results.businesses,
+        categories: !!results.categories,
+        inquiries: !!results.inquiries,
+        professionals: !!results.professionals,
+        businessListingInquiries: !!results.businessListingInquiries,
+        registrationInquiries: !!results.registrationInquiries,
       });
 
       // Extract data from API responses with proper error handling
-      const businessesArray = Array.isArray(businessesData.businesses) ? businessesData.businesses : [];
-      const categoriesArray = Array.isArray(categoriesData.categories) ? categoriesData.categories : [];
-      const inquiriesArray = Array.isArray(inquiriesData.inquiries) ? inquiriesData.inquiries : [];
-      const professionalsArray = Array.isArray(professionalsData.professionals) ? professionalsData.professionals : [];
-      const businessListingInquiriesArray = Array.isArray(businessListingInquiriesData.businessListingInquiries) ? businessListingInquiriesData.businessListingInquiries : [];
+      const businessesArray = Array.isArray(results.businesses?.businesses) ? results.businesses.businesses : [];
+      const categoriesArray = Array.isArray(results.categories?.categories) ? results.categories.categories : [];
+      const inquiriesArray = Array.isArray(results.inquiries?.inquiries) ? results.inquiries.inquiries : [];
+      const professionalsArray = Array.isArray(results.professionals?.professionals) ? results.professionals.professionals : [];
+      const businessListingInquiriesArray = Array.isArray(results.businessListingInquiries?.businessListingInquiries) 
+        ? results.businessListingInquiries.businessListingInquiries 
+        : [];
       
       // Fix: Handle registration inquiries response properly
       let registrationInquiriesArray: any[] = [];
-      if (registrationInquiriesData && Array.isArray(registrationInquiriesData.inquiries)) {
-        registrationInquiriesArray = registrationInquiriesData.inquiries;
-      } else if (Array.isArray(registrationInquiriesData)) {
-        registrationInquiriesArray = registrationInquiriesData;
-      } else if (registrationInquiriesData && registrationInquiriesData.inquiries) {
-        registrationInquiriesArray = registrationInquiriesData.inquiries;
+      if (results.registrationInquiries) {
+        if (Array.isArray(results.registrationInquiries.inquiries)) {
+          registrationInquiriesArray = results.registrationInquiries.inquiries;
+        } else if (Array.isArray(results.registrationInquiries)) {
+          registrationInquiriesArray = results.registrationInquiries;
+        } else if (results.registrationInquiries.inquiries) {
+          registrationInquiriesArray = results.registrationInquiries.inquiries;
+        }
       }
 
       console.log('Extracted arrays:', {
@@ -1230,13 +1430,13 @@ function useDebounce<T>(value: T, delay: number): T {
       ).length;
 
       setStats({
-        totalBusinesses: businessesData.length,
+        totalBusinesses: businessesArray.length,
         totalInquiries: registrationInquiriesArray.length,
         totalUsers,
         activeBusinesses,
         totalProducts,
         totalActiveProducts,
-        totalProfessionals: professionalsData.length,
+        totalProfessionals: professionalsArray.length,
         activeProfessionals,
       });
     } catch (error) {
@@ -1724,6 +1924,8 @@ function useDebounce<T>(value: T, delay: number): T {
           }
           // Refresh data to show the new professional
           fetchData();
+          fetchProfessionals();
+          setProfessionalQuery(prev => ({ ...prev, page: 1 }));
         } else {
           const error = await response.json();
           console.error("Professional creation failed:", error);
@@ -1773,7 +1975,7 @@ function useDebounce<T>(value: T, delay: number): T {
         const response = await fetch(
           `/api/admin/professionals/${editingProfessional.id}`,
           {
-            method: "PUT",
+            method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
@@ -1857,6 +2059,18 @@ function useDebounce<T>(value: T, delay: number): T {
 
         if (response.ok) {
           const result = await response.json();
+          
+          // Update local state immediately for better UX
+          if (result.category) {
+            setCategories(prev => [...prev, result.category]);
+          }
+          
+          // Invalidate React Query cache to ensure all components get fresh data
+          invalidateCategories(queryClient);
+          
+          // Refresh data from server to ensure consistency
+          fetchData();
+          
           toast({
             title: "Success",
             description: "Category created successfully!",
@@ -1922,7 +2136,22 @@ function useDebounce<T>(value: T, delay: number): T {
         );
 
         if (response.ok) {
+          const result = await response.json();
           console.log("Category update successful");
+          
+          // Update local state immediately for better UX
+          if (result.category && editingCategory) {
+            setCategories(prev =>
+              prev.map(c => c.id === editingCategory.id ? result.category : c)
+            );
+          }
+          
+          // Invalidate React Query cache to ensure all components get fresh data
+          invalidateCategories(queryClient);
+          
+          // Refresh data from server to ensure consistency
+          fetchData();
+          
           setShowRightPanel(false);
           setRightPanelContent(null);
           toast({
@@ -1952,52 +2181,58 @@ function useDebounce<T>(value: T, delay: number): T {
     [editingCategory, toast]
   );
 
-  // Handle delete category with improved error handling
-  const handleDeleteCategory = useCallback(
-    async (category: Category) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete "${category.name}"? This action cannot be undone.`
-        )
-      ) {
-        return;
-      }
+  // Handle delete category with dialog
+  const handleDeleteCategory = useCallback((category: Category) => {
+    setCategoryToDelete(category);
+    setShowDeleteCategoryDialog(true);
+  }, []);
 
-      console.log("Deleting category:", category.id);
+  // Confirm delete category
+  const confirmDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return;
+    
+    console.log("Deleting category:", categoryToDelete.id);
 
-      try {
-        const response = await fetch(`/api/admin/categories/${category.id}`, {
-          method: "DELETE",
+    try {
+      const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        console.log("Category delete successful");
+        // IMMEDIATE STATE REMOVAL - Remove deleted category from local state immediately
+        setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id));
+        setShowDeleteCategoryDialog(false);
+        setCategoryToDelete(null);
+        
+        // Invalidate React Query cache to ensure all components get fresh data
+        invalidateCategories(queryClient);
+        
+        fetchData();
+        toast({
+          title: "Success",
+          description: "Category deleted successfully",
         });
-
-        if (response.ok) {
-          console.log("Category delete successful");
-          toast({
-            title: "Success",
-            description: "Category deleted successfully",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Category delete failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to delete category: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Category delete error:", error);
+      } else {
+        const error = await response.json();
+        console.error("Category delete failed:", error);
         toast({
           title: "Error",
-          description: "Failed to delete category. Please try again.",
+          description: `Failed to delete category: ${
+            error.error || "Unknown error"
+          }`,
           variant: "destructive",
         });
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Category delete error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [categoryToDelete, toast, fetchData]);
 
   // Handle update business listing inquiry with improved error handling
   const handleUpdateBusinessListingInquiry = useCallback(
@@ -2253,64 +2488,78 @@ function useDebounce<T>(value: T, delay: number): T {
     []
   );
 
-  // Handle reject inquiry with improved error handling
+  // Handle reject inquiry with improved error handling - now uses dialog
   const handleRejectInquiry = useCallback(
-    async (inquiry: any) => {
-      if (!confirm("Reject this registration request?")) {
-        return;
-      }
+    (inquiry: any) => {
+      setInquiryToReject(inquiry);
+      setRejectReason("");
+      setShowRejectInquiryDialog(true);
+    },
+    []
+  );
 
-      setCreatingAccount(inquiry.id);
+  // Confirm reject inquiry with reason
+  const confirmRejectInquiry = useCallback(async () => {
+    if (!inquiryToReject) return;
+    
+    setCreatingAccount(inquiryToReject.id);
+    setShowRejectInquiryDialog(false);
 
-      try {
-        const response = await fetch(
-          `/api/registration-inquiries/${inquiry.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "REJECTED" }),
-          }
+    try {
+      const response = await fetch(
+        `/api/registration-inquiries/${inquiryToReject.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            status: "REJECTED",
+            rejectReason: rejectReason || "No reason provided"
+          }),
+        }
+      );
+
+      if (response.ok) {
+        // Update the inquiry in the list immediately
+        setRegistrationInquiries((prev) =>
+          prev.map((regInquiry) =>
+            regInquiry.id === inquiryToReject.id
+              ? { ...regInquiry, status: "REJECTED", rejectReason: rejectReason || "No reason provided" }
+              : regInquiry
+          )
         );
 
-        if (response.ok) {
-          // Update the inquiry in the list immediately
-          setRegistrationInquiries((prev) =>
-            prev.map((regInquiry) =>
-              regInquiry.id === inquiry.id
-                ? { ...regInquiry, status: "REJECTED" }
-                : regInquiry
-            )
-          );
+        toast({
+          title: "Success",
+          description: "Registration request rejected.",
+        });
 
-          toast({
-            title: "Success",
-            description: "Registration request rejected.",
-          });
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to reject inquiry: ${
-              error.error || error.message || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to reject inquiry:", error);
+        // Refresh data from server to ensure consistency
+        fetchData();
+      } else {
+        const error = await response.json();
         toast({
           title: "Error",
-          description: "Failed to reject inquiry. Please try again.",
+          description: `Failed to reject inquiry: ${
+            error.error || error.message || "Unknown error"
+          }`,
           variant: "destructive",
         });
-      } finally {
-        setCreatingAccount(null);
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Failed to reject inquiry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingAccount(null);
+      setInquiryToReject(null);
+      setRejectReason("");
+    }
+  }, [inquiryToReject, rejectReason, toast, fetchData]);
 
   // Helper function to get right panel title
   const getRightPanelTitle = () => {
@@ -2504,7 +2753,7 @@ function useDebounce<T>(value: T, delay: number): T {
       mobileTitle: "Category",
     },
     {
-      title: "Inquiries",
+      title: "Contact Inquiry",
       icon: MessageSquare,
       mobileIcon: MessageCircle,
       value: "inquiries",
@@ -2516,13 +2765,6 @@ function useDebounce<T>(value: T, delay: number): T {
       mobileIcon: UserCheck,
       value: "registration-requests",
       mobileTitle: "Registrations",
-    },
-    {
-      title: "Business Listings",
-      icon: FileText,
-      mobileIcon: FileText,
-      value: "business-listings",
-      mobileTitle: "Listings",
     },
     {
       title: "Analytics",
@@ -2745,9 +2987,6 @@ function useDebounce<T>(value: T, delay: number): T {
                 </CardContent>
               </Card>
 
-              {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
-
-              {/* --- ROW 2: 3 Cards (Spans: 3, 3, 2) --- */}
 
               {/* Card 1: New Businesses */}
               <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
@@ -2909,14 +3148,14 @@ function useDebounce<T>(value: T, delay: number): T {
                                     className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
                                       professional.isActive
                                         ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                        : "bg-gray-500/10 border-gray-500/30 text-gray-600"
+                                        : "bg-red-500/10 border-red-500/30 text-red-600"
                                     }`}
                                   >
                                     <span
                                       className={`w-2 h-2 rounded-full ${
                                         professional.isActive
                                           ? "bg-lime-500"
-                                          : "bg-gray-500"
+                                          : "bg-red-500"
                                       }`}
                                     ></span>
                                     {professional.isActive
@@ -2997,9 +3236,7 @@ function useDebounce<T>(value: T, delay: number): T {
                 </CardContent>
               </Card>
 
-              {/* --- ROW 3: 2 Cards (Spans: 6, 2) --- */}
-
-              {/* Card 4: Latest Registration Requests (Updated Style) */}
+          
               <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
@@ -3051,41 +3288,21 @@ function useDebounce<T>(value: T, delay: number): T {
                                     {inquiry.type}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-xs  font-medium">
+                                <TableCell className="text-xs font-medium truncate">
                                   {inquiry.name}
                                 </TableCell>
-                                <TableCell className="text-xs">
-                                  {inquiry.type === "BUSINESS"
-                                    ? inquiry.businessName || "N/A"
-                                    : inquiry.profession || "N/A"}
+                                <TableCell className="text-xs truncate">
+                                  {inquiry.businessName || "N/A"}
                                 </TableCell>
                                 <TableCell className="text-xs">
                                   {inquiry.email}
                                 </TableCell>
                                 <TableCell>
-                                  <div
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit  ${
-                                      inquiry.status === "PENDING"
-                                        ? "bg-amber-500/10 border-amber-500/30 text-amber-700"
-                                        : inquiry.status === "COMPLETED"
-                                          ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                          : inquiry.status === "REJECTED"
-                                            ? "bg-red-500/10 border-red-500/30 text-red-700"
-                                            : "bg-blue-500/10 border-blue-500/30 text-blue-700"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        inquiry.status === "PENDING"
-                                          ? "bg-amber-500"
-                                          : inquiry.status === "COMPLETED"
-                                            ? "bg-lime-500"
-                                            : inquiry.status === "REJECTED"
-                                              ? "bg-red-500"
-                                              : "bg-blue-500"
-                                      }`}
-                                    ></span>
-                                    {inquiry.status}
+                                  <div className="flex justify-center">
+                                    <StatusBadge
+                                      status={inquiry.status}
+                                      variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
+                                    />
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-xs">
@@ -3761,7 +3978,7 @@ function useDebounce<T>(value: T, delay: number): T {
                           Headline {getProfessionalSortIcon('professionalHeadline')}
                         </div>
                       </TableHead>
-                      <TableHead className="text-white font-medium">
+                      <TableHead className="text-white  truncate font-medium">
                         Location
                       </TableHead>
                       <TableHead className="text-center text-white font-medium">
@@ -3873,21 +4090,11 @@ function useDebounce<T>(value: T, delay: number): T {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div
-                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${
-                                  professional.isActive
-                                    ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                    : "bg-red-500/10 border-red-500/30 text-red-600"
-                                }`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    professional.isActive
-                                      ? "bg-lime-500"
-                                      : "bg-red-500"
-                                  }`}
-                                ></span>
-                                {professional.isActive ? "Active" : "Inactive"}
+                              <div className="flex justify-center">
+                                <StatusBadge
+                                  status={professional.isActive ? "ACTIVE" : "SUSPENDED"}
+                                  variant={professional.isActive ? "success" : "error"}
+                                />
                               </div>
                             </TableCell>
                             <TableCell className="text-gray-600">
@@ -4017,98 +4224,225 @@ function useDebounce<T>(value: T, delay: number): T {
       case "categories":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                {" "}
-                Category Manager
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manage Categories
               </h1>
-              <p className="text-md text-gray-600">
-                Configure business categories and classifications
+              <p className="text-sm text-gray-600 mt-1">
+                Add, view, edit, and manage all business categories
               </p>
             </div>
-            <div className="">
-              <div className="">
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                {/* Add Category Button */}
                 <Button
                   onClick={() => {
                     setRightPanelContent("add-category");
                     setShowRightPanel(true);
                   }}
-                  variant="outline"
-                  className="mb-6 bg-slate-900 border-none text-white rounded-2xl"
+                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
                 >
-                  <Plus className="h-4  w-4 mr-2" />
-                  Add New Category
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Add Category</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
 
-                <div className="space-y-4">
-                  {safeCategories
-                    .filter((c) => !c.parentId)
-                    .map((parentCategory) => (
-                      <div key={parentCategory.id}>
-                        <div className="flex items-center space-x-2 p-4 border rounded-2xl bg-gray-50">
-                          <span className="text-lg">📁</span>
-                          <span className="font-medium">
-                            {parentCategory.name}
-                          </span>
-                          <div className="ml-auto flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="rounded-xl"
-                              onClick={() => handleEditCategory(parentCategory)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="rounded-xl"
-                              onClick={() =>
-                                handleDeleteCategory(parentCategory)
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search categories..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedCategories.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedCategories.size}
+                  totalCount={safeCategories.length}
+                  onSelectAll={() => {
+                    const allIds = filteredCategories.map(c => c.id);
+                    setSelectedCategories(new Set(allIds));
+                  }}
+                  onDeselectAll={() => setSelectedCategories(new Set())}
+                  onBulkActivate={() => {
+                    toast({ title: 'Info', description: 'Bulk activate not applicable for categories' });
+                  }}
+                  onBulkDeactivate={() => {
+                    toast({ title: 'Info', description: 'Bulk deactivate not applicable for categories' });
+                  }}
+                  onBulkDelete={() => {
+                    // Bulk delete handler would go here
+                    toast({
+                      title: 'Bulk Delete',
+                      description: `Selected ${selectedCategories.size} categories`,
+                    });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <AdminTable title="Categories">
+                  <Table>
+                    <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                      <TableRow>
+                        <TableHead className="w-12 text-white font-medium">
+                          <Checkbox
+                            checked={filteredCategories.length > 0 && selectedCategories.size === filteredCategories.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedCategories(new Set(filteredCategories.map(c => c.id)));
+                              } else {
+                                setSelectedCategories(new Set());
                               }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        {safeCategories
-                          .filter((c) => c.parentId === parentCategory.id)
-                          .map((childCategory) => (
-                            <div
-                              key={childCategory.id}
-                              className="ml-8 flex items-center space-x-2 p-3 border-l-2 border-gray-200"
-                            >
-                              <span className="text-sm">📄</span>
-                              <span className="text-sm">
-                                {childCategory.name}
-                              </span>
-                              <div className="ml-auto flex space-x-2">
+                            }}
+                            className="border-gray-400"
+                          />
+                        </TableHead>
+                        <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                        <TableHead className="text-white font-medium">Category Name</TableHead>
+                        <TableHead className="text-white font-medium">Slug</TableHead>
+                        <TableHead className="text-white font-medium">Parent Category</TableHead>
+                        <TableHead className="text-center text-white font-medium">Item Count</TableHead>
+                        <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCategories.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-12">
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <FolderTree className="h-12 w-12 mb-3 opacity-30" />
+                              <p className="text-base font-medium">No categories found</p>
+                              <p className="text-sm text-gray-400 mt-1">
+                                {searchTerm ? 'Try adjusting your search' : 'Get started by adding your first category'}
+                              </p>
+                              {!searchTerm && (
                                 <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleEditCategory(childCategory)
-                                  }
+                                  onClick={() => {
+                                    setRightPanelContent("add-category");
+                                    setShowRightPanel(true);
+                                  }}
+                                  className="mt-4 bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Category
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="rounded-xl"
-                                  onClick={() =>
-                                    handleDeleteCategory(childCategory)
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              )}
                             </div>
-                          ))}
-                      </div>
-                    ))}
-                </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredCategories.map((category, index) => {
+                          const parentCategory = category.parentId 
+                            ? safeCategories.find(c => c.id === category.parentId) 
+                            : null;
+                          
+                          return (
+                            <TableRow
+                              key={category.id}
+                              className={`hover:bg-gray-50 ${category.parentId ? 'bg-gray-50/50' : ''}`}
+                            >
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedCategories.has(category.id)}
+                                  onCheckedChange={() => {
+                                    setSelectedCategories(prev => {
+                                      const newSet = new Set(prev);
+                                      if (newSet.has(category.id)) {
+                                        newSet.delete(category.id);
+                                      } else {
+                                        newSet.add(category.id);
+                                      }
+                                      return newSet;
+                                    });
+                                  }}
+                                  className="border-gray-400"
+                                />
+                              </TableCell>
+                              <TableCell className="text-gray-500 font-medium">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className={category.parentId ? 'text-sm' : 'font-medium'}>
+                                    {category.name}
+                                  </span>
+                                  {category.parentId && (
+                                    <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200 text-purple-700">
+                                      Sub
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-gray-600 text-sm">
+                                <code className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                  {category.slug}
+                                </code>
+                              </TableCell>
+                              <TableCell className="text-gray-600">
+                                {parentCategory ? (
+                                  <span className="text-sm">{parentCategory.name}</span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary" className="rounded-full">
+                                  {category._count?.businesses || 0}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-end space-x-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                                    onClick={() => handleEditCategory(category)}
+                                    title="Edit Category"
+                                  >
+                                    <Edit className="h-4 w-4 text-gray-500" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
+                                    onClick={() => handleDeleteCategory(category)}
+                                    title="Delete Category"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </AdminTable>
               </div>
             </div>
           </div>
@@ -4116,445 +4450,635 @@ function useDebounce<T>(value: T, delay: number): T {
       case "inquiries":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
                 Inquiries Management
               </h1>
-              <p className="text-md text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 View and manage customer inquiries
               </p>
             </div>
-            <div className="">
-              <div className="">
-                <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Customer
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Business
-                        </TableHead>
-                        <TableHead className="text-gray-900">Message</TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {inquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id}>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">{inquiry.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {inquiry.email}
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                {/* Status Filter */}
+                <Select
+                  value={inquiryQuery?.status || "all"}
+                  onValueChange={(value) => {
+                    if (setInquiryQuery) {
+                      setInquiryQuery((prev: any) => ({ ...prev, status: value, page: 1 }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className="rounded-xl bg-white border-gray-200">
+                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="hidden sm:inline">Filter</span>
+                    <span className="sm:hidden">Status</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({inquiries.length})</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="REPLIED">Replied</SelectItem>
+                    <SelectItem value="CLOSED">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search inquiries..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedInquiries.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedInquiries.size}
+                  totalCount={inquiries.length}
+                  onSelectAll={handleSelectAllInquiries}
+                  onDeselectAll={handleDeselectAllInquiries}
+                  onBulkActivate={handleInquiryBulkActivate}
+                  onBulkDeactivate={handleInquiryBulkSuspend}
+                  onBulkDelete={handleInquiryBulkDelete}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableRow>
+                      <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                      <TableHead className="text-white font-medium">Customer</TableHead>
+                      <TableHead className="text-white font-medium">Business</TableHead>
+                      <TableHead className="text-white font-medium">Message</TableHead>
+                      <TableHead className="text-center text-white font-medium">Status</TableHead>
+                      <TableHead className="text-white font-medium">Date</TableHead>
+                      <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inquiries
+                      .filter((inquiry) => {
+                        const matchesSearch =
+                          inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          inquiry.message?.toLowerCase().includes(searchTerm.toLowerCase());
+                        return matchesSearch;
+                      })
+                      .map((inquiry, index) => (
+                        <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                          <TableCell className="text-gray-500 font-medium">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <User className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{inquiry.name}</div>
+                                <div className="text-sm text-gray-500">{inquiry.email}</div>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.business?.name}
+                          <TableCell className="text-gray-600">
+                            {inquiry.business?.name || "N/A"}
                           </TableCell>
-                          <TableCell className="text-gray-900 max-w-xs truncate">
+                          <TableCell className="text-gray-600 max-w-xs truncate">
                             {inquiry.message}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="rounded-full">
-                              {inquiry.status}
-                            </Badge>
+                            <div className="flex justify-center">
+                              <StatusBadge
+                                status={inquiry.status}
+                                variant={inquiry.status === 'PENDING' ? 'warning' : inquiry.status === 'REPLIED' ? 'success' : 'neutral'}
+                              />
+                            </div>
                           </TableCell>
-                          <TableCell className="text-gray-900">
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
+                          <TableCell className="text-gray-600">
+                            {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end space-x-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                onClick={() => handleViewInquiry(inquiry)}
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4 text-gray-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                                onClick={() => handleReplyInquiry(inquiry)}
+                                title="Reply"
+                              >
+                                <Mail className="h-4 w-4 text-gray-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                                onClick={() => handleDeleteInquiry(inquiry)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                  </TableBody>
+                </Table>
               </div>
+
+              {/* Empty State */}
+              {inquiries.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <MessageSquare className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No inquiries found
+                  </h3>
+                  <p className="text-gray-500">
+                    {searchTerm ? "Try adjusting your search" : "There are no customer inquiries yet"}
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {inquiries.length > 0 && (
+                <div className="p-2 border-t">
+                  <Pagination
+                    currentPage={inquiryPagination?.page || 1}
+                    totalPages={inquiryPagination?.totalPages || 1}
+                    totalItems={inquiries.length}
+                    itemsPerPage={inquiryPagination?.limit || 10}
+                    onPageChange={(page) => {
+                      if (setInquiryQuery) {
+                        setInquiryQuery((prev: any) => ({ ...prev, page }));
+                      }
+                    }}
+                    onItemsPerPageChange={(limit) => {
+                      if (setInquiryQuery) {
+                        setInquiryQuery((prev: any) => ({ ...prev, limit, page: 1 }));
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
       case "registration-requests":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                REGISTRATION REQUESTS
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Registration Requests
               </h1>
-              <p className="text-md text-gray-600">
-                Review and approve business and professional registration
-                requests
+              <p className="text-sm text-gray-600 mt-1">
+                Review and approve business and professional registration requests
               </p>
             </div>
-            <div className="">
-              <div className="">
-                {/* Search and Actions */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="relative bg-white rounded-2xl border border-gray-200 flex-1">
-                    <Search className="absolute left-3 top-1/2 transform  -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search registration requests..."
-                      className="pl-10 w-full rounded-2xl"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      fetchData();
-                    }}
-                    className="rounded-2xl"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Refresh Data
-                  </Button>
-                </div>
 
-                {/* Data Fetching Status for Registration Requests */}
-                {dataFetchError && (
-                  <div className="bg-red-50 border border-red-200 rounded-3xl p-4 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <AlertTriangle className="h-5 w-5 text-red-600" />
-                        <span className="text-red-600 font-medium">
-                          Data Fetching Error
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            fetchData();
-                          }}
-                          className="rounded-2xl"
-                        >
-                          Retry
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-red-600 text-sm mt-1">
-                      {dataFetchError}
-                    </p>
-                  </div>
-                )}
+            {/* Toolbar */}
+            <div className="space-y-3">
+            
 
-                {/* Empty State */}
-                {registrationInquiries.length === 0 && !isLoading && (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 mb-4">
-                      <UserCheck className="h-16 w-16 mx-auto mb-4" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No Registration Requests
-                    </h3>
-                    <p className="text-gray-600">
-                      There are currently no business or professional
-                      registration requests to review.
-                    </p>
-                  </div>
-                )}
-
-                {/* Data Table */}
-                {registrationInquiries.length > 0 && (
-                  <div className="overflow-x-auto rounded-2xl bg-white border border-gray-200">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-900">Type</TableHead>
-                          <TableHead className="text-gray-900">Name</TableHead>
-                          <TableHead className="text-gray-900">
-                            Business Name
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Contact
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Location
-                          </TableHead>
-                          <TableHead className="text-gray-900">
-                            Status
-                          </TableHead>
-                          <TableHead className="text-gray-900">Date</TableHead>
-                          <TableHead className="text-gray-900">
-                            Actions
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {registrationInquiries
-                          .filter((inquiry) => {
-                            const matchesSearch =
-                              inquiry.name
-                                .toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.email
-                                .toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.businessName
-                                ?.toLowerCase()
-                                .includes(searchTerm.toLowerCase()) ||
-                              inquiry.location
-                                ?.toLowerCase()
-                                .includes(searchTerm.toLowerCase());
-                            return matchesSearch;
-                          })
-                          .map((inquiry) => (
-                            <TableRow key={inquiry.id}>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    inquiry.type === "BUSINESS"
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                  className="rounded-full"
-                                >
-                                  {inquiry.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-gray-900 font-medium">
-                                {inquiry.name}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {inquiry.businessName || "N/A"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                <div>
-                                  <div className="text-sm">{inquiry.email}</div>
-                                  {inquiry.phone && (
-                                    <div className="text-sm text-gray-500">
-                                      {inquiry.phone}
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {inquiry.location || "Not specified"}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    inquiry.status === "REJECTED"
-                                      ? "destructive"
-                                      : "outline"
-                                  }
-                                  className="rounded-full"
-                                >
-                                  {inquiry.status}
-                                  {inquiry.status === "REJECTED" && (
-                                    <AlertTriangle className="h-3 w-3 ml-1" />
-                                  )}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {new Date(
-                                  inquiry.createdAt,
-                                ).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  {inquiry.status === "PENDING" && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        className="rounded-xl bg-green-600 hover:bg-green-700"
-                                        onClick={() =>
-                                          handleCreateAccountFromInquiryWithSidebar(
-                                            inquiry,
-                                          )
-                                        }
-                                        disabled={
-                                          creatingAccount === inquiry.id
-                                        }
-                                      >
-                                        {creatingAccount === inquiry.id ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1"></div>
-                                            Creating...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <UserCheck className="h-4 w-4 mr-1" />
-                                            Create Account
-                                          </>
-                                        )}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="rounded-xl"
-                                        onClick={() =>
-                                          handleRejectInquiry(inquiry)
-                                        }
-                                        disabled={
-                                          creatingAccount === inquiry.id
-                                        }
-                                      >
-                                        {creatingAccount === inquiry.id ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
-                                            Processing...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <AlertTriangle className="h-4 w-4 mr-1" />
-                                            Reject
-                                          </>
-                                        )}
-                                      </Button>
-                                    </>
-                                  )}
-                                  {inquiry.status === "COMPLETED" && (
-                                    <Badge
-                                      variant="default"
-                                      className="rounded-full"
-                                    >
-                                      <UserCheck className="h-3 w-3 mr-1" />
-                                      Account Created
-                                    </Badge>
-                                  )}
-                                  {inquiry.status === "REJECTED" && (
-                                    <Badge
-                                      variant="destructive"
-                                      className="rounded-full"
-                                    >
-                                      <AlertTriangle className="h-3 w-3 mr-1" />
-                                      Rejected
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search registration requests..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
+
+            {/* Data Fetching Status */}
+            {dataFetchError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <span className="text-red-600 font-medium">
+                      Data Fetching Error
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fetchData()}
+                      className="rounded-xl"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {registrationInquiries.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <UserCheck className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Registration Requests
+                </h3>
+                <p className="text-gray-500">
+                  There are currently no business or professional registration requests to review.
+                </p>
+              </div>
+            )}
+
+            {/* Data Table */}
+            {registrationInquiries.length > 0 && (
+              <AdminTable title="Registration Requests">
+                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableRow>
+                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                    <TableHead className="text-white font-medium">Type</TableHead>
+                    <TableHead className="text-white font-medium">Name</TableHead>
+                    <TableHead className="text-white font-medium">Business Name</TableHead>
+                    <TableHead className="text-white font-medium">Contact</TableHead>
+                    <TableHead className="text-white    font-medium">Location</TableHead>
+                    <TableHead className="text-center text-white font-medium">Status</TableHead>
+                    <TableHead className="text-white font-medium">Date</TableHead>
+                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {registrationInquiries
+                    .filter((inquiry) => {
+                      const matchesSearch =
+                        inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+                      return matchesSearch;
+                    })
+                    .map((inquiry, index) => (
+                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                        <TableCell className="text-gray-500 font-medium">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={inquiry.type === "BUSINESS" ? "default" : "secondary"}
+                            className="rounded-full"
+                          >
+                            {inquiry.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-gray-900 font-medium">
+                          {inquiry.name}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.businessName || "N/A"}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          <div>
+                            <div className="text-sm">{inquiry.email}</div>
+                            {inquiry.phone && (
+                              <div className="text-sm text-gray-500">
+                                {inquiry.phone}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600 w-auto max-w-[150px] truncate ">
+                          {inquiry.location || "Not specified"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <StatusBadge
+                              status={inquiry.status}
+                              variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            {inquiry.status === "PENDING" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-md hover:bg-green-50"
+                                  onClick={() => handleCreateAccountFromInquiryWithSidebar(inquiry)}
+                                  disabled={creatingAccount === inquiry.id}
+                                  title="Create Account"
+                                >
+                                  {creatingAccount === inquiry.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <UserCheck className="h-4 w-4 text-green-600" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
+                                  onClick={() => handleRejectInquiry(inquiry)}
+                                  disabled={creatingAccount === inquiry.id}
+                                  title="Reject"
+                                >
+                                  {creatingAccount === inquiry.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
+                                  ) : (
+                                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                toast({
+                                  title: 'Request Details',
+                                  description: `${inquiry.type} request from ${inquiry.name}`,
+                                });
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </AdminTable>
+            )}
           </div>
         );
       case "business-listings":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                BUSINESS LISTING INQUIRIES
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-gray-900">
+                Business Listing Inquiries
               </h1>
-              <p className="text-md text-gray-600">
-                Manage business listing requests and digital presence
-                enhancement inquiries
+              <p className="text-sm text-gray-600 mt-1">
+                Manage business listing requests and digital presence enhancement inquiries
               </p>
             </div>
-            <div className="">
-              <div className="">
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-gray-900">
-                          Business
-                        </TableHead>
-                        <TableHead className="text-gray-900">Contact</TableHead>
-                        <TableHead className="text-gray-900">
-                          Requirements
-                        </TableHead>
-                        <TableHead className="text-gray-900">
-                          Inquiry Type
-                        </TableHead>
-                        <TableHead className="text-gray-900">Status</TableHead>
-                        <TableHead className="text-gray-900">
-                          Assigned To
-                        </TableHead>
-                        <TableHead className="text-gray-900">Date</TableHead>
-                        <TableHead className="text-gray-900">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {businessListingInquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id}>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">
-                                {inquiry.businessName}
-                              </div>
-                              {inquiry.businessDescription && (
-                                <div className="text-sm text-gray-500 max-w-xs truncate">
-                                  {inquiry.businessDescription}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            <div>
-                              <div className="font-medium">
-                                {inquiry.contactName}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {inquiry.email}
-                              </div>
-                              {inquiry.phone && (
-                                <div className="text-sm text-gray-500">
-                                  {inquiry.phone}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-900 max-w-xs truncate">
-                            {inquiry.requirements}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.inquiryType || "Not specified"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="rounded-full">
-                              {inquiry.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {inquiry.assignedUser
-                              ? inquiry.assignedUser.name
-                              : "Unassigned"}
-                          </TableCell>
-                          <TableCell className="text-gray-900">
-                            {new Date(inquiry.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => {
-                                  setSelectedBusinessListingInquiry(inquiry);
-                                  setShowBusinessListingInquiryDialog(true);
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => {
-                                  setSelectedBusinessListingInquiry(inquiry);
-                                  setShowBusinessListingInquiryDialog(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+
+            {/* Toolbar */}
+            <div className="space-y-3">
+              {/* Row 1: Action buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchData()}
+                  className="rounded-xl border-gray-200"
+                >
+                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+
+              {/* Row 2: Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search business listings..."
+                  className="pl-10 w-full rounded-xl border-gray-200 bg-white focus-visible:ring-gray-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
+
+            {/* Bulk Actions Toolbar */}
+            {selectedBusinessListings.size > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <BulkActionsToolbar
+                  selectedCount={selectedBusinessListings.size}
+                  totalCount={businessListingInquiries.length}
+                  onSelectAll={() => setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)))}
+                  onDeselectAll={() => setSelectedBusinessListings(new Set())}
+                  onBulkActivate={() => {
+                    toast({ title: 'Info', description: 'Bulk activate not implemented for listings' });
+                  }}
+                  onBulkDeactivate={() => {
+                    toast({ title: 'Info', description: 'Bulk deactivate not implemented for listings' });
+                  }}
+                  onBulkDelete={() => {
+                    toast({ title: 'Info', description: 'Bulk delete not implemented for listings' });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Data Table */}
+            {businessListingInquiries.length > 0 ? (
+              <AdminTable title="Business Listings">
+                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableRow>
+                    <TableHead className="w-12 text-white font-medium">
+                      <Checkbox
+                        checked={businessListingInquiries.length > 0 && selectedBusinessListings.size === businessListingInquiries.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)));
+                          } else {
+                            setSelectedBusinessListings(new Set());
+                          }
+                        }}
+                        className="border-gray-400"
+                      />
+                    </TableHead>
+                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
+                    <TableHead className="text-white font-medium">Business</TableHead>
+                    <TableHead className="text-white font-medium">Contact</TableHead>
+                    <TableHead className="text-white font-medium">Requirements</TableHead>
+                    <TableHead className="text-white font-medium">Inquiry Type</TableHead>
+                    <TableHead className="text-center text-white font-medium">Status</TableHead>
+                    <TableHead className="text-white font-medium">Assigned To</TableHead>
+                    <TableHead className="text-white font-medium">Date</TableHead>
+                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {businessListingInquiries
+                    .filter((inquiry) => {
+                      const matchesSearch =
+                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        inquiry.requirements?.toLowerCase().includes(searchTerm.toLowerCase());
+                      return matchesSearch;
+                    })
+                    .map((inquiry, index) => (
+                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedBusinessListings.has(inquiry.id)}
+                            onCheckedChange={() => {
+                              setSelectedBusinessListings(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(inquiry.id)) {
+                                  newSet.delete(inquiry.id);
+                                } else {
+                                  newSet.add(inquiry.id);
+                                }
+                                return newSet;
+                              });
+                            }}
+                            className="border-gray-400"
+                          />
+                        </TableCell>
+                        <TableCell className="text-gray-500 font-medium">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {inquiry.businessName}
+                            </div>
+                            {inquiry.businessDescription && (
+                              <div className="text-sm text-gray-500 max-w-xs truncate">
+                                {inquiry.businessDescription}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {inquiry.contactName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {inquiry.email}
+                            </div>
+                            {inquiry.phone && (
+                              <div className="text-sm text-gray-500">
+                                {inquiry.phone}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600 max-w-xs truncate">
+                          {inquiry.requirements}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.inquiryType || "Not specified"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <StatusBadge
+                              status={inquiry.status}
+                              variant={
+                                inquiry.status === "PENDING" ? "warning" :
+                                inquiry.status === "REVIEWING" || inquiry.status === "UNDER_REVIEW" ? "info" :
+                                inquiry.status === "APPROVED" ? "success" :
+                                inquiry.status === "REJECTED" ? "error" : "neutral"
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {inquiry.assignedUser?.name || "Unassigned"}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                setSelectedBusinessListingInquiry(inquiry);
+                                setShowBusinessListingInquiryDialog(true);
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                              onClick={() => {
+                                setSelectedBusinessListingInquiry(inquiry);
+                                setShowBusinessListingInquiryDialog(true);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </AdminTable>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
+                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <Building className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Business Listings Found
+                </h3>
+                <p className="text-gray-500">
+                  There are currently no business listing inquiries to review.
+                </p>
+              </div>
+            )}
           </div>
         );
       case "analytics":
@@ -4567,38 +5091,6 @@ function useDebounce<T>(value: T, delay: number): T {
               <p className="text-md text-gray-600">
                 Detailed analytics and insights
               </p>
-            </div>
-            <div className="    rounded-3xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Total Inquiries</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{inquiries.length}</div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Active Businesses</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {stats.activeBusinesses}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-3xl transition-all duration-300 hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Total Products</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {stats.totalProducts}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </div>
           </div>
         );
@@ -5658,6 +6150,180 @@ const renderRightPanel = () => {
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Business
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Professional Confirmation Dialog */}
+      <Dialog open={showDeleteProfessionalDialog} onOpenChange={setShowDeleteProfessionalDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Professional
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{professionalToDelete?.name}"? This action cannot be undone and will permanently remove the professional profile and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Professional profile and account</li>
+              <li>All associated skills, education, and experience</li>
+              <li>Portfolio items and services offered</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteProfessionalDialog(false);
+                setProfessionalToDelete(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteProfessional}
+              disabled={deletingProfessional}
+              className="rounded-2xl"
+            >
+              {deletingProfessional ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Professional
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Category Confirmation Dialog */}
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Category
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{categoryToDelete?.name}"? This action cannot be undone and will permanently remove the category and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-sm text-red-700">
+              <strong>Warning:</strong> This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
+              <li>Category and its subcategories</li>
+              <li>All businesses associated with this category</li>
+              <li>This action is irreversible</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteCategoryDialog(false);
+                setCategoryToDelete(null);
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteCategory}
+              className="rounded-2xl"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Registration Request Dialog */}
+      <Dialog open={showRejectInquiryDialog} onOpenChange={setShowRejectInquiryDialog}>
+        <DialogContent className="rounded-3xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Reject Registration Request
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject the registration request from "{inquiryToReject?.name}"? This will send a rejection notification to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-500">Type:</span>
+                  <span className="font-medium text-gray-900 ml-2">{inquiryToReject?.type}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Email:</span>
+                  <span className="font-medium text-gray-900 ml-2">{inquiryToReject?.email}</span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rejectReason" className="text-sm font-medium text-gray-900">
+                Reason for Rejection (optional)
+              </Label>
+              <Textarea
+                id="rejectReason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter a reason for rejection..."
+                className="rounded-xl resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRejectInquiryDialog(false);
+                setInquiryToReject(null);
+                setRejectReason("");
+              }}
+              className="rounded-2xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmRejectInquiry}
+              disabled={creatingAccount === inquiryToReject?.id}
+              className="rounded-2xl"
+            >
+              {creatingAccount === inquiryToReject?.id ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Rejecting...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject Request
                 </>
               )}
             </Button>

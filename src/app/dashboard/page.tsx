@@ -35,7 +35,8 @@ export default function DashboardRouter() {
           signal: controller.signal,
           headers: {
             'Cache-Control': 'no-cache'
-          }
+          },
+          credentials: 'include'
         })
         clearTimeout(timeoutId)
 
@@ -54,7 +55,8 @@ export default function DashboardRouter() {
           signal: controller.signal,
           headers: {
             'Cache-Control': 'no-cache'
-          }
+          },
+          credentials: 'include'
         })
         clearTimeout(timeoutId)
 

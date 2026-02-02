@@ -188,7 +188,7 @@ export default function ProfessionalsPage() {
         <div
           className={cn(
             "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
           <div className="flex flex-col h-full">
@@ -216,7 +216,7 @@ export default function ProfessionalsPage() {
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                   pathname === "/"
                     ? "bg-slate-800 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 hover:bg-gray-100",
                 )}
               >
                 <Home className="mr-3 h-5 w-5" />
@@ -228,7 +228,7 @@ export default function ProfessionalsPage() {
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                   pathname === "/businesses"
                     ? "bg-slate-800 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 hover:bg-gray-100",
                 )}
               >
                 <Building2 className="mr-3 h-5 w-5" />
@@ -240,7 +240,7 @@ export default function ProfessionalsPage() {
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                   pathname === "/professionals"
                     ? "bg-slate-800 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 hover:bg-gray-100",
                 )}
               >
                 <Users className="mr-3 h-5 w-5" />
@@ -252,7 +252,7 @@ export default function ProfessionalsPage() {
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                   pathname === "/pricing"
                     ? "bg-slate-800 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 hover:bg-gray-100",
                 )}
               >
                 <Calculator className="mr-3 h-5 w-5" />
@@ -264,7 +264,7 @@ export default function ProfessionalsPage() {
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
                   pathname === "/contact"
                     ? "bg-slate-800 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 hover:bg-gray-100",
                 )}
               >
                 <Mail className="mr-3 h-5 w-5" />
@@ -289,7 +289,7 @@ export default function ProfessionalsPage() {
                           setSelectedCategory(
                             selectedCategory === profession.name
                               ? null
-                              : profession.name
+                              : profession.name,
                           );
                           setSidebarOpen(false); // Close sidebar after selection
                         }}
@@ -297,7 +297,7 @@ export default function ProfessionalsPage() {
                           "w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-200",
                           selectedCategory === profession.name
                             ? "bg-slate-800 text-white"
-                            : "text-gray-700 hover:bg-gray-100"
+                            : "text-gray-700 hover:bg-gray-100",
                         )}
                       >
                         <IconComponent className="mr-3 h-4 w-4" />
@@ -339,7 +339,7 @@ export default function ProfessionalsPage() {
 
         {/* Navigation Bar - Fixed at Top */}
         <nav className="fixed inset-x-0 top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+          <div className=" mx-auto px-3 sm:px-4 lg:px-6">
             <div className="flex justify-between items-center h-14 md:h-16">
               <div className="flex items-center ">
                 <Link href="/" className="flex items-center space-x-2">
@@ -360,7 +360,7 @@ export default function ProfessionalsPage() {
                     "hover:text-cyan-400 transition-all flex duration-200 px-2 py-1 rounded-md text-sm lg:text-base",
                     pathname === "/"
                       ? "bg-white text-slate-800 font-bold"
-                      : "text-gray-700"
+                      : "text-gray-700",
                   )}
                 >
                   <Home className="mr-1 h-5 w-5" />
@@ -372,7 +372,7 @@ export default function ProfessionalsPage() {
                     "hover:text-cyan-400 transition-all flex duration-200 px-2 py-1 rounded-md text-sm lg:text-base",
                     pathname === "/businesses"
                       ? "bg-white text-slate-800 font-bold"
-                      : "text-gray-700"
+                      : "text-gray-700",
                   )}
                 >
                   <Building2 className="mr-1 h-5 w-5" />
@@ -384,7 +384,7 @@ export default function ProfessionalsPage() {
                     "hover:text-cyan-400 transition-all flex duration-200 px-2 py-1 rounded-md text-sm lg:text-base",
                     pathname === "/professionals"
                       ? "bg-white text-slate-800 font-bold"
-                      : "text-gray-700"
+                      : "text-gray-700",
                   )}
                 >
                   <Users className="mr-1 h-5 w-5" />
@@ -396,7 +396,7 @@ export default function ProfessionalsPage() {
                     "hover:text-cyan-400 transition-all flex duration-200 px-2 py-1 rounded-md text-sm lg:text-base",
                     pathname === "/pricing"
                       ? "bg-white text-slate-800 font-bold"
-                      : "text-gray-700"
+                      : "text-gray-700",
                   )}
                 >
                   <Calculator className="mr-1 h-5 w-5" />
@@ -408,7 +408,7 @@ export default function ProfessionalsPage() {
                     "hover:text-cyan-400 transition-all duration-200 flex px-2 py-1 rounded-md text-sm lg:text-base",
                     pathname === "/contact"
                       ? "bg-white text-slate-800 font-bold"
-                      : "text-gray-700"
+                      : "text-gray-700",
                   )}
                 >
                   <Mail className="mr-1 h-5 w-5" />
@@ -443,7 +443,7 @@ export default function ProfessionalsPage() {
 
           {/* Category Slider - Only visible on desktop */}
           <div className="hidden md:block bg-gray-50 border-t border-gray-200">
-            <div className="max-w-7xl mx-auto">
+            <div className=" mx-auto">
               <div className="relative">
                 <button
                   onClick={() => scrollCategories("left")}
@@ -473,14 +473,14 @@ export default function ProfessionalsPage() {
                           setSelectedCategory(
                             selectedCategory === profession.name
                               ? null
-                              : profession.name
+                              : profession.name,
                           )
                         }
                         className={cn(
                           "px-3 py-1 text-xs sm:text-sm font-semibold hover:bg-slate-800 hover:text-white whitespace-nowrap cursor-pointer transition-all duration-200 shrink-0 border-r border-gray-300 last:border-r-0 flex items-center space-x-1 sm:space-x-2",
                           selectedCategory === profession.name
                             ? "bg-slate-800 text-white"
-                            : "text-gray-500"
+                            : "text-gray-500",
                         )}
                       >
                         <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -500,11 +500,11 @@ export default function ProfessionalsPage() {
         </nav>
 
         {/* Main Content */}
-        <main className="pt-20 md:pt-32">
+        <main className="pt-12 md:pt-24">
           {/* Hero Banner - Keeping exact aspect ratio */}
-          <section className="px-3 sm:px-4 md:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="relative overflow-hidden rounded-xl md:rounded-2xl lg:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+          <section className="">
+            <div className=" mx-auto">
+              <div className="relative overflow-hidden bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
                 <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                   <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                     Find Top <br /> Professionals
@@ -524,7 +524,7 @@ export default function ProfessionalsPage() {
 
           {/* Search Bar and Filters */}
           <div className="w-full py-4 sm:py-6">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className=" mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
               <div className="w-full relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />
                 <Input
@@ -540,9 +540,9 @@ export default function ProfessionalsPage() {
 
           {/* Professional Cards Section */}
           <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
+            <div className=" mx-auto">
               {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Card
                       key={i}
@@ -600,7 +600,7 @@ export default function ProfessionalsPage() {
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredProfessionals.map((professional) => (
                       <Card
                         key={professional.id}
@@ -620,7 +620,7 @@ export default function ProfessionalsPage() {
                               onError={(e) => {
                                 console.error(
                                   "Banner image failed to load:",
-                                  professional.banner
+                                  professional.banner,
                                 );
                                 handleImageError(e);
                               }}
@@ -646,7 +646,7 @@ export default function ProfessionalsPage() {
                             onError={(e) => {
                               console.error(
                                 "Profile picture failed to load:",
-                                professional.profilePicture
+                                professional.profilePicture,
                               );
                               handleImageError(e);
                             }}
@@ -716,7 +716,7 @@ export default function ProfessionalsPage() {
                                 <a
                                   href={`https://wa.me/${professional.phone.replace(
                                     /[^0-9]/g,
-                                    ""
+                                    "",
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"

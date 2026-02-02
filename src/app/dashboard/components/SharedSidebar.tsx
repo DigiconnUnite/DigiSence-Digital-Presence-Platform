@@ -61,7 +61,7 @@ export default function SharedSidebar({
                 onClick={() => onViewChange(item.value)}
                 className={`flex flex-col items-center justify-center py-2 w-full rounded-md transition-all duration-200 ${
                   currentView === item.value
-                    ? "bg-linear-to-bl from-[#5757FF] to-[#A89CFE] text-white"
+                    ? "bg-orange-400 text-white"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -80,7 +80,7 @@ export default function SharedSidebar({
                     .slice(5)
                     .some((item) => item.value === currentView) ||
                   currentView === "settings"
-                    ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                    ? "bg-orange-400 text-white"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -104,7 +104,7 @@ export default function SharedSidebar({
                           }}
                           className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 ${
                             currentView === item.value
-                              ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                              ? "bg-orange-400 text-white"
                               : "text-gray-700 hover:bg-gray-100"
                           }`}
                         >
@@ -125,7 +125,7 @@ export default function SharedSidebar({
                         }}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl transition-all duration-200 ${
                           currentView === "settings"
-                            ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                            ? "bg-orange-400 text-white"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
@@ -190,7 +190,7 @@ export default function SharedSidebar({
                 onClick={() => onViewChange(item.value)}
                 className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} cursor-pointer px-3 py-2 rounded-md text-left transition-colors ${
                   currentView === item.value
-                    ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                    ? "bg-orange-400 text-white"
                     : "text-gray-700 bg-gray-50 hover:bg-gray-100"
                 }`}
                 title={isCollapsed ? item.title : undefined}
@@ -212,7 +212,7 @@ export default function SharedSidebar({
             onClick={onSettings}
             className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2 rounded-md text-left transition-colors ${
               currentView === "settings"
-                ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                ? "bg-orange-400 text-white"
                 : "text-gray-700 bg-gray-50 hover:bg-gray-100"
             }`}
             title={isCollapsed ? "Settings" : undefined}

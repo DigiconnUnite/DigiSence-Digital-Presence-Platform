@@ -107,6 +107,7 @@ import {
   Award,
   ChevronRight,
   Palette,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { getOptimizedImageUrl, handleImageError, isValidImageUrl } from '@/lib/image-utils';
@@ -4964,7 +4965,40 @@ export default function ProfessionalDashboard() {
                     <span className="font-semibold">Professional</span>
                   </div>
                 </div>
+                {/* Mobile View Profile Button */}
+                {professional && (
+                  <div className="flex md:hidden">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        window.open(`/pcard/${professional.slug}`, "_blank")
+                      }
+                      className="rounded-full px-3 py-0 bg-[#080322]  text-white border-0 hover:opacity-90 transition-opacity"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />
+                      <span className="text-xs">View</span>
+                    </Button>
+                  </div>
+                )}
                 <div className="flex items-center leading-tight space-x-2 sm:space-x-4">
+                  {/* Desktop View Public Profile Pill Button - Now on the right */}
+                  {professional && (
+                    <div className="hidden md:block">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          window.open(`/pcard/${professional.slug}`, "_blank")
+                        }
+                        className="rounded-full px-4 py-0 bg-[#080322]  text-white border-0 hover:opacity-90 transition-opacity"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Profile
+                        <ExternalLink className="h-3 w-3 ml-2 opacity-80" />
+                      </Button>
+                    </div>
+                  )}
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-medium text-gray-900">
                       {user?.name || "Professional"}

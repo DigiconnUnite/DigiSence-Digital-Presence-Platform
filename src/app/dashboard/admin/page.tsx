@@ -2785,12 +2785,13 @@ function useDebounce<T>(value: T, delay: number): T {
               <Skeleton className="h-8 w-64 mb-2" />
               <Skeleton className="h-6 w-96" />
             </div>
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Stats Overview - Match actual 8-column grid layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-8 gap-6 mb-8">
+              {/* 4 Stats cards - each spans 2 columns in 8-grid */}
               {Array.from({ length: 4 }).map((_, i) => (
                 <Card
                   key={i}
-                  className="bg-white border border-gray-200 shadow-sm rounded-3xl"
+                  className="bg-white border border-gray-200 shadow-sm rounded-3xl xl:col-span-2"
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <Skeleton className="h-4 w-24" />
@@ -2802,49 +2803,233 @@ function useDebounce<T>(value: T, delay: number): T {
                   </CardContent>
                 </Card>
               ))}
+              {/* New Businesses Card - spans 3 columns */}
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl xl:col-span-3 min-h-[300px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-32 bg-white/50" />
+                  <Skeleton className="h-4 w-4 rounded bg-white/50" />
+                </CardHeader>
+                <CardContent className="flex-1 px-0 bg-white">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 w-32 flex-1" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* New Professionals Card - spans 3 columns */}
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl xl:col-span-3 min-h-[300px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-32 bg-white/50" />
+                  <Skeleton className="h-4 w-4 rounded bg-white/50" />
+                </CardHeader>
+                <CardContent className="flex-1 px-0 bg-white">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 w-32 flex-1" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Latest Contact Card - spans 2 columns */}
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl xl:col-span-2 min-h-[300px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-28 bg-white/50" />
+                  <Skeleton className="h-4 w-4 rounded bg-white/50" />
+                </CardHeader>
+                <CardContent className="flex-1 px-0 bg-white">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="space-y-1">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Registration Requests Card - spans 6 columns */}
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl xl:col-span-6 min-h-[300px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-48 bg-white/50" />
+                  <Skeleton className="h-4 w-4 rounded bg-white/50" />
+                </CardHeader>
+                <CardContent className="flex-1 px-0 bg-white">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-32 flex-1" />
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Quick Actions Card - spans 2 columns */}
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl xl:col-span-2 min-h-[300px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-28 bg-white/50" />
+                  <Skeleton className="h-4 w-4 rounded bg-white/50" />
+                </CardHeader>
+                <CardContent className="flex-1 px-0">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full rounded-full bg-white/30" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
       case "businesses":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-6 w-80" />
+            <div className="mb-6">
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-80" />
             </div>
-            <div className="bg-white border overflow-hidden rounded-3xl border-gray-200 shadow-sm">
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Skeleton className="h-10 w-24 rounded-2xl" />
-                  <Skeleton className="h-10 w-48 rounded-2xl" />
-                  <Skeleton className="h-10 w-32 rounded-2xl" />
-                </div>
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <div className="bg-amber-100 p-4">
-                    <div className="flex space-x-4">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                  <div className="space-y-4 p-4">
+            {/* Toolbar */}
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-28 rounded-xl" />
+                <Skeleton className="h-10 w-28 rounded-xl" />
+                <Skeleton className="h-10 w-32 rounded-xl" />
+              </div>
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            {/* Data Table - Match actual table structure */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-16 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex space-x-4">
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-6 w-16 rounded-full" />
-                        <div className="flex space-x-2">
-                          <Skeleton className="h-8 w-8 rounded-xl" />
-                          <Skeleton className="h-8 w-8 rounded-xl" />
-                          <Skeleton className="h-8 w-8 rounded-xl" />
-                        </div>
-                      </div>
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 rounded-lg" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                </div>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        );
+      case "professionals":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-6">
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+            {/* Toolbar */}
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-28 rounded-xl" />
+                <Skeleton className="h-10 w-28 rounded-xl" />
+                <Skeleton className="h-10 w-36 rounded-xl" />
+              </div>
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            {/* Data Table - Match actual professionals table structure */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-16 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Skeleton className="h-3 w-3" />
+                            <Skeleton className="h-4 w-24" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>
@@ -2852,39 +3037,290 @@ function useDebounce<T>(value: T, delay: number): T {
       case "categories":
         return (
           <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <Skeleton className="h-8 w-56 mb-2" />
-              <Skeleton className="h-6 w-72" />
+            <div className="mb-6">
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-80" />
             </div>
-            <div className="bg-white border border-gray-200 shadow-sm rounded-3xl">
-              <div className="p-4 sm:p-6">
-                <Skeleton className="h-10 w-40 mb-6 rounded-2xl" />
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i}>
-                      <div className="flex items-center space-x-2 p-4 border rounded-2xl bg-gray-50">
-                        <Skeleton className="h-6 w-6 rounded" />
-                        <Skeleton className="h-5 w-32" />
-                        <div className="ml-auto flex space-x-2">
-                          <Skeleton className="h-8 w-8 rounded-xl" />
-                          <Skeleton className="h-8 w-8 rounded-xl" />
-                        </div>
-                      </div>
-                      {i === 0 && (
-                        <div className="ml-8 flex items-center space-x-2 p-3 border-l-2 border-gray-200">
-                          <Skeleton className="h-4 w-4 rounded" />
-                          <Skeleton className="h-4 w-24" />
-                          <div className="ml-auto flex space-x-2">
-                            <Skeleton className="h-8 w-8 rounded-xl" />
-                            <Skeleton className="h-8 w-8 rounded-xl" />
+            {/* Toolbar */}
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-36 rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            {/* Data Table - Match AdminTable structure */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-32 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-28 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-20 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-32" />
+                            {i === 1 && <Skeleton className="h-5 w-10 rounded-full" />}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                        <TableCell className="text-center">
+                          <Skeleton className="h-6 w-10 rounded-full mx-auto" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
+          </div>
+        );
+      case "inquiries":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-6">
+              <Skeleton className="h-7 w-56 mb-2" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+            {/* Toolbar */}
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-28 rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            {/* Data Table */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-32 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-16 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-1">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-3 w-32" />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        );
+      case "registration-requests":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-6">
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            {/* Search */}
+            <Skeleton className="h-10 w-full rounded-xl" />
+            {/* Data Table */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-28 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-16 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        );
+      case "business-listings":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-6">
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            {/* Toolbar */}
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-28 rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            {/* Data Table */}
+            <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-[#080322]">
+                    <TableRow>
+                      <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
+                      <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-32 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24 bg-white/50" /></TableHead>
+                      <TableHead className="text-center"><Skeleton className="h-4 w-16 bg-white/50 mx-auto" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
+                      <TableHead className="text-right w-32"><Skeleton className="h-4 w-16 bg-white/50 ml-auto" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-36" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        );
+      case "analytics":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-6 w-64" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="bg-white border border-gray-200 shadow-sm rounded-3xl p-6">
+                  <Skeleton className="h-6 w-32 mb-4" />
+                  <Skeleton className="h-40 w-full" />
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      case "settings":
+        return (
+          <div className="space-y-6 pb-20 md:pb-0">
+            <div className="mb-8">
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-6 w-64" />
+            </div>
+            <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl p-6">
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full rounded-2xl" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full rounded-2xl" />
+                </div>
+                <Skeleton className="h-10 w-32 rounded-2xl" />
+              </div>
+            </Card>
           </div>
         );
       default:
@@ -2989,7 +3425,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 
               {/* Card 1: New Businesses */}
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
                     New Businesses
@@ -3085,7 +3521,7 @@ function useDebounce<T>(value: T, delay: number): T {
               </Card>
 
               {/* Card 2: New Professionals (Updated Style) */}
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black bg-[#080322] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-3 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
                     New Professionals
@@ -3183,7 +3619,7 @@ function useDebounce<T>(value: T, delay: number): T {
               </Card>
 
               {/* Card 3: Latest Contact (Updated Style) */}
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
+              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
                     Latest Contact
@@ -3237,7 +3673,7 @@ function useDebounce<T>(value: T, delay: number): T {
               </Card>
 
           
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
                     Latest Registration Requests
@@ -3327,7 +3763,7 @@ function useDebounce<T>(value: T, delay: number): T {
               </Card>
 
               {/* Card 3: Quick Actions with card-bg */}
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black from-[#080322] to-[#A89CFE] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
+              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">
                     Quick Actions
@@ -3519,10 +3955,10 @@ function useDebounce<T>(value: T, delay: number): T {
             )}
 
             {/* Data Table */}
-            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
+            <div className="bg-white rounded-md   overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableHeader className="bg-[#080322]">
                     <TableRow>
                       <TableHead className="w-12 text-white font-medium">
                         <Checkbox
@@ -3556,7 +3992,7 @@ function useDebounce<T>(value: T, delay: number): T {
                       <TableHead className="text-white font-medium">
                         Date
                       </TableHead>
-                      <TableHead className="text-right text-white font-medium w-32">
+                      <TableHead className="text-center text-white font-medium ">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -3941,10 +4377,10 @@ function useDebounce<T>(value: T, delay: number): T {
             )}
 
             {/* Data Table */}
-            <div className="bg-white rounded-md sm:rounded-2xl  overflow-hidden">
+            <div className="bg-white rounded-md   overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableHeader className="bg-[#080322]">
                     <TableRow>
                       <TableHead className="w-12 text-white font-medium">
                         <Checkbox
@@ -3989,7 +4425,7 @@ function useDebounce<T>(value: T, delay: number): T {
                           Date {getProfessionalSortIcon('createdAt')}
                         </div>
                       </TableHead>
-                      <TableHead className="text-right text-white font-medium w-32">
+                      <TableHead className="text-center text-white font-medium w-32">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -4250,15 +4686,6 @@ function useDebounce<T>(value: T, delay: number): T {
                   <span className="sm:hidden">Add</span>
                 </Button>
 
-                {/* Refresh Button */}
-                <Button
-                  variant="outline"
-                  onClick={() => fetchData()}
-                  className="rounded-xl border-gray-200"
-                >
-                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
               </div>
 
               {/* Row 2: Search bar */}
@@ -4302,31 +4729,18 @@ function useDebounce<T>(value: T, delay: number): T {
             )}
 
             {/* Data Table */}
-            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+            <div className="bg-white rounded-md  overflow-hidden">
               <div className="overflow-x-auto">
                 <AdminTable title="Categories">
                   <Table>
-                    <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                    <TableHeader className="bg-[#080322]">
                       <TableRow>
-                        <TableHead className="w-12 text-white font-medium">
-                          <Checkbox
-                            checked={filteredCategories.length > 0 && selectedCategories.size === filteredCategories.length}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedCategories(new Set(filteredCategories.map(c => c.id)));
-                              } else {
-                                setSelectedCategories(new Set());
-                              }
-                            }}
-                            className="border-gray-400"
-                          />
-                        </TableHead>
                         <TableHead className="w-14 text-white font-medium">SN.</TableHead>
                         <TableHead className="text-white font-medium">Category Name</TableHead>
                         <TableHead className="text-white font-medium">Slug</TableHead>
                         <TableHead className="text-white font-medium">Parent Category</TableHead>
                         <TableHead className="text-center text-white font-medium">Item Count</TableHead>
-                        <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                        <TableHead className="text-center text-white font-medium ">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -4365,23 +4779,6 @@ function useDebounce<T>(value: T, delay: number): T {
                               key={category.id}
                               className={`hover:bg-gray-50 ${category.parentId ? 'bg-gray-50/50' : ''}`}
                             >
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedCategories.has(category.id)}
-                                  onCheckedChange={() => {
-                                    setSelectedCategories(prev => {
-                                      const newSet = new Set(prev);
-                                      if (newSet.has(category.id)) {
-                                        newSet.delete(category.id);
-                                      } else {
-                                        newSet.add(category.id);
-                                      }
-                                      return newSet;
-                                    });
-                                  }}
-                                  className="border-gray-400"
-                                />
-                              </TableCell>
                               <TableCell className="text-gray-500 font-medium">
                                 {index + 1}
                               </TableCell>
@@ -4452,7 +4849,7 @@ function useDebounce<T>(value: T, delay: number): T {
           <div className="space-y-6 pb-20 md:pb-0">
             <div className="mb-6">
               <h1 className="text-xl font-bold text-gray-900">
-                Inquiries Management
+               Contact Inquiries Management
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 View and manage customer inquiries
@@ -4485,15 +4882,6 @@ function useDebounce<T>(value: T, delay: number): T {
                   </SelectContent>
                 </Select>
 
-                {/* Refresh Button */}
-                <Button
-                  variant="outline"
-                  onClick={() => fetchData()}
-                  className="rounded-xl border-gray-200"
-                >
-                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
               </div>
 
               {/* Row 2: Search bar */}
@@ -4524,10 +4912,10 @@ function useDebounce<T>(value: T, delay: number): T {
             )}
 
             {/* Data Table */}
-            <div className="bg-white rounded-md sm:rounded-2xl overflow-hidden">
+            <div className="bg-white rounded-md  overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                  <TableHeader className="bg-[#080322]">
                     <TableRow>
                       <TableHead className="w-14 text-white font-medium">SN.</TableHead>
                       <TableHead className="text-white font-medium">Customer</TableHead>
@@ -4535,7 +4923,7 @@ function useDebounce<T>(value: T, delay: number): T {
                       <TableHead className="text-white font-medium">Message</TableHead>
                       <TableHead className="text-center text-white font-medium">Status</TableHead>
                       <TableHead className="text-white font-medium">Date</TableHead>
-                      <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                      <TableHead className="text-center text-white font-medium ">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -4731,7 +5119,7 @@ function useDebounce<T>(value: T, delay: number): T {
             {/* Data Table */}
             {registrationInquiries.length > 0 && (
               <AdminTable title="Registration Requests">
-                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                <TableHeader className="bg-[#080322]">
                   <TableRow>
                     <TableHead className="w-14 text-white font-medium">SN.</TableHead>
                     <TableHead className="text-white font-medium">Type</TableHead>
@@ -4741,7 +5129,7 @@ function useDebounce<T>(value: T, delay: number): T {
                     <TableHead className="text-white    font-medium">Location</TableHead>
                     <TableHead className="text-center text-white font-medium">Status</TableHead>
                     <TableHead className="text-white font-medium">Date</TableHead>
-                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                    <TableHead className="text-center text-white font-medium ">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -4920,7 +5308,7 @@ function useDebounce<T>(value: T, delay: number): T {
             {/* Data Table */}
             {businessListingInquiries.length > 0 ? (
               <AdminTable title="Business Listings">
-                <TableHeader className="bg-linear-90 from-[#080322] to-[#A89CFE]">
+                <TableHeader className="bg-[#080322]">
                   <TableRow>
                     <TableHead className="w-12 text-white font-medium">
                       <Checkbox
@@ -4943,7 +5331,7 @@ function useDebounce<T>(value: T, delay: number): T {
                     <TableHead className="text-center text-white font-medium">Status</TableHead>
                     <TableHead className="text-white font-medium">Assigned To</TableHead>
                     <TableHead className="text-white font-medium">Date</TableHead>
-                    <TableHead className="text-right text-white font-medium w-32">Actions</TableHead>
+                    <TableHead className="text-center text-white font-medium ">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -5679,8 +6067,8 @@ const renderRightPanel = () => {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+     
+        <div className="fixed inset-0     bg-center bg-slate-200  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -5772,8 +6160,7 @@ const renderRightPanel = () => {
 
   return (
     <div className="max-h-screen min-h-screen relative flex">
-      <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-      <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+      <div className="fixed inset-0    bg-slate-200  -z-10"></div>
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden">

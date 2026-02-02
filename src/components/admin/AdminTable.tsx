@@ -24,9 +24,9 @@ export function AdminTable({
   showHeader = true,
 }: AdminTableProps) {
   return (
-    <div className={`bg-white rounded-md sm:rounded-2xl overflow-hidden ${className || ""}`}>
+    <div className={`bg-white rounded-md  overflow-hidden ${className || ""}`}>
       {showHeader && (
-        <div className="bg-linear-90 from-[#080322] to-[#A89CFE] px-4 sm:px-6 py-3 sm:py-4">
+        <div className="bg-[#080322] px-4 sm:px-6 py-3 sm:py-4">
           <h2 className="text-white text-base sm:text-lg font-semibold">{title}</h2>
         </div>
       )}

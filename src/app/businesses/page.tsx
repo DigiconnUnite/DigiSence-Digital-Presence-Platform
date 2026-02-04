@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +24,7 @@ import {
   X,
   Menu,
   ChevronLeft,
-  ChevronRight,
+  ChevronRight, 
   ShoppingBag,
   Wrench,
   Cog,
@@ -91,11 +91,40 @@ export default function BusinessesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const categoryScrollRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Initialize search term from URL params
+  useEffect(() => {
+    const query = searchParams.get('q')
+    if (query) {
+      setSearchTerm(query)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     fetchBusinesses()
     fetchCategories()
   }, [])
+
+  // Debounced search handler
+  const debouncedSearch = useCallback((term: string) => {
+    setSearchTerm(term)
+  }, [])
+
+  // Update URL when search term stabilizes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) {
+        params.set('q', searchTerm)
+      } else {
+        params.delete('q')
+      }
+      router.push(`?${params.toString()}`, { scroll: false })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm, router, searchParams])
 
   useEffect(() => {
     const filtered = businesses.filter(business => {
@@ -347,7 +376,7 @@ export default function BusinessesPage() {
         )}
 
         {/* Navigation Bar - Fixed at Top */}
-        <nav className="fixed inset-x-0 top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+        <nav className="fixed inset-x-0 top-0  z-30 bg-white border-b border-gray-200 shadow-sm">
           <div className=" mx-auto px-3 sm:px-4 lg:px-6">
             <div className="flex justify-between items-center h-14 md:h-16">
               <div className="flex items-center ">
@@ -509,11 +538,11 @@ export default function BusinessesPage() {
         </nav>
 
         {/* Main Content */}
-        <main className="pt-20 md:pt-32">
+        <main className="pt-14 sm:pt-22">
           {/* Hero Banner - Keeping exact aspect ratio */}
-          <section className="px-3 sm:px-4 md:px-6 lg:px-8">
+          <section className="">
             <div className=" mx-auto">
-              <div className="relative overflow-hidden rounded-xl md:rounded-2xl lg:rounded-3xl bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+              <div className="relative overflow-hidden  bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
                 <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                   <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                     Find Top <br /> Businesses
@@ -521,6 +550,24 @@ export default function BusinessesPage() {
                   <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6">
                     Discover amazing businesses and explore their products.
                   </p>
+                  {/* Search Bar Inside Banner */}
+                  <div className="w-full  relative max-w-md">
+                    <Search className="absolute left-3  top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search businesses..."
+                      value={searchTerm}
+                      onChange={(e) => debouncedSearch(e.target.value)}
+                      className="pl-10 pr-24 py-2 sm:py-3 rounded-full border border-white/20 bg-white/90 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-gray-900 placeholder:text-gray-500"
+                    />
+                    <Button
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform  -translate-y-1/2  rounded-full bg-slate-800 hover:bg-slate-700 text-white px-4"
+                      onClick={() => debouncedSearch(searchTerm)}
+                    >
+                      Search
+                    </Button>
+                  </div>
                 </div>
                 <img
                   src="/pr-banner-shape.png"
@@ -530,57 +577,33 @@ export default function BusinessesPage() {
               </div>
             </div>
           </section>
-
-          {/* Search Bar and Filters */}
-          <div className=" z-30 px-4 sm:px-6 py-8 lg:px-8">
-            <div className=" mx-auto ">
-              <div className="w-full relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />
-                <Input
-                  type="text"
-                  placeholder="Search businesses..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 sm:py-3 rounded-full border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-background"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Business Cards Section */}
-          <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8">
+          <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12">
             <div className=" mx-auto">
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Card
                       key={i}
-                      className="overflow-hidden border-0 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                      className="overflow-hidden border rounded-2xl bg-white/80 flex flex-col h-full relative"
                     >
-                      <CardHeader className="pb-2 sm:pb-4">
-                        <div className="flex items-center space-x-2 sm:space-x-4">
-                          <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full" />
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-20 sm:w-24 md:w-28 mb-2" />
-                            <Skeleton className="h-3 w-16 sm:w-20" />
+                      {/* Skeleton Layout Matching New Design */}
+                      <div className="p-3 sm:p-4 flex flex-col h-full relative z-10 pointer-events-none">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <Skeleton className="h-14 w-14 sm:h-16 sm:w-16 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2 sm:space-y-4 px-4 sm:px-6">
-                        <Skeleton className="h-3 w-full mb-1" />
-                        <Skeleton className="h-3 w-3/4 mb-2 sm:mb-4" />
-                        <div className="flex flex-wrap gap-1 mb-2 sm:mb-4">
-                          <Skeleton className="h-6 w-24 rounded-full" />
+                        <div className="space-y-2 mb-3">
+                          <Skeleton className="h-3 w-full" />
+                          <Skeleton className="h-3 w-2/3" />
                         </div>
-                        <div className="flex gap-2 mb-2 sm:mb-4">
-                          <Skeleton className="h-8 w-full rounded-full" />
-                          <Skeleton className="h-8 w-full rounded-full" />
+                        <div className="mt-auto pt-2">
+                          <Skeleton className="h-9 w-full" />
                         </div>
-                        <div className="flex justify-between items-center pt-2 sm:pt-4 border-t border-border">
-                          <Skeleton className="h-4 w-16" />
-                          <Skeleton className="h-8 w-20 rounded-full" />
-                        </div>
-                      </CardContent>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -612,91 +635,94 @@ export default function BusinessesPage() {
                     {filteredBusinesses.map((business) => (
                       <Card
                         key={business.id}
-                        className="overflow-hidden border bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                        className="group overflow-hidden p-0 border hover:border-orange-400 rounded-3xl bg-white/80 backdrop-blur-sm flex flex-col h-full relative transition-colors"
                       >
-                        <CardHeader className="pb-2 sm:pb-4">
-                          <div className="flex items-center space-x-2 sm:space-x-4">
+                        {/* Invisible Link Overlay - Makes the whole card clickable */}
+                        <Link
+                          href={`/catalog/${business.slug}`}
+                          className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
+                          aria-label={`View details for ${business.name}`}
+                        />
+
+                        <div className="relative z-10 flex flex-col h-full p-3 sm:p-4 pointer-events-none">
+                          {/* Header Section */}
+                          <div className="flex items-center space-x-3 sm:space-x-4 mb-3">
                             <div className="shrink-0">
                               {business.logo ? (
                                 <img
                                   src={getOptimizedImageUrl(business.logo, {
-                                    width: 48,
-                                    height: 48,
-                                    quality: 85,
+                                    width: 80,
+                                    height: 80,
+                                    quality: 90,
                                     format: "auto",
                                     crop: "fill",
                                     gravity: "center",
                                   })}
                                   alt={business.name}
-                                  className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full object-cover border-2 border-border"
+                                  className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border border-slate-100 shadow-sm"
                                   loading="lazy"
                                 />
                               ) : (
-                                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                                  <Building2 className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-muted-foreground" />
+                                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+                                  <Building2 className="h-7 w-7 text-slate-300" />
                                 </div>
                               )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <Link href={`/catalog/${business.slug}`}>
-                                <CardTitle className="text-base sm:text-lg md:text-xl font-semibold text-slate-700 truncate transition-colors hover:text-cyan-600">
-                                  {business.name}
-                                </CardTitle>
-                              </Link>
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h3 className="text-base sm:text-lg font-bold text-slate-800 truncate leading-tight  transition-colors">
+                                {business.name}
+                              </h3>
                               {business.category && (
                                 <Badge
                                   variant="secondary"
-                                  className="mt-1 text-xs"
+                                  className="mt-1.5 text-[10px] sm:text-xs bg-slate-100 text-slate-600 border-transparent px-2 py-0 h-5 inline-flex"
                                 >
                                   {business.category.name}
                                 </Badge>
                               )}
                             </div>
                           </div>
-                        </CardHeader>
 
-                        <CardContent className="flex flex-col flex-1 px-4 sm:px-6">
-                          {business.description && (
-                            <CardDescription className="text-muted-foreground line-clamp-2 text-xs sm:text-sm mb-2 sm:mb-4">
-                              {business.description}
-                            </CardDescription>
-                          )}
-
-                          {/* Contact Info - Now more compact */}
-                          <div className="flex flex-wrap gap-1 mb-2 sm:mb-4">
+                          {/* Description & Address Section */}
+                          <div className="flex-1 space-y-2 mb-3">
+                            {business.description && (
+                              <p className="text-slate-500 text-xs sm:text-sm line-clamp-2 leading-snug">
+                                {business.description}
+                              </p>
+                            )}
+                            <div className="flex"></div>
                             {business.address && (
-                              <div className="flex items-center text-xs text-muted-foreground bg-gray-50 py-1 rounded-full">
-                                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-muted-foreground shrink-0" />
-                                <span className="truncate max-w-[150px] sm:max-w-none">
+                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                <span
+                                  className=""
+                                  title={business.address}
+                                >
                                   {business.address}
                                 </span>
                               </div>
                             )}
                           </div>
 
-                          {/* Spacer to push the bottom section to the bottom */}
-                          <div className="flex-1"></div>
-
-                          {/* Contact CTA Buttons */}
-                          <div className="flex gap-2 mb-2 sm:mb-4">
+          
+                          <div className="flex gap-1.5 sm:gap-2 mt-auto pt-2 pointer-events-auto">
                             {business.phone && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1 rounded-full text-xs h-8 transition-all duration-200 hover:bg-gray-100"
+                                className="flex-1 rounded-full text-[10px] sm:text-xs h-9 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-none"
                                 asChild
                               >
                                 <a href={`tel:${business.phone}`}>
-                                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  <span className="hidden sm:inline">Call</span>
+                                  <Phone className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
+                                  <span className="truncate">Call</span>
                                 </a>
                               </Button>
                             )}
                             {business.phone && (
                               <Button
-                                variant="outline"
                                 size="sm"
-                                className="flex-1 rounded-full text-white text-xs h-8 bg-green-500 hover:bg-green-600 border-green-500 transition-all duration-200"
+                                className="flex-1 rounded-full shadow-none text-[10px] sm:text-xs h-9 bg-green-600 hover:bg-green-700 text-white border-green-600  transition-colors"
                                 asChild
                               >
                                 <a
@@ -707,10 +733,8 @@ export default function BusinessesPage() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >
-                                  <FaWhatsapp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-white" />
-                                  <span className="hidden sm:inline">
-                                    WhatsApp
-                                  </span>
+                                  <FaWhatsapp className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
+                                  <span className="truncate">WhatsApp</span>
                                 </a>
                               </Button>
                             )}
@@ -718,40 +742,17 @@ export default function BusinessesPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1 rounded-full text-xs h-8 transition-all duration-200 hover:bg-gray-100"
+                                className="flex-1 rounded-full shadow-none text-[10px] sm:text-xs h-9 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors "
                                 asChild
                               >
                                 <a href={`mailto:${business.email}`}>
-                                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  <span className="hidden sm:inline">
-                                    Email
-                                  </span>
+                                  <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
+                                  <span className="truncate">Email</span>
                                 </a>
                               </Button>
                             )}
                           </div>
-
-                          {/* Stats - Fixed at bottom */}
-                          <div className="flex items-center justify-between pt-2 sm:pt-4 border-t border-border mt-auto">
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                              <span>{business.products.length} products</span>
-                            </div>
-                            <Button
-                              asChild
-                              size="sm"
-                              className="bg-sky-900 hover:bg-sky-800 text-primary-foreground rounded-full text-xs h-8 transition-all duration-200"
-                            >
-                              <Link href={`/catalog/${business.slug}`}>
-                                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                <span className="hidden sm:inline">
-                                  View Profile
-                                </span>
-                                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-                              </Link>
-                            </Button>
-                          </div>
-                        </CardContent>
+                        </div>
                       </Card>
                     ))}
                   </div>

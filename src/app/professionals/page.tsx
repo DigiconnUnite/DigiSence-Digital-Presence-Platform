@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,6 +71,7 @@ interface Category {
   slug: string
 }
 
+
 export default function ProfessionalsPage() {
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([])
@@ -82,11 +83,40 @@ export default function ProfessionalsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const categoryScrollRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Initialize search term from URL params
+  useEffect(() => {
+    const query = searchParams.get('q')
+    if (query) {
+      setSearchTerm(query)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     fetchProfessionals()
     fetchCategories()
   }, [])
+
+  // Debounced search handler
+  const debouncedSearch = useCallback((term: string) => {
+    setSearchTerm(term)
+  }, [])
+
+  // Update URL when search term stabilizes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) {
+        params.set('q', searchTerm)
+      } else {
+        params.delete('q')
+      }
+      router.push(`?${params.toString()}`, { scroll: false })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm, router, searchParams])
 
   useEffect(() => {
     const filtered = professionals.filter(professional => {
@@ -176,6 +206,7 @@ export default function ProfessionalsPage() {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
+
 
   return (
     <>
@@ -500,11 +531,11 @@ export default function ProfessionalsPage() {
         </nav>
 
         {/* Main Content */}
-        <main className="pt-12 md:pt-24">
+        <main className="pt-14 sm:pt-22">
           {/* Hero Banner - Keeping exact aspect ratio */}
           <section className="">
             <div className=" mx-auto">
-              <div className="relative overflow-hidden bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+              <div className="relative overflow-hidden  bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
                 <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                   <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                     Find Top <br /> Professionals
@@ -512,6 +543,24 @@ export default function ProfessionalsPage() {
                   <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6">
                     Connect with skilled professionals in your area.
                   </p>
+                  {/* Search Bar Inside Banner */}
+                  <div className="w-full  relative max-w-md">
+                    <Search className="absolute left-3  top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search professionals..."
+                      value={searchTerm}
+                      onChange={(e) => debouncedSearch(e.target.value)}
+                      className="pl-10 pr-24 py-2 sm:py-3 rounded-full border border-white/20 bg-white/90 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-gray-900 placeholder:text-gray-500"
+                    />
+                    <Button
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform  -translate-y-1/2  rounded-full bg-slate-800 hover:bg-slate-700 text-white px-4"
+                      onClick={() => debouncedSearch(searchTerm)}
+                    >
+                      Search
+                    </Button>
+                  </div>
                 </div>
                 <img
                   src="/pr-banner-shape.png"
@@ -522,31 +571,15 @@ export default function ProfessionalsPage() {
             </div>
           </section>
 
-          {/* Search Bar and Filters */}
-          <div className="w-full py-4 sm:py-6">
-            <div className=" mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-              <div className="w-full relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />
-                <Input
-                  type="text"
-                  placeholder="Search professionals..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 sm:py-3 rounded-full border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-background"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Professional Cards Section */}
-          <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8">
+          <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12">
             <div className=" mx-auto">
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Card
                       key={i}
-                      className="overflow-hidden pt-0 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                      className="overflow-hidden rounded-3xl pt-0 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       <div className="relative h-24 md:h-32 m-1.5 mb-0 pb-0 rounded-lg overflow-hidden">
                         <Skeleton className="w-full h-full" />
@@ -604,10 +637,10 @@ export default function ProfessionalsPage() {
                     {filteredProfessionals.map((professional) => (
                       <Card
                         key={professional.id}
-                        className="overflow-hidden pt-0 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg transition-all duration-300 relative"
+                        className="overflow-hidden rounded-4xl pt-0 bg-white backdrop-blur-sm shadow-none hover:border-orange-400 transition-all duration-300 relative"
                       >
                         <div
-                          className="relative h-24 md:h-32 m-1.5 mb-0 pb-0 rounded-lg overflow-hidden"
+                          className="relative h-24 md:h-32 m-1 mb-0 pb-0 rounded-3xl overflow-hidden"
                           style={{ minHeight: "96px" }}
                         >
                           {/* Banner image background */}
@@ -641,7 +674,7 @@ export default function ProfessionalsPage() {
                           <img
                             src={professional.profilePicture}
                             alt={professional.name}
-                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-3 border-white shadow-md"
+                            className="absolute top-26 md:top-30 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full object-cover border-3 border-white shadow-md"
                             loading="lazy"
                             onError={(e) => {
                               console.error(
@@ -654,7 +687,7 @@ export default function ProfessionalsPage() {
                           />
                         ) : (
                           <div
-                            className="absolute top-28 md:top-32 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md"
+                            className="absolute top-26 md:top-30 left-4 h-18 w-18 md:h-22 md:w-22 rounded-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md"
                             style={{ zIndex: 20 }}
                           >
                             <User className="h-9 w-9 md:h-11 md:w-11 text-gray-600" />
@@ -680,12 +713,20 @@ export default function ProfessionalsPage() {
                             </div>
                           </div>
                         </CardHeader>
-
+                        <div className="flex-1"></div>
                         <CardContent className="space-y-1 md:space-y-2 px-2 md:px-3">
                           {professional.aboutme && (
                             <CardDescription className="text-muted-foreground line-clamp-2 text-xs sm:text-sm mb-2 sm:mb-4">
                               {professional.aboutme}
                             </CardDescription>
+                          )}
+                          {professional.location && (
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                              <span className="" title={professional.location}>
+                                {professional.location}
+                              </span>
+                            </div>
                           )}
 
                           {/* Spacer to push the bottom section to the bottom */}

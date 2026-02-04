@@ -1069,8 +1069,7 @@ export default function BusinessAdminDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen flex flex-col relative">
-        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+        <div className="fixed inset-0  bg-slate-200  bg-center blur-lg  -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -1219,8 +1218,7 @@ export default function BusinessAdminDashboard() {
 
   return (
     <div className="min-h-screen flex h-screen  relative">
-      <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-      <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+  <div className="fixed inset-0  bg-slate-200  bg-center blur-lg  -z-10"></div>
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden">
@@ -1260,7 +1258,7 @@ export default function BusinessAdminDashboard() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/catalog/${business.slug}`, "_blank")}
-                    className="rounded-full px-4 py-0  bg-[#080322]  text-white hover:text-white border-0 hover:opacity-90 transition-opacity"
+                    className="rounded-full px-4 py-0  bg-[#080322] hover:bg-slate-900  text-white hover:text-white  border-0 hover:opacity-90 transition-opacity"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View 
@@ -2579,7 +2577,7 @@ export default function BusinessAdminDashboard() {
                     </Select>
                   </div>
 
-                  <Card className="rounded-3xl">
+                  <Card className="p-0 bg-white rounded-md">
                     <CardContent className="p-0">
                       {mounted && selectedProducts.length > 0 && (
                         <div className="p-4 bg-blue-50 border-b border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -2742,7 +2740,7 @@ export default function BusinessAdminDashboard() {
                           </Button>
                         </div>
                       )}
-                      <div className="overflow-x-auto border border-gray-200 rounded-md sm:rounded-2xl">
+                      <div className="overflow-x-auto border border-gray-200 rounded-md ">
                         <Table>
                           <TableHeader className="bg-[#080322] ">
                             <TableRow>
@@ -2765,7 +2763,7 @@ export default function BusinessAdminDashboard() {
                                     const filteredProducts = products.filter(
                                       (p) =>
                                         p.name
-                                          .toLowerCase()
+                                          .toLowerCase()  
                                           .includes(searchTerm.toLowerCase()) &&
                                         (selectedCategory === "" ||
                                           p.categoryId === selectedCategory),

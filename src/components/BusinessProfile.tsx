@@ -658,7 +658,7 @@ export default function BusinessProfile({
   // Helper to render the Business Info Card content (Sidebar)
   const BusinessInfoCard = () => (
     <div className="flex flex-col gap-3 lg:gap-4 w-full">
-      <Card className="relative  border border-cyan-500 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-3 lg:p-4 flex flex-col items-center text-center w-full overflow-hidden">
+      <Card className="relative  border border-orange-500 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-3 lg:p-4 flex flex-col items-center text-center w-full overflow-hidden">
         <div className="flex flex-col items-center gap-3 w-full">
           <div className="shrink-0 flex items-center justify-center">
             {business.logo && business.logo.trim() !== "" ? (
@@ -682,8 +682,8 @@ export default function BusinessProfile({
               {business.name || "Business Name"}
             </h3>
             {business.category && (
-              <span className="inline-flex items-center justify-center text-xs px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 font-medium w-fit mx-auto">
-                <Building2 className="w-3 h-3 mr-1 text-cyan-700" />
+              <span className="inline-flex items-center justify-center text-xs px-3 py-1 rounded-full border border-orange-200 bg-orange-50 text-orange-700 font-medium w-fit mx-auto">
+                <Building2 className="w-3 h-3 mr-1 text-orange-700" />
                 {business.category.name}
               </span>
             )}
@@ -693,7 +693,7 @@ export default function BusinessProfile({
               </p>
             )}
             {business.admin?.name && (
-              <span className="flex items-center justify-center text-xs flex-1 rounded-full py-1 px-3 bg-gradient-to-r from-cyan-900 via-slate-900 to-slate-900 text-gray-200 border border-gray-200 font-semibold w-fit mx-auto">
+              <span className="flex items-center justify-center text-xs flex-1 rounded-full py-1 px-3 bg-slate-900 text-gray-200 border border-gray-200 font-semibold w-fit mx-auto">
                 <User className="w-3 h-3 mr-1 text-gray-100" />
                 {business.admin.name}
               </span>
@@ -781,27 +781,27 @@ export default function BusinessProfile({
       </div>
 
       {/* Contact Details Card */}
-      <Card className="rounded-2xl shadow-md bg-gradient-60 from-cyan-950 via-slate-950 to-cyan-900 hover:shadow-md transition-shadow duration-300 px-3 py-3 flex flex-col items-stretch h-full w-full relative">
+      <Card className="rounded-2xl shadow-md bg-slate-900 hover:shadow-md transition-shadow duration-300 px-3 py-3 flex flex-col items-stretch h-full w-full relative">
         <div className="flex flex-col gap-3 w-full items-center justify-between relative z-10">
           <div className="flex flex-col flex-1 min-w-0 space-y-2.5 w-full">
             {business.address && business.address.trim() !== "" && (
               <div className="flex items-start gap-2.5 group">
-                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-7 h-7 mt-0.5 shrink-0">
-                  <MapPin className="h-3.5 w-3.5 text-gray-100 group-hover:text-cyan-300 transition-colors" />
+                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 mt-0.5 shrink-0">
+                  <MapPin className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors" />
                 </span>
-                <span className="text-xs text-white hover:text-cyan-300 font-semibold leading-snug break-words">
+                <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug break-words">
                   {business.address}
                 </span>
               </div>
             )}
             {business.phone && business.phone.trim() !== "" && (
               <div className="flex items-center gap-2.5 group">
-                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-7 h-7 shrink-0">
-                  <Phone className="h-3.5 w-3.5 text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
+                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 shrink-0">
+                  <Phone className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors shrink-0" />
                 </span>
                 <a
                   href={`tel:${business.phone}`}
-                  className="text-xs text-white hover:text-cyan-300 hover:underline font-semibold break-all"
+                  className="text-xs text-white hover:text-orange-300 hover:underline font-semibold break-all"
                   title="Call this number"
                 >
                   {business.phone}
@@ -810,12 +810,12 @@ export default function BusinessProfile({
             )}
             {business.email && business.email.trim() !== "" && (
               <div className="flex items-center gap-2.5 group">
-                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-cyan-300/50 group-hover:border-cyan-400 transition-colors w-7 h-7 shrink-0">
-                  <Mail className="h-3.5 w-3.5 text-gray-100 group-hover:text-cyan-300 transition-colors shrink-0" />
+                <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 shrink-0">
+                  <Mail className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors shrink-0" />
                 </span>
                 <a
                   href={`mailto:${business.email}`}
-                  className="text-xs text-white hover:text-cyan-300 hover:underline font-semibold break-all"
+                  className="text-xs text-white hover:text-orange-300 hover:underline font-semibold break-all"
                   title="Send email"
                 >
                   {business.email}
@@ -824,20 +824,7 @@ export default function BusinessProfile({
             )}
           </div>
 
-          {/* QR Code */}
-          <div className="flex flex-col items-center gap-1 bg-gradient-to-r from-cyan-900 via-slate-800 to-slate-900 shadow-md p-3 rounded-lg border border-gray-500 w-fit mx-auto">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/catalog/${business.slug || business.id}`)}`}
-              alt="Profile QR Code"
-              className="w-16 h-16"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = "none";
-              }}
-              loading="lazy"
-            />
-            <span className="text-[10px] text-gray-300 mt-1">Scan Me</span>
-          </div>
+          
         </div>
 
         {/* Social Links */}
@@ -931,12 +918,12 @@ export default function BusinessProfile({
   );
 
   const SkeletonLayout = () => (
-    <div className="min-h-screen bg-white flex">
-      <aside className="hidden md:block w-[300px] border-r bg-slate-50 flex-shrink-0">
+    <div className="min-h-screen bg-orange-50 grid grid-cols-1 md:grid-cols-3">
+      <aside className="hidden md:block md:col-span-1 border-r bg-slate-50">
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-12 w-full mt-4" />
       </aside>
-      <main className="flex-1 overflow-y-auto">
+      <main className="md:col-span-2 overflow-y-auto">
         <Skeleton className="h-16 w-full border-b" />
         <div className="p-6 space-y-6">
           <Skeleton className="h-96 w-full rounded-3xl" />
@@ -958,15 +945,15 @@ export default function BusinessProfile({
   return (
     // DASHBOARD LAYOUT CONTAINER
     <div
-      className="h-screen w-full overflow-hidden bg-slate-100 flex flex-col"
+      className="h-screen w-full overflow-hidden bg-orange-50 flex flex-col"
       suppressHydrationWarning
     >
       {/* PAGE HEADER - On Top, Not in Main Content */}
       <header className="flex-shrink-0 bg-white border-b z-50">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className=" mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             {/* Logo & Business Name */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 flex-shrink-0">
               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                 {business.logo && business.logo.trim() !== "" ? (
                   <img
@@ -985,13 +972,13 @@ export default function BusinessProfile({
               </span>
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-4">
-              <div className="flex space-x-8">
+            {/* Desktop Navigation - Centered */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-8">
+              <div className="flex space-x-2">
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
                     activeSection === "home"
-                      ? "text-cyan-600 bg-cyan-50 border border-cyan-200"
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                   } px-3 py-2 rounded-lg`}
                   onClick={() => {
@@ -1002,7 +989,7 @@ export default function BusinessProfile({
                   <Home
                     className={`w-4 h-4 mr-2 transition-colors ${
                       activeSection === "home"
-                        ? "text-cyan-600"
+                        ? "text-orange-600"
                         : "text-gray-500"
                     }`}
                   />
@@ -1011,7 +998,7 @@ export default function BusinessProfile({
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
                     activeSection === "about"
-                      ? "text-cyan-600 bg-cyan-50 border border-cyan-200"
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                   } px-3 py-2 rounded-lg`}
                   onClick={() =>
@@ -1024,7 +1011,7 @@ export default function BusinessProfile({
                   <User
                     className={`w-4 h-4 mr-2 transition-colors ${
                       activeSection === "about"
-                        ? "text-cyan-600"
+                        ? "text-orange-600"
                         : "text-gray-500"
                     }`}
                   />
@@ -1033,7 +1020,7 @@ export default function BusinessProfile({
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
                     activeSection === "brands"
-                      ? "text-cyan-600 bg-cyan-50 border border-cyan-200"
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                   } px-3 py-2 rounded-lg`}
                   onClick={() =>
@@ -1046,7 +1033,7 @@ export default function BusinessProfile({
                   <Grid3X3
                     className={`w-4 h-4 mr-2 transition-colors ${
                       activeSection === "brands"
-                        ? "text-cyan-600"
+                        ? "text-orange-600"
                         : "text-gray-500"
                     }`}
                   />
@@ -1055,7 +1042,7 @@ export default function BusinessProfile({
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
                     activeSection === "products"
-                      ? "text-cyan-600 bg-cyan-50 border border-cyan-200"
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                   } px-3 py-2 rounded-lg`}
                   onClick={() =>
@@ -1068,7 +1055,7 @@ export default function BusinessProfile({
                   <ShoppingBag
                     className={`w-4 h-4 mr-2 transition-colors ${
                       activeSection === "products"
-                        ? "text-cyan-600"
+                        ? "text-orange-600"
                         : "text-gray-500"
                     }`}
                   />
@@ -1077,7 +1064,7 @@ export default function BusinessProfile({
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
                     activeSection === "portfolio"
-                      ? "text-cyan-600 bg-cyan-50 border border-cyan-200"
+                      ? "text-orange-600 bg-orange-50 border border-orange-200"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                   } px-3 py-2 rounded-lg`}
                   onClick={() =>
@@ -1090,7 +1077,7 @@ export default function BusinessProfile({
                   <Briefcase
                     className={`w-4 h-4 mr-2 transition-colors ${
                       activeSection === "portfolio"
-                        ? "text-cyan-600"
+                        ? "text-orange-600"
                         : "text-gray-500"
                     }`}
                   />
@@ -1100,7 +1087,7 @@ export default function BusinessProfile({
             </nav>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex-shrink-0">
               <Button
                 size="icon"
                 variant="ghost"
@@ -1118,7 +1105,7 @@ export default function BusinessProfile({
             <div className="px-4 py-3 space-y-2">
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "home" ? "text-cyan-600" : "text-gray-600"
+                  activeSection === "home" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   setActiveSection("home");
@@ -1131,7 +1118,7 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "about" ? "text-cyan-600" : "text-gray-600"
+                  activeSection === "about" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1146,7 +1133,7 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "brands" ? "text-cyan-600" : "text-gray-600"
+                  activeSection === "brands" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1161,7 +1148,7 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "products" ? "text-cyan-600" : "text-gray-600"
+                  activeSection === "products" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1176,7 +1163,7 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "portfolio" ? "text-cyan-600" : "text-gray-600"
+                  activeSection === "portfolio" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1194,20 +1181,14 @@ export default function BusinessProfile({
         )}
       </header>
 
-      {/* CONTENT AREA WITH SIDEBAR AND MAIN */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* LEFT SIDEBAR (Desktop - Sticky/Fixed within flex) */}
-        <aside className="hidden md:flex flex-shrink-0 max-w-[250px] w-[250px] h-full overflow-y-auto  z-20 ">
-          <div className="flex flex-col p-4 lg:gap-4">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 overflow-hidden">
+        <aside className="hidden md:block md:col-span-1 h-full overflow-y-auto z-20  ">
+          <div className="flex flex-col p-4 lg:gap-4 w-full">
             <BusinessInfoCard />
           </div>
         </aside>
-
-        {/* RIGHT MAIN CONTENT CONTAINER */}
-        <main className="flex-1 h-full overflow-y-auto relative scroll-smooth">
-          {/* SCROLLABLE CONTENT WRAPPER */}
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
-            {/* Hero Section with Slider - Enhanced for Mobile */}
+        <main className="md:col-span-3 h-full overflow-y-auto relative scroll-smooth min-w-0">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
             <section className="relative w-full">
               <div className="w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg">
                 {heroContent.slides && heroContent.slides.length > 0 ? (
@@ -1464,7 +1445,7 @@ export default function BusinessProfile({
                   </div>
                 ) : (
                   // Default hero when no slides are configured
-                  <div className="relative w-full h-[40vw] min-h-40 max-h-60 md:h-[500px] md:min-h-80 bg-linear-to-br from-cyan-400 via-cyan-500 to-cyan-600 rounded-2xl overflow-hidden shadow-lg">
+                  <div className="relative w-full h-[40vw] min-h-40 max-h-60 md:h-[500px] md:min-h-80 bg-linear-to-br from-orange-400 via-orange-500 to-orange-600 rounded-2xl overflow-hidden shadow-lg">
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
                       <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto flex flex-col justify-center h-full">
                         <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg whitespace-pre-line">
@@ -1488,7 +1469,6 @@ export default function BusinessProfile({
               </div>
             </section>
 
-            {/* Brand Slider - Enhanced for Mobile */}
             {brandContent.brands?.length > 0 && (
               <section id="brands" ref={brandsRef} className="py-6 md:py-12 px-0">
                 <div className="w-full">
@@ -1505,55 +1485,58 @@ export default function BusinessProfile({
                     </Button>
                   </div>
                   {viewAllBrands ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                       {brandContent.brands.map((brand: any, index: number) => (
-                        <Card
+                        <div
                           key={index}
-                          className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${
-                            selectedBrand === brand.name
-                              ? "bg-cyan-50 border border-cyan-500 shadow-lg "
-                              : "bg-white/70 hover:bg-white/90 hover:shadow-md"
-                          }`}
+                          className="flex flex-col cursor-pointer transition-all duration-300"
                           onClick={() =>
                             setSelectedBrand(
                               selectedBrand === brand.name ? null : brand.name,
                             )
                           }
                         >
-                          <div className="h-20 md:h-32 flex items-center justify-center p-2">
-                            {brand.logo && brand.logo.trim() !== "" ? (
-                              <img
-                                src={getOptimizedImageUrl(brand.logo, {
-                                  width: 400,
-                                  height: 300,
-                                  quality: 85,
-                                  format: "auto",
-                                  crop: "fit",
-                                  gravity: "center",
-                                })}
-                                srcSet={generateSrcSet(brand.logo)}
-                                sizes={generateSizes(400)}
-                                alt={brand.name}
-                                className="w-full h-full object-contain"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            ) : (
-                              <Image className="h-full w-full text-gray-400" />
-                            )}
-                          </div>
-                          <CardHeader className="pb-2">
-                            <CardTitle
-                              className={`text-center text-xs md:text-base transition-colors ${
-                                selectedBrand === brand.name
-                                  ? "text-cyan-700 font-semibold"
-                                  : ""
-                              }`}
-                            >
-                              {brand.name}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
+                          {/* Card with image only */}
+                          <Card
+                            className={`overflow-hidden p-0 rounded-2xl px-0 md:rounded-3xl cursor-pointer transition-all duration-300 h-full ${
+                              selectedBrand === brand.name
+                                ? "bg-orange-50 border-2 border-orange-400 shadow-lg"
+                                : "bg-white/70 hover:bg-white/90 hover:shadow-md"
+                            }`}
+                          >
+                            <div className="h-full flex items-center justify-center py-0 px-0">
+                              {brand.logo && brand.logo.trim() !== "" ? (
+                                <img
+                                  src={getOptimizedImageUrl(brand.logo, {
+                                    width: 400,
+                                    height: 300,
+                                    quality: 85,
+                                    format: "auto",
+                                    crop: "fit",
+                                    gravity: "center",
+                                  })}
+                                  srcSet={generateSrcSet(brand.logo)}
+                                  sizes={generateSizes(400)}
+                                  alt={brand.name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <Image className="h-full w-full text-gray-400" />
+                              )}
+                            </div>
+                          </Card>
+                          {/* Brand name below the card */}
+                       <p className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                                  selectedBrand === brand.name
+                                    ? "text-orange-400 font-700"
+                                    : "text-gray-700 font-semibold"
+                                }`}
+                         >
+                            {brand.name}
+                          </p>
+                        </div>
                       ))}
                     </div>
                   ) : (
@@ -1575,12 +1558,8 @@ export default function BusinessProfile({
                             key={index}
                             className="basis-1/2 md:basis-1/4 lg:basis-1/5"
                           >
-                            <Card
-                              className={`overflow-hidden rounded-2xl md:rounded-3xl pb-3 pt-0 cursor-pointer transition-all duration-300 h-full flex flex-col ${
-                                selectedBrand === brand.name
-                                  ? "bg-cyan-50 border border-cyan-500 shadow-lg"
-                                  : "bg-white/70 hover:bg-white/90 hover:shadow-md"
-                              }`}
+                            <div
+                              className="flex flex-col cursor-pointer transition-all duration-300"
                               onClick={() =>
                                 setSelectedBrand(
                                   selectedBrand === brand.name
@@ -1589,37 +1568,45 @@ export default function BusinessProfile({
                                 )
                               }
                             >
-                              <div className="h-20 md:h-32 flex items-center justify-center p-2">
-                                {brand.logo && brand.logo.trim() !== "" ? (
-                                  <img
-                                    src={getOptimizedImageUrl(brand.logo, {
-                                      width: 400,
-                                      height: 300,
-                                      quality: 85,
-                                      format: "auto",
-                                    })}
-                                    srcSet={generateSrcSet(brand.logo)}
-                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                    alt={brand.name}
-                                    className="w-full h-full object-contain"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <Image className="h-full w-full text-gray-400" />
-                                )}
-                              </div>
-                              <CardHeader className="pb-2">
-                                <CardTitle
-                                  className={`text-center text-xs md:text-base transition-colors ${
-                                    selectedBrand === brand.name
-                                      ? "text-cyan-700 font-semibold"
-                                      : ""
-                                  }`}
-                                >
-                                  {brand.name}
-                                </CardTitle>
-                              </CardHeader>
-                            </Card>
+                              {/* Card with image only */}
+                              <Card
+                                className={`overflow-hidden rounded-2xl p-0 md:rounded-3xl cursor-pointer transition-all duration-300 h-full ${
+                                  selectedBrand === brand.name
+                                    ? "bg-orange-50 border-2 border-orange-400 shadow-2xl"
+                                    : "bg-white/70 hover:bg-white/90 hover:shadow-md"
+                                }`}
+                              >
+                                <div className="h-full flex items-center justify-center ">
+                                  {brand.logo && brand.logo.trim() !== "" ? (
+                                    <img
+                                      src={getOptimizedImageUrl(brand.logo, {
+                                        width: 400,
+                                        height: 300,
+                                        quality: 85,
+                                        format: "auto",
+                                      })}
+                                      srcSet={generateSrcSet(brand.logo)}
+                                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                      alt={brand.name}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <Image className="h-full w-full text-gray-400" />
+                                  )}
+                                </div>
+                              </Card>
+                              {/* Brand name below the card */}
+                              <p
+                                className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                                  selectedBrand === brand.name
+                                    ? "text-orange-400 font-700"
+                                    : "text-gray-700 font-semibold"
+                                }`}
+                              >
+                                {brand.name}
+                              </p>
+                            </div>
                           </CarouselItem>
                         ))}
                       </CarouselContent>
@@ -1651,7 +1638,7 @@ export default function BusinessProfile({
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="secondary"
-                            className="bg-cyan-100 text-cyan-800 border-cyan-300"
+                            className="bg-orange-100 text-orange-800 border-orange-300"
                           >
                             Filtered by: {selectedBrand}
                           </Badge>
@@ -1659,7 +1646,7 @@ export default function BusinessProfile({
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedBrand(null)}
-                            className="text-cyan-600 hover:text-cyan-800 hover:bg-cyan-50 h-6 px-2 text-xs"
+                            className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 h-6 px-2 text-xs"
                           >
                             <X className="h-3 w-3 mr-1" />
                             Clear
@@ -1680,7 +1667,7 @@ export default function BusinessProfile({
 
                   {/* Search Bar */}
                   <div
-                    className="sticky top-0 backdrop-blur-2xl z-30 mb-4"
+                    className="sticky top-0  backdrop-blur-xl z-30 mb-4"
                     ref={searchRef}
                   >
                     {mounted && (
@@ -1719,6 +1706,7 @@ export default function BusinessProfile({
                       {filteredProducts.map((product) => (
                         <Card
                           id={`product-${product.id}`}
+                          key={product.id}
                           className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2"
                         >
                           <div
@@ -2177,61 +2165,6 @@ export default function BusinessProfile({
                 </div>
               </div>
             </section>
-
-            {/* Footer - Enhanced for Mobile */}
-            <LampContainer>
-              <footer className="relative text-white py-8 pb-10 sm:mb-0 md:py-12 px-3 md:px-4 sm:px-6 lg:px-8 overflow-hidden rounded-2xl sm:rounded-3xl">
-                <div className="max-w-7xl mx-auto relative z-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-8">
-                    {/* DigiSence Online Presence CTA Card */}
-                    <div className="space-y-2 bg-gradient-120 from-cyan-900 via-gray-800 to-gray-900 rounded-xl md:space-y-4">
-                      <div className="bg-lienar-to-br from-gray-900 via-gray-900 to-cyan-900 rounded-xl shadow-lg p-4 md:p-6 flex flex-col items-center text-center">
-                        <p className="mb-3 text-sm md:text-base text-white font-medium">
-                          Make your online presence with DigiSence
-                        </p>
-                        <a
-                          href="#"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full"
-                        >
-                          <Button
-                            variant="default"
-                            className="w-full bg-white text-[#027BE6] hover:bg-[#f0f7ff] hover:text-[#01b1e6] font-bold shadow text-xs md:text-sm"
-                          >
-                            Get Started
-                          </Button>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Section */}
-                  <div className="border-t border-gray-800 pt-4 md:pt-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-                      <p className="text-gray-400 text-xs md:text-sm">
-                        © {new Date().getFullYear()}{" "}
-                        <span className="font-bold">{business.name}</span>. All
-                        rights reserved.
-                      </p>
-                      <p className="text-gray-400 text-xs md:text-sm">
-                        Powered by{" "}
-                        <a className="font-bold" href="https://www.digisence.io/">
-                          DigiSence
-                        </a>{" "}
-                        - The Product of{" "}
-                        <a
-                          className="font-bold "
-                          href="https://digiconnunite.com/"
-                        >
-                          Digiconn Unite Pvt. Ltd.
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </footer>
-            </LampContainer>
           </div>
 
           {/* Mobile Menu - Bottom Navigation */}
@@ -2240,7 +2173,7 @@ export default function BusinessProfile({
               <button
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                   activeSection === "home"
-                    ? "text-cyan-600 bg-cyan-50"
+                    ? "text-orange-600 bg-orange-50"
                     : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -2251,7 +2184,7 @@ export default function BusinessProfile({
               <button
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                   activeSection === "about"
-                    ? "text-cyan-600 bg-cyan-50"
+                    ? "text-orange-600 bg-orange-50"
                     : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
                 onClick={() =>
@@ -2267,7 +2200,7 @@ export default function BusinessProfile({
               <button
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                   activeSection === "brands"
-                    ? "text-cyan-600 bg-cyan-50"
+                    ? "text-orange-600 bg-orange-50"
                     : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
                 onClick={() =>
@@ -2283,7 +2216,7 @@ export default function BusinessProfile({
               <button
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                   activeSection === "products"
-                    ? "text-cyan-600 bg-cyan-50"
+                    ? "text-orange-600 bg-orange-50"
                     : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
                 onClick={() =>
@@ -2299,7 +2232,7 @@ export default function BusinessProfile({
               <button
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                   activeSection === "portfolio"
-                    ? "text-cyan-600 bg-cyan-50"
+                    ? "text-orange-600 bg-orange-50"
                     : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
                 onClick={() =>

@@ -1,4 +1,3 @@
-// app/pcard/[slug]/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -74,6 +73,7 @@ import {
   Download,
   FileText,
   Share2,
+  Menu,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -124,7 +124,7 @@ export default function ProfessionalProfile({
   const [currentView, setCurrentView] = useState<
     "home" | "about" | "services" | "portfolio" | "contact"
   >("home");
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Added for mobile menu toggle
 
   // Ensure skills and servicesOffered are arrays
   const skills = Array.isArray(professional.skills) ? professional.skills : [];
@@ -164,16 +164,6 @@ export default function ProfessionalProfile({
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Scroll detection for navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Real-time synchronization
@@ -650,11 +640,6 @@ export default function ProfessionalProfile({
             <Share2 className="w-4 h-4 mr-2" />
             Share Profile
           </Button>
-
-          {/* Footer Note */}
-          <p className="text-xs text-gray-500">
-            Profile Created By @DigiSence.io
-          </p>
         </CardContent>
       </Card>
     );
@@ -662,103 +647,210 @@ export default function ProfessionalProfile({
 
   return (
     <div
-      className={`min-h-screen ${getBackgroundClass()} ${
+      className={`h-screen w-full overflow-hidden ${getBackgroundClass()} ${
         themeSettings.fontFamily
-      } ${themeSettings.fontSize}`}
+      } ${themeSettings.fontSize} flex flex-col`}
       suppressHydrationWarning
     >
-      {/* Top Navigation Bar - Desktop */}
-      <nav className={`hidden md:block fixed left-1/2 max-w-7xl w-screen transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3 transition-all duration-200 ease-in-out ${isScrolled ? 'top-0 w-full rounded-none' : 'top-4'
-        }`}>
-        <div className="flex items-center justify-between mx-auto">
-          {/* Left Side */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600" />
+      {/* PAGE HEADER - Same as Business Profile (Static, No Scroll Effect) */}
+      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50">
+        <div className=" mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo & Business Name */}
+            <div className="flex items-center space-x-3 flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                {professional.profilePicture &&
+                professional.profilePicture.trim() !== "" ? (
+                  <img
+                    src={professional.profilePicture}
+                    alt={professional.name}
+                    className="h-10 w-10 rounded-full object-cover"
+                    loading="eager"
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-gray-600" />
+                )}
+              </div>
+              <div className="h-6 w-px bg-gray-300 hidden md:block"></div>
+              <span className="text-lg font-bold text-gray-900 hidden md:block">
+                {professional.name}
+              </span>
             </div>
-            <div className="h-6 w-px bg-gray-300"></div>
-            <span className="text-lg font-bold text-gray-900">
-              {professional.name}
-            </span>
-          </div>
 
-          {/* Center Navigation */}
-          <div className="flex space-x-8">
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "home"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => {
-                setCurrentView("home");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              <Home className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "home" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Home
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "about"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("about")}
-            >
-              <User className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "about" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              About
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "services"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("services")}
-            >
-              <Users className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "services" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Services
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "portfolio"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("portfolio")}
-            >
-              <ImageIcon className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "portfolio" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Portfolio
-            </button>
-          </div>
+            {/* Desktop Navigation - Centered */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-8">
+              <div className="flex space-x-2">
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "home"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => {
+                    setCurrentView("home");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
+                  <Home
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "home" ? "text-sky-600" : "text-gray-500"
+                    }`}
+                  />
+                  Home
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "about"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("about")}
+                >
+                  <User
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "about" ? "text-sky-600" : "text-gray-500"
+                    }`}
+                  />
+                  About
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "services"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("services")}
+                >
+                  <Users
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "services"
+                        ? "text-sky-600"
+                        : "text-gray-500"
+                    }`}
+                  />
+                  Services
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "portfolio"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("portfolio")}
+                >
+                  <ImageIcon
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "portfolio"
+                        ? "text-sky-600"
+                        : "text-gray-500"
+                    }`}
+                  />
+                  Portfolio
+                </button>
+              </div>
+            </nav>
 
-          {/* Right Side */}
-          <Button
-            onClick={() => setCurrentView("contact")}
-            className={`bg-sky-600 hover:bg-sky-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
-          >
-            Let's Talk
-          </Button>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex-shrink-0">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <Menu />
+              </Button>
+            </div>
+
+            {/* Right Side Actions (Desktop) */}
+            <div className="hidden md:flex items-center gap-2">
+              <Button
+                onClick={() => setCurrentView("contact")}
+                className={`bg-sky-600 hover:bg-sky-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
+              >
+                Let's Talk
+              </Button>
+            </div>
+          </div>
         </div>
-      </nav>
 
-      {/* Mobile Bottom Navigation */}
+        {/* Mobile Menu Dropdown (Optional, based on BP) */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t">
+            <div className="px-4 py-3 space-y-2">
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "home" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("home");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "about" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("about");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <User className="w-4 h-4 mr-2" />
+                About
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "services" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("services");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Services
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "portfolio" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("portfolio");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Portfolio
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "contact" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("contact");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contact
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Mobile Bottom Navigation (Same as BP) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
         <div className="flex justify-around items-center h-16 px-2">
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "home"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "text-sky-600 bg-sky-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
             onClick={() => {
               setCurrentView("home");
@@ -771,8 +863,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "about"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "text-sky-600 bg-sky-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("about")}
           >
@@ -782,8 +874,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "services"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "text-sky-600 bg-sky-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("services")}
           >
@@ -793,8 +885,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "portfolio"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "text-sky-600 bg-sky-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("portfolio")}
           >
@@ -804,8 +896,8 @@ export default function ProfessionalProfile({
           <button
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
               activeSection === "contact"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "text-sky-600 bg-sky-50"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
             onClick={() => setCurrentView("contact")}
           >
@@ -815,206 +907,229 @@ export default function ProfessionalProfile({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="pt-8 md:pt-24 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          {currentView === "about" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* About Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
-                >
-                  <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-slate-800 mb-6">
-                      About
-                    </h2>
-                    <div className="space-y-6">
-                      {/* About Me Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <User className="w-5 h-5 mr-2 text-sky-600" />
-                          About Me
-                        </h3>
-                        <p className="text-gray-700 leading-relaxed">
-                          {professional.aboutMe ||
-                            "No about information available."}
-                        </p>
-                      </div>
-
-                      {/* Education Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-sky-600" />
-                          Education
-                        </h3>
-                        {professional.education &&
-                        professional.education.length > 0 ? (
-                          <div className="space-y-4">
-                            {professional.education.map(
-                              (edu: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
-                                >
-                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Award className="w-5 h-5 text-sky-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">
-                                      {edu.degree || edu.title}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {edu.institution || edu.school}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      {edu.year || edu.duration}
-                                    </p>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            No education information available.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Certifications Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-sky-600" />
-                          Certifications
-                        </h3>
-                        {professional.certifications &&
-                        professional.certifications.length > 0 ? (
-                          <div className="space-y-4">
-                            {professional.certifications.map(
-                              (cert: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
-                                >
-                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Award className="w-5 h-5 text-sky-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">
-                                      {cert.name || cert.title}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {cert.issuer || cert.organization}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      {cert.year || cert.date}
-                                    </p>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            No certifications available.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Skills Section */}
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                        <Award className="w-5 h-5 mr-2 text-sky-600" />
-                        Skills
-                      </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {skills.map((skill: any, index: number) => (
-                          <div
-                            key={index}
-                            className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200 shadow-sm`}
-                          >
-                            <Award className="w-4 h-4 text-sky-600 mr-2" />
-                            <span className="text-sm text-gray-700">
-                              {skill.name?.name || skill.name}
-                            </span>
-                          </div>
-                        ))}
-                        {skills.length === 0 && (
-                          <p className="text-gray-500 italic">
-                            No skills information available.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+      {/* Main Content Layout */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 overflow-hidden">
+        {/* ASIDE - Sticky Sidebar (Desktop Only) */}
+        <aside className="hidden md:block md:col-span-1 h-full overflow-y-auto z-20  ">
+          <div className="flex flex-col p-4 lg:gap-4 w-full">
+            {/* Sticky Wrapper for Card */}
+            <div className="sticky top-24">
+              <ProfileCard />
             </div>
-          ) : currentView === "services" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Services Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-slate-800">
-                        Services
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="md:col-span-3 h-full overflow-y-auto relative scroll-smooth min-w-0">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
+            {currentView === "about" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {/* Mobile Only: Profile Card (Desktop is in Aside) */}
+                <div className="md:hidden md:col-span-1">
+                  <ProfileCard />
+                </div>
+
+                {/* About Card - Spans full width on mobile, 2 cols on desktop relative to 3-col grid? 
+                    Actually, with 3-col grid here:
+                    - Mobile: ProfileCard (1), About (1) -> Stacked.
+                    - Desktop: Aside (1), Main (3).
+                    - Inside Main: About should probably span 3 cols or 2?
+                    Let's make About span 3 cols for full width.
+                */}
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                  >
+                    <CardContent className="p-0">
+                      <h2 className="text-xl font-bold text-slate-800 mb-6">
+                        About
                       </h2>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="space-y-6">
+                        {/* About Me Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <User className="w-5 h-5 mr-2 text-sky-600" />
+                            About Me
+                          </h3>
+                          <p className="text-gray-700 leading-relaxed">
+                            {professional.aboutMe ||
+                              "No about information available."}
+                          </p>
+                        </div>
+
+                        {/* Education Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <Award className="w-5 h-5 mr-2 text-sky-600" />
+                            Education
+                          </h3>
+                          {professional.education &&
+                          professional.education.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {professional.education.map(
+                                (edu: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                      <Award className="w-5 h-5 text-sky-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-900">
+                                        {edu.degree || edu.title}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {edu.institution || edu.school}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {edu.year || edu.duration}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No education information available.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Certifications Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <Award className="w-5 h-5 mr-2 text-sky-600" />
+                            Certifications
+                          </h3>
+                          {professional.certifications &&
+                          professional.certifications.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {professional.certifications.map(
+                                (cert: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                      <Award className="w-5 h-5 text-sky-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-900">
+                                        {cert.name || cert.title}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {cert.issuer || cert.organization}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {cert.year || cert.date}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No certifications available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Skills Section */}
+                      <div className="mt-8">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                          <Award className="w-5 h-5 mr-2 text-sky-600" />
+                          Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                          {skills.map((skill: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200 shadow-sm`}
+                            >
+                              <Award className="w-4 h-4 text-sky-600 mr-2" />
+                              <span className="text-sm text-gray-700">
+                                {skill.name?.name || skill.name}
+                              </span>
+                            </div>
+                          ))}
+                          {skills.length === 0 && (
+                            <p className="text-gray-500 italic">
+                              No skills information available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : currentView === "services" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {/* Mobile Only Profile Card */}
+                <div className="md:hidden md:col-span-1">
+                  <ProfileCard />
+                </div>
+
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-slate-800">
+                          Services
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {servicesOffered
                           .slice(0, 5)
-                        .map((service: any, index: number) => (
-                          <div
-                            key={index}
-                            className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
-                          >
-                            <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
-                              <Award className="w-6 h-6 text-sky-600" />
+                          .map((service: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
+                            >
+                              <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                                <Award className="w-6 h-6 text-sky-600" />
+                              </div>
+                              <span className="text-sm font-semibold text-gray-900 text-center">
+                                {service.name?.name || service.name}
+                              </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900 text-center">
-                              {service.name?.name || service.name}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          ) : currentView === "portfolio" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Portfolio Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-xl font-bold text-slate-800">
-                        Portfolio
-                      </h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {portfolio
-                        .map((item: any, index: number) => {
-                          const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
+            ) : currentView === "portfolio" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {/* Mobile Only Profile Card */}
+                <div className="md:hidden md:col-span-1">
+                  <ProfileCard />
+                </div>
+
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold text-slate-800">
+                          Portfolio
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {portfolio.map((item: any, index: number) => {
+                          const isVideo =
+                            item.type === "video" ||
+                            (item.url &&
+                              (item.url.includes(".mp4") ||
+                                item.url.includes(".webm") ||
+                                item.url.includes(".ogg")));
                           return (
                             <div className="flex flex-col ">
                               <div
@@ -1029,15 +1144,14 @@ export default function ProfessionalProfile({
                                       className="h-full w-full object-cover absolute inset-0"
                                       poster={item.thumbnail || undefined}
                                     >
-                                      Your browser does not support the video
-                                      tag.
+                                      Your browser does not support video tag.
                                     </video>
                                   ) : (
                                     (() => {
                                       const optimizedImage = useOptimizedImage(
                                         item.url,
                                         400,
-                                        250
+                                        250,
                                       );
                                       return (
                                         <img
@@ -1067,442 +1181,440 @@ export default function ProfessionalProfile({
                             </div>
                           );
                         })}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          ) : currentView === "contact" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Contact Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                >
-                  <CardContent className="p-0">
-                          <h2 className="text-xl font-bold text-slate-800 mb-4">
-                      Let's Talk
-                    </h2>
-                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                      Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
-                    </p>
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      setInquiryModal(true);
-                    }} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="contact-name">Name *</Label>
-                          <Input
-                            id="contact-name"
-                            value={inquiryData.name}
-                            onChange={(e) =>
-                              setInquiryData((prev) => ({ ...prev, name: e.target.value }))
-                            }
-                            required
-                            placeholder="Your full name"
-                            className={getBorderRadius()}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="contact-email">Email *</Label>
-                          <Input
-                            id="contact-email"
-                            type="email"
-                            value={inquiryData.email}
-                            onChange={(e) =>
-                              setInquiryData((prev) => ({ ...prev, email: e.target.value }))
-                            }
-                            required
-                            placeholder="your.email@example.com"
-                            className={getBorderRadius()}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-phone">Phone</Label>
-                        <Input
-                          id="contact-phone"
-                          type="tel"
-                          value={inquiryData.phone}
-                          onChange={(e) =>
-                            setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
-                          }
-                          placeholder="+91 (555) 123-4567"
-                          className={getBorderRadius()}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-message">Message *</Label>
-                        <Textarea
-                          id="contact-message"
-                          value={inquiryData.message}
-                          onChange={(e) =>
-                            setInquiryData((prev) => ({
-                              ...prev,
-                              message: e.target.value,
-                            }))
-                          }
-                          rows={5}
-                          required
-                          placeholder="Tell me about your project or ask your question..."
-                          className={getBorderRadius()}
-                        />
-                      </div>
-                      <div className="flex space-x-3">
-                        <Button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className={`flex-1 ${getButtonClass()}`}
-                        >
-                          {isSubmitting ? (
-                            "Sending..."
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4 mr-2" />
-                              Send Message
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setInquiryData({ name: "", email: "", phone: "", message: "" });
-                          }}
-                          className={getBorderRadius()}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Main Grid */}
-              <div className="grid grid-cols-1 relative md:grid-cols-3 gap-6 mb-12">
-                {/* Left Column - Profile Card */}
-                <div ref={aboutRef} id="about" className="md:col-span-1">
+            ) : currentView === "contact" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {/* Mobile Only Profile Card */}
+                <div className="md:hidden md:col-span-1">
                   <ProfileCard />
                 </div>
-                {/* Middle Column */}
-                <div className="md:col-span-1 space-y-6">
-                  <div className="h-[700px] flex gap-5 flex-col">
-                    {/* Work Experience */}
-                    <Card
-                      className={`${getCardClass()} rounded-2xl p-6 h-[50%] shadow-lg border-0`}
-                    >
-                      <CardContent className="p-0 overflow-hidden h-full">
-                        <div className="flex justify-between items-center mb-5">
-                                  <h2 className="text-xl font-bold text-slate-800">
-                            Work Experience
-                          </h2>
-                          <button
-                            onClick={() => setWorkExperienceModal(true)}
-                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                          >
-                            View All <ChevronRight className="w-4 h-4 ml-1" />
-                          </button>
-                        </div>
-                        <div className="overflow-hidden">
-                          <div
-                            className={`flex flex-col space-y-4 ${
-                                      workExperience.length > 3
-                                ? "animate-marquee"
-                                : ""
-                            }`}
-                          >
-                                    {console.log('workExperience:', workExperience)}
-                                    {validWorkExperience.map(
-                                      (exp: any, index: number) => {
-                                return (
-                                  <div
-                                    key={`exp-${index}`}
-                                    className="flex items-start space-x-4 rounded-lg"
-                                  >
-                                    <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
-                                      <Building2 className="w-5 h-5 text-sky-600" />
-                                    </div>
-                                    <div className="flex-1 flex justify-items-end gap-1 w-full">
-                                      <div className="grid grid-cols-1 gap-1">
-                                        <p className="text-gray-900 font-medium text-sm">
-                                          {exp.company}
-                                        </p>
-                                        <p className="text-gray-700 text-xs">
-                                          {exp.position}
-                                        </p>
-                                        <p className="text-gray-600 text-xs">
-                                          {exp.location}
-                                        </p>
-                                      </div>
-                                      <div className="flex items-end flex-col ml-auto justify-between mt-2">
-                                        <span className="text-gray-500 text-xs">
-                                          {exp.duration}
-                                        </span>
-                                        <span className="text-gray-400 text-xs">
-                                          Total:{" "}
-                                          {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              }
-                            )}
-                            {professional.workExperience &&
-                                      validWorkExperience.length > 3 &&
-                                      validWorkExperience.map(
-                                        (exp: any, index: number) => {
-                                  return (
-                                    <div
-                                      key={`exp-dup-${index}`}
-                                      className="flex items-start space-x-4 rounded-lg"
-                                    >
-                                      <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
-                                        <Building2 className="w-5 h-5 text-sky-600" />
-                                      </div>
-                                      <div className="flex-1 flex justify-items-end gap-1 w-full">
-                                        <div className="grid grid-cols-1 gap-1">
-                                          <p className="text-gray-900 font-medium text-sm">
-                                            {exp.company}
-                                          </p>
-                                          <p className="text-gray-700 text-xs">
-                                            {exp.position}
-                                          </p>
-                                          <p className="text-gray-600 text-xs">
-                                            {exp.location}
-                                          </p>
-                                        </div>
-                                        <div className="flex items-end flex-col ml-auto justify-between mt-2">
-                                          <span className="text-gray-500 text-xs">
-                                            {exp.duration}
-                                          </span>
-                                          <span className="text-gray-400 text-xs">
-                                            Total:{" "}
-                                            {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                              )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
 
-                    {/* Skills */}
-                    <Card
-                      className={`${getCardClass()} rounded-2xl h-full p-6 shadow-lg border-0`}
-                    >
-                      <CardContent className="p-0">
-                        <div className="flex justify-between items-center mb-5">
-                                  <h2 className="text-xl font-bold text-slate-800">
-                            Expert Area
-                          </h2>
-                          <button
-                            onClick={() => setCurrentView("about")}
-                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                          >
-                            View All <ChevronRight className="w-4 h-4 ml-1" />
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-3 overflow-hidden">
-                                  {skills
-                                    .slice(0, 12)
-                                    .map((skill: any, index: number) => (
-                              <div
-                                key={index}
-                                className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
-                              >
-                                <Award className="w-5 h-5 text-sky-600 mr-2" />
-                                <span className="text-sm text-gray-700">
-                                          {skill.name?.name || skill.name}
-                                </span>
-                              </div>
-                            ))}
-                                  {skills.length > 12 && (
-                                    <div
-                                      className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
-                                    >
-                                      <span className="text-sm text-gray-700">
-                                        ...
-                                      </span>
-                                    </div>
-                                  )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-
-                {/* Right Column - Portfolio */}
-                <div className="md:col-span-1">
-                  <Card
-                    className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
-                  >
-                    <CardContent className="p-0">
-                      <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-slate-800">
-                          Portfolio
-                        </h2>
-                        <button
-                          onClick={() => setCurrentView("portfolio")}
-                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                        >
-                          View All <ChevronRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
-                      <div className="space-y-4">
-                                {portfolio
-                                  .slice(0, 2)
-                          .map((item: any, index: number) => {
-                            const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
-                            return (
-                              <div
-                                key={index}
-                                className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
-                              >
-                                <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                                  {isVideo ? (
-                                    <video
-                                      src={item.url}
-                                      controls
-                                      className="h-full w-full object-cover absolute  -bottom-2"
-                                      poster={item.thumbnail || undefined}
-                                    >
-                                      Your browser does not support the video tag.
-                                    </video>
-                                  ) : (
-                                    (() => {
-                                        const optimizedImage = useOptimizedImage(
-                                          item.url,
-                                          400,
-                                          250
-                                        );
-                                        return (
-                                          <img
-                                            src={optimizedImage.src}
-                                            srcSet={optimizedImage.srcSet}
-                                            sizes={optimizedImage.sizes}
-                                            alt={item.title}
-                                            className="h-full w-full object-cover absolute inset-0"
-                                          />
-                                        );
-                                    })()
-                                  )}
-                                </div>
-                                <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                                  <span className="text-sm font-semibold text-gray-900">
-                                    {item.title}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Bottom Sections */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                {/* Services Section - 2 cols */}
-                <div ref={servicesRef} id="services" className="md:col-span-2">
+                <div className="md:col-span-3">
                   <Card
                     className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
                   >
                     <CardContent className="p-0">
-                      <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-slate-800">
-                          Services
-                        </h2>
-                        <button
-                          onClick={() => setCurrentView("services")}
-                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                        >
-                          View All <ChevronRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                {servicesOffered
-                                  .slice(0, 5)
-                          .map((service: any, index: number) => (
-                            <div
-                              key={index}
-                              className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
-                            >
-                              <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
-                                <Award className="w-6 h-6 text-sky-600" />
-                              </div>
-                              <span className="text-sm font-semibold text-gray-900 text-center">
-                                {service.name}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Let's Talk Section - 1 col */}
-                <div ref={contactRef} id="contact">
-                  <Card
-                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                  >
-                    <CardContent className="p-0">
-                              <h2 className="text-xl font-bold text-slate-800 mb-4">
+                      <h2 className="text-xl font-bold text-slate-800 mb-4">
                         Let's Talk
                       </h2>
                       <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                        Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
+                        Ready to start a project or have questions? Get in touch
+                        with me today. I'm always open to discussing new
+                        opportunities and creative ideas.
                       </p>
-                      <div className="mt-6">
-                        <Button
-                          onClick={() => setCurrentView("contact")}
-                          className={`w-full ${getButtonClass()} shadow-lg`}
-                        >
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Send Message
-                        </Button>
-                      </div>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          setInquiryModal(true);
+                        }}
+                        className="space-y-4"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="contact-name">Name *</Label>
+                            <Input
+                              id="contact-name"
+                              value={inquiryData.name}
+                              onChange={(e) =>
+                                setInquiryData((prev) => ({
+                                  ...prev,
+                                  name: e.target.value,
+                                }))
+                              }
+                              required
+                              placeholder="Your full name"
+                              className={getBorderRadius()}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="contact-email">Email *</Label>
+                            <Input
+                              id="contact-email"
+                              type="email"
+                              value={inquiryData.email}
+                              onChange={(e) =>
+                                setInquiryData((prev) => ({
+                                  ...prev,
+                                  email: e.target.value,
+                                }))
+                              }
+                              required
+                              placeholder="your.email@example.com"
+                              className={getBorderRadius()}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-phone">Phone</Label>
+                          <Input
+                            id="contact-phone"
+                            type="tel"
+                            value={inquiryData.phone}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                            placeholder="+91 (555) 123-4567"
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-message">Message *</Label>
+                          <Textarea
+                            id="contact-message"
+                            value={inquiryData.message}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({
+                                ...prev,
+                                message: e.target.value,
+                              }))
+                            }
+                            rows={5}
+                            required
+                            placeholder="Tell me about your project or ask your question..."
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                        <div className="flex space-x-3">
+                          <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className={`flex-1 ${getButtonClass()}`}
+                          >
+                            {isSubmitting ? (
+                              "Sending..."
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4 mr-2" />
+                                Send Message
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setInquiryData({
+                                name: "",
+                                email: "",
+                                phone: "",
+                                message: "",
+                              });
+                            }}
+                            className={getBorderRadius()}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </form>
                     </CardContent>
                   </Card>
                 </div>
               </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-linear-to-r py-6 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-sm font-medium">
-            Developed By{" "}
-            <a
-              href="https://digiconnunite.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sky-400 hover:text-sky-300 transition-colors duration-200 font-semibold"
+            ) : (
+             
+<>
+  {/* Top Section: 2 Columns */}
+  <div
+    ref={aboutRef}
+    id="about"
+    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 h-full"
+  >
+    {/* Left Column: Work Experience + Expert Area */}
+    <div className="space-y-6 h-full flex flex-col">
+      {/* Work Experience Card */}
+      <Card
+        className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full flex flex-col`}
+      >
+        <CardContent className="p-0 overflow-hidden h-full flex flex-col">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-xl font-bold text-slate-800">
+              Work Experience
+            </h2>
+            <button
+              onClick={() => setWorkExperienceModal(true)}
+              className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
             >
-              Digiconn Unite Pvt. Ltd.
-            </a>
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="overflow-hidden flex-1">
+            <div
+              className={`flex flex-col space-y-4 ${
+                workExperience.length > 3 ? "animate-marquee" : ""
+              }`}
+            >
+              {console.log("workExperience:", workExperience)}
+              {validWorkExperience.map((exp: any, index: number) => {
+                return (
+                  <div
+                    key={`exp-${index}`}
+                    className="flex items-start space-x-4 rounded-lg"
+                  >
+                    <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10">
+                      <Building2 className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div className="flex-1 flex justify-items-end gap-1 w-full">
+                      <div className="grid grid-cols-1 gap-1">
+                        <p className="text-gray-900 font-medium text-sm">
+                          {exp.company}
+                        </p>
+                        <p className="text-gray-700 text-xs">
+                          {exp.position}
+                        </p>
+                        <p className="text-gray-600 text-xs">
+                          {exp.location}
+                        </p>
+                      </div>
+                      <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                        <span className="text-gray-500 text-xs">
+                          {exp.duration}
+                        </span>
+                        <span className="text-gray-400 text-xs">
+                          Total:{" "}
+                          {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {professional.workExperience &&
+                validWorkExperience.length > 3 &&
+                validWorkExperience.map((exp: any, index: number) => {
+                  return (
+                    <div
+                      key={`exp-dup-${index}`}
+                      className="flex items-start space-x-4 rounded-lg"
+                    >
+                      <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                        <Building2 className="w-5 h-5 text-sky-600" />
+                      </div>
+                      <div className="flex-1 flex justify-items-end gap-1 w-full">
+                        <div className="grid grid-cols-1 gap-1">
+                          <p className="text-gray-900 font-medium text-sm">
+                            {exp.company}
+                          </p>
+                          <p className="text-gray-700 text-xs">
+                            {exp.position}
+                          </p>
+                          <p className="text-gray-600 text-xs">
+                            {exp.location}
+                          </p>
+                        </div>
+                        <div className="flex items-end flex-col ml-auto justify-between mt-2">
+                          <span className="text-gray-500 text-xs">
+                            {exp.duration}
+                          </span>
+                          <span className="text-gray-400 text-xs">
+                            Total:{" "}
+                            {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Expert Area (Skills) Card */}
+      <Card
+        className={`${getCardClass()} rounded-2xl h-full p-6 shadow-lg border-0`}
+      >
+        <CardContent className="p-0 h-full flex flex-col">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-xl font-bold text-slate-800">
+              Expert Area
+            </h2>
+            <button
+              onClick={() => setCurrentView("about")}
+              className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+            >
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-3 overflow-hidden flex-1">
+            {skills
+              .slice(0, 12)
+              .map((skill: any, index: number) => (
+                <div
+                  key={index}
+                  className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
+                >
+                  <Award className="w-5 h-5 text-sky-600 mr-2" />
+                  <span className="text-sm text-gray-700">
+                    {skill.name?.name || skill.name}
+                  </span>
+                </div>
+              ))}
+            {skills.length > 12 && (
+              <div
+                className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
+              >
+                <span className="text-sm text-gray-700">...</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    {/* Right Column: Portfolio Card */}
+    <div className="space-y-6 h-full flex flex-col">
+      <Card
+        className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full flex flex-col`}
+      >
+        <CardContent className="p-0 overflow-hidden h-full flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-slate-800">
+              Portfolio
+            </h2>
+            <button
+              onClick={() => setCurrentView("portfolio")}
+              className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+            >
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="space-y-4 overflow-hidden flex-1">
+            {portfolio
+              .slice(0, 2)
+              .map((item: any, index: number) => {
+                const isVideo =
+                  item.type === "video" ||
+                  (item.url &&
+                    (item.url.includes(".mp4") ||
+                      item.url.includes(".webm") ||
+                      item.url.includes(".ogg")));
+                return (
+                  <div
+                    key={index}
+                    className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
+                  >
+                    <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
+                      {isVideo ? (
+                        <video
+                          src={item.url}
+                          controls
+                          className="h-full w-full object-cover absolute -bottom-2"
+                          poster={item.thumbnail || undefined}
+                        >
+                          Your browser does not support video tag.
+                        </video>
+                      ) : (
+                        (() => {
+                          const optimizedImage = useOptimizedImage(
+                            item.url,
+                            400,
+                            250
+                          );
+                          return (
+                            <img
+                              src={optimizedImage.src}
+                              srcSet={optimizedImage.srcSet}
+                              sizes={optimizedImage.sizes}
+                              alt={item.title}
+                              className="h-full w-full object-cover absolute inset-0"
+                            />
+                          );
+                        })()
+                      )}
+                    </div>
+                    <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {item.title}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+
+  {/* Bottom Section: 2 Columns */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    {/* Services Section - Col 1 */}
+    <div ref={servicesRef} id="services" className="md:col-span-1">
+      <Card
+        className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+      >
+        <CardContent className="p-0">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-800">
+              Services
+            </h2>
+            <button
+              onClick={() => setCurrentView("services")}
+              className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+            >
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {servicesOffered
+              .slice(0, 5)
+              .map((service: any, index: number) => (
+                <div
+                  key={index}
+                  className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
+                >
+                  <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                    <Award className="w-6 h-6 text-sky-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 text-center">
+                    {service.name}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    {/* Let's Talk Section - Col 2 */}
+    <div ref={contactRef} id="contact" className="md:col-span-1">
+      <Card
+        className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+      >
+        <CardContent className="p-0">
+          <h2 className="text-xl font-bold text-slate-800 mb-4">
+            Let's Talk
+          </h2>
+          <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+            Ready to start a project or have questions? Get in
+            touch with me today. I'm always open to discussing new
+            opportunities and creative ideas.
           </p>
-          <p className="text-xs text-gray-400 mt-2">
-            © 2025 All rights reserved.
-          </p>
-        </div>
-      </footer>
+          <div className="mt-6">
+            <Button
+              onClick={() => setCurrentView("contact")}
+              className={`w-full ${getButtonClass()} shadow-lg`}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Send Message
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</>
+            )}
+          </div>
+        </main>
+      </div>
 
       <style
         dangerouslySetInnerHTML={{
@@ -1625,12 +1737,8 @@ export default function ProfessionalProfile({
                       <p className="text-gray-900 font-semibold text-sm">
                         {exp.company}
                       </p>
-                      <p className="text-gray-700 text-xs">
-                        {exp.position}
-                      </p>
-                      <p className="text-gray-600 text-xs">
-                        {exp.location}
-                      </p>
+                      <p className="text-gray-700 text-xs">{exp.position}</p>
+                      <p className="text-gray-600 text-xs">{exp.location}</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-gray-500 text-xs">
@@ -1638,15 +1746,15 @@ export default function ProfessionalProfile({
                       </span>
                       <span className="text-gray-400 text-xs">
                         Total:{" "}
-                        {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                        {exp.duration
+                          ? calculateTotalTime(exp.duration)
+                          : "N/A"}
                       </span>
                     </div>
                   </div>
                   {exp.description && (
                     <div className="mt-2">
-                      <p className="text-sm text-gray-600">
-                        {exp.description}
-                      </p>
+                      <p className="text-sm text-gray-600">{exp.description}</p>
                     </div>
                   )}
                 </div>
@@ -1663,4 +1771,3 @@ export default function ProfessionalProfile({
     </div>
   );
 }
-

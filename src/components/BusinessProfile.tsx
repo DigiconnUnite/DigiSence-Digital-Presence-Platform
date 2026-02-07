@@ -54,7 +54,9 @@ import {
   X,
   Image,
   Menu,
+  Search,
   Fullscreen,
+  ImageOff,
   Home,
   ShoppingBag,
   Grid3X3,
@@ -463,7 +465,7 @@ export default function BusinessProfile({
     return scoredProducts
       .sort((a, b) => b.score - a.score)
       .filter((item) => item.score > 0)
-      .slice(0, 4)
+      .slice(0, 3)
       .map((item) => item.product);
   }, [business.products, selectedProductModal]);
 
@@ -823,8 +825,6 @@ export default function BusinessProfile({
               </div>
             )}
           </div>
-
-          
         </div>
 
         {/* Social Links */}
@@ -949,7 +949,7 @@ export default function BusinessProfile({
       suppressHydrationWarning
     >
       {/* PAGE HEADER - On Top, Not in Main Content */}
-      <header className="flex-shrink-0 bg-white border-b z-50">
+      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50">
         <div className=" mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Business Name */}
@@ -1118,7 +1118,9 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "about" ? "text-orange-600" : "text-gray-600"
+                  activeSection === "about"
+                    ? "text-orange-600"
+                    : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1133,7 +1135,9 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "brands" ? "text-orange-600" : "text-gray-600"
+                  activeSection === "brands"
+                    ? "text-orange-600"
+                    : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1148,7 +1152,9 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "products" ? "text-orange-600" : "text-gray-600"
+                  activeSection === "products"
+                    ? "text-orange-600"
+                    : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1163,7 +1169,9 @@ export default function BusinessProfile({
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "portfolio" ? "text-orange-600" : "text-gray-600"
+                  activeSection === "portfolio"
+                    ? "text-orange-600"
+                    : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   scrollToSection(
@@ -1190,7 +1198,7 @@ export default function BusinessProfile({
         <main className="md:col-span-3 h-full overflow-y-auto relative scroll-smooth min-w-0">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
             <section className="relative w-full">
-              <div className="w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg">
+              <div className="w-full rounded-2xl  overflow-hidden shadow-sm">
                 {heroContent.slides && heroContent.slides.length > 0 ? (
                   <div className="relative w-full">
                     <div className="overflow-hidden rounded-2xl">
@@ -1231,7 +1239,8 @@ export default function BusinessProfile({
                                         "Video failed to load:",
                                         mediaUrl,
                                       );
-                                      const target = e.target as HTMLVideoElement;
+                                      const target =
+                                        e.target as HTMLVideoElement;
                                       target.style.display = "none";
                                       const fallbackImg =
                                         target.nextElementSibling as HTMLImageElement;
@@ -1308,7 +1317,8 @@ export default function BusinessProfile({
                                                   : "text-sm xs:text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl"
                                               }
                                               ${
-                                                slide.headlineAlignment === "left"
+                                                slide.headlineAlignment ===
+                                                "left"
                                                   ? "text-left"
                                                   : slide.headlineAlignment ===
                                                       "right"
@@ -1342,7 +1352,8 @@ export default function BusinessProfile({
                                                   : "text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl"
                                               }
                                               ${
-                                                slide.headlineAlignment === "left"
+                                                slide.headlineAlignment ===
+                                                "left"
                                                   ? "text-left"
                                                   : slide.headlineAlignment ===
                                                       "right"
@@ -1365,7 +1376,8 @@ export default function BusinessProfile({
                                           className={`
                                               flex w-full
                                               ${
-                                                slide.headlineAlignment === "left"
+                                                slide.headlineAlignment ===
+                                                "left"
                                                   ? "justify-start"
                                                   : slide.headlineAlignment ===
                                                       "right"
@@ -1470,10 +1482,16 @@ export default function BusinessProfile({
             </section>
 
             {brandContent.brands?.length > 0 && (
-              <section id="brands" ref={brandsRef} className="py-6 md:py-12 px-0">
+              <section
+                id="brands"
+                ref={brandsRef}
+                className="py-6 md:py-12 px-0"
+              >
                 <div className="w-full">
                   <div className="flex justify-between items-center mb-4 md:mb-8">
-                    <h2 className="text-lg md:text-2xl font-bold">Trusted By</h2>
+                    <h2 className="text-lg md:text-2xl font-bold">
+                      Trusted By
+                    </h2>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1489,22 +1507,22 @@ export default function BusinessProfile({
                       {brandContent.brands.map((brand: any, index: number) => (
                         <div
                           key={index}
-                          className="flex flex-col cursor-pointer transition-all duration-300"
+                          className="flex flex-col h-full cursor-pointer transition-all duration-300"
                           onClick={() =>
                             setSelectedBrand(
                               selectedBrand === brand.name ? null : brand.name,
                             )
                           }
                         >
-                          {/* Card with image only */}
                           <Card
-                            className={`overflow-hidden p-0 rounded-2xl px-0 md:rounded-3xl cursor-pointer transition-all duration-300 h-full ${
+                            className={`overflow-hidden rounded-2xl   p-0 md:rounded-3xl cursor-pointer transition-all duration-300 h-full flex items-center justify-center flex-col ${
                               selectedBrand === brand.name
-                                ? "bg-orange-50 border-2 border-orange-400 shadow-lg"
+                                ? "bg-orange-50 border-2 border-orange-400 shadow-2xl"
                                 : "bg-white/70 hover:bg-white/90 hover:shadow-md"
                             }`}
                           >
-                            <div className="h-full flex items-center justify-center py-0 px-0">
+                            {/* Container with Fixed Height and Full Width */}
+                            <div className="relative w-full h-[180px] flex items-center justify-center bg-gray-50/50">
                               {brand.logo && brand.logo.trim() !== "" ? (
                                 <img
                                   src={getOptimizedImageUrl(brand.logo, {
@@ -1512,28 +1530,26 @@ export default function BusinessProfile({
                                     height: 300,
                                     quality: 85,
                                     format: "auto",
-                                    crop: "fit",
-                                    gravity: "center",
                                   })}
                                   srcSet={generateSrcSet(brand.logo)}
-                                  sizes={generateSizes(400)}
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                   alt={brand.name}
-                                  className="w-full h-full object-cover"
+                                  // w-full fills the width, h-auto maintains aspect ratio, object-contain ensures the whole image is visible
+                                  className="w-full my-auto mx-auto h-auto object-contain max-h-[180px]"
                                   loading="lazy"
-                                  decoding="async"
                                 />
                               ) : (
-                                <Image className="h-full w-full text-gray-400" />
+                                <Image className="h-10 w-10 text-gray-400" />
                               )}
                             </div>
                           </Card>
-                          {/* Brand name below the card */}
-                       <p className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
-                                  selectedBrand === brand.name
-                                    ? "text-orange-400 font-700"
-                                    : "text-gray-700 font-semibold"
-                                }`}
-                         >
+                          <p
+                            className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                              selectedBrand === brand.name
+                                ? "text-orange-400 font-700"
+                                : "text-gray-700 font-semibold"
+                            }`}
+                          >
                             {brand.name}
                           </p>
                         </div>
@@ -1553,64 +1569,65 @@ export default function BusinessProfile({
                       suppressHydrationWarning
                     >
                       <CarouselContent>
-                        {brandContent.brands.map((brand: any, index: number) => (
-                          <CarouselItem
-                            key={index}
-                            className="basis-1/2 md:basis-1/4 lg:basis-1/5"
-                          >
-                            <div
-                              className="flex flex-col cursor-pointer transition-all duration-300"
-                              onClick={() =>
-                                setSelectedBrand(
-                                  selectedBrand === brand.name
-                                    ? null
-                                    : brand.name,
-                                )
-                              }
+                        {brandContent.brands.map(
+                          (brand: any, index: number) => (
+                            <CarouselItem
+                              key={index}
+                              className="basis-1/2 md:basis-1/4 lg:basis-1/5"
                             >
-                              {/* Card with image only */}
-                              <Card
-                                className={`overflow-hidden rounded-2xl p-0 md:rounded-3xl cursor-pointer transition-all duration-300 h-full ${
-                                  selectedBrand === brand.name
-                                    ? "bg-orange-50 border-2 border-orange-400 shadow-2xl"
-                                    : "bg-white/70 hover:bg-white/90 hover:shadow-md"
-                                }`}
+                              <div
+                                className="flex flex-col h-full cursor-pointer transition-all duration-300"
+                                onClick={() =>
+                                  setSelectedBrand(
+                                    selectedBrand === brand.name
+                                      ? null
+                                      : brand.name,
+                                  )
+                                }
                               >
-                                <div className="h-full flex items-center justify-center ">
-                                  {brand.logo && brand.logo.trim() !== "" ? (
-                                    <img
-                                      src={getOptimizedImageUrl(brand.logo, {
-                                        width: 400,
-                                        height: 300,
-                                        quality: 85,
-                                        format: "auto",
-                                      })}
-                                      srcSet={generateSrcSet(brand.logo)}
-                                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                      alt={brand.name}
-                                      className="w-full h-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <Image className="h-full w-full text-gray-400" />
-                                  )}
-                                </div>
-                              </Card>
-                              {/* Brand name below the card */}
-                              <p
-                                className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
-                                  selectedBrand === brand.name
-                                    ? "text-orange-400 font-700"
-                                    : "text-gray-700 font-semibold"
-                                }`}
-                              >
-                                {brand.name}
-                              </p>
-                            </div>
-                          </CarouselItem>
-                        ))}
+                                <Card
+                                  className={`overflow-hidden rounded-2xl p-0 md:rounded-3xl cursor-pointer items-center justify-center transition-all duration-300 h-full flex flex-col ${
+                                    selectedBrand === brand.name
+                                      ? "bg-orange-50 border-2 border-orange-400 shadow-2xl"
+                                      : "bg-white/70 hover:bg-white/90 hover:shadow-md"
+                                  }`}
+                                >
+                                  {/* Container with Fixed Height and Full Width */}
+                                  <div className="relative w-full h-[180px] flex items-center justify-center bg-gray-50/50">
+                                    {brand.logo && brand.logo.trim() !== "" ? (
+                                      <img
+                                        src={getOptimizedImageUrl(brand.logo, {
+                                          width: 400,
+                                          height: 300,
+                                          quality: 85,
+                                          format: "auto",
+                                        })}
+                                        srcSet={generateSrcSet(brand.logo)}
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                        alt={brand.name}
+                                        // w-full fills the width, h-auto maintains aspect ratio, object-contain ensures the whole image is visible
+                                        className="w-full my-auto mx-auto h-auto object-contain max-h-[180px]"
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <Image className="h-10 w-10 text-gray-400" />
+                                    )}
+                                  </div>
+                                </Card>
+                                <p
+                                  className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                                    selectedBrand === brand.name
+                                      ? "text-orange-400 font-700"
+                                      : "text-gray-700 font-semibold"
+                                  }`}
+                                >
+                                  {brand.name}
+                                </p>
+                              </div>
+                            </CarouselItem>
+                          ),
+                        )}
                       </CarouselContent>
-                      {/* Desktop Navigation */}
                       <div className="hidden md:block">
                         <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
                         <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
@@ -1621,24 +1638,20 @@ export default function BusinessProfile({
               </section>
             )}
 
-            {/* Products/Services Section - Enhanced for Mobile */}
             {business.products.length > 0 && (
-              <section
-                id="products"
-                ref={productsRef}
-                className="py-8 md:py-16 px-0"
-              >
-                <div className="w-full">
-                  <div className="flex justify-between items-center mb-4 md:mb-8">
-                    <div className="flex flex-col gap-2">
-                      <h2 className="text-lg md:text-2xl font-bold">
+              <section id="products" ref={productsRef} className="">
+                <div className="w-full mx-auto">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                      <h2 className="text-xl md:text-3xl font-bold tracking-tight text-gray-900">
                         Our Products & Services
                       </h2>
                       {selectedBrand && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mt-2">
                           <Badge
                             variant="secondary"
-                            className="bg-orange-100 text-orange-800 border-orange-300"
+                            className="bg-orange-100 text-orange-800 hover:bg-orange-200 border-none"
                           >
                             Filtered by: {selectedBrand}
                           </Badge>
@@ -1646,7 +1659,7 @@ export default function BusinessProfile({
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedBrand(null)}
-                            className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 h-6 px-2 text-xs"
+                            className="text-orange-600 hover:text-orange-800 h-7 px-2 text-xs"
                           >
                             <X className="h-3 w-3 mr-1" />
                             Clear
@@ -1657,39 +1670,38 @@ export default function BusinessProfile({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setViewAllProducts(!viewAllProducts);
-                      }}
+                      onClick={() => setViewAllProducts(!viewAllProducts)}
+                      className="rounded-full border-gray-300"
                     >
                       {viewAllProducts ? "Show Less" : "View All"}
                     </Button>
                   </div>
 
-                  {/* Search Bar */}
-                  <div
-                    className="sticky top-0  backdrop-blur-xl z-30 mb-4"
-                    ref={searchRef}
-                  >
+                  {/* Sticky Search Bar */}
+                  <div className="sticky top-0 z-30 mb-6">
                     {mounted && (
                       <div
-                        className="flex flex-row sm:flex-row gap-2 md:gap-4 py-3"
+                        className="flex flex-col sm:flex-row gap-3 py-2  backdrop-blur-lg"
                         suppressHydrationWarning
                       >
-                        <Input
-                          placeholder="Search products..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="flex-1 bg-white text-sm"
-                        />
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search products..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 h-10 bg-gray-50 border-gray-200 focus-visible:ring-orange-500 text-sm"
+                          />
+                        </div>
                         <Select
                           value={selectedCategory}
                           onValueChange={setSelectedCategory}
                         >
-                          <SelectTrigger className="w-fit bg-white sm:w-48 text-sm">
-                            <SelectValue placeholder="All categories" />
+                          <SelectTrigger className=" sm:w-[180px] h-10 bg-gray-50 border-gray-200 text-sm">
+                            <SelectValue placeholder="All Categories" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All categories</SelectItem>
+                            <SelectItem value="all">All Categories</SelectItem>
                             {categories.map((cat) => (
                               <SelectItem key={cat.id} value={cat.id}>
                                 {cat.name}
@@ -1701,300 +1713,171 @@ export default function BusinessProfile({
                     )}
                   </div>
 
-                  {viewAllProducts ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 transition-all duration-300 ease-in-out">
-                      {filteredProducts.map((product) => (
-                        <Card
-                          id={`product-${product.id}`}
-                          key={product.id}
-                          className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2"
+                  {/* Reusable Product Card Component */}
+                  {(() => {
+                    const ProductCard = ({ product }) => (
+                      <Card
+                        id={`product-${product.id}`}
+                        className="group overflow-hidden p-0 rounded-2xl border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 flex flex-col h-full bg-white"
+                      >
+                        {/* Image Section - Fixed Height, Cover, Clean */}
+                        <div
+                          className="relative w-full h-64 overflow-hidden cursor-pointer bg-gray-100"
+                          onClick={() => openProductModal(product)}
                         >
-                          <div
-                            className="relative h-32 md:h-48 cursor-pointer"
-                            onClick={() => openProductModal(product)}
-                          >
-                            {product.image && product.image.trim() !== "" ? (
-                              <img
-                                src={getOptimizedImageUrl(product.image, {
-                                  width: 400,
-                                  height: 300,
-                                  quality: 85,
-                                  format: "auto",
-                                })}
-                                srcSet={generateSrcSet(product.image)}
-                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                alt={product.name}
-                                className="w-full h-full object-contain"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <Image className="h-10 w-10 md:h-16 md:w-16 text-gray-400" />
-                              </div>
-                            )}
+                          {product.image && product.image.trim() !== "" ? (
+                            <img
+                              src={getOptimizedImageUrl(product.image, {
+                                width: 500,
+                                height: 500,
+                                quality: 85,
+                                format: "auto",
+                              })}
+                              alt={product.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-gray-50">
+                              <ImageOff className="h-10 w-10 text-gray-300" />
+                            </div>
+                          )}
+
+                          {/* Stock Badge */}
+                          <div className="absolute top-0 right-0">
                             <Badge
-                              className={`absolute top-2 rounded-full ${product.inStock ? "bg-linear-to-l from-gray-900 to-lime-900" : "bg-linear-to-l from-gray-900 to-red-900"} border border-gray-50/25 right-2 text-xs`}
-                              variant={
-                                product.inStock ? "default" : "destructive"
-                              }
+                              className={`absolute top-3 text-white right-3 ${
+                                product.inStock
+                                  ? "bg-linear-to-l from-gray-900 to-lime-900"
+                                  : "bg-linear-to-l from-gray-900 to-red-900"
+                              } text-white border-0`}
                             >
                               {product.inStock ? (
                                 <span className="flex items-center gap-1">
-                                  {product.inStock && (
-                                    <span className="relative flex h-2 w-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                    </span>
-                                  )}{" "}
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+                                  </span>{" "}
                                   In Stock
                                 </span>
                               ) : (
                                 <span className="flex items-center gap-1">
                                   <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
                                   </span>{" "}
                                   Out of Stock
                                 </span>
                               )}
                             </Badge>
                           </div>
-                          <CardHeader className="pb-2 px-2 md:px-6">
-                            <CardTitle
-                              className="text-xs e md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="p-4 flex flex-col flex-1">
+                          <div className="flex justify-between items-start gap-2 mb-2">
+                            <h3
+                              className="font-semibold text-gray-900 line-clamp-1 cursor-pointer hover:text-orange-600 transition-colors text-sm md:text-base"
                               onClick={() => openProductModal(product)}
                             >
                               {product.name}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-0 px-2  md:px-6">
-                            <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
-                              {product.brandName && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max"
-                                >
-                                  {product.brandName}
-                                </Badge>
-                              )}
-                              {product.category && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max"
-                                >
-                                  {product.category.name}
-                                </Badge>
-                              )}
-                            </div>
-                            <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
-                              {product.description || "No description available"}
-                            </CardDescription>
-                            <div className="flex gap-2 mt-auto">
-                              <Button
-                                className="flex-1 bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
-                                onClick={() => {
-                                  if (business.phone) {
-                                    const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                    const message = `${product.name}\n\nDescription: ${product.description}\n\nLink: ${productLink}`;
-                                    const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(message)}`;
-                                    try {
-                                      window.open(whatsappUrl, "_blank");
-                                    } catch (error) {
-                                      alert(
-                                        "Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.",
-                                      );
-                                    }
-                                  } else {
-                                    alert("Phone number not available");
-                                  }
-                                }}
-                              >
-                                Inquire Now
-                                <SiWhatsapp className=" h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
-                              </Button>
-                              <Button
+                            </h3>
+                          </div>
+
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {product.brandName && (
+                              <Badge
                                 variant="outline"
-                                size="sm"
-                                className="px-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleShare(product);
-                                }}
+                                className="text-[10px] px-1.5 py-0.5 rounded-md border-gray-200 text-gray-500 font-normal"
                               >
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Share2 className="h-4 w-4" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Share this product</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <Carousel
-                      opts={{
-                        loop: true,
-                        dragFree: false,
-                        align: "start",
-                        watchDrag: true,
-                        watchResize: true,
-                        watchSlides: true,
-                      }}
-                      className="w-full"
-                      suppressHydrationWarning
-                    >
-                      <CarouselContent>
-                        {filteredProducts.map((product) => (
-                          <CarouselItem
-                            key={product.id}
-                            className="basis-1/2 md:basis-1/3 lg:basis-1/4"
-                          >
-                            <Card
-                              id={`product-${product.id}`}
-                              className="overflow-hidden bg-white hover:shadow-lg pt-0 transition-shadow duration-300 pb-2"
+                                {product.brandName}
+                              </Badge>
+                            )}
+                            {product.category && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0.5 rounded-md border-gray-200 text-gray-500 font-normal"
+                              >
+                                {product.category.name}
+                              </Badge>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed flex-1">
+                            {product.description || "No description available."}
+                          </p>
+
+                          {/* Actions */}
+                          <div className="flex gap-2 mt-auto">
+                            <Button
+                              className="flex-1 bg-green-500 hover:bg-black text-white h-9 text-xs font-medium rounded-lg"
+                              onClick={() => {
+                                if (business.phone) {
+                                  const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
+                                  const message = `Hi, I'm interested in ${product.name}\n\n${productLink}`;
+                                  const whatsappUrl = `https://wa.me/${business.phone.replace(
+                                    /[^\d]/g,
+                                    "",
+                                  )}?text=${encodeURIComponent(message)}`;
+                                  window.open(whatsappUrl, "_blank");
+                                } else {
+                                  alert("Phone number not available");
+                                }
+                              }}
                             >
-                              <div
-                                className="relative h-32 md:h-48 cursor-pointer"
-                                onClick={() => openProductModal(product)}
-                              >
-                                {product.image && product.image.trim() !== "" ? (
-                                  <img
-                                    src={getOptimizedImageUrl(product.image, {
-                                      width: 400,
-                                      height: 300,
-                                      quality: 85,
-                                      format: "auto",
-                                    })}
-                                    srcSet={generateSrcSet(product.image)}
-                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                    alt={product.name}
-                                    className="w-full h-full object-contain"
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                ) : (
-                                  <div className="flex items-center justify-center h-full">
-                                    <Image className="h-10 w-10 md:h-16 md:w-16 text-gray-400" />
-                                  </div>
-                                )}
-                                <Badge
-                                  className={`absolute top-2 rounded-full ${product.inStock ? "bg-linear-to-l from-gray-900 to-lime-900" : "bg-linear-to-l from-gray-900 to-red-900"} border border-gray-50/25 right-2 text-xs`}
-                                  variant={
-                                    product.inStock ? "default" : "destructive"
-                                  }
-                                >
-                                  {product.inStock ? (
-                                    <span className="flex items-center gap-1">
-                                      {product.inStock && (
-                                        <span className="relative flex h-2 w-2">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                        </span>
-                                      )}{" "}
-                                      In Stock
-                                    </span>
-                                  ) : (
-                                    <span className="flex items-center gap-1">
-                                      <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                                      </span>{" "}
-                                      Out of Stock
-                                    </span>
-                                  )}
-                                </Badge>
-                              </div>
-                              <CardHeader className="pb-2 px-2 md:px-6">
-                                <CardTitle
-                                  className="text-xs e md:text-lg line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
-                                  onClick={() => openProductModal(product)}
-                                >
-                                  {product.name}
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="pt-0 px-2  md:px-6">
-                                <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
-                                  {product.brandName && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max"
-                                    >
-                                      {product.brandName}
-                                    </Badge>
-                                  )}
-                                  {product.category && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[8px] md:text-xs px-1 md:px-2 py-0.5 h-4 md:h-5 min-w-max"
-                                    >
-                                      {product.category.name}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
-                                  {product.description ||
-                                    "No description available"}
-                                </CardDescription>
-                                <div className="flex gap-2 mt-auto">
-                                  <Button
-                                    className="flex-1 bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
-                                    onClick={() => {
-                                      if (business.phone) {
-                                        const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
-                                        const message = `${product.name}\n\nDescription: ${product.description}\n\nLink: ${productLink}`;
-                                        const whatsappUrl = `https://wa.me/${business.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(message)}`;
-                                        try {
-                                          window.open(whatsappUrl, "_blank");
-                                        } catch (error) {
-                                          alert(
-                                            "Unable to open WhatsApp. Please ensure WhatsApp is installed or try on a mobile device.",
-                                          );
-                                        }
-                                      } else {
-                                        alert("Phone number not available");
-                                      }
-                                    }}
-                                  >
-                                    Inquire Now
-                                    <SiWhatsapp className=" h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="px-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleShare(product);
-                                    }}
-                                  >
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Share2 className="h-4 w-4" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Share this product</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </CarouselItem>
+                              Inquire
+                              <SiWhatsapp className="h-3.5 w-3.5 ml-1.5" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShare(product);
+                              }}
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+
+                    return viewAllProducts ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                        {filteredProducts.map((product) => (
+                          <ProductCard key={product.id} product={product} />
                         ))}
-                      </CarouselContent>
-                      {/* Desktop Navigation */}
-                      <div className="hidden md:block">
-                        <CarouselPrevious className="left-2 md:left-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
-                        <CarouselNext className="right-2 md:right-4 bg-white/80 hover:bg-white text-gray-800 border-0 shadow-lg" />
                       </div>
-                    </Carousel>
-                  )}
+                    ) : (
+                      <Carousel
+                        opts={{
+                          align: "start",
+                          loop: true,
+                        }}
+                        className="w-full -mx-4 px-4 md:mx-0 md:px-0"
+                      >
+                        <CarouselContent>
+                          {filteredProducts.map((product) => (
+                            <CarouselItem
+                              key={product.id}
+                              className="basis-1/2 md:basis-1/3 lg:basis-1/4 pl-4 md:pl-4"
+                            >
+                              <ProductCard product={product} />
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        {/* Carousel Navigation */}
+                        <div className="hidden md:flex justify-end gap-2 mt-4">
+                          <CarouselPrevious className="static w-10 h-10 rounded-full border-gray-200 hover:bg-gray-100" />
+                          <CarouselNext className="static w-10 h-10 rounded-full border-gray-200 hover:bg-gray-100" />
+                        </div>
+                      </Carousel>
+                    );
+                  })()}
                 </div>
               </section>
             )}
@@ -2108,7 +1991,9 @@ export default function BusinessProfile({
               <div className="flex flex-col md:flex-row gap-8 md:gap-12">
                 {/* Left Side: About Us */}
                 <div className="flex-1">
-                  <h2 className="text-xl md:text-2xl font-bold mb-3">About Us</h2>
+                  <h2 className="text-xl md:text-2xl font-bold mb-3">
+                    About Us
+                  </h2>
                   <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
                     {business.about ||
                       "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
@@ -2131,21 +2016,23 @@ export default function BusinessProfile({
                       {business.openingHours &&
                       business.openingHours.length > 0 ? (
                         <ul className="text-sm flex-1 text-gray-800">
-                          {business.openingHours.map((item: any, idx: number) => (
-                            <li
-                              key={idx}
-                              className="flex flex-1 gap-5 justify-between items-center py-0.5"
-                            >
-                              <span className="font-medium">{item.day}</span>
-                              <span></span>
-                              <span></span>
-                              <span>
-                                {item.open && item.close
-                                  ? `${item.open} - ${item.close}`
-                                  : "Closed"}
-                              </span>
-                            </li>
-                          ))}
+                          {business.openingHours.map(
+                            (item: any, idx: number) => (
+                              <li
+                                key={idx}
+                                className="flex flex-1 gap-5 justify-between items-center py-0.5"
+                              >
+                                <span className="font-medium">{item.day}</span>
+                                <span></span>
+                                <span></span>
+                                <span>
+                                  {item.open && item.close
+                                    ? `${item.open} - ${item.close}`
+                                    : "Closed"}
+                                </span>
+                              </li>
+                            ),
+                          )}
                         </ul>
                       ) : (
                         <p className="text-sm text-gray-400">Not provided</p>
@@ -2377,7 +2264,7 @@ export default function BusinessProfile({
                     </div>
                   )}
                   <Badge
-                    className={`absolute top-3 right-3 ${
+                    className={`absolute top-3 text-white right-3 ${
                       selectedProductModal.inStock
                         ? "bg-linear-to-l from-gray-900 to-lime-900"
                         : "bg-linear-to-l from-gray-900 to-red-900"
@@ -2476,7 +2363,7 @@ export default function BusinessProfile({
               {relatedProducts.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Products Components</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {relatedProducts.map((product) => (
                       <Card
                         key={product.id}
@@ -2507,10 +2394,11 @@ export default function BusinessProfile({
                             </div>
                           )}
                           <Badge
-                            className={`absolute top-2 ${product.inStock ? "bg-linear-to-l from-gray-900 to-lime-900" : "bg-linear-to-l from-gray-900 to-red-900"} border border-gray-50/25 rounded-full right-2 text-xs`}
-                            variant={
-                              product.inStock ? "default" : "destructive"
-                            }
+                            className={`absolute top-3 text-white right-3 ${
+                              selectedProductModal.inStock
+                                ? "bg-linear-to-l from-gray-900 to-lime-900"
+                                : "bg-linear-to-l from-gray-900 to-red-900"
+                            } text-white border-0`}
                           >
                             {product.inStock ? (
                               <span className="flex items-center gap-1">

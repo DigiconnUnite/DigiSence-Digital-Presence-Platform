@@ -1,317 +1,22 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Users, Shield, Zap, ArrowRight, CheckCircle, Menu, X, Home, Building2, Users as UsersIcon, Calculator, Mail, Filter } from "lucide-react";
+import { Star, Users, Shield, Zap, ArrowRight, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import HeroSectionOne from "@/components/ui/hero";
 import MarqueeSection from "@/components/ui/marquee";
 import Footer from "@/components/Footer";
 import { Android } from "@/components/ui/android";
 import PricingSection from "@/components/sections/pricing/PricingSection";
-
-import { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import UnifiedPublicLayout from "@/components/UnifiedPublicLayout";
 
 export default function HomePage() {
-  const navItems = [
-    {
-      name: "Home",
-      link: "/",
-      icon: Home
-    },
-    {
-      name: "Businesses",
-      link: "/businesses",
-      icon: Building2
-    },
-    {
-      name: "Professionals",
-      link: "/professionals",
-      icon: UsersIcon
-    },
-    {
-      name: "Pricing",
-      link: "/pricing",
-      icon: Calculator
-    },
-    {
-      name: "Contact Us",
-      link: "/contact",
-      icon: Mail
-    },
-  ];
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 0);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Close sidebar when clicking outside
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSidebarOpen(false);
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
-
-  const isHome = pathname === "/";
-  const navTransparent = isHome && !scrolled;
-
-  // Categories for sidebar
-  const homeCategories = [
-    { name: 'Business Solutions', icon: Building2 },
-    { name: 'Professional Services', icon: UsersIcon },
-    { name: 'Pricing Plans', icon: Calculator },
-    { name: 'Contact Support', icon: Mail },
-    { name: 'Documentation', icon: Star }
-  ];
-
   return (
-    <div className="relative min-h-screen secondary-light-gradient pb-16 md:pb-0">
-      {/* Sidebar - Hidden by default on all screens */}
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <Link href="/" className="flex items-center space-x-2">
-              <img src="/logo.svg" alt="DigiSence" className="h-7 w-auto" />
-              <span className="font-bold text-xl text-slate-800">DigiSence</span>
-            </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Sidebar Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            {navItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.link}
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
-                    pathname === item.link
-                      ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
-                      : "text-gray-700 hover:bg-gray-100",
-                  )}
-                >
-                  <IconComponent className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-
-            {/* Categories Section in Sidebar */}
-            <div className="pt-6 mt-6 border-t border-gray-200">
-              <div className="flex items-center px-3 mb-3">
-                <Filter className="mr-2 h-4 w-4 text-gray-500" />
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Links</span>
-              </div>
-              <div className="space-y-1">
-                {homeCategories.map((category) => {
-                  const IconComponent = category.icon;
-                  return (
-                    <Link
-                      key={category.name}
-                      href="#"
-                      className={cn(
-                        "w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-200",
-                        "text-gray-700 hover:bg-gray-100"
-                      )}
-                    >
-                      <IconComponent className="mr-3 h-4 w-4" />
-                      {category.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </nav>
-
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-gray-200 space-y-2">
-            <Button
-              variant="outline"
-              className="w-full text-white bg-slate-800 border-gray-800 hover:bg-slate-700 transition-colors duration-200"
-              asChild
-            >
-              <Link href="/register">Make Your Profile</Link>
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full bg-white text-gray-900 hover:bg-slate-800 hover:text-white border-gray-800 transition-colors duration-200"
-              asChild
-            >
-              <Link href="/login">Login</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Overlay for sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Navigation Bar - Fixed at Top */}
-      <nav
-        className={cn(
-          "fixed inset-x-0 top-0 z-30",
-          navTransparent
-            ? "bg-transparent"
-            : "bg-white border-b border-gray-200 shadow-sm"
-        )}
-      >
-        <div className=" mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="flex justify-between items-center h-14 md:h-16">
-            <div className="flex items-center">
-              <Link
-                href="/"
-                className={cn(
-                  "relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal",
-                  navTransparent ? "text-white" : "text-gray-900"
-                )}
-              >
-                <img
-                  src="/logo.svg"
-                  alt="DigiSence"
-                  className={cn(
-                    "h-6 w-auto sm:h-7",
-                    navTransparent ? " filter invert hue-rotate-180" : " "
-                  )}
-                />
-
-                <span
-                  className={cn(
-                    "font-bold text-lg sm:text-xl",
-                    navTransparent ? "text-white" : "text-slate-800"
-                  )}
-                >
-                  DigiSence
-                </span>
-              </Link>
-            </div>
-            <div className="hidden md:flex space-x-4 lg:space-x-8 flex-1 justify-center">
-              {navItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.link}
-                    className={cn(
-                      "hover:text-cyan-400 transition-all duration-200 px-2 py-1 rounded-md text-sm lg:text-base flex items-center space-x-1",
-                      pathname === item.link
-                        ? navTransparent
-                          ? "bg-white/20 text-white font-bold"
-                          : "bg-white text-slate-800 font-bold"
-                        : navTransparent
-                          ? "text-white"
-                          : "text-gray-700"
-                    )}
-                  >
-                    <IconComponent className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="hidden md:flex space-x-2 sm:space-x-4">
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "text-white border-gray-800 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4",
-                    navTransparent
-                      ? "bg-slate-900/20 border-white/50 "
-                      : "bg-slate-800 hover:bg-white hover:text-slate-800"
-                  )}
-                  asChild
-                >
-                  <Link href="/register">Make Your Profile</Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="bg-white text-gray-900 hover:bg-slate-800 hover:text-white border-gray-800 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
-                  asChild
-                >
-                  <Link href="/login">Login</Link>
-                </Button>
-              </div>
-              {/* Sidebar Toggle Button - Visible on all screens */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className={cn(
-                  "p-2 rounded-md hover:bg-gray-100 md:hidden",
-                  navTransparent
-                    ? "text-white hover:bg-white/10"
-                    : "text-gray-700"
-                )}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 py-2">
-          <div className="px-4 sm:px-6 lg:px-8 space-y-1">
-            {navItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.link}
-                  className="flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  <IconComponent className="h-5 w-5 mr-2" />
-                  {item.name}
-                </Link>
-              );
-            })}
-            <Link
-              href="/register"
-              className="flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              Make Your Profile
-            </Link>
-            <Link
-              href="/login"
-              className="flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="  mx-auto">
+    <UnifiedPublicLayout variant="transparent" sidebarVariant="home">
+      {/* Main Content Container with gradient background */}
+      <div className="secondary-light-gradient pt-0 pb-16 md:pb-0">
         <HeroSectionOne />
 
         {/* Who Is It For? Section */}
@@ -476,7 +181,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Businesses Professionals */}
+        {/* Professionals Section */}
         <section className="py-10 md:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -611,8 +316,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </UnifiedPublicLayout>
   );
 }

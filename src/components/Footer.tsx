@@ -7,7 +7,7 @@ import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 export default function Footer() {
   return (
     <LampContainer>
-      <div className="w-full max-w-7xl    py-12">
+      <div className="w-full px-5   py-12">
         {/* Top Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

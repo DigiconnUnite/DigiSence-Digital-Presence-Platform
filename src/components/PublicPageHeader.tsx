@@ -169,7 +169,7 @@ export default function PublicPageHeader({
                     key={item.name}
                     href={item.link}
                     className={cn(
-                      "hover:text-cyan-400 transition-all duration-200 px-2 py-1 rounded-md text-sm lg:text-base flex items-center space-x-1",
+                      "hover:text-slate-600  leading-tight tracking-tighter transition-all duration-200 px-2 py-1 rounded-md text-sm lg:text-base flex items-center space-x-1",
                       pathname === item.link
                         ? isTransparent
                           ? "bg-white/20 text-white font-bold"

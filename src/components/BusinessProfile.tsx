@@ -54,6 +54,7 @@ import {
   X,
   Image,
   Menu,
+  Tag,
   Search,
   Fullscreen,
   ImageOff,
@@ -67,6 +68,10 @@ import {
   Share2,
   Download,
   Building2,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  Grid2X2Check,
 } from "lucide-react";
 import { FaWhatsapp, FaWhatsappSquare } from "react-icons/fa";
 import {
@@ -200,6 +205,10 @@ export default function BusinessProfile({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [lastUpdateCheck, setLastUpdateCheck] = useState(Date.now());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Socket.io connection
   const { socket, isConnected } = useSocket(business.id);
@@ -210,6 +219,7 @@ export default function BusinessProfile({
   const productsRef = useRef<HTMLDivElement>(null);
   const portfolioRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -601,20 +611,25 @@ export default function BusinessProfile({
 
   // Smooth scroll function - memoized for performance
   const scrollToSection = useCallback(
-    (ref: React.RefObject<HTMLDivElement>, sectionName: string) => {
+    (ref: React.RefObject<HTMLDivElement | null>, sectionName: string) => {
       setActiveSection(sectionName);
       if (ref.current) {
         const offset = 80; // Offset for the fixed header
-        const elementPosition = ref.current.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-      } else if (sectionName === "about" && typeof window !== "undefined") {
-        // Fallback for mobile if ref is on desktop element
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        const container = mainContentRef.current;
+        if (container) {
+          const elementPosition = ref.current.offsetTop;
+          const offsetPosition = elementPosition - offset;
+          container.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+          });
+        }
+      } else if (sectionName === "home" && typeof window !== "undefined") {
+        // Fallback for home section
+        const container = mainContentRef.current;
+        if (container) {
+          container.scrollTo({ top: 0, behavior: "smooth" });
+        }
       }
       // Close mobile menu if open
       setMobileMenuOpen(false);
@@ -656,6 +671,68 @@ export default function BusinessProfile({
       });
     };
   }, []);
+
+  // Mobile viewport detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Define navigation links for business profile (Removed About)
+  const navLinks = [
+    {
+      value: "home",
+      mobileTitle: "Home",
+      mobileIcon: Home,
+    },
+    {
+      value: "brands",
+      mobileTitle: "Brands",
+      mobileIcon: Grid3X3,
+    },
+    {
+      value: "products",
+      mobileTitle: "Products",
+      mobileIcon: ShoppingBag,
+    },
+    {
+      value: "portfolio",
+      mobileTitle: "Portfolio",
+      mobileIcon: Briefcase,
+    },
+  ];
+
+  // Handle view change from mobile navigation
+  const handleViewChange = (view: string) => {
+    setActiveSection(view);
+    const container = mainContentRef.current;
+    if (view === "home" && container) {
+      container.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const refMap: Record<string, React.RefObject<HTMLDivElement | null>> = {
+        about: aboutRef,
+        brands: brandsRef,
+        products: productsRef,
+        portfolio: portfolioRef,
+        contact: contactRef,
+      };
+      const ref = refMap[view];
+      if (ref?.current && container) {
+        const offset = 80;
+        const elementPosition = ref.current.offsetTop;
+        const offsetPosition = elementPosition - offset;
+        container.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }
+    }
+    setMobileMenuOpen(false);
+  };
 
   // Helper to render the Business Info Card content (Sidebar)
   const BusinessInfoCard = () => (
@@ -704,12 +781,12 @@ export default function BusinessProfile({
         </div>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-2 w-full">
+      {/* Action Buttons - Primary Row */}
+      <div className="flex flex-row gap-2 w-full">
         <Button
           variant="outline"
           size="sm"
-          className="w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
           onClick={() => {
             const vCardData = `BEGIN:VCARD
                         VERSION:3.0
@@ -737,7 +814,7 @@ export default function BusinessProfile({
         </Button>
         <Button
           size="sm"
-          className="w-full flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs font-medium shadow-sm border-0 cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs font-medium shadow-sm border-0 cursor-pointer"
           style={{ backgroundColor: "#25D366" }}
           onClick={() => {
             if (business.phone) {
@@ -753,6 +830,84 @@ export default function BusinessProfile({
           <SiWhatsapp className="h-3 w-3" />
           WhatsApp
         </Button>
+        {business.email && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+            onClick={() => {
+              if (business.email) {
+                window.location.href = `mailto:${business.email}?subject=Inquiry about ${encodeURIComponent(business.name || "")}`;
+              } else {
+                alert("Email not available");
+              }
+            }}
+            title="Send email"
+          >
+            <Mail className="h-3 w-3" />
+            Email Us
+          </Button>
+        )}
+      </div>
+
+      {/* Secondary Action Buttons - Download Row */}
+      <div className="flex flex-row gap-2 w-full">
+        {/* Download Card Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+          onClick={() => {
+            const cardData = `BEGIN:VCARD
+                              VERSION:3.0
+                              FN:${business.name || ""}
+                              ORG:${business.category?.name || ""}
+                              TEL:${business.phone || ""}
+                              EMAIL:${business.email || ""}
+                              URL:${business.website || ""}
+                              ADR:;;${business.address || ""};;;;
+                              NOTE:${business.description || ""}
+                              END:VCARD`;
+
+            const blob = new Blob([cardData], { type: "text/vcard" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${business.name || "business"}_card.vcf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }}
+          title="Download business card"
+        >
+          <Download className="h-3 w-3" />
+          Download Card
+        </Button>
+        {/* Download Catalog PDF Button */}
+        {business.catalogPdf && (
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+            onClick={() => {
+              const pdfUrl = business.catalogPdf;
+              if (pdfUrl) {
+                window.open(pdfUrl, "_blank");
+              } else {
+                alert("Catalog PDF not available");
+              }
+            }}
+            title="Download catalog PDF"
+          >
+            <Download className="h-3 w-3" />
+            Download Catalog
+          </Button>
+        )}
+      </div>
+
+      {/* Share Button - Third Row */}
+      <div className="flex flex-row gap-2 w-full">
         <Button
           variant="outline"
           size="sm"
@@ -948,9 +1103,9 @@ export default function BusinessProfile({
       className="h-screen w-full overflow-hidden bg-orange-50 flex flex-col"
       suppressHydrationWarning
     >
-      {/* PAGE HEADER - On Top, Not in Main Content */}
-      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50">
-        <div className=" mx-auto px-4 sm:px-6 lg:px-8">
+      {/* PAGE HEADER - HIDDEN ON MOBILE (hidden md:flex) */}
+      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50 hidden md:flex">
+        <div className="w-full mx-auto px-4 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Business Name */}
             <div className="flex items-center space-x-3 flex-shrink-0">
@@ -972,7 +1127,7 @@ export default function BusinessProfile({
               </span>
             </div>
 
-            {/* Desktop Navigation - Centered */}
+            {/* Desktop Navigation - Centered - About Link Removed */}
             <nav className="hidden md:flex items-center justify-center flex-1 px-8">
               <div className="flex space-x-2">
                 <button
@@ -983,7 +1138,10 @@ export default function BusinessProfile({
                   } px-3 py-2 rounded-lg`}
                   onClick={() => {
                     setActiveSection("home");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    mainContentRef.current?.scrollTo({
+                      top: 0,
+                      behavior: "smooth",
+                    });
                   }}
                 >
                   <Home
@@ -994,28 +1152,6 @@ export default function BusinessProfile({
                     }`}
                   />
                   Home
-                </button>
-                <button
-                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                    activeSection === "about"
-                      ? "text-orange-600 bg-orange-50 border border-orange-200"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                  } px-3 py-2 rounded-lg`}
-                  onClick={() =>
-                    scrollToSection(
-                      aboutRef as React.RefObject<HTMLDivElement>,
-                      "about",
-                    )
-                  }
-                >
-                  <User
-                    className={`w-4 h-4 mr-2 transition-colors ${
-                      activeSection === "about"
-                        ? "text-orange-600"
-                        : "text-gray-500"
-                    }`}
-                  />
-                  About
                 </button>
                 <button
                   className={`flex items-center text-sm font-medium transition-all duration-200 ${
@@ -1086,7 +1222,7 @@ export default function BusinessProfile({
               </div>
             </nav>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - Hidden because Header is hidden on mobile anyway, but keeping code structure */}
             <div className="md:hidden flex-shrink-0">
               <Button
                 size="icon"
@@ -1103,35 +1239,22 @@ export default function BusinessProfile({
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-t">
             <div className="px-4 py-3 space-y-2">
+              {/* About Link Removed from Mobile Menu */}
               <button
                 className={`w-full flex items-center text-sm font-medium ${
                   activeSection === "home" ? "text-orange-600" : "text-gray-600"
                 } px-3 py-2 rounded-lg hover:bg-gray-50`}
                 onClick={() => {
                   setActiveSection("home");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  mainContentRef.current?.scrollTo({
+                    top: 0,
+                    behavior: "smooth",
+                  });
                   setMobileMenuOpen(false);
                 }}
               >
                 <Home className="w-4 h-4 mr-2" />
                 Home
-              </button>
-              <button
-                className={`w-full flex items-center text-sm font-medium ${
-                  activeSection === "about"
-                    ? "text-orange-600"
-                    : "text-gray-600"
-                } px-3 py-2 rounded-lg hover:bg-gray-50`}
-                onClick={() => {
-                  scrollToSection(
-                    aboutRef as React.RefObject<HTMLDivElement>,
-                    "about",
-                  );
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <User className="w-4 h-4 mr-2" />
-                About
               </button>
               <button
                 className={`w-full flex items-center text-sm font-medium ${
@@ -1195,291 +1318,250 @@ export default function BusinessProfile({
             <BusinessInfoCard />
           </div>
         </aside>
-        <main className="md:col-span-3 h-full overflow-y-auto relative scroll-smooth min-w-0">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
-            <section className="relative w-full">
-              <div className="w-full rounded-2xl  overflow-hidden shadow-sm">
+        <main
+          ref={mainContentRef}
+          className="md:col-span-3 h-full overflow-y-auto mb-5 relative scroll-smooth min-w-0"
+        >
+          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 pt-4 space-y-6 lg:space-y-8">
+            <section className="relative w-full mx-auto">
+              <div className="aspect-3/1 md:aspect-3/1 w-full rounded-xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl bg-gray-900 relative">
                 {heroContent.slides && heroContent.slides.length > 0 ? (
-                  <div className="relative w-full">
-                    <div className="overflow-hidden rounded-2xl">
-                      <div
-                        className="flex transition-transform duration-500 ease-in-out"
-                        style={{
-                          transform: `translateX(-${currentSlideIndex * 100}%)`,
-                        }}
-                      >
-                        {heroContent.slides.map((slide: any, index: number) => {
-                          const isVideo =
-                            slide.mediaType === "video" ||
-                            (slide.media &&
-                              (slide.media.includes(".mp4") ||
-                                slide.media.includes(".webm") ||
-                                slide.media.includes(".ogg")));
-                          const mediaUrl = slide.media || slide.image;
+                  <>
+                    {/* Check if first slide is a video */}
+                    {(() => {
+                      const firstSlide = heroContent.slides[0];
+                      const isVideo =
+                        firstSlide.mediaType === "video" ||
+                        (firstSlide.media &&
+                          (firstSlide.media.includes(".mp4") ||
+                            firstSlide.media.includes(".webm") ||
+                            firstSlide.media.includes(".ogg")));
+                      const videoUrl = isVideo
+                        ? firstSlide.media || firstSlide.image
+                        : null;
 
-                          return (
-                            <div key={index} className="w-full shrink-0">
-                              <div className="relative w-full aspect-3/1 md:max-h-full bg-linear-to-br from-gray-900 to-gray-700 rounded-2xl overflow-hidden">
-                                {isVideo && mediaUrl ? (
-                                  <video
-                                    src={mediaUrl}
-                                    className="w-full h-full object-cover rounded-2xl absolute top-0 left-0"
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                    poster={
-                                      slide.poster ||
-                                      (slide.image && slide.image !== mediaUrl
-                                        ? slide.image
-                                        : undefined)
-                                    }
-                                    onError={(e) => {
-                                      console.error(
-                                        "Video failed to load:",
-                                        mediaUrl,
-                                      );
-                                      const target =
-                                        e.target as HTMLVideoElement;
-                                      target.style.display = "none";
-                                      const fallbackImg =
-                                        target.nextElementSibling as HTMLImageElement;
-                                      if (fallbackImg) {
-                                        fallbackImg.style.display = "block";
-                                      }
-                                    }}
-                                  />
-                                ) : null}
-                                <img
-                                  src={
-                                    mediaUrl && mediaUrl.trim() !== ""
-                                      ? getOptimizedImageUrl(mediaUrl, {
-                                          width: 1200,
-                                          height: 600,
-                                          quality: 85,
+                      // If first slide is video, show video player
+                      if (isVideo && videoUrl) {
+                        return (
+                          <video
+                            src={videoUrl}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            poster={
+                              firstSlide.image && firstSlide.image !== videoUrl
+                                ? firstSlide.image
+                                : undefined
+                            }
+                            onError={(e) => {
+                              console.error("Video failed to load:", videoUrl);
+                              const target = e.target as HTMLVideoElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        );
+                      }
+
+                      // Otherwise, show image slider
+                      return (
+                        <>
+                          {/* Carousel Track - Added Touch Events for Swipe */}
+                          <div
+                            className="flex transition-transform duration-700 ease-in-out w-full h-full"
+                            style={{
+                              transform: `translateX(-${currentSlideIndex * 100}%)`,
+                            }}
+                            onTouchStart={(e) => {
+                              setTouchEnd(null);
+                              setTouchStart(e.targetTouches[0].clientX);
+                            }}
+                            onTouchMove={(e) => {
+                              setTouchEnd(e.targetTouches[0].clientX);
+                            }}
+                            onTouchEnd={() => {
+                              if (!touchStart || !touchEnd) return;
+                              const distance = touchStart - touchEnd;
+                              const isLeftSwipe = distance > 50;
+                              const isRightSwipe = distance < -50;
+                              if (isLeftSwipe) {
+                                setCurrentSlideIndex((prev) =>
+                                  prev < heroContent.slides.length - 1
+                                    ? prev + 1
+                                    : 0,
+                                );
+                              }
+                              if (isRightSwipe) {
+                                setCurrentSlideIndex((prev) =>
+                                  prev > 0
+                                    ? prev - 1
+                                    : heroContent.slides.length - 1,
+                                );
+                              }
+                            }}
+                            // Mouse events for desktop swipe
+                            onMouseDown={(e) => {
+                              setTouchEnd(null);
+                              setTouchStart(e.clientX);
+                            }}
+                            onMouseMove={(e) => {
+                              setTouchEnd(e.clientX);
+                            }}
+                            onMouseUp={() => {
+                              if (!touchStart || !touchEnd) return;
+                              const distance = touchStart - touchEnd;
+                              const isLeftSwipe = distance > 50;
+                              const isRightSwipe = distance < -50;
+                              if (isLeftSwipe) {
+                                setCurrentSlideIndex((prev) =>
+                                  prev < heroContent.slides.length - 1
+                                    ? prev + 1
+                                    : 0,
+                                );
+                              }
+                              if (isRightSwipe) {
+                                setCurrentSlideIndex((prev) =>
+                                  prev > 0
+                                    ? prev - 1
+                                    : heroContent.slides.length - 1,
+                                );
+                              }
+                            }}
+                            onMouseLeave={() => {
+                              // Reset touch state when mouse leaves
+                              setTouchStart(null);
+                              setTouchEnd(null);
+                            }}
+                          >
+                            {heroContent.slides.map(
+                              (slide: any, index: number) => {
+                                const mediaUrl = slide.media || slide.image;
+                                return (
+                                  <div
+                                    key={index}
+                                    className="w-full shrink-0 h-full relative"
+                                  >
+                                    {mediaUrl && mediaUrl.trim() !== "" ? (
+                                      <img
+                                        src={getOptimizedImageUrl(mediaUrl, {
+                                          width: 1600,
+                                          quality: 90,
                                           format: "auto",
                                           crop: "fill",
                                           gravity: "auto",
-                                        })
-                                      : "/placeholder.svg"
-                                  }
-                                  srcSet={
-                                    mediaUrl && mediaUrl.trim() !== ""
-                                      ? generateSrcSet(mediaUrl)
-                                      : undefined
-                                  }
-                                  sizes={generateSizes(1200)}
-                                  alt={slide.headline || "Hero image"}
-                                  className={`w-full h-full object-cover rounded-2xl ${isVideo ? "hidden" : ""} absolute top-0 left-0`}
-                                  loading={index === 0 ? "eager" : "lazy"}
-                                  decoding="async"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = "/placeholder.svg";
-                                  }}
-                                />
-                                {slide.showText !== false && (
-                                  <div className="absolute inset-0  bg-opacity-40 flex items-center justify-center rounded-2xl">
-                                    <div
-                                      className={`
-                                          text-white
-                                          px-2 py-1
-                                          md:px-4 md:py-4
-                                          ${
-                                            slide.headlineAlignment === "left"
-                                              ? "text-left items-start justify-start"
-                                              : slide.headlineAlignment ===
-                                                  "right"
-                                                ? "text-right items-end justify-end"
-                                                : "text-center items-center justify-center"
-                                          }
-                                          max-w-[95vw]
-                                          md:max-w-4xl
-                                          mx-auto
-                                          flex flex-col
-                                          h-full
-                                          justify-center
-                                          `}
-                                    >
-                                      {slide.headline && (
-                                        <h1
-                                          className={`
-                                              font-bold
-                                              leading-tight
-                                              drop-shadow-lg
-                                              mb-1 xs:mb-2 md:mb-4
-                                              tracking-tight
-                                              font-display
-                                              whitespace-pre-line
-                                              ${
-                                                slide.headlineSize
-                                                  ? slide.headlineSize
-                                                  : "text-sm xs:text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl"
-                                              }
-                                              ${
-                                                slide.headlineAlignment ===
-                                                "left"
-                                                  ? "text-left"
-                                                  : slide.headlineAlignment ===
-                                                      "right"
-                                                    ? "text-right"
-                                                    : "text-center"
-                                              }
-                                              `}
-                                          style={{
-                                            color:
-                                              slide.headlineColor || "#ffffff",
-                                            textShadow:
-                                              "2px 2px 4px rgba(0,0,0,0.5)",
-                                          }}
-                                        >
-                                          {slide.headline}
-                                        </h1>
-                                      )}
-                                      {slide.subheadline && (
-                                        <p
-                                          className={`
-                                              drop-shadow-md
-                                              max-w-2xl
-                                              leading-relaxed
-                                              tracking-normal
-                                              font-normal
-                                              font-sans
-                                              mb-2 xs:mb-3 sm:mb-4 md:mb-6
-                                              ${
-                                                slide.subtextSize
-                                                  ? slide.subtextSize
-                                                  : "text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl"
-                                              }
-                                              ${
-                                                slide.headlineAlignment ===
-                                                "left"
-                                                  ? "text-left"
-                                                  : slide.headlineAlignment ===
-                                                      "right"
-                                                    ? "text-right"
-                                                    : "text-center"
-                                              }
-                                              `}
-                                          style={{
-                                            color:
-                                              slide.subtextColor || "#ffffff",
-                                            textShadow:
-                                              "1px 1px 2px rgba(0,0,0,0.5)",
-                                          }}
-                                        >
-                                          {slide.subheadline}
-                                        </p>
-                                      )}
-                                      {slide.cta && (
-                                        <div
-                                          className={`
-                                              flex w-full
-                                              ${
-                                                slide.headlineAlignment ===
-                                                "left"
-                                                  ? "justify-start"
-                                                  : slide.headlineAlignment ===
-                                                      "right"
-                                                    ? "justify-end"
-                                                    : "justify-center"
-                                              }
-                                              mt-0 md:mt-4
-                                          `}
-                                        >
-                                          <Button
-                                            size="lg"
-                                            onClick={() => openInquiryModal()}
-                                            className={`
-                                                  text-sm xs:text-base md:text-lg
-                                                  px-4 xs:px-6 md:px-8
-                                                  py-2 xs:py-3 md:py-4
-                                                  font-semibold rounded-xl md:rounded-2xl
-                                                  shadow-xl hover:shadow-2xl
-                                                  transition-all duration-300
-                                                  bg-white text-gray-900 hover:bg-gray-100
-                                              `}
-                                          >
-                                            {slide.cta}
-                                          </Button>
-                                        </div>
-                                      )}
-                                    </div>
+                                        })}
+                                        alt={`Slide ${index + 1}`}
+                                        className={`w-full h-full object-cover transition-transform duration-[10s] ease-linear ${
+                                          index === currentSlideIndex
+                                            ? "scale-105"
+                                            : "scale-100"
+                                        }`}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        decoding="async"
+                                        onError={(e) => {
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <ImageOff className="h-12 w-12 md:h-24 md:w-24 text-gray-300" />
+                                      </div>
+                                    )}
                                   </div>
+                                );
+                              },
+                            )}
+                          </div>
+
+                          {/* Navigation Arrows - Size decreased on mobile */}
+                          {heroContent.showArrows !== false &&
+                            heroContent.slides.length > 1 && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    setCurrentSlideIndex((prev) =>
+                                      prev > 0
+                                        ? prev - 1
+                                        : heroContent.slides.length - 1,
+                                    )
+                                  }
+                                  className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 
+                               bg-white/10 hover:bg-white/20 backdrop-blur-md 
+                               border border-white/20 text-white 
+                               rounded-full p-1 md:p-3 
+                               transition-all duration-300 hover:scale-110 z-20 group/btn"
+                                  aria-label="Previous Slide"
+                                >
+                                  <ChevronLeft className="h-3 w-3 md:h-5 md:w-5 group-hover/btn:translate-x-1 transition-transform" />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setCurrentSlideIndex((prev) =>
+                                      prev < heroContent.slides.length - 1
+                                        ? prev + 1
+                                        : 0,
+                                    )
+                                  }
+                                  className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 
+                               bg-white/10 hover:bg-white/20 backdrop-blur-md 
+                               border border-white/20 text-white 
+                               rounded-full p-1 md:p-3 
+                               transition-all duration-300 hover:scale-110 z-20 group/btn"
+                                  aria-label="Next Slide"
+                                >
+                                  <ChevronRight className="h-3 w-3 md:h-5 md:w-5 group-hover/btn:translate-x-1 transition-transform" />
+                                </button>
+                              </>
+                            )}
+
+                          {/* Pagination Dots - Size decreased on mobile */}
+                          {heroContent.showDots !== false &&
+                            heroContent.slides.length > 1 && (
+                              <div className="absolute bottom-2  left-0 right-0 flex justify-center items-center space-x-2 md:space-x-3 z-20">
+                                {heroContent.slides.map(
+                                  (_: any, index: number) => (
+                                    <button
+                                      key={index}
+                                      onClick={() =>
+                                        setCurrentSlideIndex(index)
+                                      }
+                                      className={`
+                            h-1.5 md:h-2 rounded-full transition-all duration-300
+                            ${
+                              index === currentSlideIndex
+                                ? "w-4 md:w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                                : "w-1.5 md:w-2 bg-white/50 hover:bg-white/80"
+                            }
+                          `}
+                                      aria-label={`Go to slide ${index + 1}`}
+                                    />
+                                  ),
                                 )}
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {heroContent.showArrows !== false &&
-                      heroContent.slides.length > 1 && (
-                        <>
-                          <button
-                            onClick={() =>
-                              setCurrentSlideIndex((prev) =>
-                                prev > 0
-                                  ? prev - 1
-                                  : heroContent.slides.length - 1,
-                              )
-                            }
-                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
-                          >
-                            <ChevronRight className="h-4 w-4 rotate-180" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setCurrentSlideIndex((prev) =>
-                                prev < heroContent.slides.length - 1
-                                  ? prev + 1
-                                  : 0,
-                              )
-                            }
-                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full p-2"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
+                            )}
                         </>
-                      )}
-                    {heroContent.showDots !== false &&
-                      heroContent.slides.length > 1 && (
-                        <div className="flex absolute bottom-2 mx-auto  w-full justify-center mt-4 space-x-2">
-                          {heroContent.slides.map((_: any, index: number) => (
-                            <button
-                              key={index}
-                              onClick={() => setCurrentSlideIndex(index)}
-                              className={`w-2 h-2 rounded-full transition-colors ${index === currentSlideIndex ? "bg-white" : "bg-white/50"}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                  </div>
+                      );
+                    })()}
+                  </>
                 ) : (
-                  // Default hero when no slides are configured
-                  <div className="relative w-full h-[40vw] min-h-40 max-h-60 md:h-[500px] md:min-h-80 bg-linear-to-br from-orange-400 via-orange-500 to-orange-600 rounded-2xl overflow-hidden shadow-lg">
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-2xl">
-                      <div className="text-white text-center px-2 py-2 max-w-[95vw] md:max-w-4xl mx-auto flex flex-col justify-center h-full">
-                        <h1 className="text-sm xs:text-base sm:text-lg md:text-5xl lg:text-6xl font-bold mb-1 xs:mb-2 md:mb-6 leading-tight drop-shadow-lg whitespace-pre-line">
-                          Welcome to {business.name}
-                        </h1>
-                        <p className="text-xs xs:text-sm sm:text-base md:text-2xl mb-2 xs:mb-3 md:mb-8 leading-relaxed drop-shadow-md max-w-2xl">
-                          {business.description ||
-                            "Discover our amazing products and services"}
-                        </p>
-                        <Button
-                          size="lg"
-                          onClick={() => openInquiryModal()}
-                          className="text-sm xs:text-base md:text-lg px-4 xs:px-6 md:px-8 py-2 xs:py-3 md:py-4 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 bg-white text-gray-900 hover:bg-gray-100"
-                        >
-                          Get in Touch
-                        </Button>
-                      </div>
-                    </div>
+                  // Fallback: ImageOff Icon when no media is present
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
+                    <ImageOff className="h-12 w-12 md:h-24 md:w-24 text-gray-300 mb-2" />
+                    <p className="text-sm md:text-lg text-gray-500 font-medium">
+                      No banner configured
+                    </p>
                   </div>
                 )}
               </div>
             </section>
+
+            {/* Mobile View: Business Profile Card - Show after banner */}
+            <div className="md:hidden mt-6 mb-8">
+              <BusinessInfoCard />
+            </div>
 
             {brandContent.brands?.length > 0 && (
               <section
@@ -1488,7 +1570,7 @@ export default function BusinessProfile({
                 className="py-6 md:py-12 px-0"
               >
                 <div className="w-full">
-                  <div className="flex justify-between items-center mb-4 md:mb-8">
+                  <div className="flex  justify-between items-center mb-4 md:mb-8">
                     <h2 className="text-lg md:text-2xl font-bold">
                       Trusted By
                     </h2>
@@ -1642,9 +1724,9 @@ export default function BusinessProfile({
               <section id="products" ref={productsRef} className="">
                 <div className="w-full mx-auto">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div className="flex  justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
-                      <h2 className="text-xl md:text-3xl font-bold tracking-tight text-gray-900">
+                      <h2 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900">
                         Our Products & Services
                       </h2>
                       {selectedBrand && (
@@ -1671,7 +1753,7 @@ export default function BusinessProfile({
                       variant="outline"
                       size="sm"
                       onClick={() => setViewAllProducts(!viewAllProducts)}
-                      className="rounded-full border-gray-300"
+                      className=" border-gray-300"
                     >
                       {viewAllProducts ? "Show Less" : "View All"}
                     </Button>
@@ -1681,10 +1763,10 @@ export default function BusinessProfile({
                   <div className="sticky top-0 z-30 mb-6">
                     {mounted && (
                       <div
-                        className="flex flex-col sm:flex-row gap-3 py-2  backdrop-blur-lg"
+                        className="flex flex-row gap-3 py-2 backdrop-blur-lg"
                         suppressHydrationWarning
                       >
-                        <div className="relative flex-1">
+                        <div className="relative flex-1 min-w-0">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <Input
                             placeholder="Search products..."
@@ -1697,11 +1779,11 @@ export default function BusinessProfile({
                           value={selectedCategory}
                           onValueChange={setSelectedCategory}
                         >
-                          <SelectTrigger className=" sm:w-[180px] h-10 bg-gray-50 border-gray-200 text-sm">
-                            <SelectValue placeholder="All Categories" />
+                          <SelectTrigger className="w-[100px] flex-shrink-0 h-10 bg-gray-50 border-gray-200 text-sm">
+                            <SelectValue placeholder="All" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
+                            <SelectItem value="all">All</SelectItem>
                             {categories.map((cat) => (
                               <SelectItem key={cat.id} value={cat.id}>
                                 {cat.name}
@@ -1720,9 +1802,9 @@ export default function BusinessProfile({
                         id={`product-${product.id}`}
                         className="group overflow-hidden p-0 rounded-2xl border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 flex flex-col h-full bg-white"
                       >
-                        {/* Image Section - Fixed Height, Cover, Clean */}
+                        {/* Image Section - Reduced Height on Mobile */}
                         <div
-                          className="relative w-full h-64 overflow-hidden cursor-pointer bg-gray-100"
+                          className="relative w-full h-48 md:h-64 overflow-hidden cursor-pointer bg-gray-100"
                           onClick={() => openProductModal(product)}
                         >
                           {product.image && product.image.trim() !== "" ? (
@@ -1774,11 +1856,11 @@ export default function BusinessProfile({
                           </div>
                         </div>
 
-                        {/* Content Section */}
-                        <div className="p-4 flex flex-col flex-1">
-                          <div className="flex justify-between items-start gap-2 mb-2">
+                        {/* Content Section - Adjusted Padding & Text Size */}
+                        <div className="p-3   flex flex-col flex-1">
+                          <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
                             <h3
-                              className="font-semibold text-gray-900 line-clamp-1 cursor-pointer hover:text-orange-600 transition-colors text-sm md:text-base"
+                              className="font-semibold text-slate-800 line-clamp-2 cursor-pointer hover:text-orange-600 transition-colors text-xs md:text-sm sm:text-base"
                               onClick={() => openProductModal(product)}
                             >
                               {product.name}
@@ -1786,33 +1868,35 @@ export default function BusinessProfile({
                           </div>
 
                           {/* Tags */}
-                          <div className="flex flex-wrap gap-1.5 mb-3">
+                          <div className="flex flex-wrap gap-1.5 mb-2 sm:mb-3">
                             {product.brandName && (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-1.5 py-0.5 rounded-md border-gray-200 text-gray-500 font-normal"
+                                className="text-xs px-1.5 py-0.5 rounded-full border-gray-200 text-gray-500 "
                               >
+                                <Grid2X2Check className="h-4 w-4 mr-1" />
                                 {product.brandName}
                               </Badge>
                             )}
                             {product.category && (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-1.5 py-0.5 rounded-md border-gray-200 text-gray-500 font-normal"
+                                className="text-xs px-1.5 py-0.5 rounded-full border-gray-200 text-gray-500 "
                               >
+                                <Tag className="h-4 w-4 mr-1" />
                                 {product.category.name}
                               </Badge>
                             )}
                           </div>
 
-                          <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed flex-1">
+                          <p className="text-[10px] sm:text-xs text-gray-500 line-clamp-2 mb-3 sm:mb-4 leading-relaxed flex-1">
                             {product.description || "No description available."}
                           </p>
 
                           {/* Actions */}
                           <div className="flex gap-2 mt-auto">
                             <Button
-                              className="flex-1 bg-green-500 hover:bg-black text-white h-9 text-xs font-medium rounded-lg"
+                              className="flex-1 bg-green-500 hover:bg-black text-white h-8 sm:h-9 text-[10px] sm:text-xs font-medium rounded-lg"
                               onClick={() => {
                                 if (business.phone) {
                                   const productLink = `${window.location.origin}/catalog/${business.slug}?product=${product.id}&modal=open`;
@@ -1828,18 +1912,18 @@ export default function BusinessProfile({
                               }}
                             >
                               Inquire
-                              <SiWhatsapp className="h-3.5 w-3.5 ml-1.5" />
+                              <SiWhatsapp className="h-3 w-3 ml-1" />
                             </Button>
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-9 w-9 rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                              className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleShare(product);
                               }}
                             >
-                              <Share2 className="h-4 w-4" />
+                              <Share2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </div>
@@ -1847,7 +1931,7 @@ export default function BusinessProfile({
                     );
 
                     return viewAllProducts ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                         {filteredProducts.map((product) => (
                           <ProductCard key={product.id} product={product} />
                         ))}
@@ -1987,27 +2071,11 @@ export default function BusinessProfile({
             )}
 
             {/* About Us Text & Opening Hours (Moved to Main Content) */}
-            <section className="w-full py-8 md:py-12 bg-white rounded-3xl shadow-sm px-6 md:px-8">
+            <section className="w-full py-8   md:py-12 bg-white rounded-3xl shadow-sm px-6 md:px-8">
               <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-                {/* Left Side: About Us */}
-                <div className="flex-1">
-                  <h2 className="text-xl md:text-2xl font-bold mb-3">
-                    About Us
-                  </h2>
-                  <p className="text-gray-700 md:text-base text-sm leading-relaxed whitespace-pre-line">
-                    {business.about ||
-                      "We are a leading business offering top quality products and services to our customers. Our mission is to deliver excellence and build lasting relationships."}
-                  </p>
-                </div>
-                {/* Separator */}
-                <div className="hidden md:flex flex-col items-center justify-center">
-                  <Separator orientation="vertical" className="h-32" />
-                </div>
                 {/* Right Side: Opening Hours & GST Number */}
                 <div className="flex-1">
-                  <h2 className="text-xl md:text-2xl font-bold mb-3">
-                    Opening Hours & Details
-                  </h2>
+                
                   <div className="space-y-4 flex justify-between">
                     <div>
                       <Label className="flex flex-2  text-gray-600 mb-1">
@@ -2054,86 +2122,32 @@ export default function BusinessProfile({
             </section>
           </div>
 
-          {/* Mobile Menu - Bottom Navigation */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
-            <div className="flex justify-around items-center h-16 px-2">
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-                  activeSection === "home"
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              >
-                <Home className="h-5 w-5" />
-                <span className="text-xs mt-1 font-medium">Home</span>
-              </button>
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-                  activeSection === "about"
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-                onClick={() =>
-                  scrollToSection(
-                    aboutRef as React.RefObject<HTMLDivElement>,
-                    "about",
-                  )
-                }
-              >
-                <User className="h-5 w-5" />
-                <span className="text-xs mt-1 font-medium">About</span>
-              </button>
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-                  activeSection === "brands"
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-                onClick={() =>
-                  scrollToSection(
-                    brandsRef as React.RefObject<HTMLDivElement>,
-                    "brands",
-                  )
-                }
-              >
-                <Grid3X3 className="h-5 w-5" />
-                <span className="text-xs mt-1 font-medium">Brands</span>
-              </button>
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-                  activeSection === "products"
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-                onClick={() =>
-                  scrollToSection(
-                    productsRef as React.RefObject<HTMLDivElement>,
-                    "products",
-                  )
-                }
-              >
-                <ShoppingBag className="h-5 w-5" />
-                <span className="text-xs mt-1 font-medium">Products</span>
-              </button>
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-                  activeSection === "portfolio"
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-                onClick={() =>
-                  scrollToSection(
-                    portfolioRef as React.RefObject<HTMLDivElement>,
-                    "portfolio",
-                  )
-                }
-              >
-                <Briefcase className="h-5 w-5" />
-                <span className="text-xs mt-1 font-medium">Portfolio</span>
-              </button>
+          {/* Mobile Bottom Navigation - All 4 items visible directly (About removed) */}
+          {isMobile && (
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-safe">
+              <div className="flex justify-around items-center gap-2 px-3">
+                {navLinks.map((item) => {
+                  const MobileIcon = item.mobileIcon;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => handleViewChange(item.value)}
+                      className={`flex flex-col items-center justify-center py-2 w-full rounded-none transition-all duration-200 ${
+                        activeSection === item.value
+                          ? "text-orange-400 font-extrabold border-t-4 rounded-none border-orange-400"
+                          : "text-gray-500 border-t-4 border-transparent hover:text-gray-700"
+                      }`}
+                    >
+                      <MobileIcon className="h-5 w-5 mb-0.5" />
+                      <span className="text-xs font-medium">
+                        {item.mobileTitle}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
 
@@ -2367,7 +2381,7 @@ export default function BusinessProfile({
                     {relatedProducts.map((product) => (
                       <Card
                         key={product.id}
-                        className="overflow-hidden pt-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2 cursor-pointer"
+                        className="overflow-hidden pt-0 py-0 bg-white hover:shadow-lg transition-shadow duration-300 pb-2 cursor-pointer"
                         onClick={() => setSelectedProductModal(product)}
                       >
                         <div className="relative h-32 md:h-48">
@@ -2384,7 +2398,7 @@ export default function BusinessProfile({
                               srcSet={generateSrcSet(product.image)}
                               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
                               alt={product.name}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-cover"
                               loading="lazy"
                               decoding="async"
                             />
@@ -2421,7 +2435,7 @@ export default function BusinessProfile({
                             )}
                           </Badge>
                         </div>
-                        <CardHeader className="pb-2 px-2 md:px-3 ">
+                        <CardHeader className="pb-0 px-2 md:px-3 ">
                           <CardTitle className="text-xs  md:text-lg line-clamp-1">
                             {product.name}
                           </CardTitle>
@@ -2448,8 +2462,9 @@ export default function BusinessProfile({
                           <CardDescription className="mb-2 md:mb-4 text-[10px]  md:text-sm leading-relaxed line-clamp-2">
                             {product.description || "No description available"}
                           </CardDescription>
+                          <div className="flex-1 "></div>
                           <Button
-                            className="w-full mt-auto bg-green-500 hover:bg-green-700 cursor-pointer text-xs md:text-sm"
+                            className="w-full mt-auto bg-green-500 hover:bg-slate-900 text-white cursor-pointer text-xs md:text-sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (business.phone) {

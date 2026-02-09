@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Plus, X, Save } from 'lucide-react'
@@ -14,17 +13,7 @@ import ImageUpload from '@/components/ui/image-upload'
 interface Slide {
   mediaType: 'image' | 'video'
   media: string
-  headline: string
-  headlineSize: string
-  headlineColor: string
-  headlineAlignment: 'left' | 'center' | 'right'
-  subtext: string
-  subtextSize: string
-  subtextColor: string
-  subtextAlignment: 'left' | 'center' | 'right'
-  cta: string
-  ctaLink: string
-  showText?: boolean
+  videoUrl: string
 }
 
 interface BannerEditorModalProps {
@@ -33,54 +22,40 @@ interface BannerEditorModalProps {
   editingSlide: Slide | null
   onSave: (slide: Slide) => void
   onCancel: () => void
+  // Slider settings props
+  autoPlay?: boolean
+  interval?: number
+  showDots?: boolean
+  showArrows?: boolean
+  onSliderSettingsChange?: (settings: { autoPlay: boolean; interval: number; showDots: boolean; showArrows: boolean }) => void
 }
-
-const headlineSizeOptions = [
-  { value: 'text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl', label: 'Small' },
-  { value: 'text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl', label: 'Medium' },
-  { value: 'text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl', label: 'Large' },
-  { value: 'text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl', label: 'Extra Large' },
-  { value: 'text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl', label: 'Huge' }
-]
-
-const subtextSizeOptions = [
-  { value: 'text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl', label: 'Small' },
-  { value: 'text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl', label: 'Medium' },
-  { value: 'text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl', label: 'Large' },
-  { value: 'text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl', label: 'Extra Large' },
-  { value: 'text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl', label: 'Huge' }
-]
-
-const alignmentOptions = [
-  { value: 'left', label: 'Left' },
-  { value: 'center', label: 'Center' },
-  { value: 'right', label: 'Right' }
-]
 
 export default function BannerEditorModal({
   open,
   onOpenChange,
   editingSlide,
   onSave,
-  onCancel
+  onCancel,
+  autoPlay = true,
+  interval = 5000,
+  showDots = true,
+  showArrows = true,
+  onSliderSettingsChange
 }: BannerEditorModalProps) {
   const [slideData, setSlideData] = useState<Slide>({
     mediaType: 'image',
     media: '',
-    headline: '',
-    headlineSize: 'text-4xl md:text-6xl',
-    headlineColor: '#ffffff',
-    headlineAlignment: 'center',
-    subtext: '',
-    subtextSize: 'text-xl md:text-2xl',
-    subtextColor: '#ffffff',
-    subtextAlignment: 'center',
-    cta: 'Get in Touch',
-    ctaLink: '',
-    showText: true
+    videoUrl: ''
   })
 
-  const [activeTab, setActiveTab] = useState<'content' | 'style' | 'settings'>('content')
+  const [sliderSettings, setSliderSettings] = useState({
+    autoPlay,
+    interval,
+    showDots,
+    showArrows
+  })
+
+  const [activeTab, setActiveTab] = useState<'content' | 'sliderSettings'>('content')
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -90,20 +65,19 @@ export default function BannerEditorModal({
       setSlideData({
         mediaType: 'image',
         media: '',
-        headline: '',
-        headlineSize: 'text-4xl md:text-6xl',
-        headlineColor: '#ffffff',
-        headlineAlignment: 'center',
-        subtext: '',
-        subtextSize: 'text-xl md:text-2xl',
-        subtextColor: '#ffffff',
-        subtextAlignment: 'center',
-        cta: 'Get in Touch',
-        ctaLink: '',
-        showText: true
+        videoUrl: ''
       })
     }
   }, [open, editingSlide])
+
+  useEffect(() => {
+    setSliderSettings({
+      autoPlay,
+      interval,
+      showDots,
+      showArrows
+    })
+  }, [autoPlay, interval, showDots, showArrows])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -121,6 +95,14 @@ export default function BannerEditorModal({
   const handleCancel = () => {
     onCancel()
     onOpenChange(false)
+  }
+
+  const handleSliderSettingChange = (key: string, value: boolean | number) => {
+    const newSettings = { ...sliderSettings, [key]: value }
+    setSliderSettings(newSettings)
+    if (onSliderSettingsChange) {
+      onSliderSettingsChange(newSettings)
+    }
   }
 
   return (
@@ -162,22 +144,13 @@ export default function BannerEditorModal({
                 Content
               </button>
               <button
-                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'style'
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'sliderSettings'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
-                onClick={() => setActiveTab('style')}
+                onClick={() => setActiveTab('sliderSettings')}
               >
-                Style
-              </button>
-              <button
-                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'settings'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                onClick={() => setActiveTab('settings')}
-              >
-                Settings
+                Slider Settings
               </button>
             </div>
           </div>
@@ -188,22 +161,29 @@ export default function BannerEditorModal({
               <div className="space-y-4">
                 {activeTab === 'content' && (
                   <div className="space-y-6">
-                    {/* Background Media */}
+                    {/* Media Type */}
                     <div>
-                      <Label className="text-sm font-medium">Background Media</Label>
+                      <Label className="text-sm font-medium">Media Type</Label>
+                      <Select
+                        value={slideData.mediaType}
+                        onValueChange={(value) => setSlideData(prev => ({ ...prev, mediaType: value as 'image' | 'video' }))}
+                      >
+                        <SelectTrigger className="mt-2 rounded-2xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="image">Image</SelectItem>
+                          <SelectItem value="video">Video</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Media Upload */}
+                    <div>
+                      <Label className="text-sm font-medium">
+                        {slideData.mediaType === 'video' ? 'Video Thumbnail (Image)' : 'Background Image'}
+                      </Label>
                       <div className="mt-2 space-y-3">
-                        <Select
-                          value={slideData.mediaType}
-                          onValueChange={(value) => setSlideData(prev => ({ ...prev, mediaType: value as 'image' | 'video' }))}
-                        >
-                          <SelectTrigger className="rounded-2xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="image">Image</SelectItem>
-                            <SelectItem value="video">Video</SelectItem>
-                          </SelectContent>
-                        </Select>
                         <Input
                           placeholder="Media URL"
                           value={slideData.media}
@@ -211,197 +191,77 @@ export default function BannerEditorModal({
                           className="bg-white rounded-2xl"
                         />
                         <ImageUpload
-                          allowVideo={true}
+                          allowVideo={false}
                           aspectRatio={16/9}
                           onUpload={(url) => setSlideData(prev => ({ ...prev, media: url }))}
                         />
                       </div>
                     </div>
 
-                    {/* Headline */}
-                    <div>
-                      <Label className="text-sm font-medium">Headline</Label>
-                      <Input
-                        placeholder="Enter headline"
-                        value={slideData.headline}
-                        onChange={(e) => setSlideData(prev => ({ ...prev, headline: e.target.value }))}
-                        className="mt-2 bg-white rounded-2xl"
-                      />
-                    </div>
-
-                    {/* Subtext */}
-                    <div>
-                      <Label className="text-sm font-medium">Subtext</Label>
-                      <Textarea
-                        placeholder="Enter subtext"
-                        rows={3}
-                        value={slideData.subtext}
-                        onChange={(e) => setSlideData(prev => ({ ...prev, subtext: e.target.value }))}
-                        className="mt-2 bg-white rounded-2xl"
-                      />
-                    </div>
-
-                    {/* CTA */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Video URL */}
+                    {slideData.mediaType === 'video' && (
                       <div>
-                        <Label className="text-sm font-medium">CTA Text</Label>
+                        <Label className="text-sm font-medium">Video URL</Label>
                         <Input
-                          placeholder="Call to action text"
-                          value={slideData.cta}
-                          onChange={(e) => setSlideData(prev => ({ ...prev, cta: e.target.value }))}
+                          placeholder="https://example.com/video.mp4"
+                          value={slideData.videoUrl}
+                          onChange={(e) => setSlideData(prev => ({ ...prev, videoUrl: e.target.value }))}
                           className="mt-2 bg-white rounded-2xl"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Enter the direct URL to your video file</p>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium">CTA Link</Label>
-                        <Input
-                          placeholder="https://..."
-                          value={slideData.ctaLink}
-                          onChange={(e) => setSlideData(prev => ({ ...prev, ctaLink: e.target.value }))}
-                          className="mt-2 bg-white rounded-2xl"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {activeTab === 'style' && (
-                  <div className="space-y-6">
-                    {/* Headline Style */}
-                    <div>
-                      <h3 className="text-sm font-medium mb-4">Headline Style</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm">Size</Label>
-                          <Select
-                            value={slideData.headlineSize}
-                            onValueChange={(value) => setSlideData(prev => ({ ...prev, headlineSize: value }))}
-                          >
-                            <SelectTrigger className="mt-2 rounded-2xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {headlineSizeOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-sm">Color</Label>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Input
-                              type="color"
-                              value={slideData.headlineColor}
-                              onChange={(e) => setSlideData(prev => ({ ...prev, headlineColor: e.target.value }))}
-                              className="w-12 h-10 p-1 rounded-2xl"
-                            />
-                            <Input
-                              value={slideData.headlineColor}
-                              onChange={(e) => setSlideData(prev => ({ ...prev, headlineColor: e.target.value }))}
-                              placeholder="#ffffff"
-                              className="rounded-2xl"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-sm">Alignment</Label>
-                          <Select
-                            value={slideData.headlineAlignment}
-                            onValueChange={(value) => setSlideData(prev => ({ ...prev, headlineAlignment: value as 'left' | 'center' | 'right' }))}
-                          >
-                            <SelectTrigger className="mt-2 rounded-2xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {alignmentOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Subtext Style */}
-                    <div>
-                      <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm">Size</Label>
-                          <Select
-                            value={slideData.subtextSize}
-                            onValueChange={(value) => setSlideData(prev => ({ ...prev, subtextSize: value }))}
-                          >
-                            <SelectTrigger className="mt-2 rounded-2xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {subtextSizeOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-sm">Color</Label>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Input
-                              type="color"
-                              value={slideData.subtextColor}
-                              onChange={(e) => setSlideData(prev => ({ ...prev, subtextColor: e.target.value }))}
-                              className="w-12 h-10 p-1 rounded-2xl"
-                            />
-                            <Input
-                              value={slideData.subtextColor}
-                              onChange={(e) => setSlideData(prev => ({ ...prev, subtextColor: e.target.value }))}
-                              placeholder="#ffffff"
-                              className="rounded-2xl"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-sm">Alignment</Label>
-                          <Select
-                            value={slideData.subtextAlignment}
-                            onValueChange={(value) => setSlideData(prev => ({ ...prev, subtextAlignment: value as 'left' | 'center' | 'right' }))}
-                          >
-                            <SelectTrigger className="mt-2 rounded-2xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {alignmentOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'settings' && (
+                {activeTab === 'sliderSettings' && (
                   <div className="space-y-6">
                     <h3 className="text-sm font-medium">Slider Settings</h3>
 
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="showText" className="text-sm">Show Text Overlay</Label>
-                        <Switch
-                          id="showText"
-                          checked={slideData.showText !== false}
-                          onCheckedChange={(checked) => setSlideData(prev => ({ ...prev, showText: checked }))}
-                        />
-                      </div>
+                    {/* Auto-play */}
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="autoPlay" className="text-sm">Auto-play</Label>
+                      <Switch
+                        id="autoPlay"
+                        checked={sliderSettings.autoPlay}
+                        onCheckedChange={(checked) => handleSliderSettingChange('autoPlay', checked)}
+                      />
+                    </div>
+
+                    {/* Interval */}
+                    <div>
+                      <Label htmlFor="interval" className="text-sm">Interval (ms)</Label>
+                      <Input
+                        id="interval"
+                        type="number"
+                        min={1000}
+                        max={10000}
+                        step={100}
+                        value={sliderSettings.interval}
+                        onChange={(e) => handleSliderSettingChange('interval', parseInt(e.target.value) || 5000)}
+                        className="mt-2 bg-white rounded-2xl"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Time between slides in milliseconds (1000-10000)</p>
+                    </div>
+
+                    {/* Show Dots */}
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showDots" className="text-sm">Show Navigation Dots</Label>
+                      <Switch
+                        id="showDots"
+                        checked={sliderSettings.showDots}
+                        onCheckedChange={(checked) => handleSliderSettingChange('showDots', checked)}
+                      />
+                    </div>
+
+                    {/* Show Arrows */}
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showArrows" className="text-sm">Show Navigation Arrows</Label>
+                      <Switch
+                        id="showArrows"
+                        checked={sliderSettings.showArrows}
+                        onCheckedChange={(checked) => handleSliderSettingChange('showArrows', checked)}
+                      />
                     </div>
                   </div>
                 )}

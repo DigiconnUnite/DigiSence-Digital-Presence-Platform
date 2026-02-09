@@ -161,126 +161,17 @@ export default function HeroSectionOne() {
 
   return (
 
-    <div className="relative py-20 md:py-30 h-fit overflow-hidden bg-linear-to-t to-[#5757FF] via-[#A89CFE] from-white">
-     
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "160px", height: "160px", top: "5%", left: "5%" }}
-        animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0.5,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "60px", height: "60px", top: "10%", left: "85%" }}
-        animate={{ y: [0, 30, 0], x: [0, -15, 0] }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 1,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "120px", height: "120px", top: "25%", left: "40%" }}
-        animate={{ y: [0, -25, 0], x: [0, 20, 0] }}
-        transition={{
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "200px", height: "200px", top: "40%", left: "75%" }}
-        animate={{ y: [0, 15, 0], x: [0, -20, 0] }}
-        transition={{
-          duration: 9,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 2,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "80px", height: "80px", top: "60%", left: "10%" }}
-        animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0.2,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "50px", height: "50px", top: "55%", left: "50%" }}
-        animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-        transition={{
-          duration: 6.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 1.5,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "140px", height: "140px", top: "70%", left: "30%" }}
-        animate={{ y: [0, -10, 0], x: [0, 25, 0] }}
-        transition={{
-          duration: 8.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0.8,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "90px", height: "90px", top: "85%", left: "80%" }}
-        animate={{ y: [0, 35, 0], x: [0, -5, 0] }}
-        transition={{
-          duration: 7.2,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0.3,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "40px", height: "40px", top: "20%", left: "20%" }}
-        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 1.2,
-        }}
-      />
-      <motion.div
-        className="absolute border-t rounded-full shadow-md bg-linear-to-b to-[#5757FF] via-[#A89CFE] from-white z-0"
-        style={{ width: "110px", height: "110px", top: "45%", left: "5%" }}
-        animate={{ y: [0, 25, 0], x: [0, -25, 0] }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-          repeatDelay: 0.7,
-        }}
-      />
-
-
-      <div className="absolute inset-0 w-full h-full z-10 pointer-events-none bg-white/5"></div>
+    <div
+      className="relative py-20 md:py-30 h-fit overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/footer-bg.jpg')" }}
+    >
+      {/* White gradient overlay at bottom for smooth transition to next section */}
+      <div className="absolute top-0 left-0 right-0 h-54 bg-gradient-to-t from-transparent  to-black z-10"></div>
 
       {/* LAYER 3: Content (z-20 & z-30) */}
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4 z-20">
-        <div className="py-8 md:py-16 lg:py-20 w-full">
-          <h1 className="relative mx-auto max-w-4xl text-center text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
+        <div className="py-8 md:py-16 lg:py-20  w-full">
+          <h1 className="relative mx-auto max-w-4xl mb-5 text-center text-3xl sm:text-4xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
             {"Your One-Stop Solution for a Stunning Digital Profiles"
               .split(" ")
               .map((word, index) => (
@@ -320,7 +211,7 @@ export default function HeroSectionOne() {
       </div>
 
       {/* Marquee Container */}
-      <div className="w-full relative z-10 pb-12">
+      <div className="w-full relative z-10 pb-5 pt-5">
         <div className="flex items-center">
           <motion.div
             className="flex gap-6 md:gap-10"
@@ -345,7 +236,6 @@ export default function HeroSectionOne() {
                   key={`marquee-${i}`}
                   className="relative shrink-0 z-10 rounded-2xl overflow-hidden shadow-2xl border-8 border-white/30 duration-300"
                   style={{
-                  
                     width: isPortrait ? "auto" : "40rem",
                     height: isPortrait ? "24rem" : "auto",
 

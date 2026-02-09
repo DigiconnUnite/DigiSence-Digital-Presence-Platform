@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings, ImageOff } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 
 // Keep Banner interface for data model compatibility (API still accepts these fields)
@@ -280,7 +280,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                     autoPlay
                     playsInline
                   />
-                ) : (
+                ) : currentBanner.media ? (
                   <img
                     src={getOptimizedImageUrl(currentBanner.media, {
                       width: 800,
@@ -291,6 +291,13 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                     alt="Banner preview"
                     className="w-full h-full object-cover"
                   />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
+                    <ImageOff className="w-24 h-24 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">
+                      No image configured for this banner
+                    </p>
+                  </div>
                 )}
               </>
             ) : (

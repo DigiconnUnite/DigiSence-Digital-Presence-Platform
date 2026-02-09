@@ -12,9 +12,7 @@ import UnifiedPublicLayout from "@/components/UnifiedPublicLayout";
 export default function ContactPage() {
   return (
     <UnifiedPublicLayout variant="solid" sidebarVariant="contact">
-      <div className="secondary-light-gradient relative">
-   
-
+      <div className=" relative">
         {/* Contact Content - with padding to account for fixed header */}
         <div className="relative z-10 pt-32">
           <section className="pb-20 px-4 sm:px-6 lg:px-8">
@@ -126,8 +124,6 @@ export default function ContactPage() {
             </div>
           </section>
         </div>
-
-        <Footer />
       </div>
     </UnifiedPublicLayout>
   );

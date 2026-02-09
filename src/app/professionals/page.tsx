@@ -20,7 +20,21 @@ import {
   Globe,
   Eye,
   ArrowRight,
-  ImageIcon
+  ImageIcon,
+  Code,
+  Stethoscope,
+  Scale,
+  Hammer,
+  GraduationCap,
+  Palette,
+  TrendingUp,
+  Briefcase,
+  Camera,
+  ChefHat,
+  Pill,
+  Wrench,
+  Truck,
+  UserCheck
 } from 'lucide-react'
 import { FaWhatsapp } from 'react-icons/fa'
 import UnifiedPublicLayout from '@/components/UnifiedPublicLayout'
@@ -46,24 +60,24 @@ interface Category {
 }
 
 const professions = [
-  { name: 'Developer', icon: Search },
-  { name: 'Doctor', icon: Search },
-  { name: 'Lawyer', icon: Search },
-  { name: 'Engineer', icon: Search },
-  { name: 'Teacher', icon: Search },
-  { name: 'Accountant', icon: Search },
-  { name: 'Designer', icon: Search },
-  { name: 'Marketer', icon: Search },
-  { name: 'Consultant', icon: Search },
-  { name: 'Photographer', icon: Search },
-  { name: 'Chef', icon: Search },
-  { name: 'Manager', icon: Search },
-  { name: 'Architect', icon: Search },
-  { name: 'Nurse', icon: Search },
-  { name: 'Pharmacist', icon: Search },
-  { name: 'Electrician', icon: Search },
-  { name: 'Plumber', icon: Search },
-  { name: 'Driver', icon: Search }
+  { name: 'Developer', icon: Code },
+  { name: 'Doctor', icon: Stethoscope },
+  { name: 'Lawyer', icon: Scale },
+  { name: 'Engineer', icon: Hammer },
+  { name: 'Teacher', icon: GraduationCap },
+  { name: 'Accountant', icon: TrendingUp },
+  { name: 'Designer', icon: Palette },
+  { name: 'Marketer', icon: TrendingUp },
+  { name: 'Consultant', icon: Briefcase },
+  { name: 'Photographer', icon: Camera },
+  { name: 'Chef', icon: ChefHat },
+  { name: 'Manager', icon: UserCheck },
+  { name: 'Architect', icon: Hammer },
+  { name: 'Nurse', icon: Stethoscope },
+  { name: 'Pharmacist', icon: Pill },
+  { name: 'Electrician', icon: Wrench },
+  { name: 'Plumber', icon: Wrench },
+  { name: 'Driver', icon: Truck }
 ]
 
 function ProfessionalsContent() {

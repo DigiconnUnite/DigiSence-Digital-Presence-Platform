@@ -106,7 +106,7 @@ export default function BusinessLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-white">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-slate-200">
       {/* --- LEFT SIDE: FORM --- */}
       <div className="flex-1 flex flex-col justify-center relative w-full px-4 sm:px-6 lg:px-12 py-10 lg:py-0 z-10">
         {/* Top Header */}
@@ -168,7 +168,7 @@ export default function BusinessLoginPage() {
                     required
                     disabled={loading}
                     placeholder="business@example.com"
-                    className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="pl-9 h-11 shadow-none  bg-white focus-visible:ring-2 focus-visible:ring-primary/20"
                   />
                 </div>
               </div>
@@ -201,7 +201,7 @@ export default function BusinessLoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={loading}
-                    className="pl-9 pr-10 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="pl-9 pr-10 bg-white h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   />
                   <Button
                     type="button"
@@ -246,7 +246,7 @@ export default function BusinessLoginPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 shadow-lg bg-linear-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
+                className="w-full h-11 shadow-lg bg-slate-800 cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
                 disabled={loading}
               >
                 {loading ? "Logging in..." : "Login to Business Dashboard"}

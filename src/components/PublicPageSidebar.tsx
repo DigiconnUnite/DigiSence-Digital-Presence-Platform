@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, Menu, Home, Building2, Users, Calculator, Mail, Filter } from "lucide-react";
+import { X, Menu, Home, Building2, Users, Calculator, Mail, Filter, Code, Stethoscope, Scale, Hammer, Book, Palette, Megaphone, Briefcase, Camera, ChefHat, Pill, GraduationCap, TrendingUp, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,16 +26,16 @@ const homeCategories = [
 
 // Professional categories
 const professionalCategories = [
-  { name: "Developer", icon: Users },
-  { name: "Doctor", icon: Users },
-  { name: "Lawyer", icon: Users },
-  { name: "Engineer", icon: Users },
-  { name: "Teacher", icon: Users },
-  { name: "Accountant", icon: Users },
-  { name: "Designer", icon: Users },
-  { name: "Marketer", icon: Users },
-  { name: "Consultant", icon: Users },
-  { name: "Photographer", icon: Users },
+  { name: "Developer", icon: Code },
+  { name: "Doctor", icon: Stethoscope },
+  { name: "Lawyer", icon: Scale },
+  { name: "Engineer", icon: Hammer },
+  { name: "Teacher", icon: GraduationCap },
+  { name: "Accountant", icon: Calculator },
+  { name: "Designer", icon: Palette },
+  { name: "Marketer", icon: TrendingUp },
+  { name: "Consultant", icon: Briefcase },
+  { name: "Photographer", icon: Camera },
 ];
 
 // Business categories
@@ -113,7 +113,7 @@ export default function PublicPageSidebar({
   const getActiveLinkClass = (isActive: boolean) => {
     if (variant === "home") {
       return isActive
-        ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+        ? "bg-slate-800 text-white"
         : "text-gray-700 hover:bg-gray-100";
     }
     return isActive

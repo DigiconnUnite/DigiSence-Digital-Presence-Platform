@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <UnifiedPublicLayout variant="transparent" sidebarVariant="home">
       {/* Main Content Container with gradient background */}
-      <div className="secondary-light-gradient pt-0 pb-16 md:pb-0">
+      <div className="secondary-light-gradient pt-0  md:pb-0">
         <HeroSectionOne />
 
         {/* Who Is It For? Section */}
@@ -316,8 +316,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        <Footer />
       </div>
     </UnifiedPublicLayout>
   );

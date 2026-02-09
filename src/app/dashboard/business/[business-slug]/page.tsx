@@ -885,11 +885,6 @@ export default function BusinessAdminDashboard() {
       case "dashboard":
         return (
           <div className=" mx-auto">
-            <div className="mb-8">
-              <Skeleton className="h-8 w-64 mb-2" />
-              <Skeleton className="h-6 w-96" />
-            </div>
-
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -909,20 +904,8 @@ export default function BusinessAdminDashboard() {
               ))}
             </div>
 
-            {/* Quick Actions and Recent Activity */}
+            {/* Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="rounded-3xl">
-                <CardHeader>
-                  <Skeleton className="h-6 w-32" />
-                  <Skeleton className="h-4 w-48" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full rounded-2xl" />
-                  ))}
-                </CardContent>
-              </Card>
-
               <Card className="rounded-3xl">
                 <CardHeader>
                   <Skeleton className="h-6 w-40" />
@@ -1258,7 +1241,7 @@ export default function BusinessAdminDashboard() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/catalog/${business.slug}`, "_blank")}
-                    className="rounded-full px-4 py-0  bg-[#080322] hover:bg-slate-900  text-white hover:text-white  border-0 hover:opacity-90 transition-opacity"
+                    className="rounded-full px-4 py-0.2  bg-slate-900 hover:bg-slate-800  text-white hover:text-white  border-0 hover:opacity-90 transition-opacity"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View 
@@ -1270,7 +1253,7 @@ export default function BusinessAdminDashboard() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/catalog/${business.slug}`, "_blank")}
-                    className="rounded-full px-3 py-0  bg-[#080322]  text-white border-0 hover:text-white hover:opacity-90 transition-opacity"
+                    className="rounded-full px-3 py-0  bg-slate-800  text-white border-0 hover:text-white hover:opacity-90 transition-opacity"
                   >
                     <Eye className="h-3.5 w-3.5 mr-1.5" />
                     <span className="text-xs">View</span>
@@ -1313,19 +1296,8 @@ export default function BusinessAdminDashboard() {
               {/* Main Content based on activeSection */}
               {activeSection === "dashboard" && (
                 <>
-                  <div className="  mx-auto">
-                    <div className="mb-8">
-                      <h1 className="text-lg  font-bold text-gray-900">
-                        Dashboard Overview
-                      </h1>
-                      <p className="text-md text-gray-600">
-                        Welcome back! Here's what's happening with your
-                        business.
-                      </p>
-                    </div>
-
-                    {/* Stats Overview */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Stats Overview */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                       <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium text-gray-900">
@@ -1423,6 +1395,7 @@ export default function BusinessAdminDashboard() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <Button
+                            variant="default"
                             onClick={() => {
                               setActiveSection("products");
                               setEditingProduct(null);
@@ -1439,7 +1412,7 @@ export default function BusinessAdminDashboard() {
                               });
                               setShowProductDialog(true);
                             }}
-                            className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                            className="rounded-xl  text-white hover:opacity-90 transition-opacity"
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Add New Product
@@ -1530,7 +1503,6 @@ export default function BusinessAdminDashboard() {
                         </CardContent>
                       </Card>
                     </div>
-                  </div>
                 </>
               )}
 
@@ -1790,8 +1762,8 @@ export default function BusinessAdminDashboard() {
                     </Card>
 
                     {/* Brands Table Section */}
-                    <Card className="rounded-3xl">
-                      <CardContent>
+                    <Card className="p-0 overflow-hidden rounded-xl">
+                      <CardContent className="p-0">
                         {brandContent.brands?.length > 0 ? (
                           <Table>
                             <TableHeader className="bg-[#080322] ">
@@ -2402,6 +2374,7 @@ export default function BusinessAdminDashboard() {
                         </div>
                         <div className="flex gap-2">
                           <Button
+                            variant="default"
                             onClick={() => {
                               setEditingCategory(null);
                               setCategoryFormData({
@@ -2412,7 +2385,7 @@ export default function BusinessAdminDashboard() {
                               setShowCategoryModal(true);
                             }}
                             disabled={savingCategory}
-                            className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                            className="rounded-xl  hover:opacity-90 transition-opacity"
                           >
                             {savingCategory ? (
                               <>
@@ -2428,8 +2401,8 @@ export default function BusinessAdminDashboard() {
                     </Card>
 
                     {/* Categories Table Section */}
-                    <Card className="rounded-3xl">
-                      <CardContent>
+                    <Card className=" p-0 rounded-xl overflow-hidden">
+                      <CardContent className="p-0">
                         {categories.length > 0 ? (
                           <Table>
                             <TableHeader className="bg-[#080322] ">
@@ -2526,6 +2499,7 @@ export default function BusinessAdminDashboard() {
                       </p>
                     </div>
                     <Button
+                      variant="default"
                       onClick={() => {
                         setEditingProduct(null);
                         setProductFormData({
@@ -2541,7 +2515,7 @@ export default function BusinessAdminDashboard() {
                         });
                         setShowProductDialog(true);
                       }}
-                      className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
+                      className="rounded-xl  hover:opacity-90 transition-opacity"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
@@ -2577,7 +2551,7 @@ export default function BusinessAdminDashboard() {
                     </Select>
                   </div>
 
-                  <Card className="p-0 bg-white rounded-md">
+                  <Card className="p-0 bg-white rounded-xl overflow-hidden">
                     <CardContent className="p-0">
                       {mounted && selectedProducts.length > 0 && (
                         <div className="p-4 bg-blue-50 border-b border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

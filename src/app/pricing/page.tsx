@@ -23,7 +23,6 @@ export default function PricingPage() {
       <div className="secondary-light-gradient">
         <PricingSection />
       </div>
-      <Footer />
     </UnifiedPublicLayout>
   );
 }

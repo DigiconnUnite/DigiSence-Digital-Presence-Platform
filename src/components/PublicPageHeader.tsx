@@ -15,6 +15,17 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Code,
+  Stethoscope,
+  Scale,
+  Hammer,
+  GraduationCap,
+  Palette,
+  TrendingUp,
+  Briefcase,
+  Camera,
+  ChefHat,
+  Pill,
 } from "lucide-react";
 
 export interface PublicPageHeaderProps {
@@ -47,21 +58,21 @@ const defaultNavItems = [
 
 // Default categories for professionals
 const defaultProfessions = [
-  { name: "Developer", icon: Users },
-  { name: "Doctor", icon: Users },
-  { name: "Lawyer", icon: Users },
-  { name: "Engineer", icon: Users },
-  { name: "Teacher", icon: Users },
-  { name: "Accountant", icon: Users },
-  { name: "Designer", icon: Users },
-  { name: "Marketer", icon: Users },
-  { name: "Consultant", icon: Users },
-  { name: "Photographer", icon: Users },
-  { name: "Chef", icon: Users },
+  { name: "Developer", icon: Code },
+  { name: "Doctor", icon: Stethoscope },
+  { name: "Lawyer", icon: Scale },
+  { name: "Engineer", icon: Hammer },
+  { name: "Teacher", icon: GraduationCap },
+  { name: "Accountant", icon: Calculator },
+  { name: "Designer", icon: Palette },
+  { name: "Marketer", icon: TrendingUp },
+  { name: "Consultant", icon: Briefcase },
+  { name: "Photographer", icon: Camera },
+  { name: "Chef", icon: ChefHat },
   { name: "Manager", icon: Users },
-  { name: "Architect", icon: Users },
-  { name: "Nurse", icon: Users },
-  { name: "Pharmacist", icon: Users },
+  { name: "Architect", icon: Building2 },
+  { name: "Nurse", icon: Stethoscope },
+  { name: "Pharmacist", icon: Pill },
 ];
 
 export default function PublicPageHeader({

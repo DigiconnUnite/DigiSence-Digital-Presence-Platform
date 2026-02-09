@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import PublicPageHeader from "./PublicPageHeader";
 import PublicPageSidebar from "./PublicPageSidebar";
+import Footer from "./Footer";
 import { Users, Building2, Calculator, Mail, Home } from "lucide-react";
 
 // Default navigation items
@@ -151,7 +152,7 @@ export default function UnifiedPublicLayout({
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-200">
       {/* Sidebar */}
       <PublicPageSidebar
         isOpen={sidebarOpen}
@@ -189,6 +190,9 @@ export default function UnifiedPublicLayout({
       )}>
         {children}
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

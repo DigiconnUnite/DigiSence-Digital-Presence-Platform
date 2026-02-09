@@ -106,7 +106,7 @@ export default function SharedSidebar({
                           }}
                           className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 ${
                             currentView === item.value
-                              ? "bg-orange-400 text-white"
+                              ? "bg-slate-800 text-white"
                               : "text-gray-700 hover:bg-gray-100"
                           }`}
                         >
@@ -127,7 +127,7 @@ export default function SharedSidebar({
                         }}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl transition-all duration-200 ${
                           currentView === "settings"
-                            ? "bg-orange-400 text-white"
+                            ? "bg-slate-800 text-white"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
@@ -192,7 +192,7 @@ export default function SharedSidebar({
                 onClick={() => onViewChange(item.value)}
                 className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} cursor-pointer px-3 py-2 rounded-md text-left transition-colors ${
                   currentView === item.value
-                    ? "bg-orange-400 text-white"
+                    ? "bg-slate-800 text-white"
                     : "text-gray-700 bg-gray-50 hover:bg-gray-100"
                 }`}
                 title={isCollapsed ? item.title : undefined}
@@ -214,7 +214,7 @@ export default function SharedSidebar({
             onClick={onSettings}
             className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2 rounded-md text-left transition-colors ${
               currentView === "settings"
-                ? "bg-orange-400 text-white"
+                ? "bg-slate-800 text-white"
                 : "text-gray-700 bg-gray-50 hover:bg-gray-100"
             }`}
             title={isCollapsed ? "Settings" : undefined}

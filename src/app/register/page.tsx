@@ -19,10 +19,10 @@ function RegisterContent() {
 
   // This page now purely serves as a selection screen, just like Login
   return (
-    <div className="min-h-screen flex flex-col w-full bg-slate-50">
+    <div className="min-h-screen flex flex-col w-full bg-slate-200">
       <div className="flex-1 flex flex-col justify-center items-center w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
         {/* Top Nav - Matches Login Page */}
-        <div className="w-full absolute top-0 left-0 right-0 max-w-7xl mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
+        <div className="w-full absolute top-0 left-0 right-0  mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
           <Link href="/" className="flex items-center space-x-2 group">
             {/* ACTUAL LOGO IMAGE */}
             <Image
@@ -52,7 +52,7 @@ function RegisterContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
             {/* Professional Card - Copied & Adapted from Login */}
             <Link href="/register/professional" className="block group">
-              <Card className="group relative border-2 transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden hover:shadow-2xl max-h-[500px] md:min-h-[500px] h-full">
+              <Card className="group relative border-none transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden hover:shadow-2xl max-h-[500px] md:min-h-[500px] h-full">
                 <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
 
                 {/* ACTUAL BACKGROUND IMAGE */}
@@ -96,7 +96,7 @@ function RegisterContent() {
 
             {/* Business Card - Copied & Adapted from Login */}
             <Link href="/register/business" className="block group">
-              <Card className="group relative border-2 transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden hover:shadow-2xl max-h-[500px] md:min-h-[500px] h-full">
+              <Card className="group relative border-none transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden hover:shadow-2xl max-h-[500px] md:min-h-[500px] h-full">
                 <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
 
                 <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">

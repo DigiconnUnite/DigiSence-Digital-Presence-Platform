@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
 const images = [
   "d-1.png",
   "m-1.png",
@@ -200,12 +203,23 @@ export default function HeroSectionOne() {
             }}
             className="relative mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
           >
-            <button className="w-full sm:w-48 md:w-60 transform rounded-lg px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200">
-              Explore Now
-            </button>
-            <button className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">
-              Contact Support
-            </button>
+            <Link href="/professionals">
+              <Button
+                size="lg"
+                className="w-full bg-transparent sm:w-48 md:w-60 transform rounded-lg px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+              >
+                Make Profile
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900"
+              >
+                Contact Us
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </div>

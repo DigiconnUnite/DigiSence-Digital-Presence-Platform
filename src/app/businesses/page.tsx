@@ -170,8 +170,8 @@ function BusinessesContent() {
   }
 
   return (
-    <UnifiedPublicLayout 
-      variant="solid" 
+    <UnifiedPublicLayout
+      variant="solid"
       sidebarVariant="businesses"
       showCategorySlider={true}
       categories={businessCategories}
@@ -182,7 +182,10 @@ function BusinessesContent() {
         {/* Hero Banner */}
         <section className="">
           <div className=" mx-auto">
-            <div className="relative overflow-hidden  bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+            <div
+              className=" relative py-20 md:py-30 h-fit overflow-hidden bg-cover bg-center bg-no-repeat aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16"
+              style={{ backgroundImage: "url('/footer-bg.jpg')" }}
+            >
               <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                 <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                   Find Top <br /> Businesses
@@ -217,7 +220,7 @@ function BusinessesContent() {
             </div>
           </div>
         </section>
-        
+
         {/* Business Cards Section */}
         <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12">
           <div className=" mx-auto">
@@ -335,17 +338,13 @@ function BusinessesContent() {
                           {business.address && (
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                               <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                              <span
-                                className=""
-                                title={business.address}
-                              >
+                              <span className="" title={business.address}>
                                 {business.address}
                               </span>
                             </div>
                           )}
                         </div>
 
-            
                         <div className="flex gap-1.5 sm:gap-2 mt-auto pt-2 pointer-events-auto">
                           {business.phone && (
                             <Button

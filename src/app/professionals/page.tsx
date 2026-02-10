@@ -180,7 +180,10 @@ function ProfessionalsContent() {
         {/* Hero Banner */}
         <section className="">
           <div className=" mx-auto">
-            <div className="relative overflow-hidden  bg-linear-to-r from-slate-950 to-cyan-800 aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16">
+            <div
+              className="  relative py-20 md:py-30 h-fit overflow-hidden bg-cover bg-center bg-no-repeat aspect-4/2 md:aspect-4/1  flex items-center justify-start pl-4 sm:pl-6 md:pl-12 lg:pl-16"
+              style={{ backgroundImage: "url('/footer-bg.jpg')" }}
+            >
               <div className="relative z-10 text-white max-w-xs sm:max-w-md">
                 <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-4">
                   Find Top <br /> Professionals
@@ -281,9 +284,7 @@ function ProfessionalsContent() {
                       href={`/pcard/${professional.slug}`}
                       className="block"
                     >
-                      <Card
-                        className="overflow-hidden py-0 rounded-4xl pt-0 bg-white backdrop-blur-sm shadow-none hover:border-slate-500 hover:shadow-lg transition-all duration-300 relative h-full"
-                      >
+                      <Card className="overflow-hidden py-0 rounded-4xl pt-0 bg-white backdrop-blur-sm shadow-none hover:border-slate-500 hover:shadow-lg transition-all duration-300 relative h-full">
                         <div
                           className="relative h-24 md:h-32 m-1 mb-0 pb-0 rounded-3xl overflow-hidden"
                           style={{ minHeight: "96px" }}
@@ -343,8 +344,8 @@ function ProfessionalsContent() {
                             <div className="w-18 md:w-22"></div>
                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-lg md:text-lg hover:text-slate-600 font-semibold text-slate-700 truncate">
-                                  {professional.name}
-                                </CardTitle>
+                                {professional.name}
+                              </CardTitle>
                               {professional.professionalHeadline && (
                                 <Badge
                                   variant="secondary"
@@ -385,9 +386,9 @@ function ProfessionalsContent() {
                                 asChild
                               >
                                 <a
-                                    href={`tel:${professional.phone}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
+                                  href={`tel:${professional.phone}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                   <span className="hidden sm:inline">Call</span>
                                 </a>
@@ -432,16 +433,16 @@ function ProfessionalsContent() {
                               </Button>
                             )}
                           </div>
-                          </CardContent>
-                          </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-        </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      </div>
     </UnifiedPublicLayout>
   );
 }

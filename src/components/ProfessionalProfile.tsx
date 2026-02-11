@@ -28,7 +28,7 @@ interface Professional {
   adminId: string;
   workExperience: any;
   education: any;
-  certifications: any;
+  certifications?: any; // Optional field
   skills: any;
   servicesOffered: any;
   contactInfo: any;
@@ -39,6 +39,7 @@ interface Professional {
 
 import { Button } from "@/components/ui/button";
 import { useOptimizedImage } from "@/lib/image-optimization";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -454,7 +455,7 @@ export default function ProfessionalProfile({
 
     return (
       <Card
-        className={`${getCardClass()} h-[700px] bg-linear-to-t from-sky-100 via-white to-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
+        className={`${getCardClass()} h-[700px] bg-linear-to-t  bg-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
       >
         {/* Banner */}
         <div className="relative h-auto bg-linear-to-r from-sky-200 to-sky-300 aspect-3/1 rounded-2xl overflow-hidden">
@@ -1131,12 +1132,11 @@ export default function ProfessionalProfile({
                                 item.url.includes(".webm") ||
                                 item.url.includes(".ogg")));
                           return (
-                            <div className="flex flex-col ">
+                            <div key={index} className="flex flex-col">
                               <div
-                                key={index}
-                                className="relative p-7 px-10 bg-linear-to-t border   from-sky-100/80 to-transparent rounded-xl overflow-hidden"
+                                className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
                               >
-                                <div className="relative  bg-white h-fit   border -bottom-8  aspect-video rounded-lg overflow-hidden">
+                                <div className="relative bg-white h-fit border -bottom-8 aspect-video rounded-lg overflow-hidden">
                                   {isVideo ? (
                                     <video
                                       src={item.url}
@@ -1147,22 +1147,13 @@ export default function ProfessionalProfile({
                                       Your browser does not support video tag.
                                     </video>
                                   ) : (
-                                    (() => {
-                                      const optimizedImage = useOptimizedImage(
-                                        item.url,
-                                        400,
-                                        250,
-                                      );
-                                      return (
-                                        <img
-                                          src={optimizedImage.src}
-                                          srcSet={optimizedImage.srcSet}
-                                          sizes={optimizedImage.sizes}
-                                          alt={item.title}
-                                          className="h-full w-full object-cover absolute inset-0"
-                                        />
-                                      );
-                                    })()
+                                    <OptimizedImage
+                                      src={item.url}
+                                      alt={item.title || "Portfolio image"}
+                                      fill
+                                      className="object-cover absolute inset-0"
+                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    />
                                   )}
                                 </div>
                                 <div className="absolute bottom-3 left-3 border bg-white/80 backdrop-blur-sm rounded-full px-3 py-0.2">
@@ -1172,8 +1163,8 @@ export default function ProfessionalProfile({
                                 </div>
                               </div>
                               {item.description && (
-                                <div className=" p-3 border-b border-l border-r  rounded-xl">
-                                  <p className="text-sm  text-gray-600 text-start">
+                                <div className="p-3 border-b border-l border-r rounded-xl">
+                                  <p className="text-sm text-gray-600 text-start">
                                     {item.description}
                                   </p>
                                 </div>
@@ -1511,22 +1502,13 @@ export default function ProfessionalProfile({
                           Your browser does not support video tag.
                         </video>
                       ) : (
-                        (() => {
-                          const optimizedImage = useOptimizedImage(
-                            item.url,
-                            400,
-                            250
-                          );
-                          return (
-                            <img
-                              src={optimizedImage.src}
-                              srcSet={optimizedImage.srcSet}
-                              sizes={optimizedImage.sizes}
-                              alt={item.title}
-                              className="h-full w-full object-cover absolute inset-0"
-                            />
-                          );
-                        })()
+                        <OptimizedImage
+                          src={item.url}
+                          alt={item.title || "Portfolio image"}
+                          fill
+                          className="object-cover absolute inset-0"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                        />
                       )}
                     </div>
                     <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">

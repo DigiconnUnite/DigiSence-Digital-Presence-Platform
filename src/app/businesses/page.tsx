@@ -215,7 +215,7 @@ function BusinessesContent() {
               <img
                 src="/pr-banner-shape.png"
                 alt=""
-                className="absolute bottom-0 right-0 w-auto h-3/4 sm:h-4/5 md:h-full opacity-80"
+                className="absolute -bottom-5 right-0 w-auto h-3/4 sm:h-4/5 md:h-full opacity-80"
               />
             </div>
           </div>
@@ -225,7 +225,7 @@ function BusinessesContent() {
         <section className="pb-16 sm:pb-20 px-3 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12">
           <div className=" mx-auto">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <Card
                     key={i}
@@ -275,11 +275,11 @@ function BusinessesContent() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                   {filteredBusinesses.map((business) => (
                     <Card
                       key={business.id}
-                      className="group overflow-hidden p-0 border hover:border-slate-500 rounded-3xl bg-white backdrop-blur-sm flex flex-col h-full relative transition-colors"
+                      className="group overflow-hidden  p-0 border border-slate-500/50  hover:border-slate-800 rounded-3xl bg-white backdrop-blur-sm flex flex-col h-full relative transition-colors"
                     >
                       {/* Invisible Link Overlay - Makes the whole card clickable */}
                       <Link

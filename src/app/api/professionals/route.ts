@@ -2,13 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 
+// Cache duration in seconds
+const CACHE_DURATION = 300 // 5 minutes
+
+// In-memory cache for professionals list
+let cache: {
+  data: { professionals: any[] } | null
+  timestamp: number
+} = {
+  data: null,
+  timestamp: 0
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const slug = searchParams.get('slug')
     const id = searchParams.get('id')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
 
     if (slug || id) {
+      // Single professional fetch - use caching
       const whereClause = slug ? { slug, isActive: true } : { id: id as string, isActive: true }
 
       const professional = await db.professional.findFirst({
@@ -55,64 +70,93 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Professional not found' }, { status: 404 })
       }
 
-      return NextResponse.json({ professional })
-    } else {
-      // Check for authentication - if authenticated, return only the user's professional
-      const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+      return NextResponse.json({ professional }, {
+        headers: {
+          'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
+        }
+      })
+    }
 
-      if (token) {
-        const payload = verifyToken(token)
-        if (payload && payload.role === 'PROFESSIONAL_ADMIN') {
-          // Return only the professional for the authenticated user
-          const professional = await db.professional.findFirst({
-            where: { adminId: payload.userId },
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              professionalHeadline: true,
-              aboutMe: true,
-              profilePicture: true,
-              banner: true,
-              resume: true,
-              location: true,
-              email: true,
-              website: true,
-              facebook: true,
-              twitter: true,
-              instagram: true,
-              linkedin: true,
-              isActive: true,
-              createdAt: true,
-              updatedAt: true,
-              adminId: true,
-              workExperience: true,
-              education: true,
-              skills: true,
-              servicesOffered: true,
-              contactInfo: true,
-              portfolio: true,
-              contactDetails: true,
-              ctaButton: true,
-              admin: {
-                select: {
-                  name: true,
-                  email: true,
-                },
+    // Check for authentication - if authenticated, return only the user's professional
+    const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+
+    if (token) {
+      const payload = verifyToken(token)
+      if (payload && payload.role === 'PROFESSIONAL_ADMIN') {
+        // Return only the professional for the authenticated user
+        const professional = await db.professional.findFirst({
+          where: { adminId: payload.userId },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            professionalHeadline: true,
+            aboutMe: true,
+            profilePicture: true,
+            banner: true,
+            resume: true,
+            location: true,
+            email: true,
+            website: true,
+            facebook: true,
+            twitter: true,
+            instagram: true,
+            linkedin: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            adminId: true,
+            workExperience: true,
+            education: true,
+            skills: true,
+            servicesOffered: true,
+            contactInfo: true,
+            portfolio: true,
+            contactDetails: true,
+            ctaButton: true,
+            admin: {
+              select: {
+                name: true,
+                email: true,
               },
             },
-          })
+          },
+        })
 
-          if (professional) {
-            return NextResponse.json({ professionals: [professional] })
-          } else {
-            return NextResponse.json({ professionals: [] })
-          }
+        if (professional) {
+          return NextResponse.json({ professionals: [professional] }, {
+            headers: {
+              'Cache-Control': 'private, no-cache',
+            }
+          })
+        } else {
+          return NextResponse.json({ professionals: [] }, {
+            headers: {
+              'Cache-Control': 'private, no-cache',
+            }
+          })
         }
       }
+    }
 
-      // List all active professionals (fallback for non-authenticated requests)
-      const professionals = await db.professional.findMany({
+    // Use cached data for non-authenticated requests
+    const now = Date.now()
+    const shouldUseCache = !searchParams.has('page') && !searchParams.has('limit')
+    
+    if (shouldUseCache && cache.data && (now - cache.timestamp) < CACHE_DURATION * 1000) {
+      console.log('Returning cached professionals:', cache.data.professionals.length)
+      return NextResponse.json(cache.data, {
+        headers: {
+          'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
+          'X-Cache': 'HIT',
+        }
+      })
+    }
+
+    // List all active professionals with pagination
+    const skip = (page - 1) * limit
+    const [professionals, total] = await Promise.all([
+      db.professional.findMany({
         where: { isActive: true },
         select: {
           id: true,
@@ -130,7 +174,7 @@ export async function GET(request: NextRequest) {
           skills: true,
           servicesOffered: true,
           portfolio: true,
-          isActive: true, // Add this line to include isActive in the select
+          isActive: true,
           admin: {
             select: {
               name: true,
@@ -139,13 +183,43 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { createdAt: 'desc' },
-      })
+        skip,
+        take: limit,
+      }),
+      db.professional.count({
+        where: { isActive: true },
+      }),
+    ])
 
-      console.log('Professionals API returning professionals:', professionals.length)
-      console.log('Professionals data:', professionals.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })))
-
-      return NextResponse.json({ professionals })
+    const responseData = {
+      professionals,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + professionals.length < total,
+      }
     }
+
+    // Update cache
+    if (shouldUseCache) {
+      cache = {
+        data: responseData,
+        timestamp: now,
+      }
+    }
+
+    console.log('Professionals API returning professionals:', professionals.length, 'page:', page)
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': shouldUseCache 
+          ? `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`
+          : 'private, no-cache',
+        'X-Cache': shouldUseCache ? 'MISS' : 'NO-CACHE',
+      }
+    })
   } catch (error) {
     console.error('Professional fetch error:', error)
     return NextResponse.json(

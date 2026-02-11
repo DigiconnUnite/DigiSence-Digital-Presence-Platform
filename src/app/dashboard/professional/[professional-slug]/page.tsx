@@ -1155,19 +1155,19 @@ export default function ProfessionalDashboard() {
     return (
       <div className="space-y-6 pb-20 md:pb-0">
         <div className="mb-8">
-          <Skeleton className="h-8 w-64 mb-2" />
-          <Skeleton className="h-6 w-96" />
+          <Skeleton className="h-8 w-64 mb-2 bg-gray-200" />
+          <Skeleton className="h-6 w-96 bg-gray-200" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className={themeSettings.cardClass}>
+            <Card key={i} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-24 bg-gray-200" />
+                <Skeleton className="h-4 w-4 rounded bg-gray-200" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-16 mb-1" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-8 w-16 mb-1 bg-gray-200" />
+                <Skeleton className="h-3 w-32 bg-gray-200" />
               </CardContent>
             </Card>
           ))}
@@ -2102,28 +2102,37 @@ export default function ProfessionalDashboard() {
                         Add Portfolio Item
                       </Button>
 
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {portfolio.map((item, index) => (
-                          <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius}`}>
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-4">
-                                <div className="shrink-0">
-                                  <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                                    <Image className="h-5 w-5 text-green-600" />
-                                  </div>
+                          <Card key={index} className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden`}>
+                            {/* Image Display */}
+                            <div className="aspect-video w-full bg-gray-100 relative">
+                              {item.url && isValidImageUrl(item.url) ? (
+                                <img
+                                  src={item.url}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                  onError={handleImageError}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                  <Image className="h-12 w-12 text-gray-400" />
                                 </div>
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-gray-900 text-lg">
+                              )}
+                            </div>
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900 text-lg line-clamp-1">
                                     {item.title}
                                   </h4>
-                                  <p className="text-green-600 font-medium text-sm mb-1">
-                                    Portfolio Item
-                                  </p>
-                                  <p className="text-sm text-gray-600 mb-2">
-                                    {item.description}
-                                  </p>
+                                  {item.description && (
+                                    <p className="text-gray-600 text-sm line-clamp-2 mt-1">
+                                      {item.description}
+                                    </p>
+                                  )}
                                 </div>
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-2 pt-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -2132,9 +2141,10 @@ export default function ProfessionalDashboard() {
                                       setPortfolioFormData(item);
                                       setShowPortfolioDialog(true);
                                     }}
-                                    className={themeSettings.borderRadius}
+                                    className={`flex-1 ${themeSettings.borderRadius}`}
                                   >
-                                    <Edit className="h-4 w-4" />
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit
                                   </Button>
                                   <Button
                                     variant="outline"
@@ -2153,6 +2163,29 @@ export default function ProfessionalDashboard() {
                           </Card>
                         ))}
                       </div>
+
+                      {portfolio.length === 0 && (
+                        <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+                          <Image className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            No portfolio items yet
+                          </h3>
+                          <p className="text-gray-600 mb-4">
+                            Add your first portfolio item to showcase your work
+                          </p>
+                          <Button
+                            onClick={() => {
+                              setEditingPortfolioItem(null);
+                              setPortfolioFormData({ title: '', description: '', url: '' });
+                              setShowPortfolioDialog(true);
+                            }}
+                            className={themeSettings.buttonStyle}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Portfolio Item
+                          </Button>
+                        </div>
+                      )}
 
                       <Dialog open={showPortfolioDialog} onOpenChange={setShowPortfolioDialog}>
                         <DialogContent className="max-w-2xl">
@@ -4727,8 +4760,7 @@ export default function ProfessionalDashboard() {
   if (loading || isLoading) {
     return (
       <div className="min-h-screen relative flex flex-col">
-        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+        <div className="fixed inset-0 bg-slate-200 -z-10"></div>
         {/* Top Header Bar */}
         <div className="bg-white border rounded-3xl mt-3 mx-3 border-gray-200 shadow-sm">
           <div className="flex justify-between items-center px-4 sm:px-6 py-2">
@@ -4904,9 +4936,8 @@ export default function ProfessionalDashboard() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex h-screen  relative">
-        <div className="fixed inset-0  bg-[url('/dashbaord-bg-2.png')]  bg-center blur-lg  -z-10"></div>
-        <div className="fixed inset-0    bg-center bg-white/50  -z-10"></div>
+      <div className="min-h-screen flex h-screen relative">
+        <div className="fixed inset-0 bg-slate-200 -z-10"></div>
 
         {/* Main Layout: Sidebar + Content */}
         <div className="flex flex-1 overflow-hidden">
@@ -4994,7 +5025,7 @@ export default function ProfessionalDashboard() {
                         className="rounded-full px-4 py-0 bg-[#080322]  text-white border-0 hover:opacity-90 transition-opacity"
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        View Profile
+                        View 
                         <ExternalLink className="h-3 w-3 ml-2 opacity-80" />
                       </Button>
                     </div>

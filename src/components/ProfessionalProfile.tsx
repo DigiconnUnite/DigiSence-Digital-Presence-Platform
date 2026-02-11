@@ -127,7 +127,7 @@ export default function ProfessionalProfile({
     "home" | "about" | "services" | "portfolio" | "contact"
   >("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Added for mobile menu toggle
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Mobile viewport detection
@@ -639,10 +639,10 @@ export default function ProfessionalProfile({
     }
   }, [currentView]);
 
-  // Set loading to false after component mounts
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
+  // No artificial delay - data is already loaded via SSR
+  // useEffect(() => {
+  //   setIsLoading(false);
+  // }, []);
 
   // Mobile viewport detection
   useEffect(() => {

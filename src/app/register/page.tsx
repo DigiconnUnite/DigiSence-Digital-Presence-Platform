@@ -58,7 +58,7 @@ function RegisterContent() {
                 {/* ACTUAL BACKGROUND IMAGE */}
                 <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
                   <Image
-                    src="/login-bg.png"
+                    src="/login-bg.svg"
                     alt="Background"
                     fill
                     className="object-cover"
@@ -101,7 +101,7 @@ function RegisterContent() {
 
                 <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
                   <Image
-                    src="/login-bg.png"
+                    src="/login-bg.svg"
                     alt="Background"
                     fill
                     className="object-cover"

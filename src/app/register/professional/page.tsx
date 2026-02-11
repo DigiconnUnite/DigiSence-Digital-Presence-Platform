@@ -394,7 +394,7 @@ export default function ProfessionalRegistrationPage() {
       <div className="hidden lg:flex flex-1 relative bg-slate-900 m-0 lg:m-4 lg:rounded-2xl overflow-hidden shadow-2xl">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out hover:scale-105"
-          style={{ backgroundImage: "url('/login-bg.png')" }}
+          style={{ backgroundImage: "url('/login-bg.svg')" }}
         />
         <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/20 to-slate-900/90 pointer-events-none"></div>
 

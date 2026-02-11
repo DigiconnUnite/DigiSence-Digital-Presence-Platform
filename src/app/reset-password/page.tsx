@@ -253,7 +253,7 @@ function ResetPasswordForm() {
       <div className="hidden md:flex w-full md:w-1/2 relative bg-slate-900 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out hover:scale-105"
-          style={{ backgroundImage: "url('/login-bg.png')" }}
+          style={{ backgroundImage: "url('/login-bg.svg')" }}
         ></div>
       </div>
     </div>

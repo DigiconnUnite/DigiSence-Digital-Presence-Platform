@@ -4,6 +4,9 @@ import BusinessProfile from '@/components/BusinessProfile'
 import { getOptimizedImageUrl } from '@/lib/image-utils'
 import { headers } from 'next/headers'
 
+// Enable caching for this page - cache for 60 seconds
+export const revalidate = 60
+
 interface PageProps {
   params: Promise<{
     business: string
@@ -72,6 +75,7 @@ export default async function BusinessPage({ params }: PageProps) {
           },
         } as any,
         orderBy: { createdAt: 'desc' },
+        take: 20, // Limit to 20 products for faster initial load
       },
     },
   })

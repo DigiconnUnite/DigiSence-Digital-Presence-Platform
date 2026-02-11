@@ -225,9 +225,9 @@ export default function BusinessProfile({
 
   useEffect(() => {
     setMounted(true);
-    // Simulate loading time for skeleton
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
+    // Data is already loaded via SSR, remove artificial delay
+    setIsLoading(false);
+    return () => {};
   }, []);
 
   // Listen for Real-time Updates via Socket.io
@@ -1064,7 +1064,7 @@ export default function BusinessProfile({
   );
 
   const SkeletonLayout = () => (
-    <div className="min-h-screen bg-orange-50 flex flex-col">
+    <div className="min-h-screen bg-slate-200 flex flex-col">
       {/* Header Skeleton */}
       <header className="shrink-0 bg-white shadow-sm border-b z-50">
         <div className="w-full mx-auto px-4 sm:px-4 lg:px-4">

@@ -782,37 +782,27 @@ export default function BusinessProfile({
         </div>
       </Card>
 
-      {/* Action Buttons - Primary Row */}
+      {/* Action Buttons - Call, WhatsApp, Email */}
       <div className="flex flex-row gap-2 w-full">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
-          onClick={() => {
-            const vCardData = `BEGIN:VCARD
-                        VERSION:3.0
-                        FN:${business.name || ""}
-                        ORG:${business.category?.name || ""}
-                        TEL:${business.phone || ""}
-                        EMAIL:${business.email || ""}
-                        ADR:;;${business.address || ""};;;;
-                        END:VCARD`;
-
-            const blob = new Blob([vCardData], { type: "text/vcard" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${business.name || "contact"}.vcf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          }}
-          title="Save contact to your device"
-        >
-          <UserPlus className="h-3 w-3" />
-          Save Contact
-        </Button>
+        {/* Call Button */}
+        {business.phone && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+            onClick={() => {
+              if (business.phone) {
+                window.location.href = `tel:${business.phone}`;
+              } else {
+                alert("Phone number not available");
+              }
+            }}
+            title="Call this number"
+          >
+            <Phone className="h-3 w-3" />
+            Call
+          </Button>
+        )}
         <Button
           size="sm"
           className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors text-xs font-medium shadow-sm border-0 cursor-pointer"
@@ -846,7 +836,7 @@ export default function BusinessProfile({
             title="Send email"
           >
             <Mail className="h-3 w-3" />
-            Email Us
+            Email
           </Button>
         )}
       </div>
@@ -1212,7 +1202,7 @@ export default function BusinessProfile({
   return (
     // DASHBOARD LAYOUT CONTAINER
     <div
-      className="h-screen w-full overflow-hidden bg-orange-100 flex flex-col"
+      className="h-screen w-full overflow-hidden bg-orange-50 flex flex-col"
       suppressHydrationWarning
     >
       {/* PAGE HEADER - HIDDEN ON MOBILE (hidden md:flex) */}

@@ -1551,8 +1551,8 @@ const Preloader = () => (
                           return (
                             <div
                               key={index}
-                              className="flex flex-col h-full w-full rounded-xl overflow-hidden border border-gray-200 shadow-none hover:shadow-md transition-shadow"
-                            >
+                              className="flex flex-col h-full bg-white shadow-md w-full rounded-xl overflow-hidden border border-gray-200  hover:shadow-md transition-shadow"
+                            > 
                               {/* Image Container - Full Width */}
                               <div className="relative w-full aspect-video bg-gray-100">
                                 {isVideo ? (

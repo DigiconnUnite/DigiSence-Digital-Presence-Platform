@@ -60,7 +60,7 @@ export default function OptimizedImage({
     return (
       <div
         className={cn(
-          "bg-gray-100 flex items-center justify-center",
+          "bg-gray-200 flex items-center justify-center",
           fill ? "absolute inset-0" : "",
           className
         )}
@@ -78,7 +78,7 @@ export default function OptimizedImage({
     <div className={cn("relative", fill ? "absolute inset-0" : "", className)}>
       {isLoading && (
         <div
-          className="absolute inset-0 bg-gray-200 animate-pulse z-10"
+          className="absolute inset-0 bg-gray-500 animate-pulse z-10"
           style={!fill ? { width, height } : undefined}
         />
       )}
@@ -92,7 +92,7 @@ export default function OptimizedImage({
         priority={priority}
         loading={priority ? "eager" : "lazy"}
         className={cn(
-          "object-cover transition-opacity duration-300",
+          "object-contain transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",
           fill ? "inset-0" : ""
         )}

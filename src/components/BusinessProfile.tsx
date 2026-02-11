@@ -947,7 +947,7 @@ export default function BusinessProfile({
                 <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 mt-0.5 shrink-0">
                   <MapPin className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors" />
                 </span>
-                <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug break-words">
+                <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug wrap-break-word">
                   {business.address}
                 </span>
               </div>
@@ -1076,10 +1076,10 @@ export default function BusinessProfile({
   const SkeletonLayout = () => (
     <div className="min-h-screen bg-orange-50 flex flex-col">
       {/* Header Skeleton */}
-      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50">
+      <header className="shrink-0 bg-white shadow-sm border-b z-50">
         <div className="w-full mx-auto px-4 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-3 shrink-0">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="h-6 w-px bg-gray-300 hidden md:block"></div>
               <Skeleton className="h-6 w-32 hidden md:block" />
@@ -1212,15 +1212,15 @@ export default function BusinessProfile({
   return (
     // DASHBOARD LAYOUT CONTAINER
     <div
-      className="h-screen w-full overflow-hidden bg-orange-50 flex flex-col"
+      className="h-screen w-full overflow-hidden bg-orange-100 flex flex-col"
       suppressHydrationWarning
     >
       {/* PAGE HEADER - HIDDEN ON MOBILE (hidden md:flex) */}
-      <header className="flex-shrink-0 bg-white shadow-sm border-b z-50 hidden md:flex">
+      <header className="shrink-0 bg-white shadow-sm border-b z-50 hidden md:flex">
         <div className="w-full mx-auto px-4 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Business Name */}
-            <div className="flex items-center space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-3 shrink-0">
               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                 {business.logo && business.logo.trim() !== "" ? (
                   <img
@@ -1335,7 +1335,7 @@ export default function BusinessProfile({
             </nav>
 
             {/* Mobile Menu Button - Hidden because Header is hidden on mobile anyway, but keeping code structure */}
-            <div className="md:hidden flex-shrink-0">
+            <div className="md:hidden shrink-0">
               <Button
                 size="icon"
                 variant="ghost"
@@ -1436,7 +1436,7 @@ export default function BusinessProfile({
         >
           <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 pt-4 space-y-6 lg:space-y-8">
             <section className="relative w-full mx-auto">
-              <div className="aspect-3/1 md:aspect-3/1 w-full rounded-xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl bg-gray-900 relative">
+              <div className=" aspect-4/2 bg-center md:aspect-3/1 w-full rounded-xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl bg-gray-900 relative">
                 {heroContent.slides && heroContent.slides.length > 0 ? (
                   <>
                     {/* Check if first slide is a video */}
@@ -1738,7 +1738,7 @@ export default function BusinessProfile({
                             </div>
                           </Card>
                           <p
-                            className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                            className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors wrap-break-word ${
                               selectedBrand === brand.name
                                 ? "text-orange-400 font-700"
                                 : "text-gray-700 font-semibold"
@@ -1809,7 +1809,7 @@ export default function BusinessProfile({
                                   </div>
                                 </Card>
                                 <p
-                                  className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors break-words ${
+                                  className={`text-center text-xs md:text-base mt-2 font-semibold transition-colors wrap-break-word ${
                                     selectedBrand === brand.name
                                       ? "text-orange-400 font-700"
                                       : "text-gray-700 font-semibold"
@@ -1891,7 +1891,7 @@ export default function BusinessProfile({
                           value={selectedCategory}
                           onValueChange={setSelectedCategory}
                         >
-                          <SelectTrigger className="w-[100px] flex-shrink-0 h-10 bg-gray-50 border-gray-200 text-sm">
+                          <SelectTrigger className="w-[100px] shrink-0 h-10 bg-gray-50 border-gray-200 text-sm">
                             <SelectValue placeholder="All" />
                           </SelectTrigger>
                           <SelectContent>

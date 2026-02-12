@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[DEBUG] Registration inquiries GET - Fetching from DB')
-    let inquiries = []
+    let inquiries: Awaited<ReturnType<typeof db.registrationInquiry.findMany>> = []
     try {
       inquiries = await db.registrationInquiry.findMany({
         orderBy: { createdAt: 'desc' },

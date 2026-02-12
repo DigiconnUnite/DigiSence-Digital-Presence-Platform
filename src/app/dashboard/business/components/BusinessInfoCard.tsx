@@ -20,6 +20,9 @@ import {
   Plus,
   Hash,
   XCircle,
+  FileUp,
+  FileIcon,
+  Download,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +31,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import ReactImageCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +51,7 @@ interface BusinessInfoCardProps {
   onEdit?: () => void;
   onLogoUpload?: (url: string) => void;
   gstNumber?: string;
-  openingHours?: { day: string; open: string; close: string }[];
+  openingHours?: { day: string; open: string; close: string; closed?: boolean }[];
   address?: string;
   mobile?: string;
   email?: string;
@@ -50,6 +61,7 @@ interface BusinessInfoCardProps {
     instagram?: string;
     linkedin?: string;
   };
+  catalogPdf?: string | null;
 }
 
 export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
@@ -65,6 +77,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
   mobile,
   email,
   socialLinks,
+  catalogPdf,
 }) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -80,7 +93,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     logo: logoUrl || "",
     logoPendingSave: false,
     gstNumber: gstNumber || "",
-    openingHours: openingHours || [{ day: "", open: "", close: "" }],
+    openingHours: openingHours || [
+      { day: "Monday", open: "09:00", close: "18:00", closed: false },
+      { day: "Tuesday", open: "09:00", close: "18:00", closed: false },
+      { day: "Wednesday", open: "09:00", close: "18:00", closed: false },
+      { day: "Thursday", open: "09:00", close: "18:00", closed: false },
+      { day: "Friday", open: "09:00", close: "18:00", closed: false },
+      { day: "Saturday", open: "09:00", close: "18:00", closed: false },
+      { day: "Sunday", open: "", close: "", closed: true },
+    ],
     address: address || "",
     mobile: mobile || "",
     email: email || "",
@@ -88,6 +109,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     twitter: socialLinks?.twitter || "",
     instagram: socialLinks?.instagram || "",
     linkedin: socialLinks?.linkedin || "",
+    catalogPdf: catalogPdf || "",
+    catalogPdfPendingSave: false,
   });
 
   // Sync state when props change (e.g. after a full page load)
@@ -110,6 +133,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     null,
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const handleEditClick = () => {
@@ -155,7 +180,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           twitter: editData.twitter,
           instagram: editData.instagram,
           linkedin: editData.linkedin,
-          ...(editData.logoPendingSave && { logoUrl: editData.logo }), // Only send logo if it's pending save
+          ...(editData.logoPendingSave && { logoUrl: editData.logo }),
+          ...(editData.catalogPdfPendingSave && { catalogPdf: editData.catalogPdf }),
         }),
       });
 
@@ -168,6 +194,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           businessName: responseData.business.name || prev.businessName,
           logo: responseData.business.logo || prev.logo, // Sync logo from DB
           logoPendingSave: false, // Reset pending save flag
+          catalogPdfPendingSave: false,
           adminName: responseData.business.admin?.name || prev.adminName,
           description: responseData.business.description || prev.description,
           // ... update other fields as needed
@@ -319,6 +346,80 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
     }
   }, [selectedFile, cropImage, onLogoUpload, toast]);
 
+  const handlePdfFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type === "application/pdf") {
+          setSelectedPdfFile(file);
+          uploadPdf(file);
+        } else {
+          toast({
+            title: "Invalid File Type",
+            description: "Please select a PDF file",
+            variant: "destructive",
+          });
+        }
+      }
+    },
+    [toast],
+  );
+
+  const uploadPdf = async (file: File) => {
+    setIsUploadingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "catalog");
+
+      const uploadResponse = await fetch("/api/business/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const uploadData = await uploadResponse.json();
+      const permanentUrl = uploadData.url;
+
+      if (!permanentUrl) throw new Error("No URL returned from upload server");
+
+      setEditData((prev) => ({
+        ...prev,
+        catalogPdf: permanentUrl,
+        catalogPdfPendingSave: true,
+      }));
+
+      toast({
+        title: "Success",
+        description: "Catalog PDF uploaded successfully. Click Save to apply changes.",
+      });
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to upload PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPdf(false);
+      setSelectedPdfFile(null);
+    }
+  };
+
+  const removeCatalogPdf = () => {
+    setEditData((prev) => ({
+      ...prev,
+      catalogPdf: "",
+      catalogPdfPendingSave: true,
+    }));
+  };
+
   return (
     <Card className="w-full p-0 mx-auto border-none shadow-none bg-transparent">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -364,39 +465,43 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
             )}
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="shrink-0 relative">
-              <Avatar className="h-44 w-44 border-2 border-white shadow-sm">
-                {editData.logo ? (
-                  <AvatarImage
-                    src={editData.logo}
-                    alt={editData.businessName}
-                  />
-                ) : (
-                  <AvatarFallback className="bg-gray-200 text-gray-600 text-3xl font-bold">
-                    {editData.businessName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+            {/* Column 1: Profile Picture */}
+            <div className="md:col-span-1 flex justify-center md:justify-start">
+              <div className="shrink-0 relative">
+                <Avatar className="h-32 w-32 md:h-44 md:w-44 border-2 border-white shadow-sm">
+                  {editData.logo ? (
+                    <AvatarImage
+                      src={editData.logo}
+                      alt={editData.businessName}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-gray-200 text-gray-600 text-3xl font-bold">
+                      {editData.businessName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                {isEditing && (
+                  <label
+                    htmlFor="logo-upload"
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Edit className="h-6 w-6 text-white" />
+                  </label>
                 )}
-              </Avatar>
-              {isEditing && (
-                <label
-                  htmlFor="logo-upload"
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-100 transition-opacity cursor-pointer"
-                >
-                  <Edit className="h-6 w-6 text-white" />
-                </label>
-              )}
-              <input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={!isEditing}
-              />
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={!isEditing}
+                />
+              </div>
             </div>
 
-            <div className="flex-1 w-full space-y-4">
+            {/* Column 2: Business Name & Admin Name */}
+            <div className="md:col-span-2 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Business Name
@@ -409,13 +514,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                     type="text"
                     value={editData.businessName}
                     disabled={true}
-                    className={`w-full text-lg font-semibold  border rounded-md pl-9 pr-3 py-2 outline-none transition-colors bg-gray-100 border-gray-200 text-gray-600`}
+                    className={`w-full text-lg font-semibold border rounded-md pl-9 pr-3 py-2 outline-none transition-colors bg-gray-100 border-gray-200 text-gray-600`}
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full">
-                      Cannot be updated
-                    </span>
-                  </div>
                 </div>
               </div>
               <div>
@@ -437,6 +537,73 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Column 3: Catalog PDF Upload */}
+            <div className="md:col-span-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                Catalog PDF
+              </label>
+              {editData.catalogPdf ? (
+                <div className="flex items-center gap-3 p-3 border rounded-md bg-white">
+                  <div className="flex items-center gap-2 flex-1">
+                    <FileIcon className="h-5 w-5 text-red-500" />
+                    <span className="text-sm text-gray-700 truncate max-w-[150px]">
+                      Catalog.pdf
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {editData.catalogPdf && (
+                      <a
+                        href={editData.catalogPdf}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    )}
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={removeCatalogPdf}
+                        className="p-1.5 rounded-md hover:bg-red-50 text-red-500"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-gray-400 transition-colors">
+                  <input
+                    id="catalog-pdf-upload"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfFileSelect}
+                    className="hidden"
+                    disabled={!isEditing || isUploadingPdf}
+                  />
+                  <label
+                    htmlFor="catalog-pdf-upload"
+                    className={`cursor-pointer flex flex-col items-center justify-center ${!isEditing ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    {isUploadingPdf ? (
+                      <>
+                        <Loader2 className="h-6 w-6 text-gray-400 animate-spin mb-2" />
+                        <span className="text-sm text-gray-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileUp className="h-6 w-6 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-500">
+                          Click to upload PDF
+                        </span>
+                      </>
+                    )}
+                  </label>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -565,28 +732,33 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
             </div>
             <div className="space-y-4">
               {editData.openingHours.map((hour, index) => (
-                <div key={index} className="grid grid-cols-3 gap-4 items-end">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                       Day
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        value={hour.day}
-                        onChange={(e) => {
-                          const newHours = [...editData.openingHours];
-                          newHours[index].day = e.target.value;
-                          setEditData({ ...editData, openingHours: newHours });
-                        }}
-                        placeholder="Monday"
-                        disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
-                      />
-                    </div>
+                    <Select
+                      value={hour.day}
+                      onValueChange={(value) => {
+                        const newHours = [...editData.openingHours];
+                        newHours[index].day = value;
+                        setEditData({ ...editData, openingHours: newHours });
+                      }}
+                      disabled={!isEditingLegal}
+                    >
+                      <SelectTrigger className={isEditingLegal ? "bg-white border-gray-300" : "bg-gray-50 border-gray-200"}>
+                        <SelectValue placeholder="Select day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Monday">Monday</SelectItem>
+                        <SelectItem value="Tuesday">Tuesday</SelectItem>
+                        <SelectItem value="Wednesday">Wednesday</SelectItem>
+                        <SelectItem value="Thursday">Thursday</SelectItem>
+                        <SelectItem value="Friday">Friday</SelectItem>
+                        <SelectItem value="Saturday">Saturday</SelectItem>
+                        <SelectItem value="Sunday">Sunday</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
@@ -597,16 +769,15 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         <Clock className="h-4 w-4 text-gray-400" />
                       </div>
                       <input
-                        type="text"
+                        type="time"
                         value={hour.open}
                         onChange={(e) => {
                           const newHours = [...editData.openingHours];
                           newHours[index].open = e.target.value;
                           setEditData({ ...editData, openingHours: newHours });
                         }}
-                        placeholder="09:00 AM"
-                        disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
+                        disabled={!isEditingLegal || hour.closed}
+                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal && !hour.closed ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                       />
                     </div>
                   </div>
@@ -619,20 +790,37 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                         <Clock className="h-4 w-4 text-gray-400" />
                       </div>
                       <input
-                        type="text"
+                        type="time"
                         value={hour.close}
                         onChange={(e) => {
                           const newHours = [...editData.openingHours];
                           newHours[index].close = e.target.value;
                           setEditData({ ...editData, openingHours: newHours });
                         }}
-                        placeholder="06:00 PM"
-                        disabled={!isEditingLegal}
-                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
+                        disabled={!isEditingLegal || hour.closed}
+                        className={`w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none transition-colors ${isEditingLegal && !hour.closed ? "bg-white border-gray-300 text-gray-900 focus:border-gray-500" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                       />
                     </div>
                   </div>
-                  <div className="flex gap-2 items-end">
+                  <div className="flex items-center gap-2 pb-2">
+                    <Checkbox
+                      id={`closed-${index}`}
+                      checked={hour.closed}
+                      onCheckedChange={(checked) => {
+                        const newHours = [...editData.openingHours];
+                        newHours[index].closed = checked === true;
+                        setEditData({ ...editData, openingHours: newHours });
+                      }}
+                      disabled={!isEditingLegal}
+                    />
+                    <label
+                      htmlFor={`closed-${index}`}
+                      className="text-sm text-gray-700 cursor-pointer"
+                    >
+                      Closed
+                    </label>
+                  </div>
+                  <div className="flex gap-2 items-end justify-end">
                     {editData.openingHours.length > 1 && (
                       <Button
                         type="button"
@@ -644,32 +832,31 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
                           );
                           setEditData({ ...editData, openingHours: newHours });
                         }}
-                        className="h-8 w-8 p-0"
+                        className="h-9 w-9 p-0"
                         disabled={!isEditingLegal}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     )}
-                    {index === editData.openingHours.length - 1 &&
-                      isEditingLegal && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditData({
-                              ...editData,
-                              openingHours: [
-                                ...editData.openingHours,
-                                { day: "", open: "", close: "" },
-                              ],
-                            });
-                          }}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      )}
+                    {index === editData.openingHours.length - 1 && isEditingLegal && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditData({
+                            ...editData,
+                            openingHours: [
+                              ...editData.openingHours,
+                              { day: "", open: "", close: "", closed: false },
+                            ],
+                          });
+                        }}
+                        className="h-9 w-9 p-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

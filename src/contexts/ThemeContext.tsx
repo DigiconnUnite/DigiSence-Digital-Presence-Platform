@@ -89,7 +89,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       case "gradient":
         return "bg-linear-to-r from-blue-50 to-purple-50";
       default:
-        return "bg-linear-to-b from-sky-300 via-white to-white";
+        return "bg-orange-50";
     }
   };
 

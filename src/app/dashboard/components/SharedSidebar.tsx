@@ -52,17 +52,17 @@ export default function SharedSidebar({
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-        <div className="flex justify-around items-center gap-2 py-2 px-3">
+        <div className="flex justify-around items-center gap-2  px-3">
           {navLinks.slice(0, 5).map((item) => {
             const MobileIcon = item.mobileIcon;
             return (
               <button
                 key={item.value}
                 onClick={() => onViewChange(item.value)}
-                className={`flex flex-col items-center justify-center py-2 w-full rounded-md transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center py-2 w-full rounded-none transition-all duration-200 ${
                   currentView === item.value
-                    ? "bg-linear-to-bl from-[#5757FF] to-[#A89CFE] text-white"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? " text-orange-400 font-extrabold border-t-4 rounded-none border-orange-400"
+                    : "text-gray-500 border-t-4 border-transparent hover:text-gray-700"
                 }`}
               >
                 <MobileIcon className="h-5 w-5 mb-1" />
@@ -71,17 +71,19 @@ export default function SharedSidebar({
             );
           })}
           {/* More button for additional items and logout */}
-          {(navLinks.length > 5 || onSettings !== undefined || onLogout !== undefined) && (
+          {(navLinks.length > 5 ||
+            onSettings !== undefined ||
+            onLogout !== undefined) && (
             <div className="relative">
               <button
                 onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className={`flex flex-col items-center justify-center py-2 px-3 rounded-md transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center py-2 px-3 rounded-none transition-all duration-200 ${
                   navLinks
                     .slice(5)
                     .some((item) => item.value === currentView) ||
                   currentView === "settings"
-                    ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? " text-orange-400 font-extrabold border-t-4 rounded-none border-orange-400"
+                    : "text-gray-500 border-t-4 border-transparent hover:text-gray-700"
                 }`}
               >
                 <MoreHorizontal className="h-5 w-5 mb-1" />
@@ -104,7 +106,7 @@ export default function SharedSidebar({
                           }}
                           className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 ${
                             currentView === item.value
-                              ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                              ? "bg-slate-800 text-white"
                               : "text-gray-700 hover:bg-gray-100"
                           }`}
                         >
@@ -125,7 +127,7 @@ export default function SharedSidebar({
                         }}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl transition-all duration-200 ${
                           currentView === "settings"
-                            ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                            ? "bg-slate-800 text-white"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
@@ -190,7 +192,7 @@ export default function SharedSidebar({
                 onClick={() => onViewChange(item.value)}
                 className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} cursor-pointer px-3 py-2 rounded-md text-left transition-colors ${
                   currentView === item.value
-                    ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                    ? "bg-slate-800 text-white"
                     : "text-gray-700 bg-gray-50 hover:bg-gray-100"
                 }`}
                 title={isCollapsed ? item.title : undefined}
@@ -212,7 +214,7 @@ export default function SharedSidebar({
             onClick={onSettings}
             className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2 rounded-md text-left transition-colors ${
               currentView === "settings"
-                ? "bg-linear-to-l from-[#5757FF] to-[#A89CFE] text-white"
+                ? "bg-slate-800 text-white"
                 : "text-gray-700 bg-gray-50 hover:bg-gray-100"
             }`}
             title={isCollapsed ? "Settings" : undefined}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -28,7 +28,14 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { login, refreshAuth } = useAuth();
+  const { login, refreshAuth, user: authUser } = useAuth();
+
+  // Redirect if already logged in and authenticated
+  useEffect(() => {
+    if (authUser && authUser.role === "SUPER_ADMIN") {
+      router.push("/dashboard/admin");
+    }
+  }, [authUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

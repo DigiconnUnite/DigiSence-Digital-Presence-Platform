@@ -5,28 +5,28 @@ import { getOptimizedImageUrl } from '@/lib/image-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings, ImageOff } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
 
+// Keep Banner interface for data model compatibility (API still accepts these fields)
 interface Banner {
   mediaType: 'image' | 'video';
   media: string;
-  headline: string;
-  headlineSize: string;
-  headlineColor: string;
-  headlineAlignment: 'left' | 'center' | 'right';
-  subtext: string;
-  subtextSize: string;
-  subtextColor: string;
-  subtextAlignment: 'left' | 'center' | 'right';
-  cta: string;
-  ctaLink: string;
+  headline?: string;
+  headlineSize?: string;
+  headlineColor?: string;
+  headlineAlignment?: 'left' | 'center' | 'right';
+  subtext?: string;
+  subtextSize?: string;
+  subtextColor?: string;
+  subtextAlignment?: 'left' | 'center' | 'right';
+  cta?: string;
+  ctaLink?: string;
   showText?: boolean;
 }
 
@@ -53,21 +53,10 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
   const [savingBanner, setSavingBanner] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   
-  // Form state with defaults
-  const [bannerForm, setBannerForm] = useState<Banner>({
+  // Simplified form state - only media fields
+  const [bannerForm, setBannerForm] = useState<Partial<Banner>>({
     mediaType: 'image',
     media: '',
-    headline: '',
-    headlineSize: 'text-4xl md:text-6xl',
-    headlineColor: '#ffffff',
-    headlineAlignment: 'center',
-    subtext: '',
-    subtextSize: 'text-xl md:text-2xl',
-    subtextColor: '#ffffff',
-    subtextAlignment: 'center',
-    cta: 'Get in Touch',
-    ctaLink: '',
-    showText: true,
   });
 
   const banners = heroContent.slides || [];
@@ -93,7 +82,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
       setSelectedBannerIndex(selectedBannerIndex + 1);
     }
   };
- 
+  
   const handleDelete = () => {
     setBannerToDelete(selectedBannerIndex);
     setShowDeleteDialog(true);
@@ -112,25 +101,17 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
     const bannerIndex = index !== undefined ? index : selectedBannerIndex;
     
     if (banners[bannerIndex]) {
-      // If editing existing, load that banner's data
-      setBannerForm(banners[bannerIndex]);
+      // If editing existing, load that banner's data (only media fields)
+      setBannerForm({
+        mediaType: banners[bannerIndex].mediaType,
+        media: banners[bannerIndex].media,
+      });
       setEditingBannerIndex(bannerIndex);
     } else {
       // If adding new or invalid index, reset form
       setBannerForm({
         mediaType: 'image',
         media: '',
-        headline: '',
-        headlineSize: 'text-4xl md:text-6xl',
-        headlineColor: '#ffffff',
-        headlineAlignment: 'center',
-        subtext: '',
-        subtextSize: 'text-xl md:text-2xl',
-        subtextColor: '#ffffff',
-        subtextAlignment: 'center',
-        cta: 'Get in Touch',
-        ctaLink: '',
-        showText: true,
       });
       setEditingBannerIndex(null);
     }
@@ -141,17 +122,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
     setBannerForm({
       mediaType: 'image',
       media: '',
-      headline: '',
-      headlineSize: 'text-4xl md:text-6xl',
-      headlineColor: '#ffffff',
-      headlineAlignment: 'center',
-      subtext: '',
-      subtextSize: 'text-xl md:text-2xl',
-      subtextColor: '#ffffff',
-      subtextAlignment: 'center',
-      cta: 'Get in Touch',
-      ctaLink: '',
-      showText: true,
     });
     setEditingBannerIndex(null);
     setShowModal(true);
@@ -162,11 +132,18 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
     try {
       const newSlides = [...banners];
       if (editingBannerIndex !== null) {
-        // Update existing
-        newSlides[editingBannerIndex] = bannerForm;
+        // Update existing - preserve existing text fields, only update media
+        newSlides[editingBannerIndex] = {
+          ...newSlides[editingBannerIndex],
+          mediaType: bannerForm.mediaType || 'image',
+          media: bannerForm.media || '',
+        };
       } else {
-        // Add new
-        newSlides.push(bannerForm);
+        // Add new - only media fields
+        newSlides.push({
+          mediaType: bannerForm.mediaType || 'image',
+          media: bannerForm.media || '',
+        });
         setSelectedBannerIndex(newSlides.length - 1);
       }
       onChange({ ...heroContent, slides: newSlides });
@@ -198,7 +175,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
             <SelectContent>
               {banners.map((banner, index) => (
                 <SelectItem key={index} value={index.toString()}>
-                  {index + 1}: {banner.headline || "Untitled"}
+                  {index + 1}: {banner.media ? "Banner " + (index + 1) : "Untitled"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -303,7 +280,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                     autoPlay
                     playsInline
                   />
-                ) : (
+                ) : currentBanner.media ? (
                   <img
                     src={getOptimizedImageUrl(currentBanner.media, {
                       width: 800,
@@ -314,45 +291,12 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                     alt="Banner preview"
                     className="w-full h-full object-cover"
                   />
-                )}
-                {currentBanner.showText !== false && (
-                  <div className="absolute inset-0 flex flex-col justify-center items-center p-4 text-white bg-opacity-40">
-                    {currentBanner.headline && (
-                      <h1
-                        className={`font-bold mb-2 ${currentBanner.headlineSize} ${
-                          currentBanner.headlineAlignment === "left"
-                            ? "text-left self-start"
-                            : currentBanner.headlineAlignment === "right"
-                              ? "text-right self-end"
-                              : "text-center self-center"
-                        }`}
-                        style={{ color: currentBanner.headlineColor }}
-                      >
-                        {currentBanner.headline}
-                      </h1>
-                    )}
-                    {currentBanner.subtext && (
-                      <p
-                        className={`mb-3 ${currentBanner.subtextSize} ${
-                          currentBanner.subtextAlignment === "left"
-                            ? "text-left self-start"
-                            : currentBanner.subtextAlignment === "right"
-                              ? "text-right self-end"
-                              : "text-center self-center"
-                        }`}
-                        style={{ color: currentBanner.subtextColor }}
-                      >
-                        {currentBanner.subtext}
-                      </p>
-                    )}
-                    {currentBanner.cta && (
-                      <a
-                        href={currentBanner.ctaLink || "#"}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
-                      >
-                        {currentBanner.cta}
-                      </a>
-                    )}
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
+                    <ImageOff className="w-24 h-24 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">
+                      No image configured for this banner
+                    </p>
                   </div>
                 )}
               </>
@@ -381,7 +325,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
               <TableRow>
                 <TableHead>Preview</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Headline</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -420,9 +363,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                   </TableCell>
                   <TableCell>
                     <span className="capitalize">{banner.mediaType}</span>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {banner.headline || "Untitled"}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
@@ -512,7 +452,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
       </Card>
 
       {/* Edit/Add Modal */}
-      {/* Note: z-index ensures it appears above other content. Flex-col ensures proper layout. */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col z-50 bg-white">
           <DialogHeader className="bg-white border-b">
@@ -526,7 +465,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto hide-scrollbar px-1 py-4 space-y-6 bg-white">
-            {/* Media Section */}
+            {/* Media Section - KEEP */}
             <div>
               <Label className="text-sm font-medium">Background Media</Label>
               <div className="mt-2 space-y-3">
@@ -562,257 +501,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                   }
                 />
               </div>
-            </div>
-
-            {/* Content Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Headline</Label>
-                <Input
-                  placeholder="Enter headline"
-                  value={bannerForm.headline}
-                  onChange={(e) =>
-                    setBannerForm((prev) => ({
-                      ...prev,
-                      headline: e.target.value,
-                    }))
-                  }
-                  className="mt-2 rounded-2xl"
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium">CTA Text</Label>
-                <Input
-                  placeholder="Call to action text"
-                  value={bannerForm.cta}
-                  onChange={(e) =>
-                    setBannerForm((prev) => ({ ...prev, cta: e.target.value }))
-                  }
-                  className="mt-2 rounded-2xl"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Subtext</Label>
-              <Textarea
-                placeholder="Enter subtext"
-                rows={3}
-                value={bannerForm.subtext}
-                onChange={(e) =>
-                  setBannerForm((prev) => ({
-                    ...prev,
-                    subtext: e.target.value,
-                  }))
-                }
-                className="mt-2 rounded-2xl"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">CTA Link</Label>
-              <Input
-                placeholder="https://..."
-                value={bannerForm.ctaLink}
-                onChange={(e) =>
-                  setBannerForm((prev) => ({
-                    ...prev,
-                    ctaLink: e.target.value,
-                  }))
-                }
-                className="mt-2 rounded-2xl"
-              />
-            </div>
-
-            {/* Style Section */}
-            <div>
-              <h3 className="text-sm font-medium mb-4">Headline Style</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm">Size</Label>
-                  <Select
-                    value={bannerForm.headlineSize}
-                    onValueChange={(value) =>
-                      setBannerForm((prev) => ({
-                        ...prev,
-                        headlineSize: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2 rounded-2xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
-                        Small
-                      </SelectItem>
-                      <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
-                        Medium
-                      </SelectItem>
-                      <SelectItem value="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
-                        Large
-                      </SelectItem>
-                      <SelectItem value="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
-                        Extra Large
-                      </SelectItem>
-                      <SelectItem value="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl">
-                        Huge
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm">Color</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      type="color"
-                      value={bannerForm.headlineColor}
-                      onChange={(e) =>
-                        setBannerForm((prev) => ({
-                          ...prev,
-                          headlineColor: e.target.value,
-                        }))
-                      }
-                      className="w-12 h-10 p-1 rounded-2xl"
-                    />
-                    <Input
-                      value={bannerForm.headlineColor}
-                      onChange={(e) =>
-                        setBannerForm((prev) => ({
-                          ...prev,
-                          headlineColor: e.target.value,
-                        }))
-                      }
-                      placeholder="#ffffff"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm">Alignment</Label>
-                  <Select
-                    value={bannerForm.headlineAlignment}
-                    onValueChange={(value: "left" | "center" | "right") =>
-                      setBannerForm((prev) => ({
-                        ...prev,
-                        headlineAlignment: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2 rounded-2xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium mb-4">Subtext Style</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm">Size</Label>
-                  <Select
-                    value={bannerForm.subtextSize}
-                    onValueChange={(value) =>
-                      setBannerForm((prev) => ({ ...prev, subtextSize: value }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2 rounded-2xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl">
-                        Small
-                      </SelectItem>
-                      <SelectItem value="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl">
-                        Medium
-                      </SelectItem>
-                      <SelectItem value="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl">
-                        Large
-                      </SelectItem>
-                      <SelectItem value="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl">
-                        Extra Large
-                      </SelectItem>
-                      <SelectItem value="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
-                        Huge
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm">Color</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      type="color"
-                      value={bannerForm.subtextColor}
-                      onChange={(e) =>
-                        setBannerForm((prev) => ({
-                          ...prev,
-                          subtextColor: e.target.value,
-                        }))
-                      }
-                      className="w-12 h-10 p-1 rounded-2xl"
-                    />
-                    <Input
-                      value={bannerForm.subtextColor}
-                      onChange={(e) =>
-                        setBannerForm((prev) => ({
-                          ...prev,
-                          subtextColor: e.target.value,
-                        }))
-                      }
-                      placeholder="#ffffff"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm">Alignment</Label>
-                  <Select
-                    value={bannerForm.subtextAlignment}
-                    onValueChange={(value: "left" | "center" | "right") =>
-                      setBannerForm((prev) => ({
-                        ...prev,
-                        subtextAlignment: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2 rounded-2xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Settings */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="showText"
-                checked={bannerForm.showText !== false}
-                onChange={(e) =>
-                  setBannerForm((prev) => ({
-                    ...prev,
-                    showText: e.target.checked,
-                  }))
-                }
-                className="rounded"
-              />
-              <Label htmlFor="showText" className="text-sm">
-                Show text overlay
-              </Label>
             </div>
           </div>
 
@@ -861,7 +549,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
         </DialogContent>
       </Dialog>
 
-      {/* Settings Dialog */}
+      {/* Settings Dialog - KEEP slider settings */}
       <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
         <DialogContent className="max-w-md z-50 bg-white">
           <DialogHeader className="bg-white border-b">
@@ -875,17 +563,6 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
 
           <div className="flex-1 overflow-y-auto px-1 py-4 space-y-6 bg-white">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="showTextOverlay" className="text-sm">Show Text Overlay</Label>
-                <Switch
-                  id="showTextOverlay"
-                  checked={heroContent.showText !== false}
-                  onCheckedChange={(checked) => {
-                    onChange({ ...heroContent, showText: checked });
-                  }}
-                />
-              </div>
-
               <div className="flex items-center justify-between">
                 <Label htmlFor="autoplay" className="text-sm">Auto-play</Label>
                 <Switch

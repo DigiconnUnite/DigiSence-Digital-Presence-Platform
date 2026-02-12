@@ -1,4 +1,3 @@
-// app/pcard/[slug]/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -29,7 +28,7 @@ interface Professional {
   adminId: string;
   workExperience: any;
   education: any;
-  certifications: any;
+  certifications?: any; // Optional field
   skills: any;
   servicesOffered: any;
   contactInfo: any;
@@ -40,6 +39,7 @@ interface Professional {
 
 import { Button } from "@/components/ui/button";
 import { useOptimizedImage } from "@/lib/image-optimization";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +63,7 @@ import {
   MessageCircle,
   User,
   Building2,
+  Globe,
   Award,
   Facebook,
   Twitter,
@@ -74,6 +75,7 @@ import {
   Download,
   FileText,
   Share2,
+  Menu,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -124,7 +126,11 @@ export default function ProfessionalProfile({
   const [currentView, setCurrentView] = useState<
     "home" | "about" | "services" | "portfolio" | "contact"
   >("home");
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Added for mobile menu toggle
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile viewport detection
 
   // Ensure skills and servicesOffered are arrays
   const skills = Array.isArray(professional.skills) ? professional.skills : [];
@@ -162,83 +168,268 @@ export default function ProfessionalProfile({
   const portfolioRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Basic Information Card - Left Column
+  const BasicInfoCard = () => {
+    const bannerImage = useOptimizedImage(professional.banner, 400, 200);
+    const profileImage = useOptimizedImage(
+      professional.profilePicture,
+      128,
+      128
+    );
 
-  // Scroll detection for navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    return (
+      <Card
+        className={` rounded-2xl py-0 shadow-none border  overflow-hidden h-full`}
+      >
+        {/* Banner */}
+        <div className="relative h-32 bg-linear-to-r from-sky-200 to-sky-300 overflow-hidden">
+          {professional.banner && (
+            <img
+              src={bannerImage.src}
+              srcSet={bannerImage.srcSet}
+              sizes={bannerImage.sizes}
+              alt="Banner"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )}
+        </div>
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+        {/* Profile Image */}
+        <div className="relative -mt-12 flex justify-center">
+          {professional.profilePicture ? (
+            <img
+              src={profileImage.src}
+              srcSet={profileImage.srcSet}
+              sizes={profileImage.sizes}
+              alt={professional.name}
+              className="w-24 h-24 rounded-full border-4 border-white shadow-none "
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-none  flex items-center justify-center">
+              <User className="w-12 h-12 text-gray-600" />
+            </div>
+          )}
+        </div>
 
-  // Real-time synchronization
-  useEffect(() => {
-    if (!mounted || !professional?.id) return;
+        <CardContent className="text-center px-4 pb-4">
+          {/* Name */}
+          <h1 className="text-xl font-bold text-slate-800 mt-2">
+            {professional.name}
+          </h1>
+          
+          {/* Headline */}
+          {professional.professionalHeadline && (
+            <p className="text-gray-600 text-sm mt-1">
+              {professional.professionalHeadline}
+            </p>
+          )}
 
-    const checkForUpdates = async () => {
-      try {
-        const response = await fetch(
-          `/api/professionals?${
-            professional.slug
-              ? `slug=${professional.slug}`
-              : `id=${professional.id}`
-          }`,
-          { cache: "no-store" }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          const updatedProfessional = data.professional;
+          {/* Contact Information */}
+          <div className="mt-4 space-y-2 text-left">
+            {professional.location && (
+              <div className="flex items-center text-sm text-gray-600">
+                <MapPin className="w-4 h-4 mr-2 text-sky-600" />
+                <span>{professional.location}</span>
+              </div>
+            )}
+            {professional.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2 text-sky-600" />
+                <span>{professional.phone}</span>
+              </div>
+            )}
+            {professional.email && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="w-4 h-4 mr-2 text-sky-600" />
+                <span>{professional.email}</span>
+              </div>
+            )}
+            {professional.website && (
+              <div className="flex items-center text-sm text-gray-600">
+                <MapPin className="w-4 h-4 mr-2 text-sky-600" />
+                <a href={professional.website} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">
+                  {professional.website}
+                </a>
+              </div>
+            )}
+          </div>
 
-          const hasChanged =
-            updatedProfessional.updatedAt !== professional.updatedAt ||
-            updatedProfessional.name !== professional.name ||
-            updatedProfessional.professionalHeadline !==
-              professional.professionalHeadline ||
-            updatedProfessional.aboutMe !== professional.aboutMe ||
-            updatedProfessional.profilePicture !==
-              professional.profilePicture ||
-            updatedProfessional.banner !== professional.banner ||
-            updatedProfessional.location !== professional.location ||
-            updatedProfessional.phone !== professional.phone ||
-            updatedProfessional.email !== professional.email ||
-            updatedProfessional.website !== professional.website ||
-            updatedProfessional.facebook !== professional.facebook ||
-            updatedProfessional.twitter !== professional.twitter ||
-            updatedProfessional.instagram !== professional.instagram ||
-            updatedProfessional.linkedin !== professional.linkedin ||
-            JSON.stringify(updatedProfessional.workExperience) !==
-              JSON.stringify(professional.workExperience) ||
-            JSON.stringify(updatedProfessional.education) !==
-              JSON.stringify(professional.education) ||
-            JSON.stringify(updatedProfessional.certifications) !==
-              JSON.stringify(professional.certifications) ||
-            JSON.stringify(updatedProfessional.skills) !==
-              JSON.stringify(professional.skills) ||
-            JSON.stringify(updatedProfessional.servicesOffered) !==
-              JSON.stringify(professional.servicesOffered) ||
-            JSON.stringify(updatedProfessional.portfolio) !==
-              JSON.stringify(professional.portfolio);
+          {/* Social Media Icons */}
+          <div className="flex justify-center gap-3 mt-4">
+            {professional.facebook && (
+              <a
+                href={professional.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
+              >
+                <SiFacebook className="w-5 h-5 text-blue-600" />
+              </a>
+            )}
+            {professional.twitter && (
+              <a
+                href={professional.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
+              >
+                <SiX className="w-5 h-5 text-black" />
+              </a>
+            )}
+            {professional.instagram && (
+              <a
+                href={professional.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
+              >
+                <SiInstagram className="w-5 h-5 text-pink-600" />
+              </a>
+            )}
+            {professional.linkedin && (
+              <a
+                href={professional.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
+              >
+                <SiLinkedin className="w-5 h-5 text-blue-700" />
+              </a>
+            )}
+            {professional.phone && (
+              <a
+                href={`https://wa.me/${professional.phone!.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 bg-linear-to-b from-green-100 to-white ${getBorderRadius()} hover:from-green-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
+              >
+                <SiWhatsapp className="w-5 h-5 text-green-600" />
+              </a>
+            )}
+          </div>
 
-          if (hasChanged) {
-            setProfessional(updatedProfessional);
-            console.log("Professional data updated from server");
-          }
-        }
-      } catch (error) {
-        console.warn("Failed to check for professional updates:", error);
-      }
-    };
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            {professional.resume ? (
+              <Button
+                onClick={handleResumeDownload}
+                className={`flex items-center justify-center gap-2 text-sm bg-sky-100 hover:bg-sky-200 text-sky-700 ${getBorderRadius()} transition-colors`}
+              >
+                <FileText className="w-4 h-4" />
+                Resume
+              </Button>
+            ) : (
+              <Button
+                className={`flex items-center justify-center gap-2 text-sm bg-gray-100 text-gray-400 ${getBorderRadius()} cursor-not-allowed`}
+                disabled
+              >
+                <FileText className="w-4 h-4" />
+                No Resume
+              </Button>
+            )}
+            <Button
+              onClick={handleDownloadCard}
+              className={`flex items-center justify-center gap-2 text-sm bg-sky-100 hover:bg-sky-200 text-sky-700 ${getBorderRadius()} transition-colors`}
+            >
+              <Download className="w-4 h-4" />
+              Card
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
-    checkForUpdates();
-    const interval = setInterval(checkForUpdates, 1000);
+  // Personal Details Card - Right Column
+  const PersonalDetailsCard = () => {
+    return (
+      <Card
+        className={`${getCardClass()} rounded-2xl shadow-none border  h-full`}
+      >
+        <CardContent className="p-0">
+          {/* About Section */}
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
+              <User className="w-5 h-5 mr-2 text-sky-600" />
+              About Me
+            </h2>
+            <p className="text-gray-700 text-sm leading-relaxed">
+              {professional.aboutMe || "No about information available."}
+            </p>
+          </div>
 
-    return () => clearInterval(interval);
-  }, [mounted, professional?.id, professional?.slug]);
+          {/* Personal Details Section */}
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
+              <Building2 className="w-5 h-5 mr-2 text-sky-600" />
+              Personal Details
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Name:</span>
+                <span className="text-gray-900 font-medium">{professional.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Email:</span>
+                <span className="text-gray-900 font-medium">{professional.email || "N/A"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Phone:</span>
+                <span className="text-gray-900 font-medium">{professional.phone || "N/A"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Location:</span>
+                <span className="text-gray-900 font-medium">{professional.location || "N/A"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Website:</span>
+                <span className="text-gray-900 font-medium">{professional.website || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Resume Section */}
+          <div className="p-4">
+            <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-sky-600" />
+              Resume
+            </h2>
+            {professional.resume ? (
+              <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-sky-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Resume Available</p>
+                    <p className="text-xs text-gray-500">Click to download</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleResumeDownload}
+                  size="sm"
+                  className={`${getButtonClass()}`}
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Download
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <div className="text-center">
+                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No resume uploaded</p>
+                  <p className="text-xs text-gray-400">Upload your resume to share with clients</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const handleResumeDownload = async () => {
     if (!professional.resume) {
@@ -416,19 +607,13 @@ export default function ProfessionalProfile({
     }
   };
 
+  // Intersection Observer - Disabled for static bottom navigation
+  // The activeSection is only set by handleViewChange on button click
   useEffect(() => {
+    // Observer is set up but not updating activeSection to keep navigation static
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const sectionName = entry.target.id;
-            if (sectionName) {
-              setActiveSection(sectionName);
-            }
-          }
-        });
-      },
-      { threshold: 0.3 }
+      () => {}, // Empty callback - does nothing
+      { threshold: 0.5 }
     );
 
     const sections = [
@@ -446,7 +631,7 @@ export default function ProfessionalProfile({
         if (section) observer.unobserve(section);
       });
     };
-  }, []);
+  }, [currentView]);
 
   useEffect(() => {
     if (currentView !== "home") {
@@ -454,7 +639,60 @@ export default function ProfessionalProfile({
     }
   }, [currentView]);
 
-  const ProfileCard = () => {
+  // No artificial delay - data is already loaded via SSR
+  // useEffect(() => {
+  //   setIsLoading(false);
+  // }, []);
+
+  // Mobile viewport detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Define navigation links for professional profile
+  const navLinks = [
+    {
+      value: "home",
+      mobileTitle: "Home",
+      mobileIcon: Home,
+    },
+    {
+      value: "about",
+      mobileTitle: "About",
+      mobileIcon: User,
+    },
+    {
+      value: "services",
+      mobileTitle: "Services",
+      mobileIcon: Users,
+    },
+    {
+      value: "portfolio",
+      mobileTitle: "Portfolio",
+      mobileIcon: ImageIcon,
+    },
+    {
+      value: "contact",
+      mobileTitle: "Contact",
+      mobileIcon: MessageCircle,
+    },
+  ];
+
+  // Handle view change from mobile navigation
+  const handleViewChange = (view: string) => {
+    setActiveSection(view);
+    setCurrentView(view as any);
+    if (view === "home") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const ProfileHeaderCard = () => {
     const bannerImage = useOptimizedImage(professional.banner, 400, 200);
     const profileImage = useOptimizedImage(
       professional.profilePicture,
@@ -464,10 +702,10 @@ export default function ProfessionalProfile({
 
     return (
       <Card
-        className={`${getCardClass()} h-[700px] bg-linear-to-t from-sky-100 via-white to-white rounded-xl p-4 shadow-lg border-0 overflow-hidden`}
+        className={` p-0 pb-3 rounded-2xl shadow-none border  overflow-hidden`}
       >
         {/* Banner */}
-        <div className="relative h-auto bg-linear-to-r from-sky-200 to-sky-300 aspect-3/1 rounded-2xl overflow-hidden">
+        <div className="relative h-32 bg-linear-to-r from-sky-200 to-sky-300 overflow-hidden">
           {professional.banner && (
             <img
               src={bannerImage.src}
@@ -481,727 +719,1024 @@ export default function ProfessionalProfile({
         </div>
 
         {/* Profile Image */}
-        <div className="relative -mt-8 flex justify-center">
+        <div className="relative -mt-12 flex justify-center">
           {professional.profilePicture ? (
             <img
               src={profileImage.src}
               srcSet={profileImage.srcSet}
               sizes={profileImage.sizes}
               alt={professional.name}
-              className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+              className="w-24 h-24 rounded-full border-4 border-white shadow-none "
               loading="lazy"
             />
           ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
-              <User className="w-16 h-16 text-gray-600" />
+            <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-none  flex items-center justify-center">
+              <User className="w-12 h-12 text-gray-600" />
             </div>
           )}
         </div>
 
-        <CardContent className="text-center flex flex-col px-0">
-          <div className=" pb-10">
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">
-              {professional.name}
-            </h1>
-            {professional.professionalHeadline && (
-              <p className="text-gray-600 mb-4">
-                {professional.professionalHeadline}
-              </p>
-            )}
-            {professional.location && (
-              <div className="flex items-center justify-center mb-6">
-                <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                <span className="text-sm text-gray-600">
-                  {professional.location}
-                </span>
-              </div>
-            )}
-          </div>
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {professional.phone && (
-              <Button
-                onClick={() =>
-                  window.open(`tel:${professional.phone}`, "_self")
-                }
-                className={`flex items-center w-auto bg-sky-400 hover:bg-sky-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
-              >
-                <Phone className="w-4 h-4 mr-2" />
-                Make Call
-              </Button>
-            )}
-            {professional.phone && (
-              <Button
-                onClick={() =>
-                  window.open(
-                    `https://wa.me/${professional.phone!.replace(/\D/g, "")}`,
-                    "_blank"
-                  )
-                }
-                className={`flex items-center w-auto bg-green-400 hover:bg-green-500 cursor-pointer shadow-sm text-white ${getBorderRadius()} px-4 py-2`}
-              >
-                <FaWhatsapp className="w-8 h-8 mr-2 font-extrabold" />
-                WhatsApp
-              </Button>
-            )}
-            {professional.email && (
-              <Button
-                onClick={() =>
-                  window.open(`mailto:${professional.email}`, "_self")
-                }
-                className={`flex items-center bg-blue-500 hover:bg-blue-600 cursor-pointer text-white shadow-sm ${getBorderRadius()} px-4 py-2`}
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Email
-              </Button>
-            )}
-          </div>
+        <CardContent className="text-center px-4 pb-4">
+          {/* Name */}
+          <h1 className="text-xl font-bold text-slate-800 mt-2">
+            {professional.name}
+          </h1>
+          
+          {/* Headline */}
+          {professional.professionalHeadline && (
+            <p className="text-gray-600 text-sm mt-1">
+              {professional.professionalHeadline}
+            </p>
+          )}
 
-          {/* Additional Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {professional.resume ? (
-              <Button
-                onClick={handleResumeDownload}
-                className={`flex flex-row gap-2 items-center shadow-sm text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Resume
-              </Button>
-            ) : (
-              <Button
-                className={`flex flex-row gap-2 items-center shadow-sm text-gray-400 space-y-1 p-3 bg-gray-100 ${getBorderRadius()} cursor-not-allowed transition-colors`}
-                disabled
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                No Resume
-              </Button>
-            )}
-            <Button
-              onClick={handleDownloadCard}
-              className={`flex flex-row gap-2 items-center text-gray-700 space-y-1 p-3 bg-white ${getBorderRadius()} hover:bg-sky-200 cursor-pointer transition-colors`}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Card
-            </Button>
-          </div>
-
-          {/* Social Links */}
-          <div className="flex gap-5 mb-6">
-            {professional.facebook && (
-              <a
-                href={professional.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
-              >
-                <SiFacebook className="w-6 h-6 text-blue-600" />
-              </a>
-            )}
-            {professional.twitter && (
-              <a
-                href={professional.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
-              >
-                <SiX className="w-6 h-6 text-black" />
-              </a>
-            )}
-            {professional.instagram && (
-              <a
-                href={professional.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
-              >
-                <SiInstagram className="w-6 h-6 text-pink-600" />
-              </a>
-            )}
-            {professional.linkedin && (
-              <a
-                href={professional.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-12 h-12 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-sm flex items-center justify-center transition-colors`}
-              >
-                <SiLinkedin className="w-6 h-6 text-blue-700" />
-              </a>
-            )}
-          </div>
-
-          {/* Share Button */}
-          <Button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: `${professional.name} - Professional Profile`,
-                  text: `Check out ${professional.name}'s professional profile`,
-                  url: window.location.href,
-                });
-              } else {
-                // Fallback: copy to clipboard
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                  alert("Profile link copied to clipboard!");
-                });
-              }
-            }}
-            className={`w-full mb-5 flex items-center cursor-pointer justify-center bg-white shadow-md hover:bg-sky-200 text-gray-700 ${getBorderRadius()} p-3 transition-colors`}
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Profile
-          </Button>
-
-          {/* Footer Note */}
-          <p className="text-xs text-gray-500">
-            Profile Created By @DigiSence.io
-          </p>
+          {/* Location */}
+          {professional.location && (
+            <div className="flex items-center justify-center text-sm text-gray-600 mt-2">
+              <MapPin className="w-4 h-4 mr-1 text-sky-600" />
+              <span>{professional.location}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
   };
 
-  return (
-    <div
-      className={`min-h-screen ${getBackgroundClass()} ${
-        themeSettings.fontFamily
-      } ${themeSettings.fontSize}`}
-      suppressHydrationWarning
-    >
-      {/* Top Navigation Bar - Desktop */}
-      <nav className={`hidden md:block fixed left-1/2 max-w-7xl w-screen transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 px-6 py-3 transition-all duration-200 ease-in-out ${isScrolled ? 'top-0 w-full rounded-none' : 'top-4'
-        }`}>
-        <div className="flex items-center justify-between mx-auto">
-          {/* Left Side */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600" />
-            </div>
-            <div className="h-6 w-px bg-gray-300"></div>
-            <span className="text-lg font-bold text-gray-900">
-              {professional.name}
-            </span>
-          </div>
+  const CTAActions = () => {
+    return (
+      <div className="space-y-3">
+        {/* Primary CTA Buttons - Same Row */}
+        <div className="grid grid-cols-3 gap-2">
+          {professional.phone && (
+            <Button
+              onClick={() =>
+                window.open(`tel:${professional.phone}`, "_self")
+              }
+              className={`flex flex-row items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-none ${getBorderRadius()} py-2 px-2 text-xs`}
+            >
+              <Phone className="w-4 h-4" />
+              <span>Call</span>
+            </Button>
+          )}
+          {professional.phone && (
+            <Button
+              onClick={() =>
+                window.open(
+                  `https://wa.me/${professional.phone!.replace(/\D/g, "")}`,
+                  "_blank"
+                )
+              }
+              className={`flex flex-row items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white shadow-none ${getBorderRadius()} py-2 px-2 text-xs`}
+            >
+              <FaWhatsapp className="w-4 h-4" />
+              <span>WhatsApp</span>
+            </Button>
+          )}
+          {professional.email && (
+            <Button
+              onClick={() =>
+                window.open(`mailto:${professional.email}`, "_self")
+              }
+              className={`flex flex-row items-center justify-center gap-2  bg-amber-500 hover:bg-orange-600 text-white shadow-none ${getBorderRadius()} py-2 px-2 text-xs`}
+            >
+              <Mail className="w-4 h-4" />
+              <span>Email</span>
+            </Button>
+          )}
+        </div>
 
-          {/* Center Navigation */}
-          <div className="flex space-x-8">
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "home"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => {
-                setCurrentView("home");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+        {/* Secondary Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          {professional.resume ? (
+            <Button
+              onClick={handleResumeDownload}
+              className={`flex items-center justify-center gap-2 bg-white hover:bg-sky-100 text-gray-700 border border-gray-200 shadow-none ${getBorderRadius()} py-2`}
             >
-              <Home className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "home" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Home
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "about"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("about")}
+              <FileText className="w-4 h-4" />
+              Resume
+            </Button>
+          ) : (
+            <Button
+              className={`flex items-center justify-center gap-2 bg-gray-100 text-gray-400 ${getBorderRadius()} py-2 cursor-not-allowed`}
+              disabled
             >
-              <User className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "about" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              About
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "services"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("services")}
-            >
-              <Users className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "services" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Services
-            </button>
-            <button
-              className={`flex items-center text-sm font-medium transition-all duration-200 ${
-                currentView === "portfolio"
-                  ? "text-sky-600 bg-sky-50 border border-sky-200"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              } px-3 py-2 rounded-lg`}
-              onClick={() => setCurrentView("portfolio")}
-            >
-              <ImageIcon className={`w-4 h-4 mr-2 transition-colors ${
-                currentView === "portfolio" ? "text-sky-600" : "text-gray-500"
-              }`} />
-              Portfolio
-            </button>
-          </div>
-
-          {/* Right Side */}
+              <FileText className="w-4 h-4" />
+              No Resume
+            </Button>
+          )}
           <Button
-            onClick={() => setCurrentView("contact")}
-            className={`bg-sky-600 hover:bg-sky-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
+            onClick={handleDownloadCard}
+            className={`flex items-center justify-center gap-2 bg-white hover:bg-sky-100 text-gray-700 border border-gray-200 shadow-none ${getBorderRadius()} py-2`}
           >
-            Let's Talk
+            <Download className="w-4 h-4" />
+            Card
           </Button>
         </div>
-      </nav>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
-        <div className="flex justify-around items-center h-16 px-2">
-          <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-              activeSection === "home"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => {
-              setCurrentView("home");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+        {/* Share Button */}
+        <Button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: `${professional.name} - Professional Profile`,
+                text: `Check out ${professional.name}'s professional profile`,
+                url: window.location.href,
+              });
+            } else {
+              navigator.clipboard.writeText(window.location.href).then(() => {
+                toast.success("Profile link copied to clipboard!");
+              });
+            }
+          }}
+          className={`w-full flex items-center justify-center gap-2 bg-white hover:bg-sky-100 text-gray-700 border border-gray-200 shadow-none ${getBorderRadius()} py-2`}
+        >
+          <Share2 className="w-4 h-4" />
+          Share Profile
+        </Button>
+      </div>
+    );
+  };
+
+  const SocialLinks = () => {
+    return (
+      <div className="flex flex-wrap justify-center gap-2">
+        {professional.facebook && (
+          <a
+            href={professional.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
           >
-            <Home className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">Home</span>
-          </button>
-          <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-              activeSection === "about"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => setCurrentView("about")}
+            <SiFacebook className="w-5 h-5 text-blue-600" />
+          </a>
+        )}
+        {professional.twitter && (
+          <a
+            href={professional.twitter}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
           >
-            <User className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">About</span>
-          </button>
-          <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-              activeSection === "services"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => setCurrentView("services")}
+            <SiX className="w-5 h-5 text-black" />
+          </a>
+        )}
+        {professional.instagram && (
+          <a
+            href={professional.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
           >
-            <Users className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">Services</span>
-          </button>
-          <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-              activeSection === "portfolio"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => setCurrentView("portfolio")}
+            <SiInstagram className="w-5 h-5 text-pink-600" />
+          </a>
+        )}
+        {professional.linkedin && (
+          <a
+            href={professional.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-10 h-10 bg-linear-to-b from-sky-100 to-white ${getBorderRadius()} hover:from-sky-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
           >
-            <ImageIcon className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">Portfolio</span>
-          </button>
-          <button
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-0 flex-1 ${
-              activeSection === "contact"
-                ? "text-sky-500 bg-sky-50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => setCurrentView("contact")}
+            <SiLinkedin className="w-5 h-5 text-blue-700" />
+          </a>
+        )}
+        {professional.phone && (
+          <a
+            href={`https://wa.me/${professional.phone!.replace(/\D/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-10 h-10 bg-linear-to-b from-green-100 to-white ${getBorderRadius()} hover:from-green-200 hover:to-gray-50 border shadow-none flex items-center justify-center transition-colors`}
           >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-xs mt-1 font-medium">Contact</span>
-          </button>
+            <SiWhatsapp className="w-5 h-5 text-green-600" />
+          </a>
+        )}
+      </div>
+    );
+  };
+
+ const AddressCard = () => {
+  return (
+    <Card className="rounded-2xl shadow-md bg-slate-900 hover:shadow-md transition-shadow duration-300 px-3 py-3 flex flex-col items-stretch h-full w-full relative">
+      <div className="flex flex-col gap-3 w-full items-center justify-between relative z-10">
+        <div className="flex flex-col flex-1 min-w-0 space-y-2.5 w-full">
+          
+          {/* Location */}
+          {professional.location && (
+            <div className="flex items-start gap-2.5 group">
+              <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 mt-0.5 shrink-0">
+                <MapPin className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors" />
+              </span>
+              <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug break-words">
+                {professional.location}
+              </span>
+            </div>
+          )}
+
+          {/* Phone */}
+          {professional.phone && (
+            <div className="flex items-center gap-2.5 group">
+              <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 shrink-0">
+                <Phone className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors shrink-0" />
+              </span>
+              <a
+                href={`tel:${professional.phone}`}
+                className="text-xs text-white hover:text-orange-300 hover:underline font-semibold break-all"
+                title="Call this number"
+              >
+                {professional.phone}
+              </a>
+            </div>
+          )}
+
+          {/* Email */}
+          {professional.email && (
+            <div className="flex items-center gap-2.5 group">
+              <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 shrink-0">
+                <Mail className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors shrink-0" />
+              </span>
+              <a
+                href={`mailto:${professional.email}`}
+                className="text-xs text-white hover:text-orange-300 hover:underline font-semibold break-all"
+                title="Send email"
+              >
+                {professional.email}
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="pt-8 md:pt-24 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          {currentView === "about" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
+      {/* Social Links & Website */}
+      {(professional.facebook ||
+        professional.twitter ||
+        professional.instagram ||
+        professional.linkedin ||
+        professional.website ||
+        professional.phone) && (
+        <div className="w-full border-t pt-4 border-gray-200/80 mt-1 relative z-10">
+          <div className="flex flex-wrap gap-2 w-full justify-center items-center">
+            
+            {/* Website */}
+            {professional.website && (
+              <a
+                href={
+                  professional.website.startsWith("http")
+                    ? professional.website
+                    : `https://${professional.website}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                aria-label="Website"
+              >
+                <Globe className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
+              </a>
+            )}
+
+            {/* Facebook */}
+            {professional.facebook && (
+              <a
+                href={
+                  professional.facebook.startsWith("http")
+                    ? professional.facebook
+                    : `https://${professional.facebook}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                aria-label="Facebook"
+              >
+                <SiFacebook className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+              </a>
+            )}
+
+            {/* Twitter */}
+            {professional.twitter && (
+              <a
+                href={
+                  professional.twitter.startsWith("http")
+                    ? professional.twitter
+                    : `https://${professional.twitter}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                aria-label="Twitter"
+              >
+                <SiX className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
+              </a>
+            )}
+
+            {/* Instagram */}
+            {professional.instagram && (
+              <a
+                href={
+                  professional.instagram.startsWith("http")
+                    ? professional.instagram
+                    : `https://${professional.instagram}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-pink-100 hover:bg-pink-200 transition-colors group"
+                aria-label="Instagram"
+              >
+                <SiInstagram className="h-4 w-4 text-pink-600 group-hover:text-pink-800" />
+              </a>
+            )}
+
+            {/* LinkedIn */}
+            {professional.linkedin && (
+              <a
+                href={
+                  professional.linkedin.startsWith("http")
+                    ? professional.linkedin
+                    : `https://${professional.linkedin}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                aria-label="LinkedIn"
+              >
+                <SiLinkedin className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+              </a>
+            )}
+
+            {/* WhatsApp (Styled to match the theme) */}
+            {professional.phone && (
+              <a
+                href={`https://wa.me/${professional.phone!.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 transition-colors group"
+                aria-label="WhatsApp"
+              >
+                <SiWhatsapp className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+const Preloader = () => (
+  <div className="fixed inset-0 bg-white z-99999 flex flex-col items-center h-screen w-full">
+    {/* Middle Section: Profile Picture and Loading Text */}
+    <div className="flex flex-col items-center justify-center flex-1 w-full">
+      {/* Spinning Profile Photo */}
+      <div className="relative mb-6">
+        <div className="w-24 h-24 rounded-full border  flex items-center justify-center shadow-sm bg-slate-50">
+          {professional.profilePicture &&
+          professional.profilePicture.trim() !== "" ? (
+            <img
+              src={professional.profilePicture}
+              alt={professional.name}
+              className="w-20 h-20 rounded-full object-cover"
+            />
+          ) : (
+            <User className="w-12 h-12 text-sky-400" />
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Bottom Section: Digisence Logo and Name */}
+    <div className="mb-10 flex flex-row items-center">
+      {/* Digisence Logo */}
+      <img
+        src="/logo.svg"
+        alt="Digisence Logo"
+        className="w-8 h-8 mb-2 object-contain"
+      />
+
+      {/* Digisence Name */}
+      <h1 className="text-2xl font-bold text-slate-800 tracking-tight ml-2">
+        Digisence
+      </h1>
+    </div>
+  </div>
+);
+  return (
+    <>
+      {/* Preloader */}
+      {isLoading && <Preloader />}
+      
+      <div
+        className={`h-screen w-full overflow-hidden bg-orange-50 flex flex-col ${isLoading ? 'pointer-events-none opacity-0' : ''}`}
+        suppressHydrationWarning
+      >
+      {/* PAGE HEADER - Desktop Only */}
+      <header className="hidden md:flex shrink-0 bg-white shadow-none border-b z-50">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo & Business Name */}
+            <div className="flex items-center space-x-3 shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                {professional.profilePicture &&
+                professional.profilePicture.trim() !== "" ? (
+                  <img
+                    src={professional.profilePicture}
+                    alt={professional.name}
+                    className="h-10 w-10 border rounded-full object-cover"
+                    loading="eager"
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-gray-600" />
+                )}
               </div>
-              {/* About Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
-                >
-                  <CardContent className="p-0">
-                    <h2 className="text-xl font-bold text-slate-800 mb-6">
-                      About
-                    </h2>
-                    <div className="space-y-6">
-                      {/* About Me Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <User className="w-5 h-5 mr-2 text-sky-600" />
-                          About Me
-                        </h3>
-                        <p className="text-gray-700 leading-relaxed">
-                          {professional.aboutMe ||
-                            "No about information available."}
-                        </p>
-                      </div>
-
-                      {/* Education Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-sky-600" />
-                          Education
-                        </h3>
-                        {professional.education &&
-                        professional.education.length > 0 ? (
-                          <div className="space-y-4">
-                            {professional.education.map(
-                              (edu: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
-                                >
-                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Award className="w-5 h-5 text-sky-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">
-                                      {edu.degree || edu.title}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {edu.institution || edu.school}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      {edu.year || edu.duration}
-                                    </p>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            No education information available.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Certifications Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
-                          <Award className="w-5 h-5 mr-2 text-sky-600" />
-                          Certifications
-                        </h3>
-                        {professional.certifications &&
-                        professional.certifications.length > 0 ? (
-                          <div className="space-y-4">
-                            {professional.certifications.map(
-                              (cert: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
-                                >
-                                  <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Award className="w-5 h-5 text-sky-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">
-                                      {cert.name || cert.title}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {cert.issuer || cert.organization}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      {cert.year || cert.date}
-                                    </p>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            No certifications available.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Skills Section */}
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                        <Award className="w-5 h-5 mr-2 text-sky-600" />
-                        Skills
-                      </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {skills.map((skill: any, index: number) => (
-                          <div
-                            key={index}
-                            className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200 shadow-sm`}
-                          >
-                            <Award className="w-4 h-4 text-sky-600 mr-2" />
-                            <span className="text-sm text-gray-700">
-                              {skill.name?.name || skill.name}
-                            </span>
-                          </div>
-                        ))}
-                        {skills.length === 0 && (
-                          <p className="text-gray-500 italic">
-                            No skills information available.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <div className="h-6 w-px bg-gray-300 hidden md:block"></div>
+              <span className="text-lg font-bold text-gray-900 hidden md:block">
+                {professional.name}
+              </span>
             </div>
-          ) : currentView === "services" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Services Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
+
+            {/* Desktop Navigation - Centered */}
+            <nav className="hidden md:flex items-center justify-center flex-1 px-8">
+              <div className="flex space-x-2">
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "home"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => {
+                    setCurrentView("home");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                 >
-                  <CardContent className="p-0">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-slate-800">
-                        Services
-                      </h2>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {servicesOffered
-                          .slice(0, 5)
-                        .map((service: any, index: number) => (
-                          <div
-                            key={index}
-                            className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
-                          >
-                            <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
-                              <Award className="w-6 h-6 text-sky-600" />
+                  <Home
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "home" ? "text-sky-600" : "text-gray-500"
+                    }`}
+                  />
+                  Home
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "about"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("about")}
+                >
+                  <User
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "about" ? "text-sky-600" : "text-gray-500"
+                    }`}
+                  />
+                  About
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "services"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("services")}
+                >
+                  <Users
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "services"
+                        ? "text-sky-600"
+                        : "text-gray-500"
+                    }`}
+                  />
+                  Services
+                </button>
+                <button
+                  className={`flex items-center text-sm font-medium transition-all duration-200 ${
+                    currentView === "portfolio"
+                      ? "text-sky-600 bg-sky-50 border border-sky-200"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  } px-3 py-2 rounded-lg`}
+                  onClick={() => setCurrentView("portfolio")}
+                >
+                  <ImageIcon
+                    className={`w-4 h-4 mr-2 transition-colors ${
+                      currentView === "portfolio"
+                        ? "text-sky-600"
+                        : "text-gray-500"
+                    }`}
+                  />
+                  Portfolio
+                </button>
+              </div>
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden shrink-0">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <Menu />
+              </Button>
+            </div>
+
+            {/* Right Side Actions (Desktop) */}
+            <div className="hidden md:flex items-center gap-2">
+              <Button
+                onClick={() => setCurrentView("contact")}
+                className={`bg-sky-600 hover:bg-sky-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
+              >
+                Let's Talk
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu Dropdown (Optional, based on BP) */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t">
+            <div className="px-4 py-3 space-y-2">
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "home" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("home");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "about" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("about");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <User className="w-4 h-4 mr-2" />
+                About
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "services" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("services");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Services
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "portfolio" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("portfolio");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Portfolio
+              </button>
+              <button
+                className={`w-full flex items-center text-sm font-medium ${
+                  currentView === "contact" ? "text-sky-600" : "text-gray-600"
+                } px-3 py-2 rounded-lg hover:bg-gray-50`}
+                onClick={() => {
+                  setCurrentView("contact");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contact
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-safe">
+          <div className="flex justify-around items-center gap-2 px-3">
+            {navLinks.map((item) => {
+              const MobileIcon = item.mobileIcon;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => handleViewChange(item.value)}
+                  className={`flex flex-col items-center justify-center py-2 w-full rounded-none transition-all duration-200 ${
+                    activeSection === item.value
+                      ? "text-orange-400 font-extrabold border-t-4 border-orange-400"
+                      : "text-gray-500 border-t-4 border-transparent hover:text-gray-700"
+                  }`}
+                >
+                  <MobileIcon className="h-5 w-5 mb-0.5" />
+                  <span className="text-xs font-medium">
+                    {item.mobileTitle}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Layout */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 overflow-hidden">
+        {/* ASIDE - Sticky Sidebar (Desktop Only) */}
+        <aside className="hidden md:block md:col-span-1 h-full overflow-y-auto z-20">
+          <div className="flex flex-col p-4 lg:gap-4 w-full">
+            {/* Sticky Wrapper */}
+            <div className="sticky top-24 space-y-4">
+              {/* Profile Header Card - Banner, Name, Headline only */}
+              <ProfileHeaderCard />
+
+              {/* CTA Buttons - Without Card */}
+              <CTAActions />
+
+              {/* Address Card - With Social Icons Inside */}
+              <AddressCard />
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="md:col-span-3 h-full overflow-y-auto relative scroll-smooth min-w-0">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-4 space-y-6 lg:space-y-8">
+            {currentView === "about" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} rounded-2xl p-6 shadow-none border  h-full`}
+                  >
+                    <CardContent className="p-0">
+                      <div className="space-y-6">
+                        {/* About Me Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <User className="w-5 h-5 mr-2 text-sky-600" />
+                            About Me
+                          </h3>
+                          <p className="text-gray-700 leading-relaxed">
+                            {professional.aboutMe ||
+                              "No about information available."}
+                          </p>
+                        </div>
+
+                        {/* Education Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <Award className="w-5 h-5 mr-2 text-sky-600" />
+                            Education
+                          </h3>
+                          {professional.education &&
+                          professional.education.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {professional.education.map(
+                                (edu: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                      <Award className="w-5 h-5 text-sky-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-900">
+                                        {edu.degree || edu.title}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {edu.institution || edu.school}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {edu.year || edu.duration}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
                             </div>
-                            <span className="text-sm font-semibold text-gray-900 text-center">
-                              {service.name?.name || service.name}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No education information available.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Certifications Section */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <Award className="w-5 h-5 mr-2 text-sky-600" />
+                            Certifications
+                          </h3>
+                          {professional.certifications &&
+                          professional.certifications.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {professional.certifications.map(
+                                (cert: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center shrink-0">
+                                      <Award className="w-5 h-5 text-sky-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-900">
+                                        {cert.name || cert.title}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {cert.issuer || cert.organization}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {cert.year || cert.date}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No certifications available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Skills Section */}
+                      <div className="mt-8">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                          <Award className="w-5 h-5 mr-2 text-sky-600" />
+                          Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                          {skills.map((skill: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200 shadow-none`}
+                            >
+                              <Award className="w-4 h-4 text-sky-600 mr-2" />
+                              <span className="text-sm text-gray-700">
+                                {skill.name?.name || skill.name}
+                              </span>
+                            </div>
+                          ))}
+                          {skills.length === 0 && (
+                            <p className="text-gray-500 italic">
+                              No skills information available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          ) : currentView === "portfolio" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Portfolio Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-xl font-bold text-slate-800">
-                        Portfolio
-                      </h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {portfolio
-                        .map((item: any, index: number) => {
-                          const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
-                          return (
-                            <div className="flex flex-col ">
-                              <div
-                                key={index}
-                                className="relative p-7 px-10 bg-linear-to-t border   from-sky-100/80 to-transparent rounded-xl overflow-hidden"
-                              >
-                                <div className="relative  bg-white h-fit   border -bottom-8  aspect-video rounded-lg overflow-hidden">
-                                  {isVideo ? (
-                                    <video
-                                      src={item.url}
-                                      controls
-                                      className="h-full w-full object-cover absolute inset-0"
-                                      poster={item.thumbnail || undefined}
-                                    >
-                                      Your browser does not support the video
-                                      tag.
-                                    </video>
-                                  ) : (
-                                    (() => {
-                                      const optimizedImage = useOptimizedImage(
-                                        item.url,
-                                        400,
-                                        250
-                                      );
-                                      return (
-                                        <img
-                                          src={optimizedImage.src}
-                                          srcSet={optimizedImage.srcSet}
-                                          sizes={optimizedImage.sizes}
-                                          alt={item.title}
-                                          className="h-full w-full object-cover absolute inset-0"
-                                        />
-                                      );
-                                    })()
-                                  )}
-                                </div>
-                                <div className="absolute bottom-3 left-3 border bg-white/80 backdrop-blur-sm rounded-full px-3 py-0.2">
-                                  <span className="text-sm font-semibold text-gray-900">
-                                    {item.title}
-                                  </span>
-                                </div>
+            ) : currentView === "services" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} p-6 rounded-2xl shadow-none border `}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">
+                          Services
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {servicesOffered
+                          .slice(0, 10)
+                          .map((service: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
+                            >
+                              <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                                <Award className="w-6 h-6 text-sky-600" />
                               </div>
-                              {item.description && (
-                                <div className=" p-3 border-b border-l border-r  rounded-xl">
-                                  <p className="text-sm  text-gray-600 text-start">
+                              <span className="text-sm font-semibold text-gray-900 text-center">
+                                {service.name?.name || service.name}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : currentView === "portfolio" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} rounded-2xl p-6 shadow-none border h-full`}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">
+                          Portfolio
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {portfolio.map((item: any, index: number) => {
+                          const isVideo =
+                            item.type === "video" ||
+                            (item.url &&
+                              (item.url.includes(".mp4") ||
+                                item.url.includes(".webm") ||
+                                item.url.includes(".ogg")));
+                          return (
+                            <div
+                              key={index}
+                              className="flex flex-col h-full bg-white shadow-md w-full rounded-xl overflow-hidden border border-gray-200  hover:shadow-md transition-shadow"
+                            > 
+                              {/* Image Container - Full Width */}
+                              <div className="relative w-full aspect-video bg-gray-100">
+                                {isVideo ? (
+                                  <video
+                                    src={item.url}
+                                    controls
+                                    className="w-full h-full object-cover"
+                                    poster={item.thumbnail || undefined}
+                                  >
+                                    Your browser does not support video tag.
+                                  </video>
+                                ) : (
+                                  <OptimizedImage
+                                    src={item.url}
+                                    alt={item.title || "Portfolio image"}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                  />
+                                )}
+                              </div>
+                              {/* Content - Full Width */}
+                              <div className="p-4 flex flex-col flex-1">
+                                <h3 className="font-semibold text-gray-900 text-lg">
+                                  {item.title}
+                                </h3>
+                                {item.description && (
+                                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                                     {item.description}
                                   </p>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           );
                         })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          ) : currentView === "contact" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {/* Profile Card */}
-              <div className="md:col-span-1">
-                <ProfileCard />
-              </div>
-              {/* Contact Card */}
-              <div className="md:col-span-2">
-                <Card
-                  className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                >
-                  <CardContent className="p-0">
-                          <h2 className="text-xl font-bold text-slate-800 mb-4">
-                      Let's Talk
-                    </h2>
-                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                      Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
-                    </p>
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      setInquiryModal(true);
-                    }} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="contact-name">Name *</Label>
-                          <Input
-                            id="contact-name"
-                            value={inquiryData.name}
-                            onChange={(e) =>
-                              setInquiryData((prev) => ({ ...prev, name: e.target.value }))
-                            }
-                            required
-                            placeholder="Your full name"
-                            className={getBorderRadius()}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="contact-email">Email *</Label>
-                          <Input
-                            id="contact-email"
-                            type="email"
-                            value={inquiryData.email}
-                            onChange={(e) =>
-                              setInquiryData((prev) => ({ ...prev, email: e.target.value }))
-                            }
-                            required
-                            placeholder="your.email@example.com"
-                            className={getBorderRadius()}
-                          />
-                        </div>
+                        {portfolio.length === 0 && (
+                          <p className="text-gray-500 italic text-center py-8 col-span-3">
+                            No portfolio items available.
+                          </p>
+                        )}
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-phone">Phone</Label>
-                        <Input
-                          id="contact-phone"
-                          type="tel"
-                          value={inquiryData.phone}
-                          onChange={(e) =>
-                            setInquiryData((prev) => ({ ...prev, phone: e.target.value }))
-                          }
-                          placeholder="+91 (555) 123-4567"
-                          className={getBorderRadius()}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-message">Message *</Label>
-                        <Textarea
-                          id="contact-message"
-                          value={inquiryData.message}
-                          onChange={(e) =>
-                            setInquiryData((prev) => ({
-                              ...prev,
-                              message: e.target.value,
-                            }))
-                          }
-                          rows={5}
-                          required
-                          placeholder="Tell me about your project or ask your question..."
-                          className={getBorderRadius()}
-                        />
-                      </div>
-                      <div className="flex space-x-3">
-                        <Button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className={`flex-1 ${getButtonClass()}`}
-                        >
-                          {isSubmitting ? (
-                            "Sending..."
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4 mr-2" />
-                              Send Message
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setInquiryData({ name: "", email: "", phone: "", message: "" });
-                          }}
-                          className={getBorderRadius()}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Main Grid */}
-              <div className="grid grid-cols-1 relative md:grid-cols-3 gap-6 mb-12">
-                {/* Left Column - Profile Card */}
-                <div ref={aboutRef} id="about" className="md:col-span-1">
-                  <ProfileCard />
+                    </CardContent>
+                  </Card>
                 </div>
-                {/* Middle Column */}
-                <div className="md:col-span-1 space-y-6">
-                  <div className="h-[700px] flex gap-5 flex-col">
-                    {/* Work Experience */}
+              </div>
+            ) : currentView === "contact" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="md:col-span-3">
+                  <Card
+                    className={`${getCardClass()} p-6 rounded-2xl shadow-none border`}
+                  >
+                    <CardContent className="p-0">
+                      <h2 className="text-xl font-bold text-slate-800 mb-4">
+                        Let's Talk
+                      </h2>
+                      <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                        Ready to start a project or have questions? Get in touch
+                        with me today. I'm always open to discussing new
+                        opportunities and creative ideas.
+                      </p>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          setInquiryModal(true);
+                        }}
+                        className="space-y-4"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="contact-name">Name *</Label>
+                            <Input
+                              id="contact-name"
+                              value={inquiryData.name}
+                              onChange={(e) =>
+                                setInquiryData((prev) => ({
+                                  ...prev,
+                                  name: e.target.value,
+                                }))
+                              }
+                              required
+                              placeholder="Your full name"
+                              className={getBorderRadius()}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="contact-email">Email *</Label>
+                            <Input
+                              id="contact-email"
+                              type="email"
+                              value={inquiryData.email}
+                              onChange={(e) =>
+                                setInquiryData((prev) => ({
+                                  ...prev,
+                                  email: e.target.value,
+                                }))
+                              }
+                              required
+                              placeholder="your.email@example.com"
+                              className={getBorderRadius()}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-phone">Phone</Label>
+                          <Input
+                            id="contact-phone"
+                            type="tel"
+                            value={inquiryData.phone}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                            placeholder="+91 (555) 123-4567"
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-message">Message *</Label>
+                          <Textarea
+                            id="contact-message"
+                            value={inquiryData.message}
+                            onChange={(e) =>
+                              setInquiryData((prev) => ({
+                                ...prev,
+                                message: e.target.value,
+                              }))
+                            }
+                            rows={5}
+                            required
+                            placeholder="Tell me about your project or ask your question..."
+                            className={getBorderRadius()}
+                          />
+                        </div>
+                        <div className="flex space-x-3">
+                          <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className={`flex-1 ${getButtonClass()}`}
+                          >
+                            {isSubmitting ? (
+                              "Sending..."
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4 mr-2" />
+                                Send Message
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Mobile View: Profile Card - Show after banner/hero */}
+                <div className="md:hidden mb-6">
+                  <ProfileHeaderCard />
+                  <div className="mt-4">
+                    <CTAActions />
+                  </div>
+                  <div className="mt-4">
+                    <AddressCard />
+                  </div>
+                </div>
+
+                {/* Top Section: 2 Columns */}
+                <div
+                  ref={aboutRef}
+                  id="about"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 h-full"
+                >
+                  {/* Left Column: Work Experience + Expert Area */}
+                  <div className="space-y-6 h-full flex flex-col">
+                    {/* Work Experience Card */}
                     <Card
-                      className={`${getCardClass()} rounded-2xl p-6 h-[50%] shadow-lg border-0`}
+                      className={`${getCardClass()} rounded-2xl p-6 shadow-none border  h-full flex flex-col`}
                     >
-                      <CardContent className="p-0 overflow-hidden h-full">
+                      <CardContent className="p-0 overflow-hidden h-full flex flex-col">
                         <div className="flex justify-between items-center mb-5">
-                                  <h2 className="text-xl font-bold text-slate-800">
+                          <h2 className="text-lg font-bold text-slate-800">
                             Work Experience
                           </h2>
                           <button
@@ -1211,17 +1746,15 @@ export default function ProfessionalProfile({
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="overflow-hidden">
+                        <div className="overflow-hidden flex-1">
                           <div
                             className={`flex flex-col space-y-4 ${
-                                      workExperience.length > 3
-                                ? "animate-marquee"
-                                : ""
+                              workExperience.length > 3 ? "animate-marquee" : ""
                             }`}
                           >
-                                    {console.log('workExperience:', workExperience)}
-                                    {validWorkExperience.map(
-                                      (exp: any, index: number) => {
+                            {console.log("workExperience:", workExperience)}
+                            {validWorkExperience.map(
+                              (exp: any, index: number) => {
                                 return (
                                   <div
                                     key={`exp-${index}`}
@@ -1248,24 +1781,26 @@ export default function ProfessionalProfile({
                                         </span>
                                         <span className="text-gray-400 text-xs">
                                           Total:{" "}
-                                          {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                                          {exp.duration
+                                            ? calculateTotalTime(exp.duration)
+                                            : "N/A"}
                                         </span>
                                       </div>
                                     </div>
                                   </div>
                                 );
-                              }
+                              },
                             )}
                             {professional.workExperience &&
-                                      validWorkExperience.length > 3 &&
-                                      validWorkExperience.map(
-                                        (exp: any, index: number) => {
+                              validWorkExperience.length > 3 &&
+                              validWorkExperience.map(
+                                (exp: any, index: number) => {
                                   return (
                                     <div
                                       key={`exp-dup-${index}`}
                                       className="flex items-start space-x-4 rounded-lg"
                                     >
-                                      <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-sm">
+                                      <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center border border-gray-700/10 shrink-0 shadow-none">
                                         <Building2 className="w-5 h-5 text-sky-600" />
                                       </div>
                                       <div className="flex-1 flex justify-items-end gap-1 w-full">
@@ -1286,26 +1821,28 @@ export default function ProfessionalProfile({
                                           </span>
                                           <span className="text-gray-400 text-xs">
                                             Total:{" "}
-                                            {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                                            {exp.duration
+                                              ? calculateTotalTime(exp.duration)
+                                              : "N/A"}
                                           </span>
                                         </div>
                                       </div>
                                     </div>
                                   );
-                                }
+                                },
                               )}
                           </div>
                         </div>
                       </CardContent>
                     </Card>
 
-                    {/* Skills */}
+                    {/* Expert Area (Skills) Card */}
                     <Card
-                      className={`${getCardClass()} rounded-2xl h-full p-6 shadow-lg border-0`}
+                      className={`${getCardClass()} rounded-2xl h-full p-6 shadow-none border `}
                     >
-                      <CardContent className="p-0">
+                      <CardContent className="p-0 h-full flex flex-col">
                         <div className="flex justify-between items-center mb-5">
-                                  <h2 className="text-xl font-bold text-slate-800">
+                          <h2 className="text-lg font-bold text-slate-800">
                             Expert Area
                           </h2>
                           <button
@@ -1315,194 +1852,174 @@ export default function ProfessionalProfile({
                             View All <ChevronRight className="w-4 h-4 ml-1" />
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-3 overflow-hidden">
-                                  {skills
-                                    .slice(0, 12)
-                                    .map((skill: any, index: number) => (
+                        <div className="flex flex-wrap gap-3 overflow-hidden flex-1">
+                          {skills
+                            .slice(0, 12)
+                            .map((skill: any, index: number) => (
                               <div
                                 key={index}
                                 className={`flex items-center bg-white ${getBorderRadius()} px-4 py-1 border border-gray-200`}
                               >
                                 <Award className="w-5 h-5 text-sky-600 mr-2" />
                                 <span className="text-sm text-gray-700">
-                                          {skill.name?.name || skill.name}
+                                  {skill.name?.name || skill.name}
                                 </span>
                               </div>
                             ))}
-                                  {skills.length > 12 && (
-                                    <div
-                                      className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
-                                    >
-                                      <span className="text-sm text-gray-700">
-                                        ...
-                                      </span>
-                                    </div>
-                                  )}
+                          {skills.length > 12 && (
+                            <div
+                              className={`flex items-center bg-white ${getBorderRadius()} px-4 py-2 border border-gray-200`}
+                            >
+                              <span className="text-sm text-gray-700">...</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right Column: Portfolio Card */}
+                  <div className="space-y-6 h-full flex flex-col">
+                    <Card
+                      className={`${getCardClass()} rounded-2xl p-6 shadow-none border  h-full flex flex-col`}
+                    >
+                      <CardContent className="p-0 overflow-hidden h-full flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-lg font-bold text-slate-800">
+                            Portfolio
+                          </h2>
+                          <button
+                            onClick={() => setCurrentView("portfolio")}
+                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                          >
+                            View All <ChevronRight className="w-4 h-4 ml-1" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 h-full">
+                          {portfolio
+                            .slice(0, 4)
+                            .map((item: any, index: number) => {
+                              const isVideo =
+                                item.type === "video" ||
+                                (item.url &&
+                                  (item.url.includes(".mp4") ||
+                                    item.url.includes(".webm") ||
+                                    item.url.includes(".ogg")));
+                              return (
+                                <div
+                                  key={index}
+                                  className="flex flex-col rounded-lg overflow-hidden border border-gray-200 shadow-none h-fit"
+                                >
+                                  <div className="relative w-full aspect-video bg-gray-100">
+                                    {isVideo ? (
+                                      <video
+                                        src={item.url}
+                                        controls
+                                        className="w-full h-full object-cover"
+                                        poster={item.thumbnail || undefined}
+                                      >
+                                        Your browser does not support video tag.
+                                      </video>
+                                    ) : (
+                                      <OptimizedImage
+                                        src={item.url}
+                                        alt={item.title || "Portfolio image"}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="p-3">
+                                    <span className="text-sm font-semibold text-gray-900 block">
+                                      {item.title}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
                 </div>
 
-                {/* Right Column - Portfolio */}
-                <div className="md:col-span-1">
-                  <Card
-                    className={`${getCardClass()} rounded-2xl p-6 shadow-lg border-0 h-full`}
+                {/* Bottom Section: 2 Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                  {/* Services Section - Col 1 */}
+                  <div
+                    ref={servicesRef}
+                    id="services"
+                    className="md:col-span-1"
                   >
-                    <CardContent className="p-0">
-                      <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-slate-800">
-                          Portfolio
-                        </h2>
-                        <button
-                          onClick={() => setCurrentView("portfolio")}
-                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                        >
-                          View All <ChevronRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
-                      <div className="space-y-4">
-                                {portfolio
-                                  .slice(0, 2)
-                          .map((item: any, index: number) => {
-                            const isVideo = item.type === 'video' || (item.url && (item.url.includes('.mp4') || item.url.includes('.webm') || item.url.includes('.ogg')));
-                            return (
+                    <Card
+                      className={`${getCardClass()} p-6 rounded-2xl shadow-none border `}
+                    >
+                      <CardContent className="p-0">
+                        <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-lg font-bold text-slate-800">
+                            Services
+                          </h2>
+                          <button
+                            onClick={() => setCurrentView("services")}
+                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
+                          >
+                            View All <ChevronRight className="w-4 h-4 ml-1" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {servicesOffered
+                            .slice(0, 4)
+                            .map((service: any, index: number) => (
                               <div
                                 key={index}
-                                className="relative p-7 px-10 bg-linear-to-t border from-sky-100/80 to-transparent rounded-xl overflow-hidden"
+                                className={`flex flex-col items-center p-3 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
                               >
-                                <div className="relative bg-white h-full w-full border top-full -bottom-10 aspect-4/3 rounded-t-lg overflow-hidden">
-                                  {isVideo ? (
-                                    <video
-                                      src={item.url}
-                                      controls
-                                      className="h-full w-full object-cover absolute  -bottom-2"
-                                      poster={item.thumbnail || undefined}
-                                    >
-                                      Your browser does not support the video tag.
-                                    </video>
-                                  ) : (
-                                    (() => {
-                                        const optimizedImage = useOptimizedImage(
-                                          item.url,
-                                          400,
-                                          250
-                                        );
-                                        return (
-                                          <img
-                                            src={optimizedImage.src}
-                                            srcSet={optimizedImage.srcSet}
-                                            sizes={optimizedImage.sizes}
-                                            alt={item.title}
-                                            className="h-full w-full object-cover absolute inset-0"
-                                          />
-                                        );
-                                    })()
-                                  )}
+                                <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                                  <Award className="w-6 h-6 text-sky-600" />
                                 </div>
-                                <div className="absolute bottom-3 left-3 border bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                                  <span className="text-sm font-semibold text-gray-900">
-                                    {item.title}
-                                  </span>
-                                </div>
+                                <span className="text-sm font-bold text-gray-900 text-center">
+                                  {service.name}
+                                </span>
                               </div>
-                            );
-                          })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-              {/* Bottom Sections */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                {/* Services Section - 2 cols */}
-                <div ref={servicesRef} id="services" className="md:col-span-2">
-                  <Card
-                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                  >
-                    <CardContent className="p-0">
-                      <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-slate-800">
-                          Services
+                  {/* Let's Talk Section - Col 2 */}
+                  <div ref={contactRef} id="contact" className="md:col-span-1">
+                    <Card
+                      className={`${getCardClass()} p-6 rounded-2xl shadow-none border `}
+                    >
+                      <CardContent className="p-0">
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">
+                          Let's Talk
                         </h2>
-                        <button
-                          onClick={() => setCurrentView("services")}
-                          className="text-sm text-gray-600 hover:text-gray-800 flex items-center cursor-pointer"
-                        >
-                          View All <ChevronRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                {servicesOffered
-                                  .slice(0, 5)
-                          .map((service: any, index: number) => (
-                            <div
-                              key={index}
-                              className={`flex flex-col items-center p-4 bg-gray-50 ${getBorderRadius()} hover:bg-gray-100 transition-colors`}
-                            >
-                              <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
-                                <Award className="w-6 h-6 text-sky-600" />
-                              </div>
-                              <span className="text-sm font-semibold text-gray-900 text-center">
-                                {service.name}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                          Ready to start a project or have questions? Get in
+                          touch with me today. I'm always open to discussing new
+                          opportunities and creative ideas.
+                        </p>
+                        <div className="mt-6">
+                          <Button
+                            onClick={() => setCurrentView("contact")}
+                            className={`w-full ${getButtonClass()} shadow-none border`}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Send Message
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-
-                {/* Let's Talk Section - 1 col */}
-                <div ref={contactRef} id="contact">
-                  <Card
-                    className={`${getCardClass()} p-6 rounded-2xl shadow-lg border-0`}
-                  >
-                    <CardContent className="p-0">
-                              <h2 className="text-xl font-bold text-slate-800 mb-4">
-                        Let's Talk
-                      </h2>
-                      <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                        Ready to start a project or have questions? Get in touch with me today. I'm always open to discussing new opportunities and creative ideas.
-                      </p>
-                      <div className="mt-6">
-                        <Button
-                          onClick={() => setCurrentView("contact")}
-                          className={`w-full ${getButtonClass()} shadow-lg`}
-                        >
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Send Message
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        </main>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-linear-to-r py-6 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-sm font-medium">
-            Developed By{" "}
-            <a
-              href="https://digiconnunite.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sky-400 hover:text-sky-300 transition-colors duration-200 font-semibold"
-            >
-              Digiconn Unite Pvt. Ltd.
-            </a>
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            © 2025 All rights reserved.
-          </p>
-        </div>
-      </footer>
 
       <style
         dangerouslySetInnerHTML={{
@@ -1616,7 +2133,7 @@ export default function ProfessionalProfile({
                 key={index}
                 className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
               >
-                <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10 shadow-sm">
+                <div className="w-15 h-15 bg-linear-to-b from-sky-50 to-white rounded-lg flex items-center justify-center shrink-0 border border-gray-700/10 shadow-none">
                   <Building2 className="w-5 h-5 text-sky-600" />
                 </div>
                 <div className="flex-1">
@@ -1625,12 +2142,8 @@ export default function ProfessionalProfile({
                       <p className="text-gray-900 font-semibold text-sm">
                         {exp.company}
                       </p>
-                      <p className="text-gray-700 text-xs">
-                        {exp.position}
-                      </p>
-                      <p className="text-gray-600 text-xs">
-                        {exp.location}
-                      </p>
+                      <p className="text-gray-700 text-xs">{exp.position}</p>
+                      <p className="text-gray-600 text-xs">{exp.location}</p>
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-gray-500 text-xs">
@@ -1638,15 +2151,15 @@ export default function ProfessionalProfile({
                       </span>
                       <span className="text-gray-400 text-xs">
                         Total:{" "}
-                        {exp.duration ? calculateTotalTime(exp.duration) : "N/A"}
+                        {exp.duration
+                          ? calculateTotalTime(exp.duration)
+                          : "N/A"}
                       </span>
                     </div>
                   </div>
                   {exp.description && (
                     <div className="mt-2">
-                      <p className="text-sm text-gray-600">
-                        {exp.description}
-                      </p>
+                      <p className="text-sm text-gray-600">{exp.description}</p>
                     </div>
                   )}
                 </div>
@@ -1660,7 +2173,7 @@ export default function ProfessionalProfile({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+      </>
   );
 }
-

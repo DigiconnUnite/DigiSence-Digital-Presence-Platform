@@ -1,5 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// learn more about it in the docs: https://pris.ly/d/prisma schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
@@ -69,6 +69,10 @@ model Business {
    brandContent Json?     // Brand slider data
    portfolioContent Json? // Portfolio images data
 
+   // Indexes for performance
+   @@index([isActive])
+   @@index([categoryId])
+   @@index([createdAt])
    @@map("businesses")
 }
 
@@ -109,104 +113,130 @@ model Professional {
    contactDetails        Json?   // Contact details
    ctaButton             Json?   // Call-to-action button data
 
+   // Indexes for performance
+   @@index([isActive])
+   @@index([professionName])
+   @@index([createdAt])
    @@map("professionals")
 }
 
 model Category {
-  id          String   @id @default(cuid()) @map("_id")
-  name        String
-  slug        String   @unique
-  description String?
-  parentId    String?
-  type        CategoryType @default(PRODUCT)
-  businessId  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+   id          String   @id @default(cuid()) @map("_id")
+   name        String
+   slug        String   @unique
+   description String?
+   parentId    String?
+   type        CategoryType @default(PRODUCT)
+   businessId  String?
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-  // Relations
-  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children    Category[] @relation("CategoryHierarchy")
-  business    Business? @relation("BusinessProductCategories", fields: [businessId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  businesses  Business[] @relation("BusinessCategory")
-  products    Product[]
+   // Relations
+   parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   children    Category[] @relation("CategoryHierarchy")
+   business    Business? @relation("BusinessProductCategories", fields: [businessId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   businesses  Business[] @relation("BusinessCategory")
+   products    Product[]
 
-  @@map("categories")
+   // Indexes for performance
+   @@index([type])
+   @@index([businessId])
+   @@index([parentId])
+   @@index([type, businessId])
+   @@map("categories")
 }
 
 model Brand {
-  id          String   @id @default(cuid()) @map("_id")
-  name        String
-  slug        String   @unique
-  description String?
-  logo        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+   id          String   @id @default(cuid()) @map("_id")
+   name        String
+   slug        String   @unique
+   description String?
+   logo        String?
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-  @@map("brands")
+   // Indexes for performance
+   @@index([name])
+   @@map("brands")
 }
 
 model Product {
-  id          String   @id @default(cuid()) @map("_id")
-  name        String
-  description String?
-  price       String?
-  image       String?
-  inStock     Boolean  @default(true)
-  isActive    Boolean  @default(true)
-  additionalInfo Json? // Key-value pairs for additional product information
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+   id          String   @id @default(cuid()) @map("_id")
+   name        String
+   description String?
+   price       String?
+   image       String?
+   inStock     Boolean  @default(true)
+   isActive    Boolean  @default(true)
+   additionalInfo Json? // Key-value pairs for additional product information
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-  // Relations
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  brandName   String?
-  inquiries   Inquiry[]
+   // Relations
+   businessId  String
+   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+   categoryId  String?
+   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+   brandName   String?
+   inquiries   Inquiry[]
 
-  @@map("products")
+   // Indexes for performance
+   @@index([businessId])
+   @@index([businessId, isActive])
+   @@index([categoryId])
+   @@index([isActive])
+   @@index([createdAt])
+   @@index([brandName])
+   @@map("products")
 }
 
 model Inquiry {
-  id          String       @id @default(cuid()) @map("_id")
-  name        String
-  email       String
-  phone       String?
-  message     String
-  status      InquiryStatus @default(NEW)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+   id          String       @id @default(cuid()) @map("_id")
+   name        String
+   email       String
+   phone       String?
+   message     String
+   status      InquiryStatus @default(NEW)
+   createdAt   DateTime     @default(now())
+   updatedAt   DateTime     @updatedAt
 
-  // Relations
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+   // Relations
+   businessId  String
+   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+   productId   String?
+   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+   userId      String?
+   user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@map("inquiries")
+   // Indexes for performance
+   @@index([businessId])
+   @@index([status])
+   @@index([createdAt])
+   @@map("inquiries")
 }
 
 model ProfessionalInquiry {
-  id            String             @id @default(cuid()) @map("_id")
-  name          String
-  email         String
-  phone         String?
-  message       String
-  status        InquiryStatus      @default(NEW)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+   id            String             @id @default(cuid()) @map("_id")
+   name          String
+   email         String
+   phone         String?
+   message       String
+   status        InquiryStatus      @default(NEW)
+   createdAt     DateTime           @default(now())
+   updatedAt     DateTime           @updatedAt
 
-  // Relations
-  professionalId String
-  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  serviceId      String?
-  userId         String?
-  user           User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+   // Relations
+   professionalId String
+   professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+   serviceId      String?
+   userId         String?
+   user           User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@map("professional_inquiries")
+   // Indexes for performance
+   @@index([professionalId])
+   @@index([status])
+   @@index([createdAt])
+   @@map("professional_inquiries")
 }
 
 enum UserRole {
@@ -223,22 +253,26 @@ enum InquiryStatus {
 }
 
 model BusinessListingInquiry {
-  id                  String                  @id @default(cuid()) @map("_id")
-  businessName        String
-  businessDescription String?
-  contactName         String
-  email               String
-  phone               String?
-  requirements        String
-  inquiryType         String?
-  status              BusinessListingStatus   @default(PENDING)
-  assignedTo          String?
-  assignedUser        User?                   @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
-  notes               String?
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
+   id                  String                  @id @default(cuid()) @map("_id")
+   businessName        String
+   businessDescription String?
+   contactName         String
+   email               String
+   phone               String?
+   requirements        String
+   inquiryType         String?
+   status              BusinessListingStatus   @default(PENDING)
+   assignedTo          String?
+   assignedUser        User?                   @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+   notes               String?
+   createdAt           DateTime                @default(now())
+   updatedAt           DateTime                @updatedAt
 
-  @@map("business_listing_inquiries")
+   // Indexes for performance
+   @@index([status])
+   @@index([assignedTo])
+   @@index([createdAt])
+   @@map("business_listing_inquiries")
 }
 
 enum BusinessListingStatus {
@@ -255,45 +289,49 @@ enum CategoryType {
 }
 
 model RegistrationInquiry {
-  id              String               @id @default(cuid()) @map("_id")
-  type            RegistrationType
-  // Basic contact information
-  name            String
-  email           String
-  phone           String?
+   id              String               @id @default(cuid()) @map("_id")
+   type            RegistrationType
+   // Basic contact information
+   name            String
+   email           String
+   phone           String?
 
-  // Business specific fields
-  businessName    String?
-  businessDescription String?
-  categoryId      String?
-  gstNumber       String?
-  website         String?
+   // Business specific fields
+   businessName    String?
+   businessDescription String?
+   categoryId      String?
+   gstNumber       String?
+   website         String?
 
-  // Professional specific fields
-  firstName       String?
-  lastName        String?
-  profession      String?
-  aboutMe         String?
-  professionalHeadline String?
+   // Professional specific fields
+   firstName       String?
+   lastName        String?
+   profession      String?
+   aboutMe         String?
+   professionalHeadline String?
 
-  // Common fields
-  location        String?
-  address         String?
-  password        String? // Hashed password
-  termsAccepted   Boolean              @default(false)
-  termsAcceptedAt DateTime?
+   // Common fields
+   location        String?
+   address         String?
+   password        String? // Hashed password
+   termsAccepted   Boolean              @default(false)
+   termsAcceptedAt DateTime?
 
-  // Admin review fields
-  status          RegistrationStatus   @default(PENDING)
-  adminNotes      String?
-  reviewedBy      String?
-  reviewedAt      DateTime?
+   // Admin review fields
+   status          RegistrationStatus   @default(PENDING)
+   adminNotes      String?
+   reviewedBy      String?
+   reviewedAt      DateTime?
 
-  // Metadata
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+   // Metadata
+   createdAt       DateTime             @default(now())
+   updatedAt       DateTime             @updatedAt
 
-  @@map("registration_inquiries")
+   // Indexes for performance
+   @@index([status])
+   @@index([type])
+   @@index([createdAt])
+   @@map("registration_inquiries")
 }
 
 enum RegistrationType {
@@ -310,48 +348,54 @@ enum RegistrationStatus {
 }
 
 model Session {
-  id        String   @id @default(cuid()) @map("_id")
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+   id        String   @id @default(cuid()) @map("_id")
+   userId    String
+   token     String   @unique
+   expiresAt DateTime
+   createdAt DateTime @default(now())
 
-  @@map("sessions")
+   // Indexes for performance
+   @@index([userId])
+   @@index([expiresAt])
+   @@map("sessions")
 }
 
 model PasswordReset {
-  id         String   @id @default(cuid()) @map("_id")
-  userId     String
-  token      String   @unique
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+   id         String   @id @default(cuid()) @map("_id")
+   userId     String
+   token      String   @unique
+   expiresAt  DateTime
+   createdAt  DateTime @default(now())
 
-  // Relations
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   // Relations
+   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("password_resets")
+   // Indexes for performance
+   @@index([userId])
+   @@index([expiresAt])
+   @@map("password_resets")
 }
 
 model AuditLog {
-  id          String      @id @default(cuid()) @map("_id")
-  action      AuditAction
-  entityType  String
-  entityId    String
-  userId      String
-  userEmail   String?
-  userName    String?
-  oldData     Json?
-  newData     Json?
-  ipAddress   String?
-  userAgent   String?
-  metadata    Json?
-  createdAt   DateTime    @default(now())
+   id          String      @id @default(cuid()) @map("_id")
+   action      AuditAction
+   entityType  String
+   entityId    String
+   userId      String
+   userEmail   String?
+   userName    String?
+   oldData     Json?
+   newData     Json?
+   ipAddress   String?
+   userAgent   String?
+   metadata    Json?
+   createdAt   DateTime    @default(now())
 
-  @@index([entityType, entityId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("audit_logs")
+   @@index([entityType, entityId])
+   @@index([userId])
+   @@index([action])
+   @@index([createdAt])
+   @@map("audit_logs")
 }
 
 enum AuditAction {

@@ -85,9 +85,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ business }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       }
     })
   } else {
@@ -122,9 +120,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ businesses }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       }
     })
   }

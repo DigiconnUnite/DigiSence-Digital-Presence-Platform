@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
@@ -15,18 +15,18 @@ import {
 
 // --- Main Content Logic ---
 function LoginContent() {
-  const router = useRouter();
+  // useRouter is no longer needed
   const searchParams = useSearchParams();
   const role = searchParams.get("role"); // "professional" | "business"
 
   // If no role is selected, show the Role Selection Cards
   if (!role) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-slate-50">
+      <div className="min-h-screen flex flex-col w-full bg-slate-200">
         <div className="flex-1 flex flex-col justify-center items-center w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
           
           {/* Top Nav */}
-          <div className="w-full absolute top-0 left-0 right-0 max-w-7xl mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
+          <div className="w-full absolute top-0 left-0 right-0  mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
             <Link href="/" className="flex items-center space-x-2 group">
               {/* ACTUAL LOGO IMAGE */}
               <Image
@@ -40,13 +40,17 @@ function LoginContent() {
                 DigiSence
               </span>
             </Link>
+            
+            {/* CHANGED: Used asChild to merge Button with Link */}
             <Button
-              onClick={() => router.push("/")}
               variant="ghost"
               size="sm"
-              className="hover:bg-slate-100 rounded-full py-0 px-0 border  cursor-pointer text-slate-600 hover:text-slate-900 transition-colors"
+              asChild
+              className="hover:bg-slate-100 rounded-full py-0 px-0 border cursor-pointer text-slate-600 hover:text-slate-900 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back
+              <Link href="/">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back
+              </Link>
             </Button>
           </div>
 
@@ -54,96 +58,94 @@ function LoginContent() {
           <div className="w-full max-w-7xl space-y-8 sm:space-y-10 mt-12 sm:mt-20">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
               
-              {/* Professional Card */}
-              <Card
-                className="group relative border-2 transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden cursor-pointer hover:shadow-2xl max-h-[500px] md:min-h-[500px]"
-                onClick={() => router.push("/login/professional")}
-              >
-                <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
+              {/* CHANGED: Wrapped Professional Card in Link */}
+              <Link href="/login/professional" className="block w-full h-full">
+                <Card className="group relative border-none transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden cursor-pointer hover:shadow-2xl max-h-[500px] md:min-h-[500px]">
+                  <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
 
-                {/* ACTUAL BACKGROUND IMAGE */}
-                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
-                  <Image
-                    src="/login-bg.png"
-                    alt="Background"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-
-                <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
-                  
-                  {/* Icon Section - Fixed alt attribute */}
-                  <div className="flex-1 flex items-center justify-center w-full pt-4">
-                    <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
-                      <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
-                        <Image
-                          src="/pro-svg.png"
-                          alt="Professional Icon"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    </div>
+                  {/* ACTUAL BACKGROUND IMAGE */}
+                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
+                    <Image
+                      src="/login-bg.svg"
+                      alt="Background"
+                      fill
+                      className="object-cover"
+                      priority
+                    />
                   </div>
 
-                  {/* Text Section */}
-                  <CardHeader className="space-y-3 w-full text-center pb-0 pt-6">
-                    <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-sm leading-tight">
-                      Continue as Professional
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base md:text-lg text-slate-100 font-medium leading-relaxed drop-shadow-md">
-                      Access your professional dashboard and manage your profile.
-                    </CardDescription>
-                  </CardHeader>
-                </div>
-              </Card>
-
-              {/* Business Card */}
-              <Card
-                className="group relative border-2 transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden cursor-pointer hover:shadow-2xl max-h-[500px] md:min-h-[500px]"
-                onClick={() => router.push("/login/business")}
-              >
-                <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
-
-                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
-                  <Image
-                    src="/login-bg.png"
-                    alt="Background"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-
-                <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
-                  
-                  {/* Icon Section - Fixed alt attribute */}
-                  <div className="flex-1 flex items-center justify-center w-full pt-4">
-                    <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
-                      <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
-                        <Image
-                          src="/bus-svg.png"
-                          alt="Business Icon"
-                          fill
-                          className="object-contain"
-                        />
+                  <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
+                    
+                    {/* Icon Section - Fixed alt attribute */}
+                    <div className="flex-1 flex items-center justify-center w-full pt-4">
+                      <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                        <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
+                          <Image
+                            src="/pro-svg.png"
+                            alt="Professional Icon"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
                       </div>
                     </div>
+
+                    {/* Text Section */}
+                    <CardHeader className="space-y-3 w-full text-center pb-0 pt-6">
+                      <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-sm leading-tight">
+                        Continue as Professional
+                      </CardTitle>
+                      <CardDescription className="text-sm sm:text-base md:text-lg text-slate-100 font-medium leading-relaxed drop-shadow-md">
+                        Access your professional dashboard and manage your profile.
+                      </CardDescription>
+                    </CardHeader>
+                  </div>
+                </Card>
+              </Link>
+
+              {/* CHANGED: Wrapped Business Card in Link */}
+              <Link href="/login/business" className="block w-full h-full">
+                <Card className="group relative border-none transition-all duration-500 rounded-3xl border-primary shadow-xl w-full overflow-hidden cursor-pointer hover:shadow-2xl max-h-[500px] md:min-h-[500px]">
+                  <div className="absolute inset-0 bg-slate-900/10 transition-colors group-hover:bg-slate-900/20 z-10" />
+
+                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-in-out group-hover:scale-105 bg-slate-200">
+                    <Image
+                      src="/login-bg.svg"
+                      alt="Background"
+                      fill
+                      className="object-cover"
+                      priority
+                    />
                   </div>
 
-                  {/* Text Section */}
-                  <CardHeader className="space-y-3 w-full text-center pb-0 pt-6">
-                    <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-sm leading-tight">
-                      Continue as Business
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base md:text-lg text-slate-100 font-medium leading-relaxed drop-shadow-md">
-                      Manage your business dashboard and connect with professionals.
-                    </CardDescription>
-                  </CardHeader>
-                </div>
-              </Card>
+                  <div className="flex flex-col items-center justify-between h-full relative z-20 px-6 py-8 sm:py-12">
+                    
+                    {/* Icon Section - Fixed alt attribute */}
+                    <div className="flex-1 flex items-center justify-center w-full pt-4">
+                      <div className="shrink-0 drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                        <div className="h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 relative">
+                          <Image
+                            src="/bus-svg.png"
+                            alt="Business Icon"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Text Section */}
+                    <CardHeader className="space-y-3 w-full text-center pb-0 pt-6">
+                      <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-sm leading-tight">
+                        Continue as Business
+                      </CardTitle>
+                      <CardDescription className="text-sm sm:text-base md:text-lg text-slate-100 font-medium leading-relaxed drop-shadow-md">
+                        Manage your business dashboard and connect with professionals.
+                      </CardDescription>
+                    </CardHeader>
+                  </div>
+                </Card>
+              </Link>
 
             </div>
 
@@ -170,12 +172,16 @@ function LoginContent() {
     <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Login Form for: {role}</h2>
-        <Button onClick={() => router.push("/login")} className="mt-4">
-          Back to Selection
+        
+        {/* CHANGED: Back to Selection using Link with asChild */}
+        <Button asChild className="mt-4">
+          <Link href="/login">
+            Back to Selection
+          </Link>
         </Button>
       </div>
-      </div>
-    );
+    </div>
+  );
 }
 
 // --- Main Page Export ---

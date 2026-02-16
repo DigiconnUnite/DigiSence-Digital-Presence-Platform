@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="text-[80%]" suppressHydrationWarning>
+    <html lang="en" className="text-[88%]" suppressHydrationWarning>
       <body
         className={`${archivo.variable} antialiased bg-background text-foreground`}
       >

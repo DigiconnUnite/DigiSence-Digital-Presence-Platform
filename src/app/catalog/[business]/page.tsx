@@ -159,6 +159,7 @@ export async function generateMetadata({ params }: PageProps) {
   if (!business) {
     return {
       title: 'Business Not Found',
+      description: 'The business you are looking for could not be found.',
     }
   }
 
@@ -179,13 +180,13 @@ export async function generateMetadata({ params }: PageProps) {
   const description = (business.description || `Professional profile for ${business.name}`).slice(0, 160)
 
   return {
-    title: `${business.name} - Business Profile`,
-    description,
-    keywords: `${business.name}, ${business.category?.name || 'business'}, products, services`,
+    title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
+    description: `${description}. Discover ${business.name} on DigiSence - India's global digital presence platform. View products, services, and contact information.`,
+    keywords: `${business.name}, ${business.category?.name || 'business'}, products, services, ${business.category?.name || 'business'} India, digital presence`,
     authors: [{ name: business.admin?.name || business.name }],
     openGraph: {
-      title: `${business.name} - Business Profile`,
-      description,
+      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
+      description: description,
       url: pageUrl,
       siteName: 'DigiSence',
       images: [
@@ -200,9 +201,16 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${business.name} - Business Profile`,
+      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
       description,
       images: [imageUrl],
+    },
+    alternates: {
+      canonical: pageUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   }
 }

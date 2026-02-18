@@ -22,6 +22,21 @@ import {
 import Footer from "@/components/Footer";
 import Aurora from "@/components/Aurora";
 import UnifiedPublicLayout from "@/components/UnifiedPublicLayout";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Contact Us - Get in Touch with DigiSence",
+  description: "Contact DigiSence team for support, inquiries, or partnership opportunities. We're here to help you build your digital presence. Reach out today!",
+  keywords: ['contact digisence', 'customer support', 'business inquiry', 'partnership', 'get in touch', 'contact us India'],
+  openGraph: {
+    title: 'Contact Us - DigiSence',
+    description: 'Get in touch with the DigiSence team for support and inquiries.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 const contactInfo = [
   {

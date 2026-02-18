@@ -1,14 +1,91 @@
+# DigiSence Robots.txt
+# https://mydigisence.com
+
+# Allow all major search bots
 User-agent: Googlebot
 Allow: /
+Allow: /businesses
+Allow: /professionals
+Allow: /contact
+Allow: /pricing
+Allow: /login
+Allow: /register
+Allow: /catalog/
+Allow: /pcard/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Allow: /businesses
+Allow: /professionals
+Allow: /contact
+Allow: /pricing
+Allow: /login
+Allow: /register
+Allow: /catalog/
+Allow: /pcard/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
 
+User-agent: Yahoo! Slurp
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Yandex
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+# Social Media Bots
 User-agent: Twitterbot
 Allow: /
+Allow: /businesses
+Allow: /professionals
+Allow: /catalog/
+Allow: /pcard/
 
 User-agent: facebookexternalhit
 Allow: /
+Allow: /businesses
+Allow: /professionals
+Allow: /catalog/
+Allow: /pcard/
 
+User-agent: LinkedInBot
+Allow: /
+Allow: /businesses
+Allow: /professionals
+Allow: /catalog/
+Allow: /pcard/
+
+User-agent: Pinterest
+Allow: /
+Allow: /businesses
+Allow: /professionals
+
+# Default policy for all other bots
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Sitemap location
+Sitemap: https://mydigisence.com/sitemap.xml
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 1

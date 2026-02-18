@@ -94,6 +94,7 @@ export async function generateMetadata({ params }: PageProps) {
   if (!professional) {
     return {
       title: 'Professional Not Found',
+      description: 'The professional profile you are looking for could not be found.',
     }
   }
 
@@ -108,12 +109,12 @@ export async function generateMetadata({ params }: PageProps) {
   const description = (professional.aboutMe || `Professional profile for ${professional.name}`).slice(0, 160)
 
   return {
-    title: `${professional.name} - Professional Profile`,
-    description,
-    keywords: `${professional.name}, ${professional.professionalHeadline || 'professional'}, services`,
+    title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
+    description: `${description}. View ${professional.name}'s professional profile on DigiSence - India's global digital presence platform for professionals.`,
+    keywords: `${professional.name}, ${professional.professionalHeadline || 'professional'}, services, skills, expert, ${professional.professionalHeadline || 'professional'} India`,
     authors: [{ name: professional.admin?.name || professional.name }],
     openGraph: {
-      title: `${professional.name} - Professional Profile`,
+      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
       description,
       url: pageUrl,
       siteName: 'DigiSence',
@@ -129,9 +130,16 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${professional.name} - Professional Profile`,
+      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
       description,
       images: [imageUrl],
+    },
+    alternates: {
+      canonical: pageUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   }
 }

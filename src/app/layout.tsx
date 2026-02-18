@@ -14,22 +14,72 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "Business Digital Presence Platform (BDPP)",
-  description: "A streamlined platform for professional business digital profiles",
-  keywords: ["BDPP", "Business", "Digital Presence", "Next.js", "TypeScript", "Tailwind CSS"],
-  authors: [{ name: "BDPP Team" }],
-  icons: {
-    icon: "/logo.svg",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'),
+  title: {
+    default: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
+    template: '%s | DigiSence',
+  },
+  description: 'DigiSence is India\'s leading global digital presence platform designed for business owners and professionals. Build your online presence, connect with clients, and grow your business with powerful digital tools.',
+  keywords: [
+    'digital presence',
+    'business profile',
+    'professional profile',
+    'online business directory',
+    'professional networking',
+    'business listings',
+    'digital marketing',
+    'online presence',
+    'India business platform',
+    'global business directory',
+  ],
+  authors: [{ name: 'Digiconn Unite Pvt Ltd' }],
+  creator: 'Digiconn Unite Pvt Ltd',
+  publisher: 'Digiconn Unite Pvt Ltd',
+  formatDetection: {
+    email: true,
+    address: true,
+    telephone: true,
   },
   openGraph: {
-    title: "Business Digital Presence Platform",
-    description: "Professional digital profiles for every business",
-    type: "website",
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://mydigisence.com',
+    siteName: 'DigiSence',
+    title: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
+    description: 'India\'s leading global digital presence platform for business owners and professionals. Build your online presence and connect with clients worldwide.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DigiSence - Digital Presence Platform',
+      },
+    ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Business Digital Presence Platform",
-    description: "Professional digital profiles for every business",
+    card: 'summary_large_image',
+    title: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
+    description: 'India\'s leading global digital presence platform for business owners and professionals.',
+    creator: '@digisence',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google-site-verification-code',
+  },
+  icons: {
+    icon: '/logo.svg',
+    apple: '/logo.svg',
   },
 };
 

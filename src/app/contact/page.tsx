@@ -1,4 +1,5 @@
-"use client";
+
+import type { Metadata } from "next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +23,6 @@ import {
 import Footer from "@/components/Footer";
 import Aurora from "@/components/Aurora";
 import UnifiedPublicLayout from "@/components/UnifiedPublicLayout";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Contact Us - Get in Touch with DigiSence",

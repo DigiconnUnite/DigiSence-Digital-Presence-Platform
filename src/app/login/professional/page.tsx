@@ -17,17 +17,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Professional Login - Access Your Professional Dashboard",
-  description: "Sign in to your DigiSence professional account. Manage your profile, showcase your skills, find work opportunities, and grow your professional network.",
-  keywords: ['professional login', 'expert login', 'profile management', 'professional dashboard', 'skill showcase', 'work opportunities'],
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
 
 export default function ProfessionalLoginPage() {
   const [email, setEmail] = useState("");

@@ -15,17 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Reset Password - Create New Password",
-  description: "Create a new secure password for your DigiSence account. Choose a strong password to protect your account and digital presence.",
-  keywords: ['reset password', 'new password', 'create password', 'secure password', 'password change'],
-  robots: {
-    index: false,
-    follow: true,
-  },
-};
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");

@@ -163,18 +163,17 @@ export default function HeroSectionOne() {
   }, [isDragging]);
 
   return (
-
     <div
-      className="relative py-20 md:py-30 h-fit overflow-hidden bg-cover bg-center bg-no-repeat"
+      className="relative pt-28 pb-12 sm:py-16 md:py-20 lg:py-28 min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] lg:min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/footer-bg.jpg')" }}
     >
       {/* White gradient overlay at bottom for smooth transition to next section */}
-      <div className="absolute top-0 left-0 right-0 h-54 bg-gradient-to-t from-transparent  to-black z-10"></div>
+      <div className="absolute top-0 left-0 right-0 h-32 sm:h-40 md:h-48 lg:h-54 bg-gradient-to-t from-transparent to-black z-10"></div>
 
       {/* LAYER 3: Content (z-20 & z-30) */}
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4 z-20">
-        <div className="py-8 md:py-16 lg:py-20  w-full">
-          <h1 className="relative mx-auto max-w-4xl mb-5 text-center text-3xl sm:text-4xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-slate-50">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-center px-4 sm:px-6 z-20">
+        <div className="py-4 sm:py-8 md:py-12 lg:py-16 xl:py-20 w-full">
+          <h1 className="relative mx-auto max-w-4xl mb-3 sm:mb-4 md:mb-5 text-center text-3xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-slate-50 leading-tight px-2 sm:px-4">
             {"Your One-Stop Solution for a Stunning Digital Profiles"
               .split(" ")
               .map((word, index) => (
@@ -187,7 +186,7 @@ export default function HeroSectionOne() {
                     delay: index * 0.08,
                     ease: [0.25, 0.46, 0.45, 0.94],
                   }}
-                  className="mr-1 sm:mr-2 inline-block"
+                  className="mr-1 sm:mr-1.5 md:mr-2 inline-block"
                 >
                   {word}
                 </motion.span>
@@ -201,21 +200,21 @@ export default function HeroSectionOne() {
               delay: 1,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="relative mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+            className="relative mt-3 sm:mt-4 md:mt-6 lg:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 md:gap-4 w-full sm:w-auto px-4 sm:px-0"
           >
-            <Link href="/professionals">
+            <Link href="/professionals" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="w-full bg-transparent sm:w-48 md:w-60 transform rounded-lg px-6 py-2.5 font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                className="w-full sm:w-auto min-w-[140px] md:min-w-[180px] lg:w-48 xl:w-60 transform rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 font-medium text-sm sm:text-base text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-primary bg-gray-800 hover:shadow-lg border border-white/50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
               >
                 Make Profile
               </Button>
             </Link>
-            <Link href="/contact">
+            <Link href="/contact" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-48 md:w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900"
+                className="w-full sm:w-auto min-w-[140px] md:min-w-[180px] lg:w-48 xl:w-60 transform rounded-lg border border-gray-300 bg-white px-4 sm:px-6 py-2 sm:py-2.5 font-medium text-sm sm:text-base text-black transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-lg dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900"
               >
                 Contact Us
               </Button>
@@ -225,12 +224,12 @@ export default function HeroSectionOne() {
       </div>
 
       {/* Marquee Container */}
-      <div className="w-full relative z-10 pb-5 pt-5">
-        <div className="flex items-center">
+      <div className="w-full relative z-10 pb-3 sm:pb-4 md:pb-5 pt-3 sm:pt-4 md:pt-5 mt-4 sm:mt-6 md:mt-8">
+        <div className="flex items-center overflow-hidden">
           <motion.div
-            className="flex gap-6 md:gap-10"
+            className="flex gap-3 sm:gap-4 md:gap-6 lg:gap-10"
             animate={{
-              x: [0, -3000], 
+              x: [0, -3000],
             }}
             transition={{
               x: {
@@ -248,17 +247,17 @@ export default function HeroSectionOne() {
               return (
                 <div
                   key={`marquee-${i}`}
-                  className="relative shrink-0 z-10 rounded-2xl overflow-hidden shadow-2xl border-8 border-white/30 duration-300"
+                  className={`relative shrink-0 z-10 overflow-hidden duration-300 
+                    rounded-lg border-4 shadow-none 
+                    sm:rounded-2xl sm:border-4 sm:shadow-2xl
+                    ${isPortrait ? "h-32 sm:h-64 md:h-80 lg:h-96" : "h-32 sm:h-64 md:h-80 lg:h-96"}
+                    ${isPortrait ? "w-auto sm:w-auto md:w-auto lg:w-auto" : "w-auto sm:w-auto md:w-auto lg:w-auto"}
+                  `}
                   style={{
-                    width: isPortrait ? "auto" : "40rem",
-                    height: isPortrait ? "24rem" : "auto",
-
                     aspectRatio: isPortrait ? "9/16" : "16/9",
-
-                    maxWidth: "90vw",
                   }}
                 >
-                  <div className="w-full h-full bg-white backdrop-blur-sm flex items-center justify-center">
+                  <div className="w-full h-full  flex items-center justify-center">
                     <Image
                       src={`/${img}`}
                       alt="slider"

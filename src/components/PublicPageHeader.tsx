@@ -151,7 +151,7 @@ export default function PublicPageHeader({
                   src="/logo-header.png"
                   alt="DigiSence Logo"
                   className={cn(
-                    "h-10 w-auto transition-transform duration-300 group-hover:scale-110",
+                    "h-8 w-auto transition-transform duration-300 group-hover:scale-110",
                     isTransparent ? "filter invert hue-rotate-180    " : ""
                   )}
                 />

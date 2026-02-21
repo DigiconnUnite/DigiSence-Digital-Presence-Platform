@@ -52,22 +52,19 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-200 font-sans">
       {/* --- LEFT SIDE: FORM --- */}
-      <div className="w-full  flex flex-col justify-center items-center relative bg-white px-4 sm:px-8 lg:px-16 py-12 md:py-0 z-10 overflow-y-auto">
+      <div className="w-full  flex flex-col justify-center items-center relative  px-4 sm:px-8 lg:px-16 py-12 md:py-0 z-10 overflow-y-auto">
         {/* Top Header */}
         <div className="absolute top-0 left-0 w-full px-6 py-6 flex justify-between items-center z-20 ">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-primary/10 p-1.5 rounded-md text-primary">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative">
               <img
-                src="/logo.png"
+                src="/logo-header.png"
                 alt="DigiSence Logo"
-                className="h-5 w-auto"
+                className="h-8 w-auto  transition-transform duration-300 group-hover:scale-110"
               />
             </div>
-            <span className="font-bold text-xl text-slate-800 tracking-tight">
-              DigiSence
-            </span>
           </Link>
           <Button
             onClick={() => router.push("/login")}
@@ -79,7 +76,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Content Wrapper */}
-        <div className="w-full max-w-lg space-y-8 pt-8 md:pt-0">
+        <div className="w-full  max-w-lg space-y-8 pt-8 md:pt-0">
           {/* Header Text */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-extrabold text-slate-800 ">
@@ -91,7 +88,9 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Sleek Card */}
-          <Card className="border-slate-200 p-0 shadow-none rounded-3xl overflow-hidden bg-white/50 backdrop-blur-sm">
+          <Card className="border-slate-200 p-0 shadow-none rounded-3xl overflow-hidden bg-white backdrop-blur-sm">
+
+            
             <CardContent className="p-6 sm:p-8">
               {!success ? (
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -131,7 +130,7 @@ export default function ForgotPasswordPage() {
                   {/* Submit Button */}
                   <Button
                     type="submit"
-                    className="w-full h-11 shadow-none bg-primary hover:bg-primary/90 text-white font-medium shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5"
+                    className="w-full h-11 shadow-none bg-slate-800 hover:bg-primary  text-white font-medium  shadow-slate-800/25 transition-all transform hover:-translate-y-0.5"
                     disabled={loading}
                   >
                     {loading ? "Sending..." : "Send Reset Link"}

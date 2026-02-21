@@ -202,12 +202,14 @@ export default function Footer() {
             </div>
 
             {/* Centered Powered by Digiconn Unite */}
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 flex items-center justify-center gap-2">
               <p className="text-gray-400 text-sm text-center">
                 Powered by{" "}
-                <span className="text-white font-semibold hover:text-white transition-colors cursor-pointer">
-                  Digiconn Unite Pvt. Ltd.
-                </span>
+                <Link href="https://digiconnunite.com" target="_blank">
+                  <span className="text-white font-semibold hover:text-primary transition-colors cursor-pointer">
+                    Digiconn Unite Pvt. Ltd.
+                  </span>
+                </Link>
               </p>
             </div>
 

@@ -74,20 +74,17 @@ export default function AdminLoginPage() {
     }
   };
   return (
-    <div className="min-h-screen max-h-screen relative w-full flex flex-col md:flex-row bg-slate-50 font-sans">
+    <div className="min-h-screen max-h-screen relative w-full flex flex-col md:flex-row bg-slate-200 font-sans">
       <div className="flex-1 flex flex-col justify-center relative w-full px-4 sm:px-6 lg:px-12 py-10 lg:py-0 z-10">
-        <div className="w-full absolute top-0 left-0 right-0 max-w-7xl mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <Image
-              src="/logo.png"
-              alt="DigiSence Logo"
-              width={32}
-              height={32}
-              className="h-8 w-auto"
-            />
-            <span className="font-bold text-xl sm:text-2xl text-slate-800 tracking-tight">
-              DigiSence
-            </span>
+        <div className="w-full absolute top-0 left-0 right-0  mx-auto p-4 sm:p-6 flex justify-between items-center z-50">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <img
+                src="/logo-header.png"
+                alt="DigiSence Logo"
+                className="h-8 w-auto  transition-transform duration-300 group-hover:scale-110"
+              />
+            </div>
           </Link>
           <Button
             onClick={() => router.push("/")}
@@ -99,7 +96,7 @@ export default function AdminLoginPage() {
           </Button>
         </div>
 
-        <div className="w-full max-w-md mx-auto space-y-6 sm:space-y-8 mt-12 sm:mt-4">
+        <div className="w-full bg-white py-10 px-4 rounded-lg shadow-sm max-w-md mx-auto space-y-6 sm:space-y-8 mt-12 sm:mt-4">
           {/* Header Text */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-extrabold text-slate-800">
@@ -131,7 +128,7 @@ export default function AdminLoginPage() {
                     required
                     disabled={loading}
                     placeholder="admin@example.com"
-                    className="pl-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="pl-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   />
                 </div>
               </div>
@@ -154,7 +151,7 @@ export default function AdminLoginPage() {
                     required
                     disabled={loading}
                     placeholder="Enter your password"
-                    className="pl-9 pr-9 h-11 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="pl-9 pr-9 h-11 shadow-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   />
                   <button
                     type="button"
@@ -201,7 +198,7 @@ export default function AdminLoginPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 shadow-lg bg-linear-to-r from-[#5757FF] to-[#A89CFE] cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
+                className="w-full h-11  bg-slate-800 cursor-pointer hover:opacity-90 text-white font-medium transition-all transform hover:-translate-y-0.5"
                 disabled={loading}
               >
                 {loading ? "Signing in..." : "Sign In"}

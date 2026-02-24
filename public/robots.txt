@@ -86,6 +86,3 @@ Disallow: /reset-password
 
 # Sitemap location
 Sitemap: https://mydigisence.com/sitemap.xml
-
-# Crawl-delay (optional, for polite crawling)
-Crawl-delay: 1

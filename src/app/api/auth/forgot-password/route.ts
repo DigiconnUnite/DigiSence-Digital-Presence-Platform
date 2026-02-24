@@ -12,10 +12,61 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email } = forgotPasswordSchema.parse(body);
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
+    console.log('[Forgot Password] Processing request for:', email);
+
+    // Find user by email in User table
+    let user = await prisma.user.findUnique({
       where: { email },
     });
+
+    console.log('[Forgot Password] User found in User table:', user ? 'yes' : 'no');
+
+    // If not found in User table, check RegistrationInquiry for pending registrations
+    if (!user) {
+      const registration = await prisma.registrationInquiry.findFirst({
+        where: { email },
+      });
+      
+      console.log('[Forgot Password] Registration found:', registration ? 'yes' : 'no');
+      
+      if (registration) {
+        // Return message that account is not yet approved
+        return NextResponse.json(
+          { message: "Your registration is still pending approval. Please contact support." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // If still not found, check Business table
+    if (!user) {
+      const business = await prisma.business.findFirst({
+        where: { email },
+        include: { admin: true }
+      });
+      
+      console.log('[Forgot Password] Business found:', business ? 'yes' : 'no');
+      
+      if (business?.admin) {
+        user = business.admin;
+        console.log('[Forgot Password] Found user via Business table');
+      }
+    }
+
+    // If still not found, check Professional table
+    if (!user) {
+      const professional = await prisma.professional.findFirst({
+        where: { email },
+        include: { admin: true }
+      });
+      
+      console.log('[Forgot Password] Professional found:', professional ? 'yes' : 'no');
+      
+      if (professional?.admin) {
+        user = professional.admin;
+        console.log('[Forgot Password] Found user via Professional table');
+      }
+    }
 
     if (!user) {
       // Don't reveal if email exists or not for security
@@ -39,9 +90,12 @@ export async function POST(request: NextRequest) {
 
     // Get user name for the email
     const name = user.name || user.email.split('@')[0];
+    console.log('[Forgot Password] Sending OTP to:', email, 'name:', name);
 
     // Send OTP via email
     const result = await sendOTP(email, name, 'password_reset');
+    
+    console.log('[Forgot Password] Send result:', result);
 
     if (!result.success) {
       return NextResponse.json(

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
+import { sendAccountCreationNotification } from '@/lib/email'
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -252,6 +253,21 @@ export async function POST(request: NextRequest) {
 
       return { user, business }
     })
+
+    // Send welcome email to the new business admin
+    try {
+      await sendAccountCreationNotification({
+        name: createData.adminName,
+        email: createData.email,
+        password: createData.password,
+        accountType: 'business',
+        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/login`,
+      })
+      console.log('Welcome email sent to:', createData.email)
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError)
+      // Don't fail the request if email fails
+    }
 
     // Emit Socket.IO event for real-time update
     if (global.io) {

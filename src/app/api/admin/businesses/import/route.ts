@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { parseCSV, mapCSVToBusinessData, ParseError, generateCSVTemplate } from '@/lib/utils/csvParser'
+import { sendBulkImportNotification } from '@/lib/email'
 
 // Generate secure password
 const generateSecurePassword = (): string => {
@@ -175,6 +176,34 @@ export async function POST(request: NextRequest) {
 
       return { created, failed, skipped }
     })
+
+    // Send bulk import notification to admin
+    try {
+      const adminUser = await db.user.findUnique({
+        where: { id: admin.userId },
+        select: { email: true },
+      })
+      
+      if (adminUser) {
+        // Transform failed rows to match expected format
+        const transformedFailedRows = importResult.failed.map(f => ({
+          row: f.row,
+          error: f.errors.map(e => e.message).join(', '),
+        }))
+        
+        await sendBulkImportNotification({
+          adminEmail: adminUser.email,
+          successCount: importResult.created.length,
+          failedCount: importResult.failed.length,
+          failedRows: transformedFailedRows,
+          importType: 'business',
+          adminUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/admin/businesses`,
+        })
+      }
+    } catch (emailError) {
+      console.error('Failed to send bulk import notification:', emailError)
+      // Don't fail the request if email fails
+    }
 
     // Emit Socket.IO event for real-time update
     if (global.io && importResult.created.length > 0) {

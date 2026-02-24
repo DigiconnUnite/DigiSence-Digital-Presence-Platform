@@ -1,40 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
 import { db as prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
+import { verifyOTP } from '@/lib/otp';
 
 const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Token is required"),
+  email: z.string().email("Invalid email address"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, password } = resetPasswordSchema.parse(body);
+    const { email, otp, password } = resetPasswordSchema.parse(body);
 
-    // Find password reset record
-    const passwordReset = await prisma.passwordReset.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!passwordReset) {
+    // Verify OTP
+    const otpResult = verifyOTP(email, otp, 'password_reset');
+    
+    if (!otpResult.valid) {
       return NextResponse.json(
-        { error: "Invalid or expired token" },
+        { error: otpResult.message },
         { status: 400 }
       );
     }
 
-    // Check if token has expired
-    if (passwordReset.expiresAt < new Date()) {
-      await prisma.passwordReset.delete({
-        where: { token },
-      });
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
       return NextResponse.json(
-        { error: "Token has expired" },
-        { status: 400 }
+        { error: "User not found" },
+        { status: 404 }
       );
     }
 
@@ -43,13 +42,8 @@ export async function POST(request: NextRequest) {
 
     // Update user's password
     await prisma.user.update({
-      where: { id: passwordReset.userId },
+      where: { id: user.id },
       data: { password: hashedPassword },
-    });
-
-    // Delete the used password reset token
-    await prisma.passwordReset.delete({
-      where: { token },
     });
 
     return NextResponse.json(

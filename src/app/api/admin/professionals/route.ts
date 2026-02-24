@@ -5,6 +5,7 @@ import type { UserRole } from '@/lib/auth'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
+import { sendAccountCreationNotification } from '@/lib/email'
 
 const createProfessionalSchema = z.object({
   name: z.string().min(2),
@@ -194,6 +195,21 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Send welcome email to the new professional admin
+    try {
+      await sendAccountCreationNotification({
+        name: adminName,
+        email: email,
+        password: password,
+        accountType: 'professional',
+        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/login`,
+      })
+      console.log('Welcome email sent to:', email)
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError)
+      // Don't fail the request if email fails
+    }
 
     // Emit Socket.IO event for real-time update
     if (global.io) {

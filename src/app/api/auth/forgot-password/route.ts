@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db as prisma } from '@/lib/db';
-import { generatePasswordResetToken } from '@/lib/auth';
-import { sendPasswordResetEmail } from '@/lib/email';
+import { sendOTP, canResendOTP, getOTPExpirySeconds } from '@/lib/otp';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -21,28 +20,41 @@ export async function POST(request: NextRequest) {
     if (!user) {
       // Don't reveal if email exists or not for security
       return NextResponse.json(
-        { message: "If an account exists with this email, a reset link has been sent." },
+        { message: "If an account exists with this email, a reset code has been sent." },
         { status: 200 }
       );
     }
 
-    // Generate password reset token
-    const token = generatePasswordResetToken(user.id);
+    // Check if OTP can be resent (rate limiting)
+    if (!canResendOTP(email)) {
+      const remainingSeconds = getOTPExpirySeconds(email);
+      return NextResponse.json(
+        { 
+          message: "Please wait before requesting another OTP.",
+          cooldown: remainingSeconds > 0 ? remainingSeconds : 60
+        },
+        { status: 429 }
+      );
+    }
 
-    // Create password reset record
-    await prisma.passwordReset.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
-      },
-    });
+    // Get user name for the email
+    const name = user.name || user.email.split('@')[0];
 
-    // Send password reset email
-    await sendPasswordResetEmail(user.email, token);
+    // Send OTP via email
+    const result = await sendOTP(email, name, 'password_reset');
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.message },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
-      { message: "Password reset link sent successfully." },
+      { 
+        message: "Password reset code sent successfully. Please check your email.",
+        email: email.replace(/(.{2})(.*)(@.*)/, "$1***$3") // Mask email for display
+      },
       { status: 200 }
     );
 

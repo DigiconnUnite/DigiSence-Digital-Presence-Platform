@@ -49,20 +49,6 @@ export interface RegistrationEmailJob extends BaseJob {
   };
 }
 
-export interface ProfessionalInquiryEmailJob extends BaseJob {
-  type: 'send-professional-inquiry-email';
-  data: {
-    inquiryId: string;
-    professionalName: string;
-    professionalEmail: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone?: string;
-    message: string;
-    serviceName?: string;
-  };
-}
-
 export type Job = InquiryEmailJob | RegistrationEmailJob;
 
 // In-memory job queue (use Redis for production)
@@ -189,8 +175,7 @@ async function executeJob(job: Job): Promise<void> {
       });
       break;
       
-    // Professional inquiry emails are handled directly in the API for now
-    // case 'send-professional-inquiry-email':
+    // Professional inquiry emails are handled directly in the notifications API
       
     default:
       throw new Error(`Unknown job type: ${(job as Job).type}`);

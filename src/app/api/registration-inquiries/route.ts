@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
-import { sendInquiryNotification, sendAccountCreationNotification } from '@/lib/email'
+import { sendInquiryNotification, sendAccountCreationNotification, sendRegistrationConfirmation } from '@/lib/email'
 
 const registrationInquirySchema = z.object({
   type: z.enum(['BUSINESS', 'PROFESSIONAL']),
@@ -144,14 +144,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Send confirmation email to user
+    // Send confirmation email to user (registration pending review)
     try {
-      await sendAccountCreationNotification({
+      await sendRegistrationConfirmation({
         name: validatedData.name,
         email: validatedData.email,
-        password: 'Your password will be sent after admin approval',
         accountType: validatedData.type.toLowerCase() as 'business' | 'professional',
-        loginUrl: `${process.env.NEXT_PUBLIC_API_URL}/login`,
       })
     } catch (emailError) {
       console.error('User confirmation email error:', emailError)

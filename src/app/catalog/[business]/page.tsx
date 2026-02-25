@@ -142,6 +142,9 @@ export async function generateMetadata({ params }: PageProps) {
       name: true,
       description: true,
       logo: true,
+      address: true,
+      phone: true,
+      website: true,
       category: {
         select: {
           name: true,
@@ -167,41 +170,49 @@ export async function generateMetadata({ params }: PageProps) {
   const protocol = (await headersList).get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
   const baseUrl = `${protocol}://${host}`
   const pageUrl = `${baseUrl}/catalog/${businessSlug}`
-  const imageUrl = business.logo ? getOptimizedImageUrl(business.logo, {
-    width: 1200,
-    height: 630,
-    quality: 85,
-    format: 'auto',
-    crop: 'fill',
-    gravity: 'auto'
-  }) : `${baseUrl}`
+  
+  // Use actual business logo for OG image
+  const imageUrl = business.logo 
+    ? getOptimizedImageUrl(business.logo, {
+        width: 1200,
+        height: 630,
+        quality: 85,
+        format: 'auto',
+        crop: 'fill',
+        gravity: 'center'
+      })
+    : `${baseUrl}/og-image.png`
 
-  const description = (business.description || `Professional profile for ${business.name}`).slice(0, 160)
+  // Limit description to ~4 lines (approximately 200 characters)
+  const fullDescription = business.description || `Business profile for ${business.name}`
+  const shortDescription = fullDescription.length > 200 
+    ? fullDescription.substring(0, 197) + '...'
+    : fullDescription
 
   return {
-    title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
-    description: `${description}. Discover ${business.name} on DigiSence - India's global digital presence platform. View products, services, and contact information.`,
+    title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
+    description: shortDescription,
     keywords: `${business.name}, ${business.category?.name || 'business'}, products, services, ${business.category?.name || 'business'} India, digital presence`,
     authors: [{ name: business.admin?.name || business.name }],
     openGraph: {
-      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
-      description: description,
+      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
+      description: shortDescription,
       url: pageUrl,
-      siteName: 'DigiSence',
+      siteName: 'DigiSense',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${business.name} logo`,
+          alt: `${business.name} - ${business.category?.name || 'Business'}`,
         },
       ],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSence`,
-      description,
+      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
+      description: shortDescription,
       images: [imageUrl],
     },
     alternates: {

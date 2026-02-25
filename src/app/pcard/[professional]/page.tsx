@@ -79,6 +79,9 @@ export async function generateMetadata({ params }: PageProps) {
       professionalHeadline: true,
       aboutMe: true,
       profilePicture: true,
+      location: true,
+      phone: true,
+      website: true,
       admin: { select: { name: true } },
     },
   })
@@ -96,34 +99,40 @@ export async function generateMetadata({ params }: PageProps) {
   const baseUrl = `${protocol}://${host}`
 
   const pageUrl = `${baseUrl}/pcard/${professionalSlug}`
-  const imageUrl = professional.profilePicture ? `${baseUrl}/api/placeholder/1200/630?text=${encodeURIComponent(professional.name)}` : `${baseUrl}`
+  
+  // Use actual profile picture for OG image - use the original URL without transformation
+  const imageUrl = professional.profilePicture || `${baseUrl}/og-image.png`
 
-  const description = (professional.aboutMe || `Professional profile for ${professional.name}`).slice(0, 160)
+  // Limit description to ~4 lines (approximately 200 characters)
+  const fullDescription = professional.aboutMe || `Professional profile for ${professional.name}`
+  const shortDescription = fullDescription.length > 200 
+    ? fullDescription.substring(0, 197) + '...'
+    : fullDescription
 
   return {
-    title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
-    description: `${description}. View ${professional.name}'s professional profile on DigiSence - India's global digital presence platform for professionals.`,
+    title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
+    description: shortDescription,
     keywords: `${professional.name}, ${professional.professionalHeadline || 'professional'}, services, skills, expert, ${professional.professionalHeadline || 'professional'} India`,
     authors: [{ name: professional.admin?.name || professional.name }],
     openGraph: {
-      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
-      description,
+      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
+      description: shortDescription,
       url: pageUrl,
-      siteName: 'DigiSence',
+      siteName: 'DigiSense',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${professional.name} profile picture`,
+          alt: `${professional.name} - ${professional.professionalHeadline || 'Professional'}`,
         },
       ],
-      type: 'website',
+      type: 'profile',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSence`,
-      description,
+      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
+      description: shortDescription,
       images: [imageUrl],
     },
     alternates: {

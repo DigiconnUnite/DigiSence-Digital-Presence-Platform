@@ -184,7 +184,7 @@ export default function ProfessionalProfile({
 
     return (
       <div className="flex flex-col gap-3 lg:gap-4 w-full">
-        <Card className="overflow-hidden py-0  pt-0 border-orange-500 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300  flex flex-col items-center text-center w-full ">
+        <Card className="overflow-hidden py-0   pt-0 border-orange-500 rounded-2xl shadow-none hover:shadow-xl transition-shadow duration-300  flex flex-col items-center text-center w-full ">
           {/* Banner Background */}
           <div className="relative h-24 w-full px-1  md:h-32 m-1 mb-0 pb-0 rounded-xl overflow-hidden">
             {professional.banner ? (
@@ -244,7 +244,7 @@ export default function ProfessionalProfile({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
               onClick={() => {
                 if (professional.phone) {
                   window.location.href = `tel:${professional.phone}`;
@@ -261,7 +261,7 @@ export default function ProfessionalProfile({
           {professional.phone && (
             <Button
               size="sm"
-              className="flex-1 flex items-center text-white justify-center gap-2 rounded-full bg-green-500 hover:bg-green-600 transition-colors text-xs font-medium shadow-sm border-0 cursor-pointer"
+              className="flex-1 flex items-center text-white justify-center gap-2 rounded-full bg-green-500 hover:bg-green-600 transition-colors text-xs font-medium shadow-xs border-0 cursor-pointer"
               onClick={() => {
                 if (professional.phone) {
                   const phoneNum = professional.phone.replace(/[^\d]/g, "");
@@ -287,7 +287,7 @@ export default function ProfessionalProfile({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
               onClick={() => {
                 if (professional.email) {
                   window.location.href = `mailto:${
@@ -312,7 +312,7 @@ export default function ProfessionalProfile({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
             onClick={handleDownloadCard}
             title="Download professional card"
           >
@@ -323,7 +323,7 @@ export default function ProfessionalProfile({
             <Button
               variant="default"
               size="sm"
-              className="flex-1 flex items-center justify-center gap-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors text-xs font-medium shadow-xs cursor-pointer"
               onClick={handleResumeDownload}
               title="Download resume"
             >
@@ -338,7 +338,7 @@ export default function ProfessionalProfile({
           <Button
             variant="outline"
             size="sm"
-            className="w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
             onClick={() => {
               if (navigator.share) {
                 navigator

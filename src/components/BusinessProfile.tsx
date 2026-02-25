@@ -1106,8 +1106,8 @@ export default function BusinessProfile({
         </aside>
 
         {/* Main Content Skeleton */}
-        <main className="md:col-span-3 h-full overflow-y-auto mb-5 relative  min-w-0">
-          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
+        <main className="md:col-span-3 h-full hide-scrollbar overflow-y-auto mb-5 relative  min-w-0">
+          <div className="max-w-auto mx-auto px-2 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
             {/* Hero Section */}
             <section className="relative w-full mx-auto">
               <Skeleton className="h-48 md:h-80 w-full rounded-xl md:rounded-3xl" />
@@ -1426,9 +1426,9 @@ export default function BusinessProfile({
         </aside>
         <main
           ref={mainContentRef}
-          className="md:col-span-3 h-full overflow-y-auto mb-5 relative scroll-smooth min-w-0"
+          className="md:col-span-3 h-full hide-scrollbar overflow-y-auto mb-5 relative scroll-smooth min-w-0"
         >
-          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
+          <div className="max-w-auto mx-auto px-2 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
             <section className="relative w-full mx-auto">
               <div className=" aspect-4/2 bg-center md:aspect-3/1 w-full rounded-xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl bg-gray-900 relative">
                 {heroContent.slides && safeSlides.length > 0 ? (

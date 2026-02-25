@@ -1154,8 +1154,8 @@ export default function ProfessionalProfile({
           </aside>
 
           {/* MAIN CONTENT AREA */}
-          <main className="md:col-span-3 h-full overflow-y-auto mb-5 relative scroll-smooth min-w-0">
-            <div className="mx-auto max-w-[1400px] pb-20 px-4 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
+          <main className="md:col-span-3 h-full hide-scrollbar overflow-y-auto mb-5 relative scroll-smooth min-w-0">
+            <div className="mx-auto max-w-auto pb-20 px-4 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
               
               <div className="md:hidden">
                 <ProfessionalInfoCard />

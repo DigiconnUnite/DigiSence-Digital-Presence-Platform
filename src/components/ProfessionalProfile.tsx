@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { saveAs } from "file-saver";
+import CardDownloadButton from "@/components/ui/CardDownloadButton";
 import {
   MapPin,
   Phone,
@@ -174,6 +175,41 @@ export default function ProfessionalProfile({
   const portfolioRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
+  // Handle resume download - must be defined before use
+  const handleResumeDownload = async () => {
+    if (!professional.resume) {
+      alert("No resume available for download.");
+      return;
+    }
+
+    try {
+      const link = document.createElement("a");
+      link.href = professional.resume;
+      link.download = `${professional.name}_Resume`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+
+      const fileExtension = professional.resume.split(".").pop()?.toLowerCase();
+
+      if (
+        fileExtension === "pdf" ||
+        fileExtension === "doc" ||
+        fileExtension === "docx"
+      ) {
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        window.open(professional.resume, "_blank", "noopener,noreferrer");
+      }
+    } catch (error) {
+      console.error("Error downloading resume:", error);
+      alert(
+        "Failed to download resume. Please try again or contact the professional directly.",
+      );
+    }
+  };
+
   // Professional Info Card - Like Business Profile Sidebar
   const ProfessionalInfoCard = () => {
     const profileImage = useOptimizedImage(
@@ -184,9 +220,10 @@ export default function ProfessionalProfile({
 
     return (
       <div className="flex flex-col gap-3 lg:gap-4 w-full">
-        <Card className="overflow-hidden py-0   pt-0 border-orange-500 rounded-2xl shadow-none hover:shadow-xl transition-shadow duration-300  flex flex-col items-center text-center w-full ">
+        <Card className="overflow-hidden py-0 pt-0 border-orange-500 rounded-2xl shadow-none hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center w-full ">
           {/* Banner Background */}
-          <div className="relative h-24 w-full px-1  md:h-32 m-1 mb-0 pb-0 rounded-xl overflow-hidden">
+          {/* Removed z-0 from here so it sits naturally behind the content below */}
+          <div className="relative h-24 w-full px-1 md:h-32 m-1 mb-0 pb-0 rounded-xl overflow-hidden">
             {professional.banner ? (
               <img
                 src={heroBannerImage.src}
@@ -201,24 +238,27 @@ export default function ProfessionalProfile({
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-3 w-full">
-            {/* Profile Picture - overlapping the banner */}
-            <div className="shrink-0 flex items-center justify-center mb-3  relative z-10">
+
+          <div className="relative z-10 flex flex-col items-center gap-3 w-full">
+        
+       
+            <div className="shrink-0 flex items-center justify-center -mt-10">
               {professional.profilePicture ? (
                 <img
                   src={profileImage.src}
                   srcSet={profileImage.srcSet}
                   sizes={profileImage.sizes}
                   alt={professional.name}
-                  className="w-20 h-20 rounded-full object-cover border border-gray-200 shadow-sm"
+                  className="flex w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
                   loading="eager"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center border shadow-sm">
+                <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center border-4 border-white shadow-md">
                   <User className="w-10 h-10 text-gray-400" />
                 </div>
               )}
             </div>
+        
             <div className="flex flex-col pb-4 px-4 gap-1.5 w-full min-w-0 text-center">
               <h3 className="font-extrabold text-lg text-gray-800 line-clamp-2 leading-tight">
                 {professional.name || "Professional Name"}
@@ -266,10 +306,9 @@ export default function ProfessionalProfile({
                 if (professional.phone) {
                   const phoneNum = professional.phone.replace(/[^\d]/g, "");
                   const waUrl = `https://wa.me/${phoneNum}?text=${encodeURIComponent(
-                    `Hi, I'm interested in ${professional.name}${
-                      professional.professionalHeadline
-                        ? ` (${professional.professionalHeadline})`
-                        : ""
+                    `Hi, I'm interested in ${professional.name}${professional.professionalHeadline
+                      ? ` (${professional.professionalHeadline})`
+                      : ""
                     }`,
                   )}`;
                   window.open(waUrl, "_blank");
@@ -290,11 +329,10 @@ export default function ProfessionalProfile({
               className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
               onClick={() => {
                 if (professional.email) {
-                  window.location.href = `mailto:${
-                    professional.email
-                  }?subject=Inquiry about ${encodeURIComponent(
-                    professional.name || "",
-                  )}`;
+                  window.location.href = `mailto:${professional.email
+                    }?subject=Inquiry about ${encodeURIComponent(
+                      professional.name || "",
+                    )}`;
                 } else {
                   alert("Email not available");
                 }
@@ -309,16 +347,27 @@ export default function ProfessionalProfile({
 
         {/* Secondary Action Buttons - Download Row */}
         <div className="flex flex-row gap-2 w-full">
-          <Button
+          <CardDownloadButton
+            data={{
+              name: professional.name,
+              professionalHeadline: professional.professionalHeadline,
+              location: professional.location,
+              phone: professional.phone,
+              email: professional.email,
+              website: professional.website,
+              facebook: professional.facebook,
+              twitter: professional.twitter,
+              instagram: professional.instagram,
+              linkedin: professional.linkedin,
+              logo: professional.profilePicture, // Pass profile picture as logo
+            }}
+            type="professional"
             variant="outline"
             size="sm"
             className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-xs cursor-pointer"
-            onClick={handleDownloadCard}
-            title="Download professional card"
           >
-            <Download className="h-3 w-3" />
             Download Card
-          </Button>
+          </CardDownloadButton>
           {professional.resume && (
             <Button
               variant="default"
@@ -374,7 +423,7 @@ export default function ProfessionalProfile({
                   <span className="inline-flex items-center justify-center rounded-full border bg-white/15 border-orange-300/50 group-hover:border-orange-400 transition-colors w-7 h-7 mt-0.5 shrink-0">
                     <MapPin className="h-3.5 w-3.5 text-gray-100 group-hover:text-orange-300 transition-colors" />
                   </span>
-                  <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug break-words">
+                  <span className="text-xs text-white hover:text-orange-300 font-semibold leading-snug wrap-break-word">
                     {professional.location}
                   </span>
                 </div>
@@ -417,139 +466,105 @@ export default function ProfessionalProfile({
             professional.linkedin ||
             professional.website ||
             professional.phone) && (
-            <div className="w-full border-t pt-4 border-gray-200/80 mt-1 relative z-10">
-              <div className="flex flex-wrap gap-2 w-full justify-center items-center">
-                {professional.website && (
-                  <a
-                    href={
-                      professional.website.startsWith("http")
-                        ? professional.website
-                        : `https://${professional.website}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
-                    aria-label="Website"
-                  >
-                    <Globe className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
-                  </a>
-                )}
-                {professional.facebook && (
-                  <a
-                    href={
-                      professional.facebook.startsWith("http")
-                        ? professional.facebook
-                        : `https://${professional.facebook}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
-                    aria-label="Facebook"
-                  >
-                    <SiFacebook className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
-                  </a>
-                )}
-                {professional.twitter && (
-                  <a
-                    href={
-                      professional.twitter.startsWith("http")
-                        ? professional.twitter
-                        : `https://${professional.twitter}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
-                    aria-label="Twitter"
-                  >
-                    <SiX className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
-                  </a>
-                )}
-                {professional.instagram && (
-                  <a
-                    href={
-                      professional.instagram.startsWith("http")
-                        ? professional.instagram
-                        : `https://${professional.instagram}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-pink-100 hover:bg-pink-200 transition-colors group"
-                    aria-label="Instagram"
-                  >
-                    <SiInstagram className="h-4 w-4 text-pink-600 group-hover:text-pink-800" />
-                  </a>
-                )}
-                {professional.linkedin && (
-                  <a
-                    href={
-                      professional.linkedin.startsWith("http")
-                        ? professional.linkedin
-                        : `https://${professional.linkedin}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
-                    aria-label="LinkedIn"
-                  >
-                    <SiLinkedin className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
-                  </a>
-                )}
-                {professional.phone && (
-                  <a
-                    href={`https://wa.me/${professional.phone!.replace(
-                      /\D/g,
-                      "",
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 transition-colors group"
-                    aria-label="WhatsApp"
-                  >
-                    <SiWhatsapp className="h-4 w-4 text-green-600 group-hover:text-green-800" />
-                  </a>
-                )}
+              <div className="w-full border-t pt-4 border-gray-200/80 mt-1 relative z-10">
+                <div className="flex flex-wrap gap-2 w-full justify-center items-center">
+                  {professional.website && (
+                    <a
+                      href={
+                        professional.website.startsWith("http")
+                          ? professional.website
+                          : `https://${professional.website}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                      aria-label="Website"
+                    >
+                      <Globe className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
+                    </a>
+                  )}
+                  {professional.facebook && (
+                    <a
+                      href={
+                        professional.facebook.startsWith("http")
+                          ? professional.facebook
+                          : `https://${professional.facebook}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                      aria-label="Facebook"
+                    >
+                      <SiFacebook className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+                    </a>
+                  )}
+                  {professional.twitter && (
+                    <a
+                      href={
+                        professional.twitter.startsWith("http")
+                          ? professional.twitter
+                          : `https://${professional.twitter}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+                      aria-label="Twitter"
+                    >
+                      <SiX className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
+                    </a>
+                  )}
+                  {professional.instagram && (
+                    <a
+                      href={
+                        professional.instagram.startsWith("http")
+                          ? professional.instagram
+                          : `https://${professional.instagram}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-pink-100 hover:bg-pink-200 transition-colors group"
+                      aria-label="Instagram"
+                    >
+                      <SiInstagram className="h-4 w-4 text-pink-600 group-hover:text-pink-800" />
+                    </a>
+                  )}
+                  {professional.linkedin && (
+                    <a
+                      href={
+                        professional.linkedin.startsWith("http")
+                          ? professional.linkedin
+                          : `https://${professional.linkedin}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors group"
+                      aria-label="LinkedIn"
+                    >
+                      <SiLinkedin className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+                    </a>
+                  )}
+                  {professional.phone && (
+                    <a
+                      href={`https://wa.me/${professional.phone!.replace(
+                        /\D/g,
+                        "",
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 transition-colors group"
+                      aria-label="WhatsApp"
+                    >
+                      <SiWhatsapp className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </Card>
       </div>
-    );
-  };
-
-  const handleResumeDownload = async () => {
-    if (!professional.resume) {
-      alert("No resume available for download.");
-      return;
-    }
-
-    try {
-      const link = document.createElement("a");
-      link.href = professional.resume;
-      link.download = `${professional.name}_Resume`;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-
-      const fileExtension = professional.resume.split(".").pop()?.toLowerCase();
-
-      if (
-        fileExtension === "pdf" ||
-        fileExtension === "doc" ||
-        fileExtension === "docx"
-      ) {
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        window.open(professional.resume, "_blank", "noopener,noreferrer");
-      }
-    } catch (error) {
-      console.error("Error downloading resume:", error);
-      alert(
-        "Failed to download resume. Please try again or contact the professional directly.",
-      );
-    }
-  };
-
+    )
+  }
+    
   const handleDownloadCard = async () => {
     try {
       const professionalData = {
@@ -894,9 +909,14 @@ export default function ProfessionalProfile({
                       setCurrentView("about");
                       if (aboutRef.current) {
                         const offset = 100;
-                        const elementPosition = aboutRef.current.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                        const elementPosition =
+                          aboutRef.current.getBoundingClientRect().top;
+                        const offsetPosition =
+                          elementPosition + window.pageYOffset - offset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: "smooth",
+                        });
                       }
                     }}
                   >
@@ -919,9 +939,14 @@ export default function ProfessionalProfile({
                       setCurrentView("services");
                       if (servicesRef.current) {
                         const offset = 100;
-                        const elementPosition = servicesRef.current.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                        const elementPosition =
+                          servicesRef.current.getBoundingClientRect().top;
+                        const offsetPosition =
+                          elementPosition + window.pageYOffset - offset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: "smooth",
+                        });
                       }
                     }}
                   >
@@ -944,9 +969,14 @@ export default function ProfessionalProfile({
                       setCurrentView("portfolio");
                       if (portfolioRef.current) {
                         const offset = 100;
-                        const elementPosition = portfolioRef.current.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                        const elementPosition =
+                          portfolioRef.current.getBoundingClientRect().top;
+                        const offsetPosition =
+                          elementPosition + window.pageYOffset - offset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: "smooth",
+                        });
                       }
                     }}
                   >
@@ -969,9 +999,14 @@ export default function ProfessionalProfile({
                       setCurrentView("contact");
                       if (contactRef.current) {
                         const offset = 100;
-                        const elementPosition = contactRef.current.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                        const elementPosition =
+                          contactRef.current.getBoundingClientRect().top;
+                        const offsetPosition =
+                          elementPosition + window.pageYOffset - offset;
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: "smooth",
+                        });
                       }
                     }}
                   >
@@ -1003,9 +1038,14 @@ export default function ProfessionalProfile({
                     setCurrentView("contact");
                     if (contactRef.current) {
                       const offset = 100;
-                      const elementPosition = contactRef.current.getBoundingClientRect().top;
-                      const offsetPosition = elementPosition + window.pageYOffset - offset;
-                      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                      const elementPosition =
+                        contactRef.current.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
                     }
                   }}
                   className={`bg-orange-600 hover:bg-orange-700 text-white ${getBorderRadius()} px-4 py-2 shadow-md`}
@@ -1034,15 +1074,22 @@ export default function ProfessionalProfile({
                 </button>
                 <button
                   className={`w-full flex items-center text-sm font-medium ${
-                    currentView === "about" ? "text-orange-600" : "text-gray-600"
+                    currentView === "about"
+                      ? "text-orange-600"
+                      : "text-gray-600"
                   } px-3 py-2 rounded-lg hover:bg-gray-50`}
                   onClick={() => {
                     setCurrentView("about");
                     if (aboutRef.current) {
                       const offset = 100;
-                      const elementPosition = aboutRef.current.getBoundingClientRect().top;
-                      const offsetPosition = elementPosition + window.pageYOffset - offset;
-                      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                      const elementPosition =
+                        aboutRef.current.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
                     }
                     setMobileMenuOpen(false);
                   }}
@@ -1060,9 +1107,14 @@ export default function ProfessionalProfile({
                     setCurrentView("services");
                     if (servicesRef.current) {
                       const offset = 100;
-                      const elementPosition = servicesRef.current.getBoundingClientRect().top;
-                      const offsetPosition = elementPosition + window.pageYOffset - offset;
-                      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                      const elementPosition =
+                        servicesRef.current.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
                     }
                     setMobileMenuOpen(false);
                   }}
@@ -1080,9 +1132,14 @@ export default function ProfessionalProfile({
                     setCurrentView("portfolio");
                     if (portfolioRef.current) {
                       const offset = 100;
-                      const elementPosition = portfolioRef.current.getBoundingClientRect().top;
-                      const offsetPosition = elementPosition + window.pageYOffset - offset;
-                      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                      const elementPosition =
+                        portfolioRef.current.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
                     }
                     setMobileMenuOpen(false);
                   }}
@@ -1100,9 +1157,14 @@ export default function ProfessionalProfile({
                     setCurrentView("contact");
                     if (contactRef.current) {
                       const offset = 100;
-                      const elementPosition = contactRef.current.getBoundingClientRect().top;
-                      const offsetPosition = elementPosition + window.pageYOffset - offset;
-                      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                      const elementPosition =
+                        contactRef.current.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
                     }
                     setMobileMenuOpen(false);
                   }}
@@ -1156,7 +1218,6 @@ export default function ProfessionalProfile({
           {/* MAIN CONTENT AREA */}
           <main className="md:col-span-3 h-full hide-scrollbar overflow-y-auto mb-5 relative scroll-smooth min-w-0">
             <div className="mx-auto max-w-auto pb-20 px-4 sm:px-4 lg:px-4 pt-4 space-y-6 lg:space-y-8">
-              
               <div className="md:hidden">
                 <ProfessionalInfoCard />
               </div>
@@ -1251,13 +1312,9 @@ export default function ProfessionalProfile({
                         </p>
                       )}
                     </div>
-
-                    {/* Skills */}
-                    
                   </div>
                 </CardContent>
               </Card>
-
 
               <div
                 ref={aboutRef}
@@ -1357,7 +1414,6 @@ export default function ProfessionalProfile({
                 </Card>
               </div>
 
-              
               {/* 4. Portfolio Section (Full Card) */}
               <Card
                 className={`${getCardClass()} rounded-2xl p-6 shadow-none border`}
@@ -1381,9 +1437,9 @@ export default function ProfessionalProfile({
                       return (
                         <div
                           key={index}
-                          className="flex flex-col h-full  bg-gray-600 shadow-none w-full rounded-xl overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
+                          className="flex flex-col h-full p-1  bg-slate-50 shadow-none w-full rounded-2xl overflow-hidden border border-gray-200 hover:border-5 hover:border-gray-300  transition-colors"
                         >
-                          <div className="relative w-full aspect-video bg-gray-100">
+                          <div className="relative w-full aspect-video border rounded-xl overflow-hidden  bg-gray-100">
                             {isVideo ? (
                               <video
                                 src={item.url}
@@ -1403,7 +1459,7 @@ export default function ProfessionalProfile({
                               />
                             )}
                           </div>
-                          <div className="p-4 flex flex-col flex-1">
+                          <div className="p-3 flex flex-col flex-1">
                             <h3 className="font-semibold text-gray-900 text-lg">
                               {item.title}
                             </h3>
@@ -1704,3 +1760,4 @@ export default function ProfessionalProfile({
     </>
   );
 }
+

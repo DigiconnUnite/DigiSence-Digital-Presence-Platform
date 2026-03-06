@@ -88,6 +88,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Footer from "@/components/Footer";
+import CardDownloadButton from "@/components/ui/CardDownloadButton";
 
 // Define Business type since Prisma doesn't export it for MongoDB
 interface Business {
@@ -848,37 +849,28 @@ export default function BusinessProfile({
       {/* Secondary Action Buttons - Download Row */}
       <div className="flex flex-row gap-2 w-full">
         {/* Download Card Button */}
-        <Button
+        <CardDownloadButton
+          data={{
+            name: business.name,
+            category: business.category,
+            description: business.description,
+            address: business.address,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            facebook: business.facebook,
+            twitter: business.twitter,
+            instagram: business.instagram,
+            linkedin: business.linkedin,
+            logo: business.logo, // Pass business logo
+          }}
+          type="business"
           variant="outline"
           size="sm"
           className="flex-1 flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-xs font-medium shadow-sm cursor-pointer"
-          onClick={() => {
-            const cardData = `BEGIN:VCARD
-                              VERSION:3.0
-                              FN:${business.name || ""}
-                              ORG:${business.category?.name || ""}
-                              TEL:${business.phone || ""}
-                              EMAIL:${business.email || ""}
-                              URL:${business.website || ""}
-                              ADR:;;${business.address || ""};;;;
-                              NOTE:${business.description || ""}
-                              END:VCARD`;
-
-            const blob = new Blob([cardData], { type: "text/vcard" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${business.name || "business"}_card.vcf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          }}
-          title="Download business card"
         >
-          <Download className="h-3 w-3" />
           Download Card
-        </Button>
+        </CardDownloadButton>
         {/* Download Catalog PDF Button */}
         {business.catalogPdf && (
           <Button

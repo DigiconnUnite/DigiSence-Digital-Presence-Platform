@@ -4,28 +4,28 @@ import { generateBusinessCard, ProfessionalData } from '@/lib/qr-generator';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { professional } = body;
+    const { business } = body;
 
-    if (!professional) {
+    if (!business) {
       return NextResponse.json(
-        { error: 'Professional data is required' },
+        { error: 'Business data is required' },
         { status: 400 }
       );
     }
 
-    // Extract professional data
+    // Extract business data
     const professionalData: ProfessionalData = {
-      name: professional.name,
-      professionalHeadline: professional.professionalHeadline,
-      location: professional.location,
-      phone: professional.phone,
-      email: professional.email,
-      website: professional.website,
-      facebook: professional.facebook,
-      twitter: professional.twitter,
-      instagram: professional.instagram,
-      linkedin: professional.linkedin,
-      logo: professional.logo, // Add profile picture as logo
+      name: business.name,
+      professionalHeadline: business.category?.name || business.description,
+      location: business.address || business.location,
+      phone: business.phone,
+      email: business.email,
+      website: business.website,
+      facebook: business.facebook,
+      twitter: business.twitter,
+      instagram: business.instagram,
+      linkedin: business.linkedin,
+      logo: business.logo, // Add business logo
     };
 
     // Generate the business card
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="${professional.name.replace(/\s+/g, '_')}_Visiting_Card.png"`,
+        'Content-Disposition': `attachment; filename="${business.name.replace(/\s+/g, '_')}_Visiting_Card.png"`,
       },
     });
   } catch (error) {

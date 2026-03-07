@@ -88,8 +88,8 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!professional) {
     return {
-      title: 'Professional Not Found',
-      description: 'The professional profile you are looking for could not be found.',
+      title: 'Professional Not Found | Mydigisence',
+      description: 'The professional profile you are looking for could not be found on Mydigisence - India\'s leading digital presence platform for professionals.',
     }
   }
 
@@ -103,44 +103,62 @@ export async function generateMetadata({ params }: PageProps) {
   // Use actual profile picture for OG image - use the original URL without transformation
   const imageUrl = professional.profilePicture || `${baseUrl}/og-image.png`
 
-  // Limit description to ~4 lines (approximately 200 characters)
-  const fullDescription = professional.aboutMe || `Professional profile for ${professional.name}`
-  const shortDescription = fullDescription.length > 200 
-    ? fullDescription.substring(0, 197) + '...'
+  // Create comprehensive description (150-160 characters for optimal SEO)
+  const fullDescription = professional.aboutMe || `${professional.name} - ${professional.professionalHeadline || 'Professional'} on Mydigisence. Find contact information, services, and expertise.`
+  const description = fullDescription.length > 160 
+    ? fullDescription.substring(0, 157) + '...'
     : fullDescription
 
+  // Professional headline as category
+  const categoryName = professional.professionalHeadline || 'Professional'
+
   return {
-    title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
-    description: shortDescription,
-    keywords: `${professional.name}, ${professional.professionalHeadline || 'professional'}, services, skills, expert, ${professional.professionalHeadline || 'professional'} India`,
+    title: `${professional.name} | professional - ${categoryName} | Mydigisence`,
+    description: description,
+    keywords: `${professional.name}, ${categoryName}, professional directory, ${categoryName} India, digital business card, expert, Mydigisence professional, services, skills`,
     authors: [{ name: professional.admin?.name || professional.name }],
     openGraph: {
-      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
-      description: shortDescription,
+      title: `${professional.name} | professional - ${categoryName} | Mydigisence`,
+      description: description,
       url: pageUrl,
-      siteName: 'DigiSense',
+      siteName: 'Mydigisence',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${professional.name} - ${professional.professionalHeadline || 'Professional'}`,
+          alt: `${professional.name} - ${categoryName} on Mydigisence`,
         },
       ],
       type: 'profile',
+      locale: 'en_US',
+      profile: {
+        firstName: professional.name.split(' ')[0],
+        lastName: professional.name.split(' ').slice(1).join(' ') || undefined,
+      },
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${professional.name} - ${professional.professionalHeadline || 'Professional'} | DigiSense`,
-      description: shortDescription,
+      title: `${professional.name} | professional - ${categoryName} | Mydigisence`,
+      description: description,
       images: [imageUrl],
     },
     alternates: {
       canonical: pageUrl,
+      languages: {
+        'en': pageUrl,
+      },
     },
     robots: {
       index: true,
       follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
   }
 }

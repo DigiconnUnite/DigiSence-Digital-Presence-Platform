@@ -160,8 +160,8 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!business) {
     return {
-      title: 'Business Not Found',
-      description: 'The business you are looking for could not be found.',
+      title: 'Business Not Found | Mydigisence',
+      description: 'The business you are looking for could not be found on Mydigisence - India\'s leading digital presence platform for businesses.',
     }
   }
 
@@ -183,44 +183,58 @@ export async function generateMetadata({ params }: PageProps) {
       })
     : `${baseUrl}/og-image.png`
 
-  // Limit description to ~4 lines (approximately 200 characters)
-  const fullDescription = business.description || `Business profile for ${business.name}`
-  const shortDescription = fullDescription.length > 200 
-    ? fullDescription.substring(0, 197) + '...'
+  // Create comprehensive description (150-160 characters for optimal SEO)
+  const fullDescription = business.description || `${business.name} - Find products, services, and contact information for ${business.name} on Mydigisence.`
+  const description = fullDescription.length > 160 
+    ? fullDescription.substring(0, 157) + '...'
     : fullDescription
 
+  // Category for the title format
+  const categoryName = business.category?.name || 'Business'
+
   return {
-    title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
-    description: shortDescription,
-    keywords: `${business.name}, ${business.category?.name || 'business'}, products, services, ${business.category?.name || 'business'} India, digital presence`,
+    title: `${business.name} | business - ${categoryName} | Mydigisence`,
+    description: description,
+    keywords: `${business.name}, ${categoryName}, business directory, ${categoryName} India, digital business card, online business, Mydigisence business, local business, products and services`,
     authors: [{ name: business.admin?.name || business.name }],
     openGraph: {
-      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
-      description: shortDescription,
+      title: `${business.name} | business - ${categoryName} | Mydigisence`,
+      description: description,
       url: pageUrl,
-      siteName: 'DigiSense',
+      siteName: 'Mydigisence',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${business.name} - ${business.category?.name || 'Business'}`,
+          alt: `${business.name} - ${categoryName} on Mydigisence`,
         },
       ],
       type: 'website',
+      locale: 'en_US',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${business.name} - ${business.category?.name || 'Business'} | DigiSense`,
-      description: shortDescription,
+      title: `${business.name} | business - ${categoryName} | Mydigisence`,
+      description: description,
       images: [imageUrl],
     },
     alternates: {
       canonical: pageUrl,
+      languages: {
+        'en': pageUrl,
+      },
     },
     robots: {
       index: true,
       follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
   }
 }

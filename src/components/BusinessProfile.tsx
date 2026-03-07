@@ -2088,14 +2088,14 @@ export default function BusinessProfile({
                     .filter((image: any) => image !== null && image !== undefined)
                     .slice(0, 6)
                     .map((image: any, index: number) => {
-                      // Define grid positions for bento layout
+                      // Define grid positions for bento layout - matching dashboard layout
                       const gridClasses = [
-                        "md:row-span-2 md:col-span-2 col-span-2 row-span-1", // Large top-left
-                        "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
-                        "md:row-span-1 md:col-span-1 col-span-1", // Top-right small
-                        "md:row-span-2 md:col-span-2 col-span-2 row-span-1 md:col-start-3 md:row-start-1", // Large bottom
-                        "md:row-span-1 md:col-span-1 col-span-1", // Bottom-left small
-                        "md:row-span-1 md:col-span-1 col-span-1", // Bottom-right small
+                        "md:row-span-1 md:col-span-2 col-span-2 row-span-2", // Index 0: Rectangle (16:9) - row 1, cols 1-2
+                        "md:row-span-1 md:col-span-2 col-span-2 row-span-2", // Index 1: Rectangle (16:9) - row 1, cols 3-4
+                        "md:row-span-1 md:col-span-1 col-span-1", // Index 2: Square
+                        "md:row-span-1 md:col-span-1 col-span-1", // Index 3: Square
+                        "md:row-span-1 md:col-span-1 col-span-1", // Index 4: Square
+                        "md:row-span-1 md:col-span-1 col-span-1", // Index 5: Square
                       ];
 
                       const isVideo =
@@ -2107,10 +2107,10 @@ export default function BusinessProfile({
                       return (
                         <div
                           key={index}
-                          className={`bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center hover:shadow transition-shadow bg-center bg-cover relative overflow-hidden ${gridClasses[index] || "md:row-span-1 md:col-span-1"} ${index === 0 || index === 3 ? "min-h-[140px] md:min-h-[180px]" : "min-h-[100px] md:min-h-[120px]"}`}
+                          className={`bg-gray-100 border rounded-xl shadow-sm flex items-center justify-center hover:shadow transition-shadow bg-center bg-cover relative overflow-hidden ${gridClasses[index] || "md:row-span-1 md:col-span-1"} ${index === 0 || index === 1 ? "min-h-[140px] md:min-h-[180px]" : "min-h-[100px] md:min-h-[120px]"}`}
                           style={{
                             aspectRatio:
-                              index === 0 || index === 3 ? "2/1" : "1/1",
+                              index === 0 || index === 1 ? "2/1" : "1/1",
                           }}
                         >
                           {isVideo ? (
@@ -2125,8 +2125,8 @@ export default function BusinessProfile({
                           ) : image.url ? (
                             <img
                               src={getOptimizedImageUrl(image.url, {
-                                width: index === 0 || index === 3 ? 600 : 300,
-                                height: index === 0 || index === 3 ? 300 : 300,
+                                width: index === 0 || index === 1 ? 600 : 300,
+                                height: index === 0 || index === 1 ? 300 : 300,
                                 quality: 85,
                                 format: "auto",
                                 crop: "fill",
@@ -2134,7 +2134,7 @@ export default function BusinessProfile({
                               })}
                               srcSet={generateSrcSet(image.url)}
                               sizes={
-                                index === 0 || index === 3
+                                index === 0 || index === 1
                                   ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                   : "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
                               }
@@ -2145,10 +2145,10 @@ export default function BusinessProfile({
                             />
                           ) : (
                             <span
-                              className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 3 ? "w-[60px] h-[60px] md:w-20 md:h-20" : "w-10 h-10 md:w-14 md:h-14"}`}
+                              className={`flex items-center justify-center rounded-full bg-gray-200 ${index === 0 || index === 1 ? "w-[60px] h-[60px] md:w-20 md:h-20" : "w-10 h-10 md:w-14 md:h-14"}`}
                             >
                               <Image
-                                className={`text-gray-400 ${index === 0 || index === 3 ? "w-8 h-8 md:w-10 md:h-10" : "w-6 h-6 md:w-8 md:h-8"}`}
+                                className={`text-gray-400 ${index === 0 || index === 1 ? "w-8 h-8 md:w-10 md:h-10" : "w-6 h-6 md:w-8 md:h-8"}`}
                               />
                             </span>
                           )}

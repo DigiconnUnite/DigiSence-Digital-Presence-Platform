@@ -16,10 +16,10 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'),
   title: {
-    default: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
-    template: '%s | DigiSence',
+    default: 'Mydigisence - Digital Presence Platform for Businesses & Professionals',
+    template: '%s | Mydigisence',
   },
-  description: 'DigiSence is India\'s leading global digital presence platform designed for business owners and professionals. Build your online presence, connect with clients, and grow your business with powerful digital tools.',
+  description: 'Mydigisence is India\'s leading global digital presence platform designed for business owners and professionals. Build your online presence, connect with clients, and grow your business with powerful digital tools.',
   keywords: [
     'digital presence',
     'business profile',
@@ -44,23 +44,23 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://mydigisence.com',
-    siteName: 'DigiSence',
-    title: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
+    siteName: 'Mydigisence',
+    title: 'Mydigisence - Digital Presence Platform for Businesses & Professionals',
     description: 'India\'s leading global digital presence platform for business owners and professionals. Build your online presence and connect with clients worldwide.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DigiSence - Digital Presence Platform',
+        alt: 'Mydigisence - Digital Presence Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DigiSence - Digital Presence Platform for Businesses & Professionals',
+    title: 'Mydigisence - Digital Presence Platform for Businesses & Professionals',
     description: 'India\'s leading global digital presence platform for business owners and professionals.',
-    creator: '@digisence',
+    creator: '@mydigisence',
     images: ['/og-image.png'],
   },
   robots: {

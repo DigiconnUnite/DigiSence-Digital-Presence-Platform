@@ -83,6 +83,7 @@ import {
 import ImageUpload from "@/components/ui/image-upload";
 
 import HeroBannerManager from "@/components/ui/hero-banner-manager";
+import BusinessBannerUploader from "@/components/ui/business-banner-uploader";
 import { BusinessInfoCard } from "../components/BusinessInfoCard";
 import SharedSidebar from "../../components/SharedSidebar";
 
@@ -1773,40 +1774,46 @@ export default function BusinessAdminDashboard() {
                     </p>
                   </div>
 
-                  <HeroBannerManager
-                    heroContent={heroContent}
-                    onChange={async (newContent) => {
-                      setHeroContent(newContent);
-                      if (!business) return;
-                      try {
-                        const response = await fetch("/api/business", {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ heroContent: newContent }),
-                        });
-                        if (response.ok) {
-                          const result = await response.json();
-                          setBusiness(result.business);
-                          toast({
-                            title: "Success",
-                            description: "Hero content saved successfully!",
-                          });
-                        } else {
-                          toast({
-                            title: "Error",
-                            description: "Failed to save hero content",
-                            variant: "destructive",
-                          });
-                        }
-                      } catch (error) {
-                        toast({
-                          title: "Error",
-                          description: "Failed to save hero content",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  />
+
+                  {/* Hero Banner Manager - Advanced Multiple Slides */}
+                  <Card className="rounded-3xl p-0 shadow-none bg-transparent">
+                    <CardContent className="p-0" >
+                      <HeroBannerManager
+                        heroContent={heroContent}
+                        onChange={async (newContent) => {
+                          setHeroContent(newContent);
+                          if (!business) return;
+                          try {
+                            const response = await fetch("/api/business", {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ heroContent: newContent }),
+                            });
+                            if (response.ok) {
+                              const result = await response.json();
+                              setBusiness(result.business);
+                              toast({
+                                title: "Success",
+                                description: "Hero content saved successfully!",
+                              });
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: "Failed to save hero content",
+                                variant: "destructive",
+                              });
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to save hero content",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 

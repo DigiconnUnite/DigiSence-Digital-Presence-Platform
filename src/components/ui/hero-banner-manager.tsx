@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings, ImageOff } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Play, Settings, ImageOff, Crop as CropIcon } from 'lucide-react';
 import ImageUpload from '@/components/ui/image-upload';
+import BannerCropper from '@/components/ui/bannercropper';
+import BusinessBannerUploader from '@/components/ui/business-banner-uploader';
 
 // Keep Banner interface for data model compatibility (API still accepts these fields)
 interface Banner {
@@ -52,6 +54,8 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
   const [bannerToDelete, setBannerToDelete] = useState<number | null>(null);
   const [savingBanner, setSavingBanner] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showBannerUploader, setShowBannerUploader] = useState(false);
+  const [uploadingBannerIndex, setUploadingBannerIndex] = useState<number | null>(null);
   
   // Simplified form state - only media fields
   const [bannerForm, setBannerForm] = useState<Partial<Banner>>({
@@ -119,12 +123,45 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
   };
 
   const handleAddSlide = () => {
-    setBannerForm({
-      mediaType: 'image',
-      media: '',
-    });
-    setEditingBannerIndex(null);
-    setShowModal(true);
+    // Open BusinessBannerUploader directly for new banner
+    setUploadingBannerIndex(null); // null means adding new
+    setShowBannerUploader(true);
+  };
+
+  const handleEditBannerUpload = (index: number) => {
+    // Open BusinessBannerUploader directly for editing existing banner
+    setUploadingBannerIndex(index);
+    // Pre-fill with existing banner data if editing
+    if (banners[index]) {
+      setBannerForm({
+        mediaType: banners[index].mediaType,
+        media: banners[index].media,
+      });
+    }
+    setShowBannerUploader(true);
+    setShowModal(false);
+  };
+
+  const handleBannerUploadComplete = (url: string, type: 'image' | 'video') => {
+    const newSlides = [...banners];
+    const newBanner = {
+      mediaType: type,
+      media: url,
+    };
+    
+    if (uploadingBannerIndex !== null && uploadingBannerIndex < newSlides.length) {
+      // Update existing banner
+      newSlides[uploadingBannerIndex] = { ...newSlides[uploadingBannerIndex], ...newBanner };
+    } else {
+      // Add new banner
+      newSlides.push(newBanner);
+      setSelectedBannerIndex(newSlides.length - 1);
+    }
+    
+    onChange({ ...heroContent, slides: newSlides });
+    setShowBannerUploader(false);
+    setUploadingBannerIndex(null);
+    setBannerForm({ mediaType: 'image', media: '' });
   };
 
   const handleSaveBanner = async () => {
@@ -250,7 +287,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleEdit(selectedBannerIndex)}
+                onClick={() => handleEditBannerUpload(selectedBannerIndex)}
                 disabled={!currentBanner}
                 className="rounded-xl"
               >
@@ -303,7 +340,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
             ) : (
               <div
                 className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                onClick={() => handleEdit(undefined)}
+                onClick={handleAddSlide}
               >
                 <Plus className="w-24 h-24 text-gray-400 mb-4" />
                 <p className="text-gray-500 text-center">
@@ -415,7 +452,7 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEdit(index)}
+                        onClick={() => handleEditBannerUpload(index)}
                         className="rounded-xl"
                       >
                         <Edit className="h-4 w-4" />
@@ -465,42 +502,36 @@ export default function HeroBannerManager({ heroContent, onChange }: HeroBannerM
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto hide-scrollbar px-1 py-4 space-y-6 bg-white">
-            {/* Media Section - KEEP */}
+            {/* Media Section - Using BusinessBannerUploader with tabs for Image and Video */}
             <div>
               <Label className="text-sm font-medium">Background Media</Label>
-              <div className="mt-2 space-y-3">
-                <Select
-                  value={bannerForm.mediaType}
-                  onValueChange={(value: "image" | "video") =>
-                    setBannerForm((prev) => ({ ...prev, mediaType: value }))
-                  }
-                >
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="image">Image</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Media URL"
-                  value={bannerForm.media}
-                  onChange={(e) =>
-                    setBannerForm((prev) => ({
-                      ...prev,
-                      media: e.target.value,
-                    }))
-                  }
-                  className="rounded-2xl"
-                />
-                <ImageUpload
-                  allowVideo={bannerForm.mediaType === 'video'}
-                  onUpload={(url) =>
-                    setBannerForm((prev) => ({ ...prev, media: url }))
+              <div className="mt-2">
+                <BusinessBannerUploader
+                  currentBanner={bannerForm.media}
+                  mediaType={bannerForm.mediaType as 'image' | 'video' || 'image'}
+                  onUpload={(url, type) => {
+                    setBannerForm((prev) => ({ ...prev, media: url, mediaType: type }));
+                  }}
+                  trigger={
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary transition-colors cursor-pointer text-center">
+                      <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Click to upload banner image or video</p>
+                      <p className="text-xs text-gray-400 mt-1">Supports: JPG, PNG, MP4, WebM (1500×500)</p>
+                    </div>
                   }
                 />
               </div>
+              {/* Show selected media info */}
+              {bannerForm.media && (
+                <div className="mt-2 p-2 bg-gray-50 rounded-lg flex items-center gap-2">
+                  {bannerForm.mediaType === 'video' || bannerForm.media.includes('.mp4') ? (
+                    <Play className="w-4 h-4 text-blue-500" />
+                  ) : (
+                    <ImageIcon className="w-4 h-4 text-green-500" />
+                  )}
+                  <span className="text-xs text-gray-600 truncate">{bannerForm.media}</span>
+                </div>
+              )}
             </div>
           </div>
 

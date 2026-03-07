@@ -37,7 +37,7 @@ export default function HomePage() {
 
   return (
     <>
-      {isLoading && <HomePreloader />}
+      {/* {isLoading && <HomePreloader />} */}
       <UnifiedPublicLayout variant="transparent" sidebarVariant="home">
       {/* Main Content Container with gradient background */}
       <div className="secondary-light-gradient pt-0  md:pb-0">

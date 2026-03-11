@@ -351,7 +351,13 @@ export default function BannerCropper({
     );
   }
 
-  // Default trigger button
+  // In controlled mode (open and onOpenChange provided), don't render trigger
+  // The parent controls when to show the dialog
+  if (isControlled) {
+    return <>{renderDialog()}</>;
+  }
+
+  // Default trigger button for standalone mode
   const defaultTrigger = (
     <Button variant="outline" className="gap-2">
       <Upload className="w-4 h-4" />
@@ -362,7 +368,7 @@ export default function BannerCropper({
   return (
     <>
       <div onClick={() => setIsDialogOpen(true)}>
-        {trigger || defaultTrigger}
+        {defaultTrigger}
       </div>
       {renderDialog()}
     </>

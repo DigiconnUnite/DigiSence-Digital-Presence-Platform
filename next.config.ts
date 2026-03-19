@@ -43,11 +43,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-    };
+  webpack: (config, { isServer }) => {
+    // Provide Buffer polyfill for sharp and qrcode in server-side rendering
+    if (isServer) {
+      config.plugins.push(
+        new (require('webpack').ProvidePlugin)({
+          Buffer: ['buffer', 'Buffer'],
+        })
+      );
+
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        buffer: false,
+      };
+    }
+    
     return config;
   },
 };

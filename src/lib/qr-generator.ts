@@ -1,6 +1,5 @@
 import QRCode from "qrcode";
 import sharp from "sharp";
-import { Buffer } from "buffer";
 
 // --- Interfaces ---
 

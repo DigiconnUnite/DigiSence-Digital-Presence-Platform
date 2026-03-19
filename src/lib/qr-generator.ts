@@ -48,6 +48,19 @@ const ICONS = {
 
 // --- Helper Functions ---
 
+/**
+ * Escape special XML characters to prevent SVG rendering issues
+ */
+function escapeXml(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, "'")
+    .replace(/'/g, "'");
+}
+
 async function generateQRCode(
   data: string,
   size: number = 150,
@@ -200,7 +213,7 @@ export async function generateBusinessCard(
              !logoBuffer
                ? `
              <circle cx="${logoSize / 2}" cy="${logoSize / 2}" r="${logoSize / 2}" fill="rgba(255,255,255,0.05)" stroke="${accentColor}" stroke-width="2"/>
-             <text x="${logoSize / 2}" y="${logoSize / 2 + 15}" font-family="${template.fontFamily}" font-size="40" fill="white" text-anchor="middle">${professional.name.charAt(0)}</text>
+             <text x="${logoSize / 2}" y="${logoSize / 2 + 15}" font-family="${template.fontFamily}" font-size="40" fill="white" text-anchor="middle">${escapeXml(professional.name.charAt(0))}</text>
            `
                : ""
            }
@@ -208,14 +221,14 @@ export async function generateBusinessCard(
            <!-- Name & Headline -->
            <g transform="translate(${logoBuffer ? logoSize + 25 : 0}, ${logoBuffer ? 0 : 150})">
               <text x="0" y="35" font-family="${template.fontFamily}" font-size="42" font-weight="bold" fill="white" letter-spacing="-1">
-                ${professional.name}
+                ${escapeXml(professional.name)}
               </text>
               ${
                 professional.professionalHeadline
                   ? `
                 <rect x="0" y="50" width="100" height="2" fill="${accentColor}" opacity="0.5" rx="1" />
                 <text x="0" y="80" font-family="${template.fontFamily}" font-size="18" fill="#94a3b8" font-style="italic">
-                  ${professional.professionalHeadline}
+                  ${escapeXml(professional.professionalHeadline)}
                 </text>
               `
                   : ""
@@ -232,7 +245,7 @@ export async function generateBusinessCard(
                ? `
              <g transform="translate(0, 35)">
                <svg width="20" height="20" viewBox="0 0 24 24">${ICONS.phone}</svg>
-               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${professional.phone}</text>
+               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${escapeXml(professional.phone || '')}</text>
              </g>
            `
                : ""
@@ -243,7 +256,7 @@ export async function generateBusinessCard(
                ? `
              <g transform="translate(0, 70)">
                <svg width="20" height="20" viewBox="0 0 24 24">${ICONS.email}</svg>
-               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${professional.email}</text>
+               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${escapeXml(professional.email || '')}</text>
              </g>
            `
                : ""
@@ -254,7 +267,7 @@ export async function generateBusinessCard(
                ? `
              <g transform="translate(0, 105)">
                <svg width="20" height="20" viewBox="0 0 24 24">${ICONS.website}</svg>
-               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${professional.website}</text>
+               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${escapeXml(professional.website || '')}</text>
              </g>
            `
                : ""
@@ -265,7 +278,7 @@ export async function generateBusinessCard(
                ? `
              <g transform="translate(0, 140)">
                <svg width="20" height="20" viewBox="0 0 24 24">${ICONS.location}</svg>
-               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${professional.location}</text>
+               <text x="30" y="16" font-family="${template.fontFamily}" font-size="15" fill="#cbd5e1">${escapeXml(professional.location || '')}</text>
              </g>
            `
                : ""

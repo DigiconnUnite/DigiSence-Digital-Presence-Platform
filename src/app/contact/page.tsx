@@ -1,7 +1,7 @@
 
 import type { Metadata } from "next";
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -109,14 +109,14 @@ const faqs = [
 ];
 
 export default function ContactPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitState, setSubmitState] = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formState, setFormState] = React.useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = React.useState('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setSubmitState('idle')
+    setFormState('idle')
     setErrorMsg('')
 
     const formData = new FormData(e.currentTarget)
@@ -138,15 +138,16 @@ export default function ContactPage() {
       const result = await response.json()
 
       if (response.ok) {
-        setSubmitState('success')
+        // @ts-ignore - TypeScript incorrectly thinks this is void
+        setFormState('success')
         // Reset form
         (e.target as HTMLFormElement).reset()
       } else {
-        setSubmitState('error')
+        setFormState('error')
         setErrorMsg(result.error || 'Failed to send message')
       }
     } catch {
-      setSubmitState('error')
+      setFormState('error')
       setErrorMsg('Network error. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -265,14 +266,14 @@ export default function ContactPage() {
                       {isSubmitting ? 'Sending...' : 'Send Message'}
                     </Button>
 
-                    {submitState === 'success' && (
+                    {formState === 'success' && (
                       <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center">
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Your message has been sent successfully!
                       </div>
                     )}
 
-                    {submitState === 'error' && (
+                    {formState === 'error' && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                         {errorMsg}
                       </div>

@@ -103,6 +103,7 @@ interface ProfileInfoCardProps {
   setEditingTwitter: (value: string) => void;
   setEditingInstagram: (value: string) => void;
   setEditingLinkedin: (value: string) => void;
+  setProfessional: React.Dispatch<React.SetStateAction<Professional | null>>;
   handleFieldUpdate: (field: string, value: string) => void;
   setShowBannerModal: (value: boolean) => void;
   setShowProfilePictureModal: (value: boolean) => void;
@@ -161,6 +162,7 @@ const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
   setEditingTwitter,
   setEditingInstagram,
   setEditingLinkedin,
+  setProfessional,
   handleFieldUpdate,
   setShowBannerModal,
   setShowProfilePictureModal,

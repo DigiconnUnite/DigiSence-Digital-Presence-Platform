@@ -21,6 +21,7 @@ interface Professional {
   twitter: string | null;
   instagram: string | null;
   linkedin: string | null;
+  
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -80,6 +81,7 @@ interface BasicProfileTabProps {
   setEditingTwitter: (value: string) => void;
   setEditingInstagram: (value: string) => void;
   setEditingLinkedin: (value: string) => void;
+  setProfessional: React.Dispatch<React.SetStateAction<Professional | null>>;
   handleFieldUpdate: (field: string, value: string) => void;
   setShowBannerModal: (value: boolean) => void;
   setShowProfilePictureModal: (value: boolean) => void;

@@ -136,8 +136,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if brand is being used by any products
+    const brand = await db.brand.findUnique({
+      where: { id },
+    })
+    
+    if (!brand) {
+      return NextResponse.json({ error: 'Brand not found' }, { status: 404 })
+    }
+
     const productsUsingBrand = await db.product.count({
-      where: { brandId: id },
+      where: { brandName: brand.name },
     })
 
     if (productsUsingBrand > 0) {

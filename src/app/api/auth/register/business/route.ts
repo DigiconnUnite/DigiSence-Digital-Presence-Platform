@@ -4,6 +4,17 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Simple slugify function
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+}
+
 export async function POST(request: Request) {
   try {
     const { businessName, email, password, phone, address } = await request.json();
@@ -44,6 +55,7 @@ export async function POST(request: Request) {
     const newBusiness = await prisma.business.create({
       data: {
         name: businessName,
+        slug: slugify(businessName),
         email,
         phone,
         address,

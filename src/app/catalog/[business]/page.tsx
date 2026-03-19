@@ -1,24 +1,15 @@
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
+import { cache } from 'react'
 import BusinessProfile from '@/components/BusinessProfile'
 import { getOptimizedImageUrl } from '@/lib/image-utils'
 import { headers } from 'next/headers'
 import Navigation from '@/components/Navigation'
 
-// Enable caching for this page - cache for 60 seconds
-export const revalidate = 60
-
-interface PageProps {
-  params: Promise<{
-    business: string
-  }>
-}
-
-export default async function BusinessPage({ params }: PageProps) {
-  const { business: businessSlug } = await params
-
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
+// Cache the business lookup to avoid duplicate DB calls
+const getBusinessBySlug = cache(async (slug: string) => {
+  return db.business.findUnique({
+    where: { slug },
     select: {
       id: true,
       name: true,
@@ -79,6 +70,46 @@ export default async function BusinessPage({ params }: PageProps) {
       },
     },
   })
+})
+
+// Cache for metadata only - lighter query
+const getBusinessMetadata = cache(async (slug: string) => {
+  return db.business.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      description: true,
+      logo: true,
+      address: true,
+      phone: true,
+      website: true,
+      category: {
+        select: {
+          name: true,
+        },
+      },
+      admin: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+})
+
+// Enable caching for this page - cache for 60 seconds
+export const revalidate = 60
+
+interface PageProps {
+  params: Promise<{
+    business: string
+  }>
+}
+
+export default async function BusinessPage({ params }: PageProps) {
+  const { business: businessSlug } = await params
+
+  const business = await getBusinessBySlug(businessSlug)
 
   if (!business || !business.isActive) {
     notFound()
@@ -136,27 +167,7 @@ export default async function BusinessPage({ params }: PageProps) {
 export async function generateMetadata({ params }: PageProps) {
   const { business: businessSlug } = await params
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: {
-      name: true,
-      description: true,
-      logo: true,
-      address: true,
-      phone: true,
-      website: true,
-      category: {
-        select: {
-          name: true,
-        },
-      },
-      admin: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  })
+  const business = await getBusinessMetadata(businessSlug)
 
   if (!business) {
     return {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Loader2, Download } from 'lucide-react'
 import { parseCSV, validateCSVData, generateCSVTemplate } from '@/lib/utils/csvParser'
 
 interface ImportResult {
@@ -54,7 +54,14 @@ export default function ImportCSVModal({ isOpen, onClose, onImportComplete }: Im
       
       // Validate data
       const errors = validateCSVData(parseResult.data)
-      setPreviewErrors(errors.slice(0, 5)) // Show first 5 errors
+      setPreviewErrors(errors.slice(0, 5).map(err => {
+        // Parse error message to extract row number
+        const match = err.match(/Row (\d+): (.+)/)
+        return { 
+          row: match ? parseInt(match[1]) : 0, 
+          message: match ? match[2] : err 
+        }
+      })) // Show first 5 errors
     }
   }
 
@@ -205,7 +212,7 @@ export default function ImportCSVModal({ isOpen, onClose, onImportComplete }: Im
 
               {/* Category Selection */}
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb Category-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   (Optional)
                 </label>
                 <input

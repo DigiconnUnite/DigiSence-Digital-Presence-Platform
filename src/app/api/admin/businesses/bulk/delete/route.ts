@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const { businessIds } = parseResult.data
 
-    // Get businesses to delete (for response and cascade)
+    // Get businesses to delete (for response and to collect admin IDs)
     const businessesToDelete = await db.business.findMany({
       where: { id: { in: businessIds } },
       select: { id: true, adminId: true, name: true },
@@ -53,16 +53,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No businesses found' }, { status: 404 })
     }
 
-    // Use transaction to delete all related records
+    // Collect all IDs for batch delete
+    const adminIds = businessesToDelete
+      .map(b => b.adminId)
+      .filter(Boolean) as string[]
+
+    // Use batch deletes instead of for-loop (much more efficient)
     await db.$transaction(async (tx) => {
-      for (const business of businessesToDelete) {
-        // Delete related records
-        await tx.product.deleteMany({ where: { businessId: business.id } })
-        await tx.inquiry.deleteMany({ where: { businessId: business.id } })
-        // Delete business
-        await tx.business.delete({ where: { id: business.id } })
-        // Delete associated admin user
-        await tx.user.delete({ where: { id: business.adminId } })
+      // Delete all related records in batch
+      await tx.product.deleteMany({ where: { businessId: { in: businessIds } } })
+      await tx.inquiry.deleteMany({ where: { businessId: { in: businessIds } } })
+      // Delete businesses in batch
+      await tx.business.deleteMany({ where: { id: { in: businessIds } } })
+      // Delete associated admin users in batch
+      if (adminIds.length > 0) {
+        await tx.user.deleteMany({ where: { id: { in: adminIds } } })
       }
     })
 

@@ -1,0 +1,31 @@
+/* Aurora component - CSS animation instead of JavaScript rAF */
+.aurora-container {
+  overflow: hidden;
+}
+
+.aurora-gradient {
+  background: linear-gradient(
+    to bottom,
+    hsl(0, 90%, 85%),
+    hsl(60, 90%, 85%),
+    hsl(120, 90%, 85%),
+    hsl(180, 90%, 85%),
+    hsl(240, 90%, 85%),
+    hsl(300, 90%, 85%),
+    hsl(360, 90%, 85%)
+  );
+  background-size: 400% 100%;
+  animation: aurora-shift 20s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

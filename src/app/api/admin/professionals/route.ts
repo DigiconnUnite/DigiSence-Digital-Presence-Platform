@@ -91,8 +91,6 @@ export async function GET(request: NextRequest) {
     ])
     const totalPages = Math.ceil(totalItems / limit)
 
-    console.log('Admin API returning professionals:', professionals.length, 'page:', page, 'total:', totalItems)
-
     return NextResponse.json({
       professionals,
       pagination: {
@@ -205,8 +203,7 @@ export async function POST(request: NextRequest) {
         accountType: 'professional',
         loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/login`,
       })
-      console.log('Welcome email sent to:', email)
-    } catch (emailError) {
+      } catch (emailError) {
       console.error('Failed to send welcome email:', emailError)
       // Don't fail the request if email fails
     }

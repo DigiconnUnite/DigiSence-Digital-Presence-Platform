@@ -4,60 +4,42 @@ import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 
 const resetPasswordSchema = z.object({
+  targetUserId: z.string().min(1, 'Target user ID is required'),
   newPassword: z.string().min(6),
 })
 
-async function getSuperAdmin(request: NextRequest) {
-  const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
-  
-  if (!token) {
-    return null
-  }
-  
-  const payload = verifyToken(token)
-  if (!payload || payload.role !== 'SUPER_ADMIN') {
-    return null
-  }
-  
-  return payload
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const admin = await getSuperAdmin(request)
-    if (!admin) {
+    const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    const payload = verifyToken(token)
+    if (!payload || payload.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized - Super Admin access required' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { newPassword } = resetPasswordSchema.parse(body)
+    const { targetUserId, newPassword } = resetPasswordSchema.parse(body)
 
     try {
-      // Get the business admin user
-      const business = await db.business.findFirst({
-        where: { adminId: admin.userId },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              email: true,
-              name: true,
-            },
-          },
-        },
+      // Verify target user exists
+      const targetUser = await db.user.findUnique({
+        where: { id: targetUserId },
       })
 
-      if (!business) {
-        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+      if (!targetUser) {
+        return NextResponse.json({ error: 'Target user not found' }, { status: 404 })
       }
 
-      // Hash the new password
+      // Hash the new password - import at module level to avoid N+1 issue
       const { hashPassword } = await import('@/lib/auth')
       const hashedPassword = await hashPassword(newPassword)
 
       // Update the user's password
       await db.user.update({
-        where: { id: business.adminId },
+        where: { id: targetUserId },
         data: { password: hashedPassword },
       })
 
@@ -78,5 +60,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
-}
   }
+}

@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToS3, getOptimizedImageUrl, getOptimizedVideoUrl } from '@/lib/s3-upload'
+import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 
-// Mock upload for testing when AWS is not configured
-async function mockUpload(file: File): Promise<any> {
-  // Generate a mock URL for testing
-  const mockUrl = `https://mock-s3.example.com/uploads/${Date.now()}-${file.name}`
-  return {
-    success: true,
-    url: mockUrl,
-    key: `uploads/${Date.now()}-${file.name}`,
-    originalName: file.name,
-  }
+// Auth guard for upload route
+function authenticateRequest(request: NextRequest): { userId: string; role: string } | null {
+  const token = getTokenFromRequest(request) ?? request.cookies.get('auth-token')?.value
+  if (!token) return null
+  const payload = verifyToken(token) as { userId: string; role: string } | null
+  return payload
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate the request
+    const user = authenticateRequest(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
 
@@ -48,17 +51,20 @@ export async function POST(request: NextRequest) {
     const isPdf = allowedPdfTypes.includes(file.type)
     const folder = 'bdpp-uploads'
 
-    // Upload to S3 (with fallback to mock for testing)
+    // Upload to S3 - FAIL loudly instead of silently falling back to mock
     let uploadResult;
     try {
       uploadResult = await uploadToS3(buffer, file.name, {
         folder,
         contentType: file.type,
       })
-    } catch (error) {
-      // Fallback to mock upload if S3 is not configured
-      console.warn('S3 upload failed, using mock upload:', error)
-      uploadResult = await mockUpload(file)
+    } catch (s3Error) {
+      // Fail loudly - don't silently use mock URLs in production
+      console.error('S3 upload failed:', s3Error)
+      return NextResponse.json({
+        error: 'File upload service is currently unavailable. Please try again later.',
+        details: process.env.NODE_ENV === 'development' ? (s3Error instanceof Error ? s3Error.message : 'S3 error') : undefined
+      }, { status: 503 })
     }
 
     if (!uploadResult.success) {

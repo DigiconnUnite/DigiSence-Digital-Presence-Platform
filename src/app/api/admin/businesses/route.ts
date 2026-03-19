@@ -4,6 +4,8 @@ import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 import { sendAccountCreationNotification } from '@/lib/email'
+import { generateUniqueBusinessSlug } from '@/lib/slug-helpers'
+import { hashPassword } from '@/lib/auth'
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -56,16 +58,6 @@ async function getSuperAdmin(request: NextRequest) {
   }
 
   return payload
-}
-
-async function generateUniqueSlug(baseSlug: string): Promise<string> {
-  let slug = baseSlug
-  let counter = 1
-  while (await db.business.findFirst({ where: { slug } })) {
-    slug = `${baseSlug}-${counter}`
-    counter++
-  }
-  return slug
 }
 
 export async function GET(request: NextRequest) {
@@ -144,14 +136,12 @@ export async function GET(request: NextRequest) {
       })
     ])
 
-    console.log('Admin API returning businesses:', businesses.length, 'of', total)
-
     return NextResponse.json({
       businesses,
       pagination: {
         page,
         limit,
-        total,
+        totalItems: total,
         totalPages: Math.ceil(total / limit),
       },
       filters: {
@@ -199,10 +189,9 @@ export async function POST(request: NextRequest) {
     const baseSlug = createData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
     // Generate unique slug
-    const slug = await generateUniqueSlug(baseSlug)
+    const slug = await generateUniqueBusinessSlug(createData.name)
 
-    // Hash password
-    const { hashPassword } = await import('@/lib/auth')
+    // Hash password - import at module level to avoid N+1 issue
     const hashedPassword = await hashPassword(createData.password)
 
     // Create user and business in transaction
@@ -263,8 +252,7 @@ export async function POST(request: NextRequest) {
         accountType: 'business',
         loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/login`,
       })
-      console.log('Welcome email sent to:', createData.email)
-    } catch (emailError) {
+      } catch (emailError) {
       console.error('Failed to send welcome email:', emailError)
       // Don't fail the request if email fails
     }
@@ -316,9 +304,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
-    // Check if business exists
+    // Check if business exists and get adminId
     const existingBusiness = await db.business.findUnique({
       where: { id },
+      select: { id: true, adminId: true },
     })
 
     if (!existingBusiness) {
@@ -338,6 +327,16 @@ export async function DELETE(request: NextRequest) {
     await db.business.delete({
       where: { id },
     })
+
+    // FIX: Also delete the associated admin user to prevent orphaned accounts
+    if (existingBusiness.adminId) {
+      await db.user.delete({
+        where: { id: existingBusiness.adminId },
+      }).catch(() => {
+        // User might have been deleted already or doesn't exist
+        console.warn('Failed to delete admin user:', existingBusiness.adminId)
+      })
+    }
 
     // Emit Socket.IO event for real-time update
     if (global.io) {
@@ -400,17 +399,14 @@ export async function PUT(
   }
 }
 
-// Bulk actions endpoints
+// Single status update schema
 const bulkStatusSchema = z.object({
-  businessIds: z.array(z.string()).min(1),
+  id: z.string(),
   isActive: z.boolean(),
 })
 
-const bulkDeleteSchema = z.object({
-  businessIds: z.array(z.string()).min(1),
-})
-
-// PATCH /api/admin/businesses/bulk/status - Bulk update status
+// PATCH /api/admin/businesses - Single status update only
+// For bulk operations use /api/admin/businesses/bulk/status or /api/admin/businesses/bulk/delete
 export async function PATCH(request: NextRequest) {
   try {
     const admin = await getSuperAdmin(request)
@@ -420,68 +416,40 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
     
-    // Check if it's a bulk action or single status update
-    if (body.businessIds && Array.isArray(body.businessIds)) {
-      // Bulk operation
-      const parseResult = bulkStatusSchema.safeParse(body)
-      if (!parseResult.success) {
-        return NextResponse.json({ error: 'Invalid request data' }, { status: 400 })
-      }
-
-      const { businessIds, isActive } = parseResult.data
-
-      // Update all businesses
-      await db.business.updateMany({
-        where: { id: { in: businessIds } },
-        data: { isActive },
-      })
-
-      // Emit Socket.IO event for real-time update
-      if (global.io) {
-        global.io.emit('business-status-updated', {
-          businessIds,
-          isActive,
-          action: 'bulk-status-update',
-          timestamp: new Date().toISOString(),
-          adminId: admin.userId
-        })
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: `Updated ${businessIds.length} businesses`,
-        updatedCount: businessIds.length,
-      })
-    } else {
-      // Single status update (backward compatible)
-      const { id, isActive } = body
-      if (!id) {
-        return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
-      }
-
-      const business = await db.business.update({
-        where: { id },
-        data: { isActive },
-        include: {
-          admin: { select: { id: true, email: true, name: true } },
-          category: { select: { id: true, name: true } },
-          _count: { select: { products: true, inquiries: true } },
-        },
-      })
-
-      if (global.io) {
-        global.io.emit('business-status-updated', {
-          business,
-          action: 'status-update',
-          timestamp: new Date().toISOString(),
-          adminId: admin.userId
-        })
-      }
-
-      return NextResponse.json({ success: true, business })
+    // Single status update only (for backward compatibility)
+    const { id, isActive } = body
+    if (!id) {
+      return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
+
+    // Validate
+    const parseResult = bulkStatusSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json({ error: 'Invalid request data' }, { status: 400 })
+    }
+
+    const business = await db.business.update({
+      where: { id },
+      data: { isActive },
+      include: {
+        admin: { select: { id: true, email: true, name: true } },
+        category: { select: { id: true, name: true } },
+        _count: { select: { products: true, inquiries: true } },
+      },
+    })
+
+    if (global.io) {
+      global.io.emit('business-status-updated', {
+        business,
+        action: 'status-update',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      })
+    }
+
+    return NextResponse.json({ success: true, business })
   } catch (error) {
-    console.error('Bulk status update error:', error)
+    console.error('Business status update error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

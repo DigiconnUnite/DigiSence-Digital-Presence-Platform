@@ -273,3 +273,35 @@ export const validateCategories = async (
 
   return { valid, invalid };
 };
+
+// Validate CSV data rows - returns array of error messages
+export const validateCSVData = (data: CSVRow[]): string[] => {
+  const errors: string[] = [];
+  
+  data.forEach((row, index) => {
+    const rowNum = index + 2; // +2 because data starts at row 2 (row 1 is header)
+    
+    // Validate required fields
+    if (!row.name || row.name.trim().length < 2) {
+      errors.push(`Row ${rowNum}: Name is required and must be at least 2 characters`);
+    }
+    
+    if (!row.email || !isValidEmail(row.email)) {
+      errors.push(`Row ${rowNum}: Valid email is required`);
+    }
+    
+    if (!row.admin_name || row.admin_name.trim().length < 2) {
+      errors.push(`Row ${rowNum}: Admin name is required and must be at least 2 characters`);
+    }
+    
+    if (row.phone && !isValidPhone(row.phone)) {
+      errors.push(`Row ${rowNum}: Invalid phone format`);
+    }
+    
+    if (row.website && !isValidUrl(row.website)) {
+      errors.push(`Row ${rowNum}: Invalid website URL`);
+    }
+  });
+  
+  return errors;
+};

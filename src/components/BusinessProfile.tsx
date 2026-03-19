@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   getOptimizedImageUrl,
@@ -212,6 +213,8 @@ export default function BusinessProfile({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  const { toast } = useToast();
+
   // Socket.io connection
   const { socket, isConnected } = useSocket(business.id);
 
@@ -262,10 +265,10 @@ export default function BusinessProfile({
 
   const forceRefresh = async () => {
     setIsRefreshing(true);
-    // Manual refresh by fetching current data
+    // Manual refresh by fetching current data using the correct API endpoint
     try {
       const response = await fetch(
-        `/api/businesses?${business.slug ? `slug=${business.slug}` : `id=${business.id}`}`,
+        `/api/business?slug=${business.slug}`,
         {
           cache: "no-store",
         },
@@ -531,7 +534,11 @@ export default function BusinessProfile({
         }
 
         if (errors.length > 0) {
-          alert(`Please fix the following errors:\n${errors.join("\n")}`);
+          toast({
+            title: "Validation Error",
+            description: errors.join("\n"),
+            variant: "destructive",
+          });
           setIsSubmitting(false);
           return;
         }
@@ -554,22 +561,27 @@ export default function BusinessProfile({
         const result = await response.json();
 
         if (response.ok) {
-          alert(
-            "Inquiry submitted successfully! We will get back to you soon.",
-          );
+          toast({
+            title: "Inquiry Submitted",
+            description: "We will get back to you soon!",
+          });
           setInquiryModal(false);
           setInquiryData({ name: "", email: "", phone: "", message: "" });
           setSelectedProduct(null);
         } else {
-          alert(
-            `Failed to submit inquiry: ${result.error || "Please try again."}`,
-          );
+          toast({
+            title: "Error",
+            description: result.error || "Please try again.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Inquiry submission error:", error);
-        alert(
-          "An error occurred while submitting your inquiry. Please check your connection and try again.",
-        );
+        toast({
+          title: "Error",
+          description: "Please check your connection and try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsSubmitting(false);
       }
@@ -591,10 +603,17 @@ export default function BusinessProfile({
         navigator.clipboard
           .writeText(shareUrl)
           .then(() => {
-            alert("Link copied to clipboard!");
+            toast({
+              title: "Link Copied",
+              description: "Link copied to clipboard!",
+            });
           })
           .catch(() => {
-            alert("Failed to copy link");
+            toast({
+              title: "Error",
+              description: "Failed to copy link",
+              variant: "destructive",
+            });
           });
       }
     },

@@ -42,14 +42,12 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
-        // Fetch professional data and redirect directly to professional dashboard
+        // Fetch professional data using server-side filter and redirect directly to professional dashboard
         try {
-          const response = await fetch("/api/professionals");
+          const response = await fetch(`/api/professionals?adminId=${result.user?.id}`);
           if (response.ok) {
             const data = await response.json();
-            const userProfessional = data.professionals?.find(
-              (p: any) => p.adminId === result.user?.id,
-            );
+            const userProfessional = data.professionals?.[0];
 
             if (userProfessional) {
               router.push(`/dashboard/professional/${userProfessional.slug}`);
@@ -93,14 +91,12 @@ export default function ProfessionalLoginPage() {
       const result = await login(email, password, true);
 
       if (result.success) {
-        // Fetch professional data and redirect directly to professional dashboard
+        // Fetch professional data using server-side filter and redirect directly to professional dashboard
         try {
-          const response = await fetch("/api/professionals");
+          const response = await fetch(`/api/professionals?adminId=${result.user?.id}`);
           if (response.ok) {
             const data = await response.json();
-            const userProfessional = data.professionals?.find(
-              (p: any) => p.adminId === result.user?.id,
-            );
+            const userProfessional = data.professionals?.[0];
 
             if (userProfessional) {
               router.push(`/dashboard/professional/${userProfessional.slug}`);

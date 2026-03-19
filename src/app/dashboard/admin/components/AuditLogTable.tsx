@@ -83,6 +83,8 @@ export default function AuditLogTable({
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [sortColumn, setSortColumn] = useState<keyof AuditLogEntry>('createdAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const LOGS_PER_PAGE = 20
 
   const handleSort = (column: keyof AuditLogEntry) => {
     if (sortColumn === column) {
@@ -125,6 +127,7 @@ export default function AuditLogTable({
     return matchesSearch && matchesAction && matchesDate
   })
 
+  // Sort and paginate
   const sortedLogs = [...filteredLogs].sort((a, b) => {
     const aVal = a[sortColumn]
     const bVal = b[sortColumn]
@@ -143,6 +146,25 @@ export default function AuditLogTable({
     
     return 0
   })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredLogs.length / LOGS_PER_PAGE)
+  const paginatedLogs = sortedLogs.slice(
+    (currentPage - 1) * LOGS_PER_PAGE,
+    currentPage * LOGS_PER_PAGE
+  )
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
 
   const SortIcon = ({ column }: { column: keyof AuditLogEntry }) => (
     <span className="ml-1">
@@ -249,14 +271,14 @@ export default function AuditLogTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {sortedLogs.length === 0 ? (
+            {paginatedLogs.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   No audit logs found matching your criteria.
                 </td>
               </tr>
             ) : (
-              sortedLogs.map((log) => (
+              paginatedLogs.map((log) => (
                 <React.Fragment key={log.id}>
                   <tr 
                     className={`hover:bg-gray-50 ${expandedRow === log.id ? 'bg-blue-50' : ''}`}
@@ -351,16 +373,27 @@ export default function AuditLogTable({
         </table>
       </div>
 
-      {/* Pagination placeholder */}
+      {/* Pagination */}
       <div className="px-4 py-3 border-t flex items-center justify-between">
         <div className="text-sm text-gray-500">
-          Showing {filteredLogs.length} of {logs.length} logs
+          Showing {(currentPage - 1) * LOGS_PER_PAGE + 1} to {Math.min(currentPage * LOGS_PER_PAGE, filteredLogs.length)} of {filteredLogs.length} logs
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+          <button 
+            className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50" 
+            disabled={currentPage === 1}
+            onClick={handlePreviousPage}
+          >
             Previous
           </button>
-          <button className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+          <span className="px-3 py-1 text-sm text-gray-600">
+            Page {currentPage} of {totalPages || 1}
+          </span>
+          <button 
+            className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50" 
+            disabled={currentPage >= totalPages}
+            onClick={handleNextPage}
+          >
             Next
           </button>
         </div>

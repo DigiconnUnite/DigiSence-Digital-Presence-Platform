@@ -19,8 +19,66 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const slug = searchParams.get('slug')
     const id = searchParams.get('id')
+    const adminId = searchParams.get('adminId') // Server-side filter for professional login
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Server-side filter by adminId - for professional login efficiency
+    if (adminId) {
+      const professional = await db.professional.findFirst({
+        where: { adminId, isActive: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          professionalHeadline: true,
+          aboutMe: true,
+          profilePicture: true,
+          banner: true,
+          resume: true,
+          location: true,
+          phone: true,
+          email: true,
+          website: true,
+          facebook: true,
+          twitter: true,
+          instagram: true,
+          linkedin: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          adminId: true,
+          workExperience: true,
+          education: true,
+          skills: true,
+          servicesOffered: true,
+          contactInfo: true,
+          portfolio: true,
+          contactDetails: true,
+          ctaButton: true,
+          admin: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      })
+
+      if (professional) {
+        return NextResponse.json({ professionals: [professional] }, {
+          headers: {
+            'Cache-Control': 'private, no-cache',
+          }
+        })
+      } else {
+        return NextResponse.json({ professionals: [] }, {
+          headers: {
+            'Cache-Control': 'private, no-cache',
+          }
+        })
+      }
+    }
 
     if (slug || id) {
       // Single professional fetch - use caching

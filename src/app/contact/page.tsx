@@ -1,6 +1,7 @@
 
 import type { Metadata } from "next";
 
+import { useState } from 'react'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -108,6 +109,50 @@ const faqs = [
 ];
 
 export default function ContactPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitState, setSubmitState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitState('idle')
+    setErrorMsg('')
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      email: formData.get('email'),
+      subject: formData.get('subject'),
+      message: formData.get('message'),
+    }
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setSubmitState('success')
+        // Reset form
+        (e.target as HTMLFormElement).reset()
+      } else {
+        setSubmitState('error')
+        setErrorMsg(result.error || 'Failed to send message')
+      }
+    } catch {
+      setSubmitState('error')
+      setErrorMsg('Network error. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <UnifiedPublicLayout variant="solid" sidebarVariant="contact">
       <div className="relative">
@@ -129,7 +174,7 @@ export default function ContactPage() {
                       as possible.
                     </p>
                   </div>
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label
@@ -140,6 +185,7 @@ export default function ContactPage() {
                         </Label>
                         <Input
                           id="firstName"
+                          name="firstName"
                           type="text"
                           placeholder="Shivam"
                           className="mt-1 border-gray-200 focus:border-slate-800 focus:ring-cyan-500"
@@ -154,6 +200,7 @@ export default function ContactPage() {
                         </Label>
                         <Input
                           id="lastName"
+                          name="lastName"
                           type="text"
                           placeholder="Thakur"
                           className="mt-1 border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
@@ -170,6 +217,7 @@ export default function ContactPage() {
                       </Label>
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         placeholder="your@mail.com"
                         className="mt-1 border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
@@ -185,6 +233,7 @@ export default function ContactPage() {
                       </Label>
                       <Input
                         id="subject"
+                        name="subject"
                         type="text"
                         placeholder="How can we help you?"
                         className="mt-1 border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
@@ -200,6 +249,7 @@ export default function ContactPage() {
                       </Label>
                       <Textarea
                         id="message"
+                        name="message"
                         placeholder="Tell us more about your inquiry..."
                         rows={5}
                         className="mt-1 border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
@@ -208,11 +258,25 @@ export default function ContactPage() {
 
                     <Button
                       type="submit"
+                      disabled={isSubmitting}
                       className="w-full rounded-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3"
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      Send Message
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
                     </Button>
+
+                    {submitState === 'success' && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Your message has been sent successfully!
+                      </div>
+                    )}
+
+                    {submitState === 'error' && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {errorMsg}
+                      </div>
+                    )}
                   </form>
                 </CardContent>
               </Card>

@@ -5521,6 +5521,7 @@ const renderRightPanel = () => {
                       size="sm"
                       className="h-8 px-2 hover:bg-transparent border-l rounded-none"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>

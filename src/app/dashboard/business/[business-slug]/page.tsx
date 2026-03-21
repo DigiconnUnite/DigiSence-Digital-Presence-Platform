@@ -444,7 +444,7 @@ export default function BusinessAdminDashboard() {
           const data = await productsRes.json();
           setProducts(data.products);
           setImages([
-            ...new Set(data.products.map((p) => p.image).filter(Boolean)),
+            ...new Set(data.products.map((p: Product) => p.image).filter(Boolean)),
           ] as string[]);
           tempProducts = data.products;
         } else {
@@ -907,7 +907,7 @@ export default function BusinessAdminDashboard() {
   const confirmDeleteBrand = async () => {
     if (brandToDeleteIndex === null) return;
     const updatedBrands = brandContent.brands.filter(
-      (_, i) => i !== brandToDeleteIndex,
+      (brand: any, i: number) => i !== brandToDeleteIndex,
     );
 
     try {
@@ -924,7 +924,7 @@ export default function BusinessAdminDashboard() {
       });
 
       if (response.ok) {
-        setBrandContent((prev) => ({
+        setBrandContent((prev: any) => ({
           ...prev,
           brands: updatedBrands,
         }));
@@ -955,7 +955,7 @@ export default function BusinessAdminDashboard() {
   const confirmDeletePortfolio = async () => {
     if (portfolioToDeleteIndex === null) return;
     const updatedImages = (portfolioContent.images || []).filter(
-      (_, i) => i !== portfolioToDeleteIndex,
+      (img: any, i: number) => i !== portfolioToDeleteIndex,
     );
 
     try {
@@ -970,7 +970,7 @@ export default function BusinessAdminDashboard() {
       });
 
       if (response.ok) {
-        setPortfolioContent((prev) => ({
+        setPortfolioContent((prev: any) => ({
           ...prev,
           images: updatedImages,
         }));
@@ -1862,7 +1862,7 @@ export default function BusinessAdminDashboard() {
                             placeholder="Enter brand name"
                             value={brandContent.newBrandName || ""}
                             onChange={(e) =>
-                              setBrandContent((prev) => ({
+                              setBrandContent((prev: any) => ({
                                 ...prev,
                                 newBrandName: e.target.value,
                               }))
@@ -1877,7 +1877,7 @@ export default function BusinessAdminDashboard() {
                               placeholder="Photo URL or upload below"
                               value={brandContent.newBrandLogo || ""}
                               onChange={(e) =>
-                                setBrandContent((prev) => ({
+                                setBrandContent((prev: any) => ({
                                   ...prev,
                                   newBrandLogo: e.target.value,
                                 }))
@@ -1886,7 +1886,7 @@ export default function BusinessAdminDashboard() {
                             />
                             <ImageUpload
                               onUpload={(url) =>
-                                setBrandContent((prev) => ({
+                                setBrandContent((prev: any) => ({
                                   ...prev,
                                   newBrandLogo: url,
                                 }))
@@ -1926,7 +1926,7 @@ export default function BusinessAdminDashboard() {
                               });
 
                               if (response.ok) {
-                                setBrandContent((prev) => ({
+                                setBrandContent((prev: any) => ({
                                   ...prev,
                                   brands: updatedBrands,
                                   newBrandName: "",
@@ -2057,7 +2057,7 @@ export default function BusinessAdminDashboard() {
                                                 );
 
                                                 if (response.ok) {
-                                                  setBrandContent((prev) => ({
+                                                  setBrandContent((prev: any) => ({
                                                     ...prev,
                                                     brands: updatedBrands,
                                                   }));
@@ -2240,7 +2240,7 @@ export default function BusinessAdminDashboard() {
                                 });
 
                                 if (response.ok) {
-                                  setPortfolioContent((prev) => ({
+                                  setPortfolioContent((prev: any) => ({
                                     ...prev,
                                     images,
                                   }));
@@ -2519,14 +2519,56 @@ export default function BusinessAdminDashboard() {
                         <div className="flex gap-2">
                           <Button
                             variant="default"
-                            onClick={() => {
-                              setEditingCategory(null);
-                              setCategoryFormData({
-                                name: "",
-                                description: "",
-                                parentId: "",
-                              });
-                              setShowCategoryModal(true);
+                            onClick={async () => {
+                              if (!categoryFormData.name.trim()) {
+                                toast({
+                                  title: "Error",
+                                  description: "Category name is required",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+
+                              setSavingCategory(true);
+                              try {
+                                const response = await fetch("/api/business/categories", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify(categoryFormData),
+                                });
+
+                                if (response.ok) {
+                                  const data = await response.json();
+                                  setCategories((prev) => [...prev, data.category]);
+                                  setCategoryFormData({
+                                    name: "",
+                                    description: "",
+                                    parentId: "",
+                                  });
+                                  await fetchData();
+                                  toast({
+                                    title: "Success",
+                                    description: "Category created successfully!",
+                                  });
+                                } else {
+                                  const errorResult = await response.json();
+                                  toast({
+                                    title: "Error",
+                                    description: `Failed to create category: ${errorResult.error}`,
+                                    variant: "destructive",
+                                  });
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to create category. Please try again.",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setSavingCategory(false);
+                              }
                             }}
                             disabled={savingCategory}
                             className="rounded-xl  hover:opacity-90 transition-opacity"
@@ -3886,7 +3928,7 @@ export default function BusinessAdminDashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <div className="max-h-48 overflow-y-auto">
-                        {(brandContent.brands || []).map((brand) => (
+                        {(brandContent.brands || []).map((brand: any) => (
                           <SelectItem key={brand.name} value={brand.name}>
                             {brand.name}
                           </SelectItem>

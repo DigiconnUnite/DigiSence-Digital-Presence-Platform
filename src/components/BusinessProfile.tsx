@@ -1616,7 +1616,7 @@ export default function BusinessProfile({
 
                   {/* Reusable Product Card Component */}
                   {(() => {
-                    const ProductCard = ({ product }) => (
+                    const ProductCard = ({ product }: { product: Product }) => (
                       <Card
                         id={`product-${product.id}`}
                         className="group overflow-hidden p-0 rounded-2xl border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 flex flex-col h-full bg-white"

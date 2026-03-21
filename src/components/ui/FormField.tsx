@@ -131,6 +131,7 @@ export const FormField = ({
             }}
             className="absolute right-0 top-0 h-full px-3 hover:bg-transparent rounded-md flex items-center justify-center focus:outline-none"
             tabIndex={-1}
+            aria-label={`Toggle ${label.toLowerCase()} visibility`}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4 text-gray-400" />

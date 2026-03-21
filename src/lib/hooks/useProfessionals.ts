@@ -84,7 +84,7 @@ const createProfessional = async (data: any): Promise<Professional> => {
 };
 
 const updateProfessional = async ({ id, data }: { id: string; data: any }): Promise<Professional> => {
-  const response = await fetch(`/api/professionals/${id}`, {
+  const response = await fetch(`/api/admin/professionals/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -97,7 +97,7 @@ const updateProfessional = async ({ id, data }: { id: string; data: any }): Prom
 };
 
 const deleteProfessional = async (id: string): Promise<void> => {
-  const response = await fetch(`/api/professionals/${id}`, {
+  const response = await fetch(`/api/admin/professionals/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -107,7 +107,7 @@ const deleteProfessional = async (id: string): Promise<void> => {
 };
 
 const toggleProfessionalStatus = async (id: string, isActive: boolean): Promise<Professional> => {
-  const response = await fetch(`/api/professionals/${id}`, {
+  const response = await fetch(`/api/admin/professionals/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ isActive }),

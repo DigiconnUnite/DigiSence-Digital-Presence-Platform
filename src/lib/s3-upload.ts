@@ -3,6 +3,29 @@ import { Upload } from '@aws-sdk/lib-storage'
 import { s3Client, S3_CONFIG } from './aws'
 import { v4 as uuidv4 } from 'uuid'
 
+/**
+ * Detect MIME type from file extension
+ */
+function getMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  const mimeTypes: Record<string, string> = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'bmp': 'image/bmp',
+    'ico': 'image/x-icon',
+    'tiff': 'image/tiff',
+    'tif': 'image/tiff',
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  }
+  return mimeTypes[ext || ''] || 'application/octet-stream'
+}
+
 export interface UploadResult {
   success: boolean
   url?: string
@@ -191,11 +214,12 @@ export async function uploadBusinessLogo(
   fileName: string,
   businessId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'business',
     entityId: businessId,
     imageType: 'logo',
-    contentType: 'image/png'
+    contentType
   })
 }
 
@@ -207,11 +231,12 @@ export async function uploadBusinessBanner(
   fileName: string,
   businessId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'business',
     entityId: businessId,
     imageType: 'banner',
-    contentType: 'image/jpeg'
+    contentType
   })
 }
 
@@ -223,11 +248,12 @@ export async function uploadBusinessPortfolio(
   fileName: string,
   businessId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'business',
     entityId: businessId,
     imageType: 'portfolio',
-    contentType: 'image/jpeg'
+    contentType
   })
 }
 
@@ -239,11 +265,12 @@ export async function uploadBusinessCatalog(
   fileName: string,
   businessId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'business',
     entityId: businessId,
     imageType: 'catalog',
-    contentType: 'application/pdf'
+    contentType
   })
 }
 
@@ -255,11 +282,12 @@ export async function uploadProfessionalProfilePicture(
   fileName: string,
   professionalId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'professional',
     entityId: professionalId,
     imageType: 'profile',
-    contentType: 'image/jpeg'
+    contentType
   })
 }
 
@@ -271,11 +299,12 @@ export async function uploadProfessionalBanner(
   fileName: string,
   professionalId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'professional',
     entityId: professionalId,
     imageType: 'banner',
-    contentType: 'image/jpeg'
+    contentType
   })
 }
 
@@ -287,11 +316,12 @@ export async function uploadProfessionalPortfolio(
   fileName: string,
   professionalId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'professional',
     entityId: professionalId,
     imageType: 'portfolio',
-    contentType: 'image/jpeg'
+    contentType
   })
 }
 
@@ -303,11 +333,12 @@ export async function uploadBrandLogo(
   fileName: string,
   brandId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'brand',
     entityId: brandId,
     imageType: 'logo',
-    contentType: 'image/png'
+    contentType
   })
 }
 
@@ -319,11 +350,12 @@ export async function uploadProfessionalResume(
   fileName: string,
   professionalId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'professional',
     entityId: professionalId,
     imageType: 'resume',
-    contentType: 'application/pdf'
+    contentType
   })
 }
 
@@ -335,10 +367,11 @@ export async function uploadProductImage(
   fileName: string,
   productId: string
 ): Promise<UploadResult> {
+  const contentType = getMimeType(fileName)
   return uploadToS3(fileBuffer, fileName, {
     entityType: 'product',
     entityId: productId,
     imageType: 'product',
-    contentType: 'image/jpeg'
+    contentType
   })
 }

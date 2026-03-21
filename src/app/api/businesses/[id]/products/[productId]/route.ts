@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
@@ -6,7 +7,7 @@ import { z } from 'zod'
 const updateProductSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
-  price: z.string().optional(),
+  price: z.coerce.number().optional(),
   image: z.string().url().optional().or(z.literal('')),
 })
 
@@ -52,9 +53,16 @@ export async function PUT(
     const body = await request.json()
     const updates = updateProductSchema.parse(body)
 
+    const cleanedUpdate: Prisma.ProductUncheckedUpdateInput = {}
+
+    if (updates.name !== undefined) cleanedUpdate.name = updates.name
+    if (updates.description !== undefined) cleanedUpdate.description = updates.description === '' ? null : updates.description
+    if (updates.price !== undefined) cleanedUpdate.price = updates.price
+    if (updates.image !== undefined) cleanedUpdate.image = updates.image === '' ? null : updates.image
+
     const product = await db.product.update({
       where: { id: productId },
-      data: updates,
+      data: cleanedUpdate,
     })
 
     // Notify Frontend via WebSocket

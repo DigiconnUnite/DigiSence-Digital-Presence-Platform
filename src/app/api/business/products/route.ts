@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
@@ -6,7 +7,7 @@ import { z } from 'zod'
 const productSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  price: z.string().optional(),
+  price: z.coerce.number().optional(),
   image: z.string().optional(),
   categoryId: z.string().optional(),
   brandName: z.string().optional(),
@@ -18,7 +19,7 @@ const productSchema = z.object({
 const updateProductSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
-  price: z.string().optional(),
+  price: z.coerce.number().optional(),
   image: z.string().optional(),
   categoryId: z.string().optional(),
   brandName: z.string().optional(),
@@ -100,21 +101,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const productData = productSchema.parse(body)
 
-    // Convert empty strings to null for optional fields
-    const cleanedData = {
-      ...productData,
-      categoryId: productData.categoryId || null,
-      brandName: productData.brandName || null,
-      description: productData.description || null,
-      price: productData.price || null,
-      image: productData.image || null,
+    const cleanedData: Prisma.ProductUncheckedCreateInput = {
+      name: productData.name,
+      businessId: admin.businessId,
+      description: productData.description === '' ? null : productData.description ?? null,
+      price: productData.price == null ? null : productData.price,
+      image: productData.image === '' ? null : productData.image ?? null,
+      categoryId: productData.categoryId === '' ? null : productData.categoryId ?? null,
+      brandName: productData.brandName === '' ? null : productData.brandName ?? null,
+      inStock: productData.inStock,
+      isActive: productData.isActive,
+      additionalInfo: productData.additionalInfo ?? null,
     }
 
     const product = await db.product.create({
-      data: {
-        ...cleanedData,
-        businessId: admin.businessId,
-      },
+      data: cleanedData,
     })
 
     return NextResponse.json({

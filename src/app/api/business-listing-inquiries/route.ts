@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { sendBusinessListingInquiryNotification } from '@/lib/email'
 import { z } from 'zod'
 
 const businessListingInquirySchema = z.object({
@@ -80,20 +81,17 @@ export async function POST(request: NextRequest) {
 
     // Send email notification to admins
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'businessListingInquiry',
-          businessListingInquiryId: inquiry.id,
-        }),
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@digisence.com'
+      await sendBusinessListingInquiryNotification({
+        adminEmail,
+        businessName: inquiry.businessName,
+        businessDescription: inquiry.businessDescription || undefined,
+        contactName: inquiry.contactName,
+        email: inquiry.email,
+        phone: inquiry.phone || undefined,
+        requirements: inquiry.requirements,
+        inquiryUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisense.com'}/admin/business-listing-inquiries/${inquiry.id}`,
       })
-
-      if (!response.ok) {
-        console.error('Failed to send email notification')
-      }
     } catch (error) {
       console.error('Email notification error:', error)
     }

@@ -156,25 +156,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if email fails
     }
 
-    // Send email notification to admins
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'registrationInquiry',
-          registrationInquiryId: inquiry.id,
-        }),
-      })
-
-      if (!response.ok) {
-        console.error('Failed to send admin email notification')
-      }
-    } catch (error) {
-      console.error('Admin email notification error:', error)
-    }
+    // Note: Admin notification for new registration inquiries can be added here
+    // when a corresponding email notification function is implemented
 
     return NextResponse.json({
       success: true,

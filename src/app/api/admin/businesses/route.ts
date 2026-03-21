@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 import { sendAccountCreationNotification } from '@/lib/email'
@@ -258,14 +259,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('business-created', {
-        business: result.business,
-        action: 'create',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('business-created', {
+      business: result.business,
+      action: 'create',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,
@@ -339,14 +338,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('business-deleted', {
-        businessId: id,
-        action: 'delete',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('business-deleted', {
+      businessId: id,
+      action: 'delete',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,
@@ -438,14 +435,12 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
-    if (global.io) {
-      global.io.emit('business-status-updated', {
-        business,
-        action: 'status-update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      })
-    }
+    broadcast('business-status-updated', {
+      business,
+      action: 'status-update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    })
 
     return NextResponse.json({ success: true, business })
   } catch (error) {

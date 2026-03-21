@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 
 const updateBusinessSchema = z.object({
@@ -62,28 +63,14 @@ export async function POST(
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
 
-    // Update slug if name changed
+    // FIX H-3: Preserve existing slug to avoid breaking public URLs
+    // Slugs should NOT be regenerated when business name changes
+    // This ensures existing bookmarks, shared links, and indexed URLs remain valid
     let updateFields = { ...updateData }
-    if (updateData.name && updateData.name !== existingBusiness.name) {
-      const newSlug = updateData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      
-      // Check if new slug is already taken
-      const slugExists = await db.business.findFirst({
-        where: {
-          slug: newSlug,
-          id: { not: existingBusiness.id }
-        },
-      })
-      
-      if (slugExists) {
-        return NextResponse.json(
-          { error: 'Business with this name already exists' },
-          { status: 400 }
-        )
-      }
-      
-      updateFields.slug = newSlug
-    }
+    
+    // Remove slug from update fields to preserve existing slug
+    // Admin can only set slug during initial creation, not during updates
+    delete updateFields.slug
 
     const business = await db.business.update({
       where: { id: existingBusiness.id },
@@ -113,14 +100,12 @@ export async function POST(
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('business-updated', {
-        business: business,
-        action: 'update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('business-updated', {
+      business: business,
+      action: 'update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,
@@ -254,14 +239,12 @@ export async function PUT(
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('business-status-updated', {
-        business: business,
-        action: 'status-update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('business-status-updated', {
+      business: business,
+      action: 'status-update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,

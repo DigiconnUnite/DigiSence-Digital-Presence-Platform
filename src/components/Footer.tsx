@@ -205,7 +205,7 @@ export default function Footer() {
             <div className="order-1 md:order-2 flex items-center justify-center gap-2">
               <p className="text-gray-400 text-sm text-center">
                 Powered by{" "}
-                <Link href="https://digiconnunite.com" target="_blank">
+                <Link href="https://digiconnunite.com" target="_blank" rel="noopener noreferrer">
                   <span className="text-white font-semibold hover:text-primary transition-colors cursor-pointer">
                     Digiconn Unite Pvt. Ltd.
                   </span>

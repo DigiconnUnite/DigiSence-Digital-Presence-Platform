@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSocket } from "@/lib/hooks/useSocket";
+import useDebounce from "@/hooks/useDebounce";
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateCategories } from '@/lib/cacheInvalidation';
 import {
@@ -111,6 +112,7 @@ import SharedSidebar from "../components/SharedSidebar";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { AdminTable } from "@/components/admin/AdminTable";
+import CredentialsModal from "./panels/CredentialsModal";
 
 interface Business {
   id: string;
@@ -283,7 +285,7 @@ export default function SuperAdminDashboard() {
     showBusinessListingInquiryDialog,
     setShowBusinessListingInquiryDialog,
   ] = useState(false);
-  const [forceRerender, setForceRerender] = useState(0);
+  
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -430,7 +432,6 @@ export default function SuperAdminDashboard() {
 
   // Handle view inquiry
   const handleViewInquiry = (inquiry: any) => {
-    console.log('View inquiry:', inquiry);
     // Could open a modal or navigate to detail view
     toast({
       title: 'Inquiry Details',
@@ -440,7 +441,6 @@ export default function SuperAdminDashboard() {
 
   // Handle reply inquiry
   const handleReplyInquiry = (inquiry: any) => {
-    console.log('Reply to inquiry:', inquiry);
     // Could open email composer
     toast({
       title: 'Reply to Inquiry',
@@ -522,22 +522,7 @@ export default function SuperAdminDashboard() {
     setShowBulkDeleteDialog(true);
   };
 
-  // Custom debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  
-  return debouncedValue;
-}
+
 
 // Responsive design hook
   useEffect(() => {
@@ -563,7 +548,6 @@ function useDebounce<T>(value: T, delay: number): T {
     if (!socket || !isConnected) return;
 
     const handleBusinessCreated = (data: any) => {
-      console.log('Business created via Socket.IO:', data);
       setBusinesses(prev => [data.business, ...prev]);
       // Also update businessData if it exists
       setBusinessData(prev => prev ? {
@@ -586,7 +570,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleBusinessUpdated = (data: any) => {
-      console.log('Business updated via Socket.IO:', data);
       // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
@@ -604,7 +587,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleBusinessDeleted = (data: any) => {
-      console.log('Business deleted via Socket.IO:', data);
       // Update both businesses state and businessData state
       setBusinesses(prev => prev.filter(biz => biz.id !== data.businessId));
       setBusinessData(prev => prev ? {
@@ -628,7 +610,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleBusinessStatusUpdated = (data: any) => {
-      console.log('Business status updated via Socket.IO:', data);
       // Update both businesses state and businessData state
       setBusinesses(prev => prev.map(biz =>
         biz.id === data.business.id ? { ...biz, ...data.business } : biz
@@ -652,7 +633,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleProfessionalCreated = (data: any) => {
-      console.log('Professional created via Socket.IO:', data);
       setProfessionals(prev => [data.professional, ...prev]);
       // Also update professionalData if it exists
       setProfessionalData(prev => prev ? {
@@ -674,7 +654,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleProfessionalUpdated = (data: any) => {
-      console.log('Professional updated via Socket.IO:', data);
       setProfessionals(prev => prev.map(pro =>
         pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
       ));
@@ -692,7 +671,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleProfessionalDeleted = (data: any) => {
-      console.log('Professional deleted via Socket.IO:', data);
       setProfessionals(prev => prev.filter(pro => pro.id !== data.professionalId));
       // Also update professionalData if it exists
       setProfessionalData(prev => prev ? {
@@ -715,7 +693,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleProfessionalStatusUpdated = (data: any) => {
-      console.log('Professional status updated via Socket.IO:', data);
       setProfessionals(prev => prev.map(pro =>
         pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
       ));
@@ -738,7 +715,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleRegistrationInquiryUpdated = (data: any) => {
-      console.log('Registration inquiry updated via Socket.IO:', data);
       setRegistrationInquiries(prev => prev.map(inquiry =>
         inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
       ));
@@ -749,7 +725,6 @@ function useDebounce<T>(value: T, delay: number): T {
     };
 
     const handleRegistrationInquiryStatusUpdated = (data: any) => {
-      console.log('Registration inquiry status updated via Socket.IO:', data);
       setRegistrationInquiries(prev => prev.map(inquiry =>
         inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
       ));
@@ -794,16 +769,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
   // Authentication check
   useEffect(() => {
-    console.log('[DEBUG] Admin Dashboard - Auth Check:', {
-      loading,
-      user: user ? { id: user.id, role: user.role, email: user.email } : null,
-      currentPath: window.location.pathname
-    });
     if (!loading && (!user || user.role !== "SUPER_ADMIN")) {
-      console.log('[DEBUG] Admin Dashboard - Redirecting to login:', {
-        reason: !user ? 'No user' : `Wrong role: ${user.role}`,
-        redirectingTo: '/login'
-      });
       router.push("/login");
       return;
     }
@@ -1339,8 +1305,6 @@ function useDebounce<T>(value: T, delay: number): T {
     setDataFetchError(null);
 
     try {
-      console.log('[DEBUG] Admin Dashboard - Starting data fetch');
-      
       // Fetch each API separately to avoid Promise.all failure
       const fetchPromises = [
         { name: 'businesses', url: "/api/admin/businesses" },
@@ -1361,24 +1325,13 @@ function useDebounce<T>(value: T, delay: number): T {
             if (response.ok) {
               results[item.name] = await response.json();
             } else {
-              console.error(`[DEBUG] ${item.name} API failed:`, response.status);
               results[item.name] = null;
             }
           } catch (error) {
-            console.error(`[DEBUG] ${item.name} fetch error:`, error);
             results[item.name] = null;
           }
         })
       );
-
-      console.log('[DEBUG] Admin Dashboard - API results:', {
-        businesses: !!results.businesses,
-        categories: !!results.categories,
-        inquiries: !!results.inquiries,
-        professionals: !!results.professionals,
-        businessListingInquiries: !!results.businessListingInquiries,
-        registrationInquiries: !!results.registrationInquiries,
-      });
 
       // Extract data from API responses with proper error handling
       const businessesArray = Array.isArray(results.businesses?.businesses) ? results.businesses.businesses : [];
@@ -1400,15 +1353,6 @@ function useDebounce<T>(value: T, delay: number): T {
           registrationInquiriesArray = results.registrationInquiries.inquiries;
         }
       }
-
-      console.log('Extracted arrays:', {
-        businessesArray: businessesArray.length,
-        categoriesArray: categoriesArray.length,
-        inquiriesArray: inquiriesArray.length,
-        professionalsArray: professionalsArray.length,
-        businessListingInquiriesArray: businessListingInquiriesArray.length,
-        registrationInquiriesArray: registrationInquiriesArray.length
-      });
 
       setBusinesses(businessesArray);
       setCategories(categoriesArray);
@@ -1455,25 +1399,18 @@ function useDebounce<T>(value: T, delay: number): T {
     fetchData();
   }, [fetchData]);
 
-  // Debug logging for registration inquiries specifically
-  useEffect(() => {
-    if (currentView === "registration-requests") {
-      console.log('Registration inquiries data:', {
-        length: registrationInquiries.length,
-        data: registrationInquiries,
-        isLoading,
-        dataFetchError
-      });
-    }
-  }, [registrationInquiries, isLoading, dataFetchError, currentView]);
 
-  // Generate password utility
+
+  // Generate password utility - cryptographically secure
   const generatePassword = useCallback(() => {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let password = "Adm@";
+    // Use crypto.getRandomValues for cryptographically secure random values
+    const randomValues = new Uint32Array(12);
+    crypto.getRandomValues(randomValues);
     for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+      password += chars.charAt(randomValues[i] % chars.length);
     }
     return password;
   }, []);
@@ -1481,6 +1418,15 @@ function useDebounce<T>(value: T, delay: number): T {
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [generatedUsername, setGeneratedUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Credentials modal state
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    email: string;
+    password: string;
+    name?: string;
+    type?: 'business' | 'professional';
+  } | null>(null);
 
   // Generate credentials utility
   const handleGenerateCredentials = useCallback(
@@ -1518,8 +1464,6 @@ function useDebounce<T>(value: T, delay: number): T {
         website: (formData.get("website") as string) || "",
       };
 
-      console.log("Creating business:", businessData);
-
       try {
         const response = await fetch("/api/admin/businesses", {
           method: "POST",
@@ -1531,11 +1475,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
         if (response.ok) {
           const result = await response.json();
-          console.log("Business creation successful");
-          toast({
-            title: "Success",
-            description: `Business created successfully! Login credentials: Email: ${businessData.email}, Password: ${businessData.password}`,
+          // Show credentials in modal instead of toast
+          setCredentials({
+            email: businessData.email,
+            password: businessData.password,
+            name: businessData.name,
+            type: 'business'
           });
+          setShowCredentialsModal(true);
           setShowRightPanel(false);
           setRightPanelContent(null);
           setGeneratedPassword("");
@@ -1600,8 +1547,6 @@ function useDebounce<T>(value: T, delay: number): T {
         categoryId: formData.get("categoryId") as string,
       };
 
-      console.log("Updating business:", editingBusiness.id, updateData);
-
       try {
         const response = await fetch(
           `/api/admin/businesses/${editingBusiness.id}`,
@@ -1615,8 +1560,6 @@ function useDebounce<T>(value: T, delay: number): T {
         );
 
         if (response.ok) {
-          console.log("Update successful, updating state...");
-          
           // Update the business in the local state immediately
           setBusinesses((prev) =>
             prev.map((biz) =>
@@ -1625,9 +1568,6 @@ function useDebounce<T>(value: T, delay: number): T {
                 : biz
             )
           );
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
 
           // Also refresh paginated data to ensure consistency
           fetchBusinesses();
@@ -1681,18 +1621,14 @@ function useDebounce<T>(value: T, delay: number): T {
     setShowDeleteBusinessDialog(false);
     
     try {
-      console.log("Deleting business:", deleteBusiness.id, deleteBusiness.name);
       const response = await fetch(`/api/admin/businesses/${deleteBusiness.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        console.log("Business deletion successful, updating state...");
-
         // Remove the deleted business from the local state immediately
         setBusinesses((prev) => {
           const updatedBusinesses = prev.filter((biz) => biz.id !== deleteBusiness.id);
-          console.log("Updated businesses list:", updatedBusinesses.length, "businesses remaining");
           return updatedBusinesses;
         });
 
@@ -1710,8 +1646,7 @@ function useDebounce<T>(value: T, delay: number): T {
             : prev.totalActiveProducts,
         }));
 
-        // Force re-render to ensure UI updates
-        setForceRerender((prev) => prev + 1);
+
 
         // Also refresh paginated data
         fetchBusinesses();
@@ -1750,12 +1685,6 @@ function useDebounce<T>(value: T, delay: number): T {
     async (e: React.MouseEvent, business: Business) => {
       e.preventDefault();
       setToggleLoading(business.id);
-      console.log(
-        "Toggling business status for:",
-        business.id,
-        "current isActive:",
-        business.isActive
-      );
       try {
         const response = await fetch(`/api/admin/businesses/${business.id}`, {
           method: "PUT",
@@ -1766,8 +1695,6 @@ function useDebounce<T>(value: T, delay: number): T {
         });
 
         if (response.ok) {
-          console.log("Toggle successful, updating state...");
-          
           // Update the business in the local state immediately
           setBusinesses((prev) =>
             prev.map((biz) =>
@@ -1787,9 +1714,6 @@ function useDebounce<T>(value: T, delay: number): T {
               ? prev.totalActiveProducts + business._count.products
               : prev.totalActiveProducts - business._count.products,
           }));
-
-          // Force re-render to ensure UI updates
-          setForceRerender((prev) => prev + 1);
 
           // Also refresh paginated data
           fetchBusinesses();
@@ -1835,24 +1759,24 @@ function useDebounce<T>(value: T, delay: number): T {
       }
 
       try {
-        console.log("Duplicating business:", business.id, business.name);
         const response = await fetch(`/api/admin/businesses/${business.id}/duplicate`, {
           method: "POST",
         });
 
         if (response.ok) {
           const result = await response.json();
-          console.log("Business duplication successful:", result);
-          
           // Refresh data to show the new business
           fetchBusinesses();
           fetchData();
 
-          toast({
-            title: "Success",
-            description: `Business duplicated successfully! Login credentials for new admin:\nEmail: ${result.loginCredentials.email}\nPassword: ${result.loginCredentials.password}`,
-            duration: 10000,
+          // Show credentials in modal instead of toast
+          setCredentials({
+            email: result.loginCredentials.email,
+            password: result.loginCredentials.password,
+            name: result.name,
+            type: 'business'
           });
+          setShowCredentialsModal(true);
         } else {
           const error = await response.json();
           console.error("Business duplication failed:", error);
@@ -1899,8 +1823,6 @@ function useDebounce<T>(value: T, delay: number): T {
         phone: formData.get("phone") as string,
       };
 
-      console.log("Creating professional account:", professionalData);
-
       try {
         const response = await fetch("/api/admin/professionals", {
           method: "POST",
@@ -1912,11 +1834,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
         if (response.ok) {
           const result = await response.json();
-          console.log("Professional account creation successful");
-          toast({
-            title: "Success",
-            description: `Professional account created successfully! Login credentials: Email: ${professionalData.email}, Password: ${professionalData.password}`,
+          // Show credentials in modal instead of toast
+          setCredentials({
+            email: professionalData.email,
+            password: professionalData.password,
+            name: professionalData.name,
+            type: 'professional'
           });
+          setShowCredentialsModal(true);
           setShowRightPanel(false);
           setRightPanelContent(null);
           setGeneratedPassword("");
@@ -1968,12 +1893,6 @@ function useDebounce<T>(value: T, delay: number): T {
         email: formData.get("email") as string,
       };
 
-      console.log(
-        "Updating professional account:",
-        editingProfessional.id,
-        updateData
-      );
-
       try {
         const response = await fetch(
           `/api/admin/professionals/${editingProfessional.id}`,
@@ -1987,8 +1906,6 @@ function useDebounce<T>(value: T, delay: number): T {
         );
 
         if (response.ok) {
-          console.log("Account update successful, updating state...");
-          
           // Update the professional in the professionalData state immediately
           setProfessionalData((prev) =>
             prev
@@ -2124,8 +2041,6 @@ function useDebounce<T>(value: T, delay: number): T {
         parentId: rawParentId === "none" ? null : rawParentId || null,
       };
 
-      console.log("Updating category:", editingCategory.id, updateData);
-
       try {
         const response = await fetch(
           `/api/admin/categories/${editingCategory.id}`,
@@ -2140,8 +2055,6 @@ function useDebounce<T>(value: T, delay: number): T {
 
         if (response.ok) {
           const result = await response.json();
-          console.log("Category update successful");
-          
           // Update local state immediately for better UX
           if (result.category && editingCategory) {
             setCategories(prev =>
@@ -2194,15 +2107,12 @@ function useDebounce<T>(value: T, delay: number): T {
   const confirmDeleteCategory = useCallback(async () => {
     if (!categoryToDelete) return;
     
-    console.log("Deleting category:", categoryToDelete.id);
-
     try {
       const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        console.log("Category delete successful");
         // IMMEDIATE STATE REMOVAL - Remove deleted category from local state immediately
         setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id));
         setShowDeleteCategoryDialog(false);
@@ -3325,8 +3235,7 @@ function useDebounce<T>(value: T, delay: number): T {
       return renderSkeletonContent();
     }
 
-    // Use forceRerender to ensure UI updates immediately
-    const _ = forceRerender;
+
 
     // Ensure categories is always an array
     const safeCategories = Array.isArray(categories) ? categories : [];
@@ -5790,10 +5699,10 @@ const renderRightPanel = () => {
                 />
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1">
-                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent border-l rounded-none" onClick={() => setShowPassword(!showPassword)}>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent border-l rounded-none" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
-                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent border-l rounded-none" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }}>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent border-l rounded-none" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }} aria-label="Generate password">
                     <Key className="h-3 w-3" />
                   </Button>
                 </div>
@@ -6088,10 +5997,10 @@ const renderRightPanel = () => {
                 />
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1">
-                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 rounded-md" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }}>
+                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 rounded-md" onClick={(e) => { e.preventDefault(); setGeneratedPassword(generatePassword()); }} aria-label="Generate password">
                     <Key className="h-3 w-3" />
                   </Button>
                 </div>
@@ -6852,6 +6761,13 @@ const renderRightPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Credentials Modal - Shows instead of toast for password display */}
+      <CredentialsModal
+        isOpen={showCredentialsModal}
+        onClose={() => setShowCredentialsModal(false)}
+        credentials={credentials}
+      />
     </div>
   );
 }

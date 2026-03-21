@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { sendInquiryNotification } from '@/lib/email'
 import { z } from 'zod'
 
 const inquirySchema = z.object({
@@ -150,10 +151,15 @@ export async function POST(request: NextRequest) {
     console.log(`Inquiry created with ID: ${inquiry.id}`)
 
     // Send email notification to business (non-blocking - fire and forget)
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'inquiry', inquiryId: inquiry.id }),
+    sendInquiryNotification({
+      businessName: inquiry.business.name,
+      businessEmail: inquiry.business.email || '',
+      customerName: inquiry.name,
+      customerEmail: inquiry.email,
+      customerPhone: inquiry.phone || undefined,
+      message: inquiry.message,
+      productName: inquiry.product?.name,
+      inquiryUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/dashboard/inquiries`,
     }).catch((error) => {
       console.error('Email notification error (non-blocking):', error)
     })

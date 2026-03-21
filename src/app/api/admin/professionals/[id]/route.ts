@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 
 const updateProfessionalSchema = z.object({
@@ -73,14 +74,12 @@ export async function PUT(
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-status-updated', {
-        professional: professional,
-        action: 'status-update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-status-updated', {
+      professional: professional,
+      action: 'status-update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,
@@ -143,14 +142,12 @@ export async function POST(
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-updated', {
-        professional: professional,
-        action: 'update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-updated', {
+      professional: professional,
+      action: 'update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,
@@ -213,14 +210,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-deleted', {
-        professionalId: professionalId,
-        action: 'delete',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-deleted', {
+      professionalId: professionalId,
+      action: 'delete',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       success: true,

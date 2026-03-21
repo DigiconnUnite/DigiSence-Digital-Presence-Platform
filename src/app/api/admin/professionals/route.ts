@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import type { UserRole } from '@/lib/auth'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 import { sendAccountCreationNotification } from '@/lib/email'
@@ -209,14 +210,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-created', {
-        professional: professional,
-        action: 'create',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-created', {
+      professional: professional,
+      action: 'create',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({
       user: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 
 const bulkStatusSchema = z.object({
@@ -87,16 +88,14 @@ export async function POST(
     })
 
     // Emit single batched Socket.IO event
-    if (global.io) {
-      global.io.emit('businesses-bulk-status-updated', {
-        businesses: updatedBusinesses,
-        isActive,
-        action: 'bulk_status_update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId,
-        count: ids.length
-      })
-    }
+    broadcast('businesses-bulk-status-updated', {
+      businesses: updatedBusinesses,
+      isActive,
+      action: 'bulk_status_update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId,
+      count: ids.length
+    })
 
     const actionText = isActive ? 'activated' : 'suspended'
     

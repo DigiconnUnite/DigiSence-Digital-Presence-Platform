@@ -616,7 +616,7 @@ export default function BusinessBannerUploader({
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
             {/* Rotate Button */}
-            <Button variant="outline" size="icon" onClick={handleRotate} title="Rotate 90°">
+            <Button variant="outline" size="icon" onClick={handleRotate} aria-label="Rotate 90°">
               <RotateCw className="h-4 w-4" />
             </Button>
 
@@ -625,7 +625,7 @@ export default function BusinessBannerUploader({
               variant="outline" 
               size="icon" 
               onClick={handleFlip} 
-              title="Flip Horizontal"
+              aria-label="Flip Horizontal"
               className={flip ? "bg-primary/10" : ""}
             >
               <FlipHorizontal className="h-4 w-4" />
@@ -634,7 +634,7 @@ export default function BusinessBannerUploader({
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
             {/* Reset Button */}
-            <Button variant="outline" size="icon" onClick={handleReset} title="Reset">
+            <Button variant="outline" size="icon" onClick={handleReset} aria-label="Reset">
               <RefreshCw className="h-4 w-4" />
             </Button>
 
@@ -645,7 +645,7 @@ export default function BusinessBannerUploader({
               variant="outline" 
               size="icon" 
               onClick={handlePreview} 
-              title="Preview"
+              aria-label="Preview"
               disabled={!completedCrop}
             >
               <Eye className="h-4 w-4" />

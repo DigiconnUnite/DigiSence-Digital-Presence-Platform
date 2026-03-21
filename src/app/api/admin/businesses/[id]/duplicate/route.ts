@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 
 async function getSuperAdmin(request: NextRequest) {
   const token = getTokenFromRequest(request) || request.cookies.get('auth-token')?.value
@@ -128,14 +129,12 @@ export async function POST(
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('business-created', {
-        business: result.business,
-        action: 'duplicate',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      })
-    }
+    broadcast('business-created', {
+      business: result.business,
+      action: 'duplicate',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    })
 
     return NextResponse.json({
       success: true,

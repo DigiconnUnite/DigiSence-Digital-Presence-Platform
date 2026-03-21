@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 
 interface RouteParams {
   params: Promise<{
@@ -128,14 +129,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-updated', {
-        professional: professional,
-        action: 'update',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-updated', {
+      professional: professional,
+      action: 'update',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({ professional })
   } catch (error) {
@@ -183,14 +182,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     })
 
     // Emit Socket.IO event for real-time update
-    if (global.io) {
-      global.io.emit('professional-deleted', {
-        professionalId: id,
-        action: 'delete',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      });
-    }
+    broadcast('professional-deleted', {
+      professionalId: id,
+      action: 'delete',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    });
 
     return NextResponse.json({ message: 'Professional and associated user deleted successfully' })
   } catch (error) {

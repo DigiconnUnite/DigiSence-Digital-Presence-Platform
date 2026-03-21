@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { sendProfessionalInquiryNotification } from '@/lib/email'
 import { z } from 'zod'
 
 const professionalInquirySchema = z.object({
@@ -112,15 +113,15 @@ export async function POST(request: NextRequest) {
 
     // Send email notification to professional (non-blocking - fire and forget)
     // Email failures should not block the response
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'professional_inquiry',
-        inquiryId: inquiry.id,
-      }),
+    sendProfessionalInquiryNotification({
+      professionalName: inquiry.professional.name,
+      professionalEmail: inquiry.professional.email || '',
+      customerName: inquiry.name,
+      customerEmail: inquiry.email,
+      customerPhone: inquiry.phone || undefined,
+      message: inquiry.message,
+      serviceName: undefined,
+      inquiryUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mydigisence.com'}/dashboard/professional-inquiries`,
     }).catch((error) => {
       console.error('Email notification error (non-blocking):', error)
     })

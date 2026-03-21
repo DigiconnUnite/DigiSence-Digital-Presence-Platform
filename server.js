@@ -33,8 +33,9 @@ app.prepare().then(() => {
     })
   })
 
-  // Expose io instance globally so API routes can access it
-  global.io = io
+  // Use singleton module for Socket.io
+  const { setIo } = require('./src/lib/socket')
+  setIo(io)
 
   server.listen(3000, (err) => {
     if (err) throw err

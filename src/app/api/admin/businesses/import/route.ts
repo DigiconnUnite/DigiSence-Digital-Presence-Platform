@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { parseCSV, mapCSVToBusinessData, ParseError, generateCSVTemplate } from '@/lib/utils/csvParser'
 import { sendBulkImportNotification } from '@/lib/email'
 
@@ -206,8 +207,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Emit Socket.IO event for real-time update
-    if (global.io && importResult.created.length > 0) {
-      global.io.emit('business-created', {
+    if (importResult.created.length > 0) {
+      broadcast('business-created', {
         action: 'bulk-import',
         count: importResult.created.length,
         timestamp: new Date().toISOString(),

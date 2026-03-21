@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 
 async function getSuperAdmin(request: NextRequest) {
@@ -72,15 +73,13 @@ export async function POST(request: NextRequest) {
     })
 
     // Emit Socket.IO event
-    if (global.io) {
-      global.io.emit('business-bulk-deleted', {
-        businessIds,
-        deletedCount: businessesToDelete.length,
-        action: 'bulk-delete',
-        timestamp: new Date().toISOString(),
-        adminId: admin.userId
-      })
-    }
+    broadcast('business-bulk-deleted', {
+      businessIds,
+      deletedCount: businessesToDelete.length,
+      action: 'bulk-delete',
+      timestamp: new Date().toISOString(),
+      adminId: admin.userId
+    })
 
     return NextResponse.json({
       success: true,

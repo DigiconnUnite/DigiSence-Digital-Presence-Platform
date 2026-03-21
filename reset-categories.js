@@ -6,15 +6,9 @@ async function resetCategories() {
   try {
     console.log('Resetting categories...');
 
-    // Delete all categories
-    await prisma.category.deleteMany({});
-
-    console.log('All categories deleted successfully');
-
-    // Reset the database with seed data
-    await prisma.$executeRaw`db.categories.dropIndexes()`;
-
-    console.log('Category indexes dropped');
+    // Delete all categories using Prisma
+    const result = await prisma.category.deleteMany({});
+    console.log(`Deleted ${result.count} categories successfully`);
 
   } catch (error) {
     console.error('Error resetting categories:', error);

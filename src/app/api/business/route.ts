@@ -253,7 +253,9 @@ export async function PUT(request: NextRequest) {
         .map(([key, value]) => [key, value === "" ? null : value]),
     );
 
-    // Update slug if name changed
+    // FIX H-3: Preserve existing slug to avoid breaking public URLs
+    // Slugs should NOT be regenerated when business name changes
+    // This ensures existing bookmarks, shared links, and indexed URLs remain valid
     let updateFields = { ...cleanBusinessUpdateData };
 
     // 3. ASSIGN LOGO FIELD
@@ -262,29 +264,9 @@ export async function PUT(request: NextRequest) {
       console.log("Updating logo in database to:", finalLogoUrl);
     }
 
-    if (restData.name && restData.name !== existingBusiness.name) {
-      const newSlug = restData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-
-      // Check if new slug is already taken
-      const slugExists = await db.business.findFirst({
-        where: {
-          slug: newSlug,
-          id: { not: existingBusiness.id },
-        },
-      });
-
-      if (slugExists) {
-        return NextResponse.json(
-          { error: "Business with this name already exists" },
-          { status: 400 },
-        );
-      }
-
-      updateFields.slug = newSlug;
-    }
+    // Remove slug from update fields to preserve existing slug
+    // Business admins cannot change the slug after initial creation
+    delete updateFields.slug;
 
     const business = await db.business.update({
       where: { id: existingBusiness.id },
@@ -382,7 +364,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Password reset successfully",
-      newPassword,
     });
   } catch (error) {
     console.error("Password reset error:", error);

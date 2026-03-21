@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getTokenFromRequest, verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/socket'
 import { z } from 'zod'
 import { getNoStoreHeaders, getInvalidationHeaders } from '@/lib/cache'
 
@@ -56,15 +57,13 @@ export async function POST(request: NextRequest) {
     })
 
     // Emit Socket.IO events for real-time updates
-    if (global.io) {
-      for (const id of ids) {
-        global.io.emit('professional-deleted', {
-          professionalId: id,
-          action: 'delete',
-          timestamp: new Date().toISOString(),
-          adminId: admin.userId
-        })
-      }
+    for (const id of ids) {
+      broadcast('professional-deleted', {
+        professionalId: id,
+        action: 'delete',
+        timestamp: new Date().toISOString(),
+        adminId: admin.userId
+      })
     }
 
     return NextResponse.json({

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyOTP, canResendOTP, getOTPExpirySeconds } from '@/lib/otp';
+import { validateOTP, canResendOTP, getOTPExpirySeconds } from '@/lib/otp';
 
 const verifyOTPSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, otp, purpose } = verifyOTPSchema.parse(body);
 
-    // Verify OTP
-    const result = verifyOTP(email, otp, purpose);
+    // Validate OTP without consuming it
+    const result = validateOTP(email, otp, purpose);
 
     if (!result.valid) {
       return NextResponse.json(

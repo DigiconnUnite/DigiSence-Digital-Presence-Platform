@@ -69,7 +69,52 @@ export const deleteOTP = (email: string): boolean => {
 }
 
 /**
- * Verify OTP for an email
+ * Validate OTP for an email without consuming/deleting it
+ * Used for checking OTP validity during verification
+ * Returns: { valid: boolean, message: string }
+ */
+export const validateOTP = (
+  email: string,
+  otp: string,
+  purpose?: 'password_reset' | 'email_verification' | 'login_verification'
+): { valid: boolean; message: string } => {
+  const normalizedEmail = email.toLowerCase()
+  const storedOTP = otpStore.get(normalizedEmail)
+  
+  if (!storedOTP) {
+    return { valid: false, message: 'No OTP found. Please request a new OTP.' }
+  }
+  
+  // Check if OTP has expired
+  if (Date.now() > storedOTP.expiresAt) {
+    otpStore.delete(normalizedEmail)
+    return { valid: false, message: 'OTP has expired. Please request a new OTP.' }
+  }
+  
+  // Check purpose match
+  if (purpose && storedOTP.purpose !== purpose) {
+    return { valid: false, message: 'Invalid OTP purpose.' }
+  }
+  
+  // Check max attempts
+  if (storedOTP.attempts >= MAX_ATTEMPTS) {
+    otpStore.delete(normalizedEmail)
+    return { valid: false, message: 'Too many failed attempts. Please request a new OTP.' }
+  }
+  
+  // Verify OTP
+  if (storedOTP.otp !== otp) {
+    storedOTP.attempts++
+    return { valid: false, message: `Invalid OTP. ${MAX_ATTEMPTS - storedOTP.attempts} attempts remaining.` }
+  }
+  
+  // OTP is valid - do NOT delete it, just return validation result
+  return { valid: true, message: 'OTP verified successfully.' }
+}
+
+/**
+ * Verify OTP for an email and consume it
+ * Used for final password reset - verifies and deletes OTP
  * Returns: { valid: boolean, message: string }
  */
 export const verifyOTP = (

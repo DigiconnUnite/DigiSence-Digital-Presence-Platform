@@ -260,7 +260,7 @@ export default function ProfessionalDashboard() {
 
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  const formatDuration = (item) => {
+  const formatDuration = (item: any) => {
     if (item.startMonth && item.startYear) {
       const start = `${item.startMonth} ${item.startYear}`;
       const end = item.isCurrent ? 'Present' : (item.endMonth && item.endYear ? `${item.endMonth} ${item.endYear}` : '');
@@ -2964,7 +2964,7 @@ export default function ProfessionalDashboard() {
 
   // Reusable Components
 
-  const StatCard = ({ title, value, subtitle, icon, truncate = false }) => (
+  const StatCard = ({ title, value, subtitle, icon, truncate = false }: any) => (
     <Card
       className={`${themeSettings.cardClass} ${themeSettings.borderRadius} transition-all duration-300 hover:shadow-lg`}
     >
@@ -3038,7 +3038,7 @@ export default function ProfessionalDashboard() {
     bannerUrl,
     setBannerUrl,
     isLoading,
-  }) => (
+  }: any) => (
     <div className="space-y-6">
       {/* Create Profile Prompt */}
       <Card
@@ -3180,7 +3180,7 @@ export default function ProfessionalDashboard() {
                   <Input
                     value={professionalSocialMedia.facebook}
                     onChange={(e) =>
-                      setProfessionalSocialMedia((prev) => ({
+                      setProfessionalSocialMedia((prev: any) => ({
                         ...prev,
                         facebook: e.target.value,
                       }))
@@ -3197,7 +3197,7 @@ export default function ProfessionalDashboard() {
                   <Input
                     value={professionalSocialMedia.twitter}
                     onChange={(e) =>
-                      setProfessionalSocialMedia((prev) => ({
+                      setProfessionalSocialMedia((prev: any) => ({
                         ...prev,
                         twitter: e.target.value,
                       }))
@@ -3214,7 +3214,7 @@ export default function ProfessionalDashboard() {
                   <Input
                     value={professionalSocialMedia.instagram}
                     onChange={(e) =>
-                      setProfessionalSocialMedia((prev) => ({
+                      setProfessionalSocialMedia((prev: any) => ({
                         ...prev,
                         instagram: e.target.value,
                       }))
@@ -3231,7 +3231,7 @@ export default function ProfessionalDashboard() {
                   <Input
                     value={professionalSocialMedia.linkedin}
                     onChange={(e) =>
-                      setProfessionalSocialMedia((prev) => ({
+                      setProfessionalSocialMedia((prev: any) => ({
                         ...prev,
                         linkedin: e.target.value,
                       }))
@@ -3281,7 +3281,7 @@ export default function ProfessionalDashboard() {
     professionalPortfolio,
     setProfessionalPortfolio,
     isLoading,
-  }) => (
+  }: any) => (
     <form onSubmit={handleUpdateProfessional} className="space-y-6">
       {/* Basic Information */}
       <Card
@@ -3411,7 +3411,7 @@ export default function ProfessionalDashboard() {
               <Input
                 value={professionalSocialMedia.facebook}
                 onChange={(e) =>
-                  setProfessionalSocialMedia((prev) => ({
+                  setProfessionalSocialMedia((prev: any) => ({
                     ...prev,
                     facebook: e.target.value,
                   }))
@@ -3428,7 +3428,7 @@ export default function ProfessionalDashboard() {
               <Input
                 value={professionalSocialMedia.twitter}
                 onChange={(e) =>
-                  setProfessionalSocialMedia((prev) => ({
+                  setProfessionalSocialMedia((prev: any) => ({
                     ...prev,
                     twitter: e.target.value,
                   }))
@@ -3445,7 +3445,7 @@ export default function ProfessionalDashboard() {
               <Input
                 value={professionalSocialMedia.instagram}
                 onChange={(e) =>
-                  setProfessionalSocialMedia((prev) => ({
+                  setProfessionalSocialMedia((prev: any) => ({
                     ...prev,
                     instagram: e.target.value,
                   }))
@@ -3462,7 +3462,7 @@ export default function ProfessionalDashboard() {
               <Input
                 value={professionalSocialMedia.linkedin}
                 onChange={(e) =>
-                  setProfessionalSocialMedia((prev) => ({
+                  setProfessionalSocialMedia((prev: any) => ({
                     ...prev,
                     linkedin: e.target.value,
                   }))
@@ -3625,7 +3625,7 @@ export default function ProfessionalDashboard() {
     handleFieldUpdate,
     setShowBannerModal,
     setShowProfilePictureModal
-  }) => {
+  }: any) => {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -4596,7 +4596,7 @@ export default function ProfessionalDashboard() {
     itemName,
     setItems,
     icon: IconComponent,
-  }) => (
+  }: any) => (
     <Card
       className={`${themeSettings.cardClass} ${themeSettings.borderRadius} overflow-hidden hover:shadow-xl transition-shadow duration-300`}
     >

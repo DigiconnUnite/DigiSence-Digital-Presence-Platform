@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -113,118 +113,29 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { AdminTable } from "@/components/admin/AdminTable";
 import CredentialsModal from "./panels/CredentialsModal";
-
-interface Business {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  logo?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  admin: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  category?: {
-    id: string;
-    name: string;
-  };
-  _count: {
-    products: number;
-    inquiries: number;
-  };
-}
-
-// Pagination, Sorting, and Selection State for Businesses
-interface BusinessQueryParams {
-  page: number;
-  limit: number;
-  search: string;
-  status: string;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-}
-
-interface BusinessApiResponse {
-  businesses: Business[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  };
-}
-
-interface ProfessionalApiResponse {
-  professionals: Professional[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  };
-}
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  parentId?: string;
-  _count: {
-    businesses: number;
-  };
-}
-
-interface AdminStats {
-  totalBusinesses: number;
-  totalInquiries: number;
-  totalUsers: number;
-  activeBusinesses: number;
-  totalProducts: number;
-  totalActiveProducts: number;
-  totalProfessionals: number;
-  activeProfessionals: number;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-  slug: string;
-  professionalHeadline: string | null;
-  aboutMe: string | null;
-  profilePicture: string | null;
-  banner: string | null;
-  location: string | null;
-  phone: string | null;
-  email: string | null;
-  website: string | null;
-  facebook: string | null;
-  twitter: string | null;
-  instagram: string | null;
-  linkedin: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  adminId: string;
-  workExperience?: any[];
-  education?: any[];
-  skills?: string[];
-  servicesOffered?: any[];
-  portfolio?: any[];
-  admin: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-}
+import { useSocketSync } from "./hooks/useSocketSync";
+import { useBulkActions } from "./hooks/useBulkActions";
+import { useBusinessTable } from "./hooks/useBusinessTable";
+import { useProfessionalTable } from "./hooks/useProfessionalTable";
+import { useAdminAuxiliaryState } from "./hooks/useAdminAuxiliaryState";
+import { useInquiryActions } from "./hooks/useInquiryActions";
+import { useCategoryActions } from "./hooks/useCategoryActions";
+import { useBusinessListingActions } from "./hooks/useBusinessListingActions";
+import { useRegistrationActions } from "./hooks/useRegistrationActions";
+import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
+import DashboardOverview from "./components/DashboardOverview";
+import BusinessesView from "./components/BusinessesView";
+import ProfessionalsView from "./components/ProfessionalsView";
+import CategoriesView from "./components/CategoriesView";
+import InquiriesView from "./components/InquiriesView";
+import RegistrationRequestsView from "./components/RegistrationRequestsView";
+import BusinessListingsView from "./components/BusinessListingsView";
+import type {
+  AdminStats,
+  Business,
+  Category,
+  Professional,
+} from "./types";
 
 export default function SuperAdminDashboard() {
   const { user, loading, logout } = useAuth();
@@ -289,27 +200,68 @@ export default function SuperAdminDashboard() {
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
-  // Business management state
-  const [businessQuery, setBusinessQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const [businessData, setBusinessData] = useState<BusinessApiResponse | null>(null);
-  const [businessLoading, setBusinessLoading] = useState(false);
-  const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(new Set());
+
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
   const [addBusinessLoading, setAddBusinessLoading] = useState(false);
   const [editBusinessLoading, setEditBusinessLoading] = useState(false);
   const [toggleLoading, setToggleLoading] = useState<string | null>(null);
-  
+
+  const [professionalBulkActionLoading, setProfessionalBulkActionLoading] = useState(false);
+  const [addProfessionalLoading, setAddProfessionalLoading] = useState(false);
+  const [editProfessionalLoading, setEditProfessionalLoading] = useState(false);
+  const [professionalToggleLoading, setProfessionalToggleLoading] = useState<string | null>(null);
+  const [showProfessionalBulkDeleteDialog, setShowProfessionalBulkDeleteDialog] = useState(false);
+  const [deletingProfessional, setDeletingProfessional] = useState(false);
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  const [showDeleteProfessionalDialog, setShowDeleteProfessionalDialog] = useState(false);
+
+  const adminDataFetchControllerRef = useRef<AbortController | null>(null);
+  const adminDataFetchRequestRef = useRef(0);
+
+
+
   // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const {
+    businessQuery,
+    setBusinessQuery,
+    businessData,
+    setBusinessData,
+    businessLoading,
+    selectedBusinessIds,
+    setSelectedBusinessIds,
+    exportLoading,
+    fetchBusinesses,
+    handleSort,
+    handlePageChange,
+    handleLimitChange,
+    handleSelectBusiness,
+    handleSelectAll,
+    handleDeselectAll,
+    handleExport,
+  } = useBusinessTable({ debouncedSearch, toast });
+
+  const {
+    professionalQuery,
+    setProfessionalQuery,
+    professionalData,
+    setProfessionalData,
+    professionalLoading,
+    selectedProfessionalIds,
+    setSelectedProfessionalIds,
+    professionalExportLoading,
+    professionalSortBy,
+    professionalSortOrder,
+    fetchProfessionals,
+    handleProfessionalSort,
+    handleProfessionalPageChange,
+    handleProfessionalLimitChange,
+    handleSelectProfessional,
+    handleSelectAllProfessionals,
+    handleDeselectAllProfessionals,
+    handleProfessionalExport,
+  } = useProfessionalTable({ debouncedSearch, currentView, toast });
   
   // Professional form state
 
@@ -328,199 +280,80 @@ export default function SuperAdminDashboard() {
     linkedin: "",
   });
   
-  // Professional management state with pagination and selection
-  const [professionalQuery, setProfessionalQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const [professionalData, setProfessionalData] = useState<ProfessionalApiResponse | null>(null);
-  const [professionalLoading, setProfessionalLoading] = useState(false);
-  const [selectedProfessionalIds, setSelectedProfessionalIds] = useState<Set<string>>(new Set());
-  const [professionalBulkActionLoading, setProfessionalBulkActionLoading] = useState(false);
-  const [professionalExportLoading, setProfessionalExportLoading] = useState(false);
-  const [addProfessionalLoading, setAddProfessionalLoading] = useState(false);
-  const [editProfessionalLoading, setEditProfessionalLoading] = useState(false);
-  const [professionalToggleLoading, setProfessionalToggleLoading] = useState<string | null>(null);
-  const [showProfessionalBulkDeleteDialog, setShowProfessionalBulkDeleteDialog] = useState(false);
-  const [deletingProfessional, setDeletingProfessional] = useState(false);
-  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
-  const [showDeleteProfessionalDialog, setShowDeleteProfessionalDialog] = useState(false);
-  const [professionalSortBy, setProfessionalSortBy] = useState('createdAt');
-  const [professionalSortOrder, setProfessionalSortOrder] = useState<'asc' | 'desc'>('desc');
-  
-  // Inquiries management state
-  const [inquiryToDelete, setInquiryToDelete] = useState<any>(null);
-  const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
-  const [selectedInquiries, setSelectedInquiries] = useState<Set<string>>(new Set());
-  const [inquiryQuery, setInquiryQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const [inquiryPagination, setInquiryPagination] = useState<{
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  } | null>(null);
-
-  // Registration management state
-  const [selectedRegistrations, setSelectedRegistrations] = useState<Set<string>>(new Set());
-  const [selectedRegistrationInquiry, setSelectedRegistrationInquiry] = useState<any>(null);
-  const [showRegistrationInquiryDialog, setShowRegistrationInquiryDialog] = useState(false);
-  const [registrationQuery, setRegistrationQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const [registrationPagination, setRegistrationPagination] = useState<{
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  } | null>(null);
-
-  // Business Listing management state
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [categoryQuery, setCategoryQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const [categoryPagination, setCategoryPagination] = useState<{
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  } | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false);
+  const {
+    inquiryToDelete,
+    setInquiryToDelete,
+    showDeleteInquiryDialog,
+    setShowDeleteInquiryDialog,
+    selectedInquiries,
+    setSelectedInquiries,
+    inquiryQuery,
+    setInquiryQuery,
+    inquiryPagination,
+    setInquiryPagination,
+    selectedRegistrations,
+    setSelectedRegistrations,
+    selectedRegistrationInquiry,
+    setSelectedRegistrationInquiry,
+    showRegistrationInquiryDialog,
+    setShowRegistrationInquiryDialog,
+    registrationQuery,
+    setRegistrationQuery,
+    registrationPagination,
+    setRegistrationPagination,
+    selectedCategories,
+    setSelectedCategories,
+    categoryQuery,
+    setCategoryQuery,
+    categoryPagination,
+    setCategoryPagination,
+    categoryToDelete,
+    setCategoryToDelete,
+    showDeleteCategoryDialog,
+    setShowDeleteCategoryDialog,
+    businessListingQuery,
+    setBusinessListingQuery,
+    businessListingPagination,
+    setBusinessListingPagination,
+    selectedBusinessListings,
+    setSelectedBusinessListings,
+  } = useAdminAuxiliaryState();
   
   // Reject inquiry dialog state
   const [showRejectInquiryDialog, setShowRejectInquiryDialog] = useState(false);
   const [inquiryToReject, setInquiryToReject] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState("");
   
-  const [businessListingQuery, setBusinessListingQuery] = useState<BusinessQueryParams>({
-    page: 1,
-    limit: 10,
-    search: '',
-    status: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+  const {
+    handleViewInquiry,
+    handleReplyInquiry,
+    handleDeleteInquiry,
+    confirmDeleteInquiry,
+    handleSelectAllInquiries,
+    handleDeselectAllInquiries,
+    handleInquiryBulkActivate,
+    handleInquiryBulkSuspend,
+    handleInquiryBulkDelete,
+  } = useInquiryActions({
+    inquiries,
+    setInquiries,
+    selectedInquiries,
+    setSelectedInquiries,
+    inquiryToDelete,
+    setInquiryToDelete,
+    setShowDeleteInquiryDialog,
+    setShowBulkDeleteDialog,
+    toast,
   });
-  const [businessListingPagination, setBusinessListingPagination] = useState<{
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-  } | null>(null);
-  const [selectedBusinessListings, setSelectedBusinessListings] = useState<Set<string>>(new Set());
 
-  // Handle view inquiry
-  const handleViewInquiry = (inquiry: any) => {
-    // Could open a modal or navigate to detail view
-    toast({
-      title: 'Inquiry Details',
-      description: `From: ${inquiry.name} (${inquiry.email})`,
-    });
-  };
-
-  // Handle reply inquiry
-  const handleReplyInquiry = (inquiry: any) => {
-    // Could open email composer
-    toast({
-      title: 'Reply to Inquiry',
-      description: `Opening email client for ${inquiry.email}`,
-    });
-  };
-
-  // Handle delete inquiry with dialog
-  const handleDeleteInquiry = useCallback((inquiry: any) => {
-    setInquiryToDelete(inquiry);
-    setShowDeleteInquiryDialog(true);
-  }, []);
-
-  // Confirm delete inquiry
-  const confirmDeleteInquiry = useCallback(() => {
-    if (!inquiryToDelete) return;
-    setInquiries(prev => prev.filter(i => i.id !== inquiryToDelete.id));
-    setShowDeleteInquiryDialog(false);
-    setInquiryToDelete(null);
-    toast({
-      title: 'Inquiry Deleted',
-      description: 'The inquiry has been removed.',
-    });
-  }, [inquiryToDelete, toast]);
-
-  // Inquiry bulk action handlers
-  const handleSelectAllInquiries = () => {
-    setSelectedInquiries(new Set(inquiries.map(i => i.id)));
-  };
-
-  const handleDeselectAllInquiries = () => {
-    setSelectedInquiries(new Set());
-  };
-
-  const handleInquiryBulkActivate = async () => {
-    if (selectedInquiries.size === 0) return;
-    const ids = Array.from(selectedInquiries);
-    try {
-      await Promise.all(ids.map(async (id) => {
-        await fetch(`/api/inquiries/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'REPLIED' }),
-        });
-      }));
-      setInquiries(prev => prev.map(i => 
-        selectedInquiries.has(i.id) ? { ...i, status: 'REPLIED' } : i
-      ));
-      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as REPLIED` });
-      setSelectedInquiries(new Set());
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
-    }
-  };
-
-  const handleInquiryBulkSuspend = async () => {
-    if (selectedInquiries.size === 0) return;
-    const ids = Array.from(selectedInquiries);
-    try {
-      await Promise.all(ids.map(async (id) => {
-        await fetch(`/api/inquiries/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'PENDING' }),
-        });
-      }));
-      setInquiries(prev => prev.map(i => 
-        selectedInquiries.has(i.id) ? { ...i, status: 'PENDING' } : i
-      ));
-      toast({ title: 'Success', description: `${selectedInquiries.size} inquiries marked as PENDING` });
-      setSelectedInquiries(new Set());
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to update inquiry status', variant: 'destructive' });
-    }
-  };
-
-  const handleInquiryBulkDelete = () => {
-    if (selectedInquiries.size === 0) return;
-    setShowBulkDeleteDialog(true);
-  };
+  const {
+    handleUpdateBusinessListingInquiry,
+  } = useBusinessListingActions({
+    setBusinessListingInquiries,
+    setShowBusinessListingInquiryDialog,
+    setSelectedBusinessListingInquiry,
+    toast,
+  });
 
 
 
@@ -544,228 +377,14 @@ export default function SuperAdminDashboard() {
   const { socket, isConnected } = useSocket();
 
   // Real-time updates from Socket.IO
-  useEffect(() => {
-    if (!socket || !isConnected) return;
-
-    const handleBusinessCreated = (data: any) => {
-      setBusinesses(prev => [data.business, ...prev]);
-      // Also update businessData if it exists
-      setBusinessData(prev => prev ? {
-        ...prev,
-        businesses: [data.business, ...prev.businesses],
-        pagination: {
-          ...prev.pagination,
-          totalItems: prev.pagination.totalItems + 1
-        }
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        totalBusinesses: prev.totalBusinesses + 1,
-        totalUsers: prev.totalUsers + 1,
-      }));
-      toast({
-        title: "Business Created",
-        description: `${data.business.name} has been added to the platform.`,
-      });
-    };
-
-    const handleBusinessUpdated = (data: any) => {
-      // Update both businesses state and businessData state
-      setBusinesses(prev => prev.map(biz =>
-        biz.id === data.business.id ? { ...biz, ...data.business } : biz
-      ));
-      setBusinessData(prev => prev ? {
-        ...prev,
-        businesses: prev.businesses.map(biz =>
-          biz.id === data.business.id ? { ...biz, ...data.business } : biz
-        )
-      } : null);
-      toast({
-        title: "Business Updated",
-        description: `${data.business.name} has been updated.`,
-      });
-    };
-
-    const handleBusinessDeleted = (data: any) => {
-      // Update both businesses state and businessData state
-      setBusinesses(prev => prev.filter(biz => biz.id !== data.businessId));
-      setBusinessData(prev => prev ? {
-        ...prev,
-        businesses: prev.businesses.filter(biz => biz.id !== data.businessId),
-        pagination: {
-          ...prev.pagination,
-          totalItems: prev.pagination.totalItems - 1
-        }
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        totalBusinesses: prev.totalBusinesses - 1,
-        totalUsers: prev.totalUsers - 1,
-        activeBusinesses: prev.activeBusinesses - 1,
-      }));
-      toast({
-        title: "Business Deleted",
-        description: "A business has been removed from the platform.",
-      });
-    };
-
-    const handleBusinessStatusUpdated = (data: any) => {
-      // Update both businesses state and businessData state
-      setBusinesses(prev => prev.map(biz =>
-        biz.id === data.business.id ? { ...biz, ...data.business } : biz
-      ));
-      setBusinessData(prev => prev ? {
-        ...prev,
-        businesses: prev.businesses.map(biz =>
-          biz.id === data.business.id ? { ...biz, ...data.business } : biz
-        )
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        activeBusinesses: data.business.isActive
-          ? prev.activeBusinesses + 1
-          : prev.activeBusinesses - 1,
-      }));
-      toast({
-        title: "Business Status Updated",
-        description: `${data.business.name} is now ${data.business.isActive ? 'active' : 'inactive'}.`,
-      });
-    };
-
-    const handleProfessionalCreated = (data: any) => {
-      setProfessionals(prev => [data.professional, ...prev]);
-      // Also update professionalData if it exists
-      setProfessionalData(prev => prev ? {
-        ...prev,
-        professionals: [data.professional, ...prev.professionals],
-        pagination: {
-          ...prev.pagination,
-          totalItems: prev.pagination.totalItems + 1
-        }
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        totalProfessionals: prev.totalProfessionals + 1,
-      }));
-      toast({
-        title: "Professional Created",
-        description: `${data.professional.name} has been added to the platform.`,
-      });
-    };
-
-    const handleProfessionalUpdated = (data: any) => {
-      setProfessionals(prev => prev.map(pro =>
-        pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
-      ));
-      // Also update professionalData if it exists
-      setProfessionalData(prev => prev ? {
-        ...prev,
-        professionals: prev.professionals.map(pro =>
-          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
-        )
-      } : null);
-      toast({
-        title: "Professional Updated",
-        description: `${data.professional.name} has been updated.`,
-      });
-    };
-
-    const handleProfessionalDeleted = (data: any) => {
-      setProfessionals(prev => prev.filter(pro => pro.id !== data.professionalId));
-      // Also update professionalData if it exists
-      setProfessionalData(prev => prev ? {
-        ...prev,
-        professionals: prev.professionals.filter(pro => pro.id !== data.professionalId),
-        pagination: {
-          ...prev.pagination,
-          totalItems: prev.pagination.totalItems - 1
-        }
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        totalProfessionals: prev.totalProfessionals - 1,
-        activeProfessionals: prev.activeProfessionals - 1,
-      }));
-      toast({
-        title: "Professional Deleted",
-        description: "A professional has been removed from the platform.",
-      });
-    };
-
-    const handleProfessionalStatusUpdated = (data: any) => {
-      setProfessionals(prev => prev.map(pro =>
-        pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
-      ));
-      setProfessionalData(prev => prev ? {
-        ...prev,
-        professionals: prev.professionals.map(pro =>
-          pro.id === data.professional.id ? { ...pro, ...data.professional } : pro
-        )
-      } : null);
-      setStats(prev => ({
-        ...prev,
-        activeProfessionals: data.professional.isActive
-          ? prev.activeProfessionals + 1
-          : prev.activeProfessionals - 1,
-      }));
-      toast({
-        title: "Professional Status Updated",
-        description: `${data.professional.name} is now ${data.professional.isActive ? 'active' : 'inactive'}.`,
-      });
-    };
-
-    const handleRegistrationInquiryUpdated = (data: any) => {
-      setRegistrationInquiries(prev => prev.map(inquiry =>
-        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
-      ));
-      toast({
-        title: "Registration Inquiry Updated",
-        description: `Request from ${data.inquiry.name} has been updated.`,
-      });
-    };
-
-    const handleRegistrationInquiryStatusUpdated = (data: any) => {
-      setRegistrationInquiries(prev => prev.map(inquiry =>
-        inquiry.id === data.inquiry.id ? { ...inquiry, ...data.inquiry } : inquiry
-      ));
-      setStats(prev => ({
-        ...prev,
-        totalInquiries: data.inquiry.status === 'PENDING' 
-          ? prev.totalInquiries + 1 
-          : Math.max(0, prev.totalInquiries - 1),
-      }));
-      toast({
-        title: "Registration Request Status Updated",
-        description: `${data.inquiry.name}'s request is now ${data.inquiry.status}.`,
-      });
-    };
-
-    // Register event listeners
-    socket.on('business-created', handleBusinessCreated);
-    socket.on('business-updated', handleBusinessUpdated);
-    socket.on('business-deleted', handleBusinessDeleted);
-    socket.on('business-status-updated', handleBusinessStatusUpdated);
-    socket.on('professional-created', handleProfessionalCreated);
-    socket.on('professional-updated', handleProfessionalUpdated);
-    socket.on('professional-deleted', handleProfessionalDeleted);
-    socket.on('professional-status-updated', handleProfessionalStatusUpdated);
-    socket.on('registration-inquiry-updated', handleRegistrationInquiryUpdated);
-    socket.on('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
-
-    // Cleanup listeners on unmount
-    return () => {
-      socket.off('business-created', handleBusinessCreated);
-      socket.off('business-updated', handleBusinessUpdated);
-      socket.off('business-deleted', handleBusinessDeleted);
-      socket.off('business-status-updated', handleBusinessStatusUpdated);
-      socket.off('professional-created', handleProfessionalCreated);
-      socket.off('professional-updated', handleProfessionalUpdated);
-      socket.off('professional-deleted', handleProfessionalDeleted);
-      socket.off('professional-status-updated', handleProfessionalStatusUpdated);
-      socket.off('registration-inquiry-updated', handleRegistrationInquiryUpdated);
-      socket.off('registration-inquiry-status-updated', handleRegistrationInquiryStatusUpdated);
-    };
-  }, [socket, isConnected, toast]);
+  useSocketSync(socket, isConnected, {
+    setBusinesses,
+    setBusinessData,
+    setProfessionals,
+    setProfessionalData,
+    setRegistrationInquiries,
+    setStats,
+  });
 
   // Authentication check
   useEffect(() => {
@@ -810,187 +429,6 @@ export default function SuperAdminDashboard() {
     };
   }, [filteredBusinesses]);
 
-
-  // Fetch businesses with pagination, search, and sorting
-  const fetchBusinesses = useCallback(async () => {
-    setBusinessLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: businessQuery.page.toString(),
-        limit: businessQuery.limit.toString(),
-        search: businessQuery.search,
-        status: businessQuery.status,
-        sortBy: businessQuery.sortBy,
-        sortOrder: businessQuery.sortOrder,
-      });
-      
-      const response = await fetch(`/api/admin/businesses?${params}`);
-      if (response.ok) {
-        const data: BusinessApiResponse = await response.json();
-        setBusinessData(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch businesses:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch businesses',
-        variant: 'destructive',
-      });
-    } finally {
-      setBusinessLoading(false);
-    }
-  }, [businessQuery, toast]);
-  
-  // Fetch businesses when query changes
-  useEffect(() => {
-    fetchBusinesses();
-  }, [fetchBusinesses]);
-  
-  // Update query when debounced search changes
-  useEffect(() => {
-    setBusinessQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
-
-  // Handle sort change
-  const handleSort = (column: string) => {
-    setBusinessQuery(prev => ({
-      ...prev,
-      sortBy: column,
-      sortOrder: prev.sortBy === column && prev.sortOrder === 'desc' ? 'asc' : 'desc',
-      page: 1,
-    }));
-  };
-  
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setBusinessQuery(prev => ({ ...prev, page }));
-  };
-  
-  // Handle items per page change
-  const handleLimitChange = (limit: number) => {
-    setBusinessQuery(prev => ({ ...prev, limit, page: 1 }));
-  };
-  
-  // Handle selection
-  const handleSelectBusiness = (businessId: string) => {
-    setSelectedBusinessIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(businessId)) {
-        newSet.delete(businessId);
-      } else {
-        newSet.add(businessId);
-      }
-      return newSet;
-    });
-  };
-  
-  const handleSelectAll = () => {
-    if (businessData?.businesses) {
-      const allIds = businessData.businesses.map(b => b.id);
-      setSelectedBusinessIds(new Set(allIds));
-    }
-  };
-  
-  const handleDeselectAll = () => {
-    setSelectedBusinessIds(new Set());
-  };
-  
-  // Bulk actions
-  const handleBulkActivate = async () => {
-    if (selectedBusinessIds.size === 0) return;
-    setBulkActionLoading(true);
-    try {
-      const response = await fetch('/api/admin/businesses/bulk/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: true }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses activated` });
-        setSelectedBusinessIds(new Set());
-        fetchBusinesses();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to activate businesses', variant: 'destructive' });
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-  
-  const handleBulkDeactivate = async () => {
-    if (selectedBusinessIds.size === 0) return;
-    setBulkActionLoading(true);
-    try {
-      const response = await fetch('/api/admin/businesses/bulk/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedBusinessIds), isActive: false }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses suspended` });
-        setSelectedBusinessIds(new Set());
-        fetchBusinesses();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to suspend businesses', variant: 'destructive' });
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-  
-  const handleBulkDelete = async () => {
-    if (selectedBusinessIds.size === 0) return;
-    setShowBulkDeleteDialog(true);
-  };
-  
-  const confirmBulkDelete = async () => {
-    setBulkActionLoading(true);
-    setShowBulkDeleteDialog(false);
-    try {
-      const response = await fetch('/api/admin/businesses/bulk/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedBusinessIds) }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedBusinessIds.size} businesses deleted` });
-        setSelectedBusinessIds(new Set());
-        fetchBusinesses();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete businesses', variant: 'destructive' });
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-  
-  // Export to CSV
-  const handleExport = async () => {
-    setExportLoading(true);
-    try {
-      const response = await fetch('/api/admin/businesses/export?format=csv');
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast({ title: 'Success', description: 'Businesses exported successfully' });
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to export businesses', variant: 'destructive' });
-    } finally {
-      setExportLoading(false);
-    }
-  };
-  
   // Get sort icon
   const getSortIcon = (column: string) => {
     if (businessQuery.sortBy !== column) return <div className="w-4 h-4 opacity-30">↕</div>;
@@ -1007,189 +445,6 @@ export default function SuperAdminDashboard() {
       <div className="w-4 h-4">↓</div>;
   };
 
-  // Fetch professionals with pagination, search, and sorting
-  const fetchProfessionals = useCallback(async () => {
-    setProfessionalLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: professionalQuery.page.toString(),
-        limit: professionalQuery.limit.toString(),
-        search: professionalQuery.search,
-        status: professionalQuery.status,
-        sortBy: professionalSortBy,
-        sortOrder: professionalSortOrder,
-      });
-      
-      const response = await fetch(`/api/admin/professionals?${params}`);
-      if (response.ok) {
-        const data: ProfessionalApiResponse = await response.json();
-        setProfessionalData(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch professionals:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch professionals',
-        variant: 'destructive',
-      });
-    } finally {
-      setProfessionalLoading(false);
-    }
-  }, [professionalQuery, professionalSortBy, professionalSortOrder, toast]);
-  
-  // Fetch professionals when query changes
-  useEffect(() => {
-    if (currentView === 'professionals') {
-      fetchProfessionals();
-    }
-  }, [fetchProfessionals, currentView]);
-  
-  // Update professional query when debounced search changes
-  useEffect(() => {
-    setProfessionalQuery(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
-
-  // Handle professional sort change
-  const handleProfessionalSort = (column: string) => {
-    if (professionalSortBy === column) {
-      setProfessionalSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setProfessionalSortBy(column);
-      setProfessionalSortOrder('desc');
-    }
-    setProfessionalQuery(prev => ({ ...prev, page: 1 }));
-  };
-  
-  // Handle professional page change
-  const handleProfessionalPageChange = (page: number) => {
-    setProfessionalQuery(prev => ({ ...prev, page }));
-  };
-  
-  // Handle professional items per page change
-  const handleProfessionalLimitChange = (limit: number) => {
-    setProfessionalQuery(prev => ({ ...prev, limit, page: 1 }));
-  };
-  
-  // Handle professional selection
-  const handleSelectProfessional = (professionalId: string) => {
-    setSelectedProfessionalIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(professionalId)) {
-        newSet.delete(professionalId);
-      } else {
-        newSet.add(professionalId);
-      }
-      return newSet;
-    });
-  };
-  
-  const handleSelectAllProfessionals = () => {
-    if (professionalData?.professionals) {
-      const allIds = professionalData.professionals.map(p => p.id);
-      setSelectedProfessionalIds(new Set(allIds));
-    }
-  };
-  
-  const handleDeselectAllProfessionals = () => {
-    setSelectedProfessionalIds(new Set());
-  };
-  
-  // Professional bulk actions
-  const handleProfessionalBulkActivate = async () => {
-    if (selectedProfessionalIds.size === 0) return;
-    setProfessionalBulkActionLoading(true);
-    try {
-      const response = await fetch('/api/admin/professionals/bulk/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: true }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals activated` });
-        setSelectedProfessionalIds(new Set());
-        fetchProfessionals();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to activate professionals', variant: 'destructive' });
-    } finally {
-      setProfessionalBulkActionLoading(false);
-    }
-  };
-  
-  const handleProfessionalBulkDeactivate = async () => {
-    if (selectedProfessionalIds.size === 0) return;
-    setProfessionalBulkActionLoading(true);
-    try {
-      const response = await fetch('/api/admin/professionals/bulk/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds), isActive: false }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deactivated` });
-        setSelectedProfessionalIds(new Set());
-        fetchProfessionals();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to deactivate professionals', variant: 'destructive' });
-    } finally {
-      setProfessionalBulkActionLoading(false);
-    }
-  };
-  
-  const handleProfessionalBulkDelete = async () => {
-    if (selectedProfessionalIds.size === 0) return;
-    setShowProfessionalBulkDeleteDialog(true);
-  };
-  
-  const confirmProfessionalBulkDelete = async () => {
-    setProfessionalBulkActionLoading(true);
-    setShowProfessionalBulkDeleteDialog(false);
-    try {
-      const response = await fetch('/api/admin/professionals/bulk/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedProfessionalIds) }),
-      });
-      if (response.ok) {
-        toast({ title: 'Success', description: `${selectedProfessionalIds.size} professionals deleted` });
-        setSelectedProfessionalIds(new Set());
-        fetchProfessionals();
-        fetchData();
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete professionals', variant: 'destructive' });
-    } finally {
-      setProfessionalBulkActionLoading(false);
-    }
-  };
-  
-  // Professional export to CSV
-  const handleProfessionalExport = async () => {
-    setProfessionalExportLoading(true);
-    try {
-      const response = await fetch('/api/admin/professionals/export?format=csv');
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `professionals-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast({ title: 'Success', description: 'Professionals exported successfully' });
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to export professionals', variant: 'destructive' });
-    } finally {
-      setProfessionalExportLoading(false);
-    }
-  };
-  
   // Handle toggle professional status
   const handleToggleProfessionalStatus = useCallback(
     async (e: React.MouseEvent, professional: Professional) => {
@@ -1301,6 +556,11 @@ export default function SuperAdminDashboard() {
 
   // Data fetching function - Fixed to handle individual API failures gracefully
   const fetchData = useCallback(async () => {
+    adminDataFetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    adminDataFetchControllerRef.current = controller;
+    const requestId = ++adminDataFetchRequestRef.current;
+
     setIsLoading(true);
     setDataFetchError(null);
 
@@ -1321,7 +581,7 @@ export default function SuperAdminDashboard() {
       await Promise.all(
         fetchPromises.map(async (item) => {
           try {
-            const response = await fetch(item.url);
+            const response = await fetch(item.url, { signal: controller.signal });
             if (response.ok) {
               results[item.name] = await response.json();
             } else {
@@ -1352,6 +612,10 @@ export default function SuperAdminDashboard() {
         } else if (results.registrationInquiries.inquiries) {
           registrationInquiriesArray = results.registrationInquiries.inquiries;
         }
+      }
+
+      if (adminDataFetchRequestRef.current !== requestId) {
+        return;
       }
 
       setBusinesses(businessesArray);
@@ -1387,26 +651,71 @@ export default function SuperAdminDashboard() {
         activeProfessionals,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return;
+      }
       console.error("Failed to fetch data:", error);
       setDataFetchError("Failed to fetch data. Please try again.");
     } finally {
-      setIsLoading(false);
+      if (
+        adminDataFetchRequestRef.current === requestId &&
+        adminDataFetchControllerRef.current === controller
+      ) {
+        setIsLoading(false);
+        adminDataFetchControllerRef.current = null;
+      }
     }
   }, []);
 
-  // Initial data fetch
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    return () => {
+      adminDataFetchControllerRef.current?.abort();
+    };
+  }, []);
 
+  // Business bulk actions
+  const businessBulkActions = useBulkActions('business', selectedBusinessIds, {
+    fetchData,
+    fetchEntities: fetchBusinesses,
+    setSelectedIds: setSelectedBusinessIds,
+    setLoading: setBulkActionLoading,
+    setShowDeleteDialog: setShowBulkDeleteDialog,
+  });
 
+  // Professional bulk actions
+  const professionalBulkActions = useBulkActions('professional', selectedProfessionalIds, {
+    fetchData,
+    fetchEntities: fetchProfessionals,
+    setSelectedIds: setSelectedProfessionalIds,
+    setLoading: setProfessionalBulkActionLoading,
+    setShowDeleteDialog: setShowProfessionalBulkDeleteDialog,
+  });
+
+  const {
+    handleAddCategory,
+    handleEditCategory,
+    handleUpdateCategory,
+    handleDeleteCategory,
+    confirmDeleteCategory,
+  } = useCategoryActions({
+    editingCategory,
+    setEditingCategory,
+    categoryToDelete,
+    setCategoryToDelete,
+    setCategories,
+    setShowDeleteCategoryDialog,
+    setShowRightPanel,
+    setRightPanelContent,
+    fetchData,
+    queryClient,
+    toast,
+  });
 
   // Generate password utility - cryptographically secure
   const generatePassword = useCallback(() => {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let password = "Adm@";
-    // Use crypto.getRandomValues for cryptographically secure random values
     const randomValues = new Uint32Array(12);
     crypto.getRandomValues(randomValues);
     for (let i = 0; i < 12; i++) {
@@ -1414,6 +723,32 @@ export default function SuperAdminDashboard() {
     }
     return password;
   }, []);
+
+  const {
+    handleCreateAccountFromInquiry,
+    handleCreateAccountFromInquiryWithSidebar,
+    handleRejectInquiry,
+    confirmRejectInquiry,
+  } = useRegistrationActions({
+    setCreatingAccount,
+    setRegistrationInquiries,
+    setEditingBusiness,
+    setEditingProfessional,
+    setRightPanelContent,
+    setShowRightPanel,
+    setInquiryToReject,
+    setRejectReason,
+    setShowRejectInquiryDialog,
+    inquiryToReject,
+    rejectReason,
+    fetchData,
+    toast,
+  });
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [generatedUsername, setGeneratedUsername] = useState("");
@@ -1954,525 +1289,6 @@ export default function SuperAdminDashboard() {
     },
     [editingProfessional, toast, fetchProfessionals]
   );
-
-  // Handle add category with improved error handling
-  const handleAddCategory = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-
-      const rawParentId = formData.get("parentId") as string;
-      const categoryData = {
-        name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        parentId: rawParentId === "none" ? null : rawParentId || undefined,
-      };
-
-      try {
-        const response = await fetch("/api/admin/categories", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(categoryData),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          
-          // Update local state immediately for better UX
-          if (result.category) {
-            setCategories(prev => [...prev, result.category]);
-          }
-          
-          // Invalidate React Query cache to ensure all components get fresh data
-          invalidateCategories(queryClient);
-          
-          // Refresh data from server to ensure consistency
-          fetchData();
-          
-          toast({
-            title: "Success",
-            description: "Category created successfully!",
-          });
-          setShowRightPanel(false);
-          setRightPanelContent(null);
-          e.currentTarget.reset();
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to create category: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create category. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle edit category
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditingCategory(category);
-    setRightPanelContent("edit-category");
-    setShowRightPanel(true);
-  }, []);
-
-  // Handle update category with improved error handling
-  const handleUpdateCategory = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!editingCategory) return;
-
-      const formData = new FormData(e.currentTarget);
-
-      const rawParentId = formData.get("parentId") as string;
-      const updateData = {
-        name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        parentId: rawParentId === "none" ? null : rawParentId || null,
-      };
-
-      try {
-        const response = await fetch(
-          `/api/admin/categories/${editingCategory.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updateData),
-          }
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          // Update local state immediately for better UX
-          if (result.category && editingCategory) {
-            setCategories(prev =>
-              prev.map(c => c.id === editingCategory.id ? result.category : c)
-            );
-          }
-          
-          // Invalidate React Query cache to ensure all components get fresh data
-          invalidateCategories(queryClient);
-          
-          // Refresh data from server to ensure consistency
-          fetchData();
-          
-          setShowRightPanel(false);
-          setRightPanelContent(null);
-          toast({
-            title: "Success",
-            description: "Category updated successfully!",
-          });
-        } else {
-          const error = await response.json();
-          console.error("Category update failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to update category: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Category update error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update category. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [editingCategory, toast]
-  );
-
-  // Handle delete category with dialog
-  const handleDeleteCategory = useCallback((category: Category) => {
-    setCategoryToDelete(category);
-    setShowDeleteCategoryDialog(true);
-  }, []);
-
-  // Confirm delete category
-  const confirmDeleteCategory = useCallback(async () => {
-    if (!categoryToDelete) return;
-    
-    try {
-      const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        // IMMEDIATE STATE REMOVAL - Remove deleted category from local state immediately
-        setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id));
-        setShowDeleteCategoryDialog(false);
-        setCategoryToDelete(null);
-        
-        // Invalidate React Query cache to ensure all components get fresh data
-        invalidateCategories(queryClient);
-        
-        fetchData();
-        toast({
-          title: "Success",
-          description: "Category deleted successfully",
-        });
-      } else {
-        const error = await response.json();
-        console.error("Category delete failed:", error);
-        toast({
-          title: "Error",
-          description: `Failed to delete category: ${
-            error.error || "Unknown error"
-          }`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Category delete error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete category. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [categoryToDelete, toast, fetchData]);
-
-  // Handle update business listing inquiry with improved error handling
-  const handleUpdateBusinessListingInquiry = useCallback(
-    async (inquiryId: string, updates: any) => {
-      try {
-        const response = await fetch(
-          `/api/business-listing-inquiries/${inquiryId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updates),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          // Update the inquiry in the list
-          setBusinessListingInquiries((prev) =>
-            prev.map((inquiry) =>
-              inquiry.id === inquiryId ? data.inquiry : inquiry
-            )
-          );
-          toast({
-            title: "Success",
-            description: "Inquiry updated successfully!",
-          });
-          setShowBusinessListingInquiryDialog(false);
-          setSelectedBusinessListingInquiry(null);
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to update inquiry: ${
-              error.error || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to update inquiry:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update inquiry. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Handle create account from inquiry with improved error handling
-  const handleCreateAccountFromInquiry = useCallback(
-    async (inquiry: any) => {
-      if (
-        !confirm(
-          `Create ${inquiry.type.toLowerCase()} account for ${inquiry.name}? This will send login credentials to ${inquiry.email}.`
-        )
-      ) {
-        return;
-      }
-
-      setCreatingAccount(inquiry.id);
-
-      try {
-        // First update inquiry status to UNDER_REVIEW
-        const reviewResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: "UNDER_REVIEW" }),
-        });
-
-        if (!reviewResponse.ok) {
-          throw new Error("Failed to update inquiry status to under review");
-        }
-
-        // Update inquiry status in local state
-        setRegistrationInquiries((prev) =>
-          prev.map((regInquiry) =>
-            regInquiry.id === inquiry.id
-              ? { ...regInquiry, status: "UNDER_REVIEW" }
-              : regInquiry
-          )
-        );
-
-        // Generate password from stored hash (we'll decrypt or use a new one)
-        // Since we stored the hashed password, we need to generate a new one for sending
-        const generatedPassword = generatePassword();
-
-        let response;
-        let accountData;
-        let successMessage;
-
-        if (inquiry.type === "BUSINESS") {
-          accountData = {
-            name: inquiry.businessName || inquiry.name,
-            email: inquiry.email,
-            password: generatedPassword,
-            adminName: inquiry.name,
-            description: inquiry.businessDescription || "",
-            phone: inquiry.phone || "",
-            address: inquiry.location || inquiry.address || "",
-            website: inquiry.website || "",
-            categoryId: inquiry.categoryId || "",
-          };
-          response = await fetch("/api/admin/businesses", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(accountData),
-          });
-          successMessage = "Business account created successfully!";
-        } else {
-          accountData = {
-            name: inquiry.name,
-            email: inquiry.email,
-            password: generatedPassword,
-            adminName: inquiry.name,
-            phone: inquiry.phone || "",
-            location: inquiry.location || "",
-            aboutMe: inquiry.aboutMe || "",
-            profession: inquiry.profession || "",
-          };
-          response = await fetch("/api/admin/professionals", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(accountData),
-          });
-          successMessage = "Professional account created successfully!";
-        }
-
-        if (response.ok) {
-          const result = await response.json();
-
-          // Send email notification with credentials
-          try {
-            const emailResponse = await fetch("/api/notifications", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                type: "accountCreation",
-                name: inquiry.name,
-                email: inquiry.email,
-                password: generatedPassword,
-                accountType: inquiry.type.toLowerCase(),
-                loginUrl: `${window.location.origin}/login`,
-              }),
-            });
-
-            if (!emailResponse.ok) {
-              console.error("Failed to send account creation email");
-            }
-          } catch (emailError) {
-            console.error("Email notification error:", emailError);
-          }
-
-          // Update inquiry status to COMPLETED
-          const statusUpdateResponse = await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "COMPLETED" }),
-          });
-
-          if (statusUpdateResponse.ok) {
-            // Update the inquiry in the list
-            setRegistrationInquiries((prev) =>
-              prev.map((regInquiry) =>
-                regInquiry.id === inquiry.id
-                  ? { ...regInquiry, status: "COMPLETED" }
-                  : regInquiry
-              )
-            );
-
-            toast({
-              title: "Success",
-              description: `${successMessage} Login credentials sent to ${inquiry.email}`,
-            });
-
-            // Refresh data to ensure the UI is up to date
-            fetchData();
-          } else {
-            console.error("Failed to update inquiry status");
-            toast({
-              title: "Warning",
-              description: `${successMessage} but failed to update inquiry status.`,
-              variant: "destructive",
-            });
-          }
-        } else {
-          // Reset inquiry status back to PENDING if account creation failed
-          await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "PENDING" }),
-          });
-
-          // Update local state back
-          setRegistrationInquiries((prev) =>
-            prev.map((regInquiry) =>
-              regInquiry.id === inquiry.id
-                ? { ...regInquiry, status: "PENDING" }
-                : regInquiry
-            )
-          );
-
-          const error = await response.json();
-          console.error("Account creation failed:", error);
-          toast({
-            title: "Error",
-            description: `Failed to create account: ${
-              error.error || error.message || "Unknown error"
-            }`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to create account:", error);
-        toast({
-          title: "Error",
-          description: "Failed to create account. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setCreatingAccount(null);
-      }
-    },
-    [generatePassword, toast, fetchData]
-  );
-
-  // Handle create account from inquiry with sidebar
-  const handleCreateAccountFromInquiryWithSidebar = useCallback(
-    (inquiry: any) => {
-      // Set the inquiry data for the sidebar
-      setEditingBusiness(inquiry.type === "BUSINESS" ? inquiry : null);
-      setEditingProfessional(inquiry.type === "PROFESSIONAL" ? inquiry : null);
-
-      // Open the account creation sidebar
-      setRightPanelContent("create-account-from-inquiry");
-      setShowRightPanel(true);
-    },
-    []
-  );
-
-  // Handle reject inquiry with improved error handling - now uses dialog
-  const handleRejectInquiry = useCallback(
-    (inquiry: any) => {
-      setInquiryToReject(inquiry);
-      setRejectReason("");
-      setShowRejectInquiryDialog(true);
-    },
-    []
-  );
-
-  // Confirm reject inquiry with reason
-  const confirmRejectInquiry = useCallback(async () => {
-    if (!inquiryToReject) return;
-    
-    setCreatingAccount(inquiryToReject.id);
-    setShowRejectInquiryDialog(false);
-
-    try {
-      const response = await fetch(
-        `/api/registration-inquiries/${inquiryToReject.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ 
-            status: "REJECTED",
-            rejectReason: rejectReason || "No reason provided"
-          }),
-        }
-      );
-
-      if (response.ok) {
-        // Update the inquiry in the list immediately
-        setRegistrationInquiries((prev) =>
-          prev.map((regInquiry) =>
-            regInquiry.id === inquiryToReject.id
-              ? { ...regInquiry, status: "REJECTED", rejectReason: rejectReason || "No reason provided" }
-              : regInquiry
-          )
-        );
-
-        toast({
-          title: "Success",
-          description: "Registration request rejected.",
-        });
-
-        // Refresh data from server to ensure consistency
-        fetchData();
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Error",
-          description: `Failed to reject inquiry: ${
-            error.error || error.message || "Unknown error"
-          }`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to reject inquiry:", error);
-      toast({
-        title: "Error",
-        description: "Failed to reject inquiry. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setCreatingAccount(null);
-      setInquiryToReject(null);
-      setRejectReason("");
-    }
-  }, [inquiryToReject, rejectReason, toast, fetchData]);
 
   // Helper function to get right panel title
   const getRightPanelTitle = () => {
@@ -3243,2112 +2059,172 @@ export default function SuperAdminDashboard() {
     switch (currentView) {
       case "dashboard":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-8">
-              <h1 className="text-lg font-bold text-gray-900">
-                Admin Dashboard Overview
-              </h1>
-              <p className="text-md text-gray-600">
-                Welcome back! Here's what's happening with your business.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-8 gap-6">
-              {/* --- ROW 1: 4 Cards (Each spans 2 columns in the 8-grid) --- */}
-
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Active Businesses
-                  </CardTitle>
-                  <Building className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.activeBusinesses}
-                  </div>
-                  <p className="text-xs text-gray-500">Currently active</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Active Professionals
-                  </CardTitle>
-                  <UserCheck className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.activeProfessionals}
-                  </div>
-                  <p className="text-xs text-gray-500">Currently active</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    Registration Requests
-                  </CardTitle>
-                  <UserCheck className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.totalInquiries}
-                  </div>
-                  <p className="text-xs text-gray-500">Pending requests</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-3xl transition-all duration-300 hover:shadow-lg xl:col-span-2">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-900">
-                    System Status
-                  </CardTitle>
-                  <Activity className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.activeBusinesses > 0 || stats.activeProfessionals > 0
-                      ? "Excellent"
-                      : "Growing"}
-                  </div>
-                  <p className="text-xs text-gray-500">Platform health</p>
-                </CardContent>
-              </Card>
-
-
-              {/* Card 1: New Businesses */}
-              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-4 min-h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-white">
-                    New Businesses
-                  </CardTitle>
-                  <Building className="h-4 w-4 text-white" />
-                </CardHeader>
-                <CardContent className="flex-1 px-0 bg-white flex flex-col">
-                  <div className="overflow-x-auto flex-1">
-                    {businesses.length > 0 ? (
-                      <Table>
-                        <TableHeader className="">
-                          <TableRow>
-                            <TableHead className="text-xs flex-1">
-                              Name
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Category
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Date
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {businesses
-                            .sort(
-                              (a, b) =>
-                                new Date(b.createdAt).getTime() -
-                                new Date(a.createdAt).getTime(),
-                            )
-                            .slice(0, 4)
-                            .map((business) => (
-                              <TableRow key={business.id}>
-                                <TableCell className="text-xs font-medium flex-1">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    {business.logo ? (
-                                      <img
-                                        src={business.logo}
-                                        alt={`${business.name} logo`}
-                                        className="h-8 w-8 rounded-full object-cover shrink-0"
-                                      />
-                                    ) : (
-                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                        <Building className="h-4 w-4 text-gray-400" />
-                                      </div>
-                                    )}
-                                    <span className="truncate">
-                                      {business.name}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs w-auto">
-                                  {business.category?.name || "N/A"}
-                                </TableCell>
-                                <TableCell className="w-auto">
-                                  <div
-                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
-                                      business.isActive
-                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                        : "bg-red-500/10 border-red-500/30 text-red-600"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        business.isActive
-                                          ? "bg-lime-500"
-                                          : "bg-red-500"
-                                      }`}
-                                    ></span>
-                                    {business.isActive ? "Active" : "Inactive"}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs w-auto">
-                                  {new Date(
-                                    business.createdAt,
-                                  ).toLocaleDateString()}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
-                        <Building className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-xs font-medium">No Data</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 2: New Professionals (Updated Style) */}
-              <Card className="flex flex-col bg-linear-90 overflow-hidden text-black bg-[#080322] px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-4 min-h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-white">
-                    New Professionals
-                  </CardTitle>
-                  <User className="h-4 w-4 text-white" />
-                </CardHeader>
-                <CardContent className="flex-1 px-0 bg-white flex flex-col">
-                  <div className="overflow-x-auto flex-1">
-                    {professionals.length > 0 ? (
-                      <Table>
-                        <TableHeader className="">
-                          <TableRow>
-                            <TableHead className="text-xs flex-1">
-                              Name
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Profession
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-xs w-auto">
-                              Date
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {professionals
-                            .sort(
-                              (a, b) =>
-                                new Date(b.createdAt).getTime() -
-                                new Date(a.createdAt).getTime(),
-                            )
-                            .slice(0, 4)
-                            .map((professional) => (
-                              <TableRow key={professional.id}>
-                                <TableCell className="text-xs font-medium flex-1">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    {professional.profilePicture ? (
-                                      <img
-                                        src={professional.profilePicture}
-                                        alt={`${professional.name} profile`}
-                                        className="h-8 w-8 rounded-full object-cover shrink-0"
-                                      />
-                                    ) : (
-                                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                        <User className="h-4 w-4 text-gray-400" />
-                                      </div>
-                                    )}
-                                    <span className="truncate">
-                                      {professional.name}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs w-auto max-w-[150px] truncate">
-                                  {professional.professionalHeadline || "N/A"}
-                                </TableCell>
-                                <TableCell className="w-auto">
-                                  <div
-                                    className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
-                                      professional.isActive
-                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                        : "bg-red-500/10 border-red-500/30 text-red-600"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        professional.isActive
-                                          ? "bg-lime-500"
-                                          : "bg-red-500"
-                                      }`}
-                                    ></span>
-                                    {professional.isActive
-                                      ? "Active"
-                                      : "Inactive"}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs w-auto">
-                                  {new Date(
-                                    professional.createdAt,
-                                  ).toLocaleDateString()}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
-                        <User className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-xs font-medium">No Data</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-          
-              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-6 min-h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-white">
-                    Latest Registration Requests
-                  </CardTitle>
-                  <UserCheck className="h-4 w-4 text-white" />
-                </CardHeader>
-                <CardContent className="flex-1 px-0 bg-white flex flex-col">
-                  <div className="overflow-x-auto flex-1">
-                    {registrationInquiries.length > 0 ? (
-                      <Table>
-                        <TableHeader className="">
-                          <TableRow>
-                            <TableHead className="text-xs">Type</TableHead>
-                            <TableHead className="text-xs">Name</TableHead>
-                            <TableHead className="text-xs">
-                              Business/Profession
-                            </TableHead>
-                            <TableHead className="text-xs">Email</TableHead>
-                            <TableHead className="text-xs">Status</TableHead>
-                            <TableHead className="text-xs">Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {registrationInquiries
-                            .sort(
-                              (a, b) =>
-                                new Date(b.createdAt).getTime() -
-                                new Date(a.createdAt).getTime(),
-                            )
-                            .slice(0, 5)
-                            .map((inquiry) => (
-                              <TableRow  key={inquiry.id}>
-                                <TableCell >
-                                  <div
-                                    className={`flex  items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium w-fit  ${
-                                      inquiry.type === "BUSINESS"
-                                        ? "bg-blue-500/10 border-blue-500/30 text-blue-700"
-                                        : "bg-purple-500/10 border-purple-500/30 text-purple-700"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        inquiry.type === "BUSINESS"
-                                          ? "bg-blue-500"
-                                          : "bg-purple-500"
-                                      }`}
-                                    ></span>
-                                    {inquiry.type === "BUSINESS" ? "B" : "P"}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs font-medium truncate">
-                                  {inquiry.name}
-                                </TableCell>
-                                <TableCell className="text-xs truncate">
-                                  {inquiry.businessName || "N/A"}
-                                </TableCell>
-                                <TableCell className="text-xs">
-                                  {inquiry.email}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex justify-center">
-                                    <StatusBadge
-                                      status={inquiry.status}
-                                      variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
-                                    />
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-xs">
-                                  {new Date(
-                                    inquiry.createdAt,
-                                  ).toLocaleDateString()}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
-                        <UserCheck className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-xs font-medium">
-                          No Registration Requests
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 3: Quick Actions with card-bg */}
-              <Card className="flex flex-col  overflow-hidden text-black bg-[#080322]  px-0 pb-0 border-none shadow-sm rounded-xl transition-all duration-300 hover:shadow-lg xl:col-span-2 min-h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-white">
-                    Quick Actions
-                  </CardTitle>
-                  <Zap className="h-4 w-4 text-white" />
-                </CardHeader>
-                <CardContent className="flex-1 px-0  flex flex-col">
-                  <div className="space-y-3 p-4">
-                    <button
-                      onClick={() => {
-                        setRightPanelContent("add-business");
-                        setShowRightPanel(true);
-                      }}
-                      className="w-full py-2.5 cursor-pointer px-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
-                    >
-                      <Building className="h-4 w-4 mr-2" />
-                      Create Business
-                    </button>
-                    <button
-                      onClick={() => {
-                        setRightPanelContent("add-professional");
-                        setShowRightPanel(true);
-                      }}
-                      className="w-full py-2.5 px-4  cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Create Professional
-                    </button>
-                    <button
-                      onClick={() => {
-                        setRightPanelContent("add-category");
-                        setShowRightPanel(true);
-                      }}
-                      className="w-full py-2.5 px-4 cursor-pointer rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 flex items-center justify-center shadow-lg"
-                    >
-                      <FolderTree className="h-4 w-4 mr-2" />
-                      Create Category
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <DashboardOverview
+            stats={stats}
+            businesses={businesses}
+            professionals={professionals}
+            registrationInquiries={registrationInquiries}
+            onAddBusiness={() => {
+              setRightPanelContent("add-business");
+              setShowRightPanel(true);
+            }}
+            onAddProfessional={() => {
+              setRightPanelContent("add-professional");
+              setShowRightPanel(true);
+            }}
+            onAddCategory={() => {
+              setRightPanelContent("add-category");
+              setShowRightPanel(true);
+            }}
+          />
         );
       case "businesses":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            {/* Data Fetching Status */}
-            {dataFetchError && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <span className="text-red-600 font-medium">
-                      Data Fetching Error
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        fetchData();
-                        fetchBusinesses();
-                      }}
-                      className="rounded-xl"
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
-              </div>
-            )}
-
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-                Manage Businesses
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Add, view, edit, and manage all registered businesses
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
-              <div className="flex gap-2">
-                {/* Status Filter - With text on desktop */}
-                <Select
-                  value={businessQuery.status}
-                  onValueChange={(value) => {
-                    setBusinessQuery((prev) => ({
-                      ...prev,
-                      status: value,
-                      page: 1,
-                    }));
-                  }}
-                >
-                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
-                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
-                    <span className="hidden sm:inline">Filter</span>
-                    <span className="sm:hidden">Status</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      All ({businessData?.pagination.totalItems || filteredBusinesses.length})
-                    </SelectItem>
-                    <SelectItem value="active">
-                      Active ({filteredBusinesses.filter((b) => b.isActive).length})
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      Inactive ({filteredBusinesses.filter((b) => !b.isActive).length})
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Export Button - With text on desktop */}
-                <Button
-                  variant="outline"
-                  onClick={handleExport}
-                  disabled={exportLoading}
-                  className="rounded-xl border-gray-200"
-                >
-                  {exportLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
-                  ) : (
-                    <Download className="h-4 w-4 text-gray-500 mr-2" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {exportLoading ? 'Exporting...' : 'Export'}
-                  </span>
-                  <span className="sm:hidden">
-                    {exportLoading ? '...' : ''}
-                  </span>
-                </Button>
-
-                {/* Add New Button - With text on desktop */}
-                <Button
-                  onClick={() => {
-                    setRightPanelContent("add-business");
-                    setShowRightPanel(true);
-                  }}
-                  disabled={addBusinessLoading}
-                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
-                >
-                  {addBusinessLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  ) : (
-                    <Plus className="h-4 w-4 mr-2" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {addBusinessLoading ? 'Opening...' : 'Add Business'}
-                  </span>
-                  <span className="sm:hidden">
-                    {addBusinessLoading ? '...' : 'Add'}
-                  </span>
-                </Button>
-              </div>
-
-              {/* Row 2: Search bar - Full width with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search businesses..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedBusinessIds.size > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <BulkActionsToolbar
-                  selectedCount={selectedBusinessIds.size}
-                  totalCount={
-                    businessData?.pagination.totalItems ||
-                    filteredBusinesses.length
-                  }
-                  onSelectAll={handleSelectAll}
-                  onDeselectAll={handleDeselectAll}
-                  onBulkActivate={handleBulkActivate}
-                  onBulkDeactivate={handleBulkDeactivate}
-                  onBulkDelete={handleBulkDelete}
-                />
-              </div>
-            )}
-
-            {/* Data Table */}
-            <div className="bg-white rounded-md   overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-[#080322]">
-                    <TableRow>
-                      <TableHead className="w-12 text-white font-medium">
-                        <Checkbox
-                          checked={
-                            businessData?.businesses.every((b) =>
-                              selectedBusinessIds.has(b.id),
-                            ) || false
-                          }
-                          onCheckedChange={(checked) => {
-                            if (checked) handleSelectAll();
-                            else handleDeselectAll();
-                          }}
-                          className="border-gray-400"
-                        />
-                      </TableHead>
-                      <TableHead className="w-14 text-white font-medium">
-                        SN.
-                      </TableHead>
-                      <TableHead className="text-white font-medium">
-                        Business
-                      </TableHead>
-                      <TableHead className="text-white font-medium">
-                        Admin Email
-                      </TableHead>
-                      <TableHead className="text-white font-medium">
-                        Category
-                      </TableHead>
-                      <TableHead className="text-center text-white font-medium">
-                        Status
-                      </TableHead>
-                      <TableHead className="text-white font-medium">
-                        Date
-                      </TableHead>
-                      <TableHead className="text-center text-white font-medium ">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {businessLoading
-                      ? // Loading skeleton
-                        Array.from({ length: businessQuery.limit }).map(
-                          (_, i) => (
-                            <TableRow key={i}>
-                              <TableCell>
-                                <Skeleton className="h-4 w-4" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-8" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <Skeleton className="h-10 w-10 rounded-full" />
-                                  <Skeleton className="h-4 w-32" />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-40" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-24" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex justify-center">
-                                  <Skeleton className="h-6 w-16 rounded-full" />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-20" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex justify-end space-x-2">
-                                  <Skeleton className="h-8 w-8" />
-                                  <Skeleton className="h-8 w-8" />
-                                  <Skeleton className="h-8 w-8" />
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ),
-                        )
-                      : businessData?.businesses.map((business, index) => (
-                          <TableRow
-                            key={business.id}
-                            className="hover:bg-gray-50"
-                          >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedBusinessIds.has(business.id)}
-                                onCheckedChange={() =>
-                                  handleSelectBusiness(business.id)
-                                }
-                                className="border-gray-400"
-                              />
-                            </TableCell>
-                            <TableCell className="text-gray-500 font-medium">
-                              {(businessData.pagination.page - 1) *
-                                businessData.pagination.limit +
-                                index +
-                                1}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {business.logo ? (
-                                  <img
-                                    src={business.logo}
-                                    alt={`${business.name} logo`}
-                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
-                                  />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                                    <Building className="h-5 w-5 text-gray-400" />
-                                  </div>
-                                )}
-                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
-                                  {business.name}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-600 truncate">
-                              {business.admin.email}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              <Badge
-                                variant="outline"
-                                className="rounded-lg bg-gray-50 border-gray-200 truncate max-w-[120px]"
-                              >
-                                {business.category?.name || "None"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div
-                                className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${
-                                  business.isActive
-                                        ? "bg-lime-500/10 border-lime-500/30 text-lime-700"
-                                        : "bg-red-500/10 border-red-500/30 text-red-600"
-                                }`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    business.isActive
-                                      ? "bg-lime-500"
-                                      : "bg-red-500"
-                                  }`}
-                                ></span>
-                                {business.isActive ? "Active" : "Inactive"}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              {new Date(business.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex justify-end space-x-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className={`h-8 w-8 p-0 rounded-lg ${
-                                    business.isActive
-                                      ? "hover:bg-orange-50"
-                                      : "hover:bg-green-50"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleToggleBusinessStatus(e, business);
-                                  }}
-                                  disabled={toggleLoading === business.id}
-                                  title={business.isActive ? "Suspend Business" : "Activate Business"}
-                                >
-                                  {toggleLoading === business.id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
-                                  ) : (
-                                    <Power className={`h-4 w-4 ${
-                                      business.isActive
-                                        ? "text-orange-500"
-                                        : "text-green-500"
-                                    }`} />
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                  onClick={() =>
-                                    window.open(
-                                      `/catalog/${business.slug}`,
-                                      "_blank",
-                                    )
-                                  }
-                                  title="View Business"
-                                >
-                                  <Eye className="h-4 w-4 text-gray-500" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                  onClick={() => handleEditBusiness(business)}
-                                  title="Edit Business"
-                                >
-                                  <Edit className="h-4 w-4 text-gray-500" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
-                                  onClick={() => handleDeleteBusiness(business)}
-                                  title="Delete Business"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Empty State */}
-              {!businessLoading &&
-                (!businessData?.businesses ||
-                  businessData.businesses.length === 0) && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Building className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No businesses found
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      {searchTerm || businessQuery.status !== "all"
-                        ? "Try adjusting your search or filters"
-                        : "Get started by adding your first business"}
-                    </p>
-                    {!searchTerm && businessQuery.status === "all" && (
-                      <Button
-                        onClick={() => {
-                          setRightPanelContent("add-business");
-                          setShowRightPanel(true);
-                        }}
-                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Business
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-              {/* Pagination */}
-              {businessData && businessData.businesses.length > 0 && (
-                <div className="p-2 border-t">
-                  <Pagination
-                    currentPage={businessData.pagination.page}
-                    totalPages={businessData.pagination.totalPages}
-                    totalItems={businessData.pagination.totalItems}
-                    itemsPerPage={businessData.pagination.limit}
-                    onPageChange={handlePageChange}
-                    onItemsPerPageChange={handleLimitChange}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <BusinessesView
+            dataFetchError={dataFetchError}
+            fetchData={fetchData}
+            fetchBusinesses={fetchBusinesses}
+            businessQuery={businessQuery}
+            setBusinessQuery={setBusinessQuery}
+            businessData={businessData}
+            filteredBusinesses={filteredBusinesses}
+            handleExport={handleExport}
+            exportLoading={exportLoading}
+            onOpenAddBusiness={() => {
+              setRightPanelContent("add-business");
+              setShowRightPanel(true);
+            }}
+            addBusinessLoading={addBusinessLoading}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedBusinessIds={selectedBusinessIds}
+            handleSelectAll={handleSelectAll}
+            handleDeselectAll={handleDeselectAll}
+            handleSelectBusiness={handleSelectBusiness}
+            businessBulkActions={businessBulkActions}
+            businessLoading={businessLoading}
+            toggleLoading={toggleLoading}
+            handleToggleBusinessStatus={handleToggleBusinessStatus}
+            handleEditBusiness={handleEditBusiness}
+            handleDeleteBusiness={handleDeleteBusiness}
+            handlePageChange={handlePageChange}
+            handleLimitChange={handleLimitChange}
+          />
         );
       case "professionals":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            {/* Data Fetching Status */}
-            {dataFetchError && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <span className="text-red-600 font-medium">
-                      Data Fetching Error
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        fetchData();
-                        fetchProfessionals();
-                      }}
-                      className="rounded-xl"
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
-              </div>
-            )}
-
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-                Manage Professionals
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Add, view, edit, and manage all registered professionals
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-              {/* Row 1: Action buttons (Filter, Export, Add) - With text on desktop */}
-              <div className="flex gap-2">
-                {/* Status Filter - With text on desktop */}
-                <Select
-                  value={professionalQuery.status}
-                  onValueChange={(value) => {
-                    setProfessionalQuery((prev) => ({
-                      ...prev,
-                      status: value,
-                      page: 1,
-                    }));
-                  }}
-                >
-                  <SelectTrigger className=" rounded-xl bg-white border-gray-200">
-                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
-                    <span className="hidden sm:inline">Filter</span>
-                    <span className="sm:hidden">Status</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      All ({professionalData?.pagination.totalItems || professionals.length})
-                    </SelectItem>
-                    <SelectItem value="active">
-                      Active ({professionals.filter((p) => p.isActive).length})
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      Inactive ({professionals.filter((p) => !p.isActive).length})
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Export Button - With text on desktop */}
-                <Button
-                  variant="outline"
-                  onClick={handleProfessionalExport}
-                  disabled={professionalExportLoading}
-                  className="rounded-xl border-gray-200"
-                >
-                  {professionalExportLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2" />
-                  ) : (
-                    <Download className="h-4 w-4 text-gray-500 mr-2" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {professionalExportLoading ? 'Exporting...' : 'Export'}
-                  </span>
-                  <span className="sm:hidden">
-                    {professionalExportLoading ? '...' : ''}
-                  </span>
-                </Button>
-
-                {/* Add New Button - With text on desktop */}
-                <Button
-                  onClick={() => {
-                    setRightPanelContent("add-professional");
-                    setShowRightPanel(true);
-                  }}
-                  disabled={addProfessionalLoading}
-                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
-                >
-                  {addProfessionalLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  ) : (
-                    <Plus className="h-4 w-4 mr-2" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {addProfessionalLoading ? 'Opening...' : 'Add Professional'}
-                  </span>
-                  <span className="sm:hidden">
-                    {addProfessionalLoading ? '...' : 'Add'}
-                  </span>
-                </Button>
-              </div>
-
-              {/* Row 2: Search bar - Full width with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search professionals..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedProfessionalIds.size > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <BulkActionsToolbar
-                  selectedCount={selectedProfessionalIds.size}
-                  totalCount={
-                    professionalData?.pagination.totalItems ||
-                    professionals.length
-                  }
-                  onSelectAll={handleSelectAllProfessionals}
-                  onDeselectAll={handleDeselectAllProfessionals}
-                  onBulkActivate={handleProfessionalBulkActivate}
-                  onBulkDeactivate={handleProfessionalBulkDeactivate}
-                  onBulkDelete={handleProfessionalBulkDelete}
-                />
-              </div>
-            )}
-
-            {/* Data Table */}
-            <div className="bg-white rounded-md   overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-[#080322]">
-                    <TableRow>
-                      <TableHead className="w-12 text-white font-medium">
-                        <Checkbox
-                          checked={
-                            professionalData?.professionals.every((p) =>
-                              selectedProfessionalIds.has(p.id),
-                            ) || false
-                          }
-                          onCheckedChange={(checked) => {
-                            if (checked) handleSelectAllProfessionals();
-                            else handleDeselectAllProfessionals();
-                          }}
-                          className="border-gray-400"
-                        />
-                      </TableHead>
-                      <TableHead className="w-14 text-white font-medium">
-                        SN.
-                      </TableHead>
-                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('name')}>
-                        <div className="flex items-center gap-1">
-                          Professional {getProfessionalSortIcon('name')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('email')}>
-                        <div className="flex items-center gap-1">
-                          Email {getProfessionalSortIcon('email')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('professionalHeadline')}>
-                        <div className="flex items-center gap-1">
-                          Headline {getProfessionalSortIcon('professionalHeadline')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-white  truncate font-medium">
-                        Location
-                      </TableHead>
-                      <TableHead className="text-center text-white font-medium">
-                        Status
-                      </TableHead>
-                      <TableHead className="text-white font-medium cursor-pointer" onClick={() => handleProfessionalSort('createdAt')}>
-                        <div className="flex items-center gap-1">
-                          Date {getProfessionalSortIcon('createdAt')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center text-white font-medium w-32">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {professionalLoading
-                      ? // Loading skeleton
-                        Array.from({ length: professionalQuery.limit }).map(
-                          (_, i) => (
-                            <TableRow key={i}>
-                              <TableCell>
-                                <Skeleton className="h-4 w-4" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-8" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <Skeleton className="h-10 w-10 rounded-full" />
-                                  <Skeleton className="h-4 w-32" />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-40" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-32" />
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-24" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex justify-center">
-                                  <Skeleton className="h-6 w-16 rounded-full" />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Skeleton className="h-4 w-20" />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex justify-end space-x-2">
-                                  <Skeleton className="h-8 w-8" />
-                                  <Skeleton className="h-8 w-8" />
-                                  <Skeleton className="h-8 w-8" />
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ),
-                        )
-                      : professionalData?.professionals.map((professional, index) => (
-                          <TableRow
-                            key={professional.id}
-                            className="hover:bg-gray-50"
-                          >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedProfessionalIds.has(professional.id)}
-                                onCheckedChange={() =>
-                                  handleSelectProfessional(professional.id)
-                                }
-                                className="border-gray-400"
-                              />
-                            </TableCell>
-                            <TableCell className="text-gray-500 font-medium">
-                              {(professionalData.pagination.page - 1) *
-                                professionalData.pagination.limit +
-                                index +
-                                1}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {professional.profilePicture ? (
-                                  <img
-                                    src={professional.profilePicture}
-                                    alt={`${professional.name} profile`}
-                                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
-                                  />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                                    <User className="h-5 w-5 text-gray-400" />
-                                  </div>
-                                )}
-                                <span className="text-gray-900 font-medium truncate max-w-[200px]">
-                                  {professional.name}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-600 truncate">
-                              {professional.email || "N/A"}
-                            </TableCell>
-                            <TableCell className="text-gray-600 truncate max-w-[150px]">
-                              {professional.professionalHeadline || "No headline"}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3 text-gray-400" />
-                                {professional.location || "Not specified"}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex justify-center">
-                                <StatusBadge
-                                  status={professional.isActive ? "ACTIVE" : "SUSPENDED"}
-                                  variant={professional.isActive ? "success" : "error"}
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              {new Date(professional.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex justify-end space-x-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className={`h-8 w-8 p-0 rounded-lg ${
-                                    professional.isActive
-                                      ? "hover:bg-orange-50"
-                                      : "hover:bg-green-50"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleToggleProfessionalStatus(e, professional);
-                                  }}
-                                  disabled={professionalToggleLoading === professional.id}
-                                  title={professional.isActive ? "Deactivate Professional" : "Activate Professional"}
-                                >
-                                  {professionalToggleLoading === professional.id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
-                                  ) : (
-                                    <Power className={`h-4 w-4 ${
-                                      professional.isActive
-                                        ? "text-orange-500"
-                                        : "text-green-500"
-                                    }`} />
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                  onClick={() =>
-                                    window.open(
-                                      `/pcard/${professional.slug}`,
-                                      "_blank",
-                                    )
-                                  }
-                                  title="View Profile"
-                                >
-                                  <Eye className="h-4 w-4 text-gray-500" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                  onClick={() => handleEditProfessional(professional)}
-                                  title="Edit Professional"
-                                >
-                                  <Edit className="h-4 w-4 text-gray-500" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
-                                  onClick={() => handleDeleteProfessional(professional)}
-                                  title="Delete Professional"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Empty State */}
-              {!professionalLoading &&
-                (!professionalData?.professionals ||
-                  professionalData.professionals.length === 0) && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <User className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No professionals found
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      {searchTerm || professionalQuery.status !== "all"
-                        ? "Try adjusting your search or filters"
-                        : "Get started by adding your first professional"}
-                    </p>
-                    {!searchTerm && professionalQuery.status === "all" && (
-                      <Button
-                        onClick={() => {
-                          setRightPanelContent("add-professional");
-                          setShowRightPanel(true);
-                        }}
-                        className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Professional
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-              {/* Pagination */}
-              {professionalData && professionalData.professionals.length > 0 && (
-                <div className="p-2 border-t">
-                  <Pagination
-                    currentPage={professionalData.pagination.page}
-                    totalPages={professionalData.pagination.totalPages}
-                    totalItems={professionalData.pagination.totalItems}
-                    itemsPerPage={professionalData.pagination.limit}
-                    onPageChange={handleProfessionalPageChange}
-                    onItemsPerPageChange={handleProfessionalLimitChange}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <ProfessionalsView
+            dataFetchError={dataFetchError}
+            fetchData={fetchData}
+            fetchProfessionals={fetchProfessionals}
+            professionalQuery={professionalQuery}
+            setProfessionalQuery={setProfessionalQuery}
+            professionalData={professionalData}
+            professionals={professionals}
+            handleProfessionalExport={handleProfessionalExport}
+            professionalExportLoading={professionalExportLoading}
+            onOpenAddProfessional={() => {
+              setRightPanelContent("add-professional");
+              setShowRightPanel(true);
+            }}
+            addProfessionalLoading={addProfessionalLoading}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedProfessionalIds={selectedProfessionalIds}
+            handleSelectAllProfessionals={handleSelectAllProfessionals}
+            handleDeselectAllProfessionals={handleDeselectAllProfessionals}
+            handleSelectProfessional={handleSelectProfessional}
+            professionalBulkActions={professionalBulkActions}
+            professionalLoading={professionalLoading}
+            handleProfessionalSort={handleProfessionalSort}
+            getProfessionalSortIcon={getProfessionalSortIcon}
+            professionalToggleLoading={professionalToggleLoading}
+            handleToggleProfessionalStatus={handleToggleProfessionalStatus}
+            handleEditProfessional={handleEditProfessional}
+            handleDeleteProfessional={handleDeleteProfessional}
+            handleProfessionalPageChange={handleProfessionalPageChange}
+            handleProfessionalLimitChange={handleProfessionalLimitChange}
+          />
         );
       case "categories":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-                Manage Categories
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Add, view, edit, and manage all business categories
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-              {/* Row 1: Action buttons */}
-              <div className="flex gap-2">
-                {/* Add Category Button */}
-                <Button
-                  onClick={() => {
-                    setRightPanelContent("add-category");
-                    setShowRightPanel(true);
-                  }}
-                  className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Add Category</span>
-                  <span className="sm:hidden">Add</span>
-                </Button>
-
-              </div>
-
-              {/* Row 2: Search bar with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search categories..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedCategories.size > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <BulkActionsToolbar
-                  selectedCount={selectedCategories.size}
-                  totalCount={safeCategories.length}
-                  onSelectAll={() => {
-                    const allIds = filteredCategories.map(c => c.id);
-                    setSelectedCategories(new Set(allIds));
-                  }}
-                  onDeselectAll={() => setSelectedCategories(new Set())}
-                  onBulkActivate={() => {
-                    toast({ title: 'Info', description: 'Bulk activate not applicable for categories' });
-                  }}
-                  onBulkDeactivate={() => {
-                    toast({ title: 'Info', description: 'Bulk deactivate not applicable for categories' });
-                  }}
-                  onBulkDelete={() => {
-                    // Bulk delete handler would go here
-                    toast({
-                      title: 'Bulk Delete',
-                      description: `Selected ${selectedCategories.size} categories`,
-                    });
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Data Table */}
-            <div className="bg-white rounded-md  overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <Table>
-                    <TableHeader className="bg-[#080322]">
-                      <TableRow>
-                        <TableHead className="w-14 text-white font-medium">SN.</TableHead>
-                        <TableHead className="text-white font-medium">Category Name</TableHead>
-                        <TableHead className="text-white font-medium">Slug</TableHead>
-                        <TableHead className="text-white font-medium">Parent Category</TableHead>
-                        <TableHead className="text-center text-white font-medium">Item Count</TableHead>
-                        <TableHead className="text-center text-white font-medium ">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCategories.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12">
-                            <div className="flex flex-col items-center justify-center text-gray-500">
-                              <FolderTree className="h-12 w-12 mb-3 opacity-30" />
-                              <p className="text-base font-medium">No categories found</p>
-                              <p className="text-sm text-gray-400 mt-1">
-                                {searchTerm ? 'Try adjusting your search' : 'Get started by adding your first category'}
-                              </p>
-                              {!searchTerm && (
-                                <Button
-                                  onClick={() => {
-                                    setRightPanelContent("add-category");
-                                    setShowRightPanel(true);
-                                  }}
-                                  className="mt-4 bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add Category
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredCategories.map((category, index) => {
-                          const parentCategory = category.parentId 
-                            ? safeCategories.find(c => c.id === category.parentId) 
-                            : null;
-                          
-                          return (
-                            <TableRow
-                              key={category.id}
-                              className={`hover:bg-gray-50 ${category.parentId ? 'bg-gray-50/50' : ''}`}
-                            >
-                              <TableCell className="text-gray-500 font-medium">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <span className={category.parentId ? 'text-sm' : 'font-medium'}>
-                                    {category.name}
-                                  </span>
-                                  {category.parentId && (
-                                    <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200 text-purple-700">
-                                      Sub
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-gray-600 text-sm">
-                                <code className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                                  {category.slug}
-                                </code>
-                              </TableCell>
-                              <TableCell className="text-gray-600">
-                                {parentCategory ? (
-                                  <span className="text-sm">{parentCategory.name}</span>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant="secondary" className="rounded-full">
-                                  {category._count?.businesses || 0}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex justify-end space-x-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
-                                    onClick={() => handleEditCategory(category)}
-                                    title="Edit Category"
-                                  >
-                                    <Edit className="h-4 w-4 text-gray-500" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
-                                    onClick={() => handleDeleteCategory(category)}
-                                    title="Delete Category"
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </Table>
-              </div>
-            </div>
-          </div>
+          <CategoriesView
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onOpenAddCategory={() => {
+              setRightPanelContent("add-category");
+              setShowRightPanel(true);
+            }}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            safeCategories={safeCategories}
+            filteredCategories={filteredCategories}
+            onInfoToast={(description) => {
+              toast({ title: "Info", description });
+            }}
+            handleEditCategory={handleEditCategory}
+            handleDeleteCategory={handleDeleteCategory}
+          />
         );
       case "inquiries":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-               Contact Inquiries Management
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                View and manage customer inquiries
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-              {/* Row 1: Action buttons */}
-              <div className="flex gap-2">
-                {/* Status Filter */}
-                <Select
-                  value={inquiryQuery?.status || "all"}
-                  onValueChange={(value) => {
-                    if (setInquiryQuery) {
-                      setInquiryQuery((prev: any) => ({ ...prev, status: value, page: 1 }));
-                    }
-                  }}
-                >
-                  <SelectTrigger className="rounded-xl bg-white border-gray-200">
-                    <Filter className="h-4 w-4 text-gray-500 mr-2" />
-                    <span className="hidden sm:inline">Filter</span>
-                    <span className="sm:hidden">Status</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All ({inquiries.length})</SelectItem>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="REPLIED">Replied</SelectItem>
-                    <SelectItem value="CLOSED">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
-
-              </div>
-
-              {/* Row 2: Search bar with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search inquiries..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedInquiries.size > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <BulkActionsToolbar
-                  selectedCount={selectedInquiries.size}
-                  totalCount={inquiries.length}
-                  onSelectAll={handleSelectAllInquiries}
-                  onDeselectAll={handleDeselectAllInquiries}
-                  onBulkActivate={handleInquiryBulkActivate}
-                  onBulkDeactivate={handleInquiryBulkSuspend}
-                  onBulkDelete={handleInquiryBulkDelete}
-                />
-              </div>
-            )}
-
-            {/* Data Table */}
-            <div className="bg-white rounded-md  overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-[#080322]">
-                    <TableRow>
-                      <TableHead className="w-14 text-white font-medium">SN.</TableHead>
-                      <TableHead className="text-white font-medium">Customer</TableHead>
-                      <TableHead className="text-white font-medium">Business</TableHead>
-                      <TableHead className="text-white font-medium">Message</TableHead>
-                      <TableHead className="text-center text-white font-medium">Status</TableHead>
-                      <TableHead className="text-white font-medium">Date</TableHead>
-                      <TableHead className="text-center text-white font-medium ">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inquiries
-                      .filter((inquiry) => {
-                        const matchesSearch =
-                          inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inquiry.message?.toLowerCase().includes(searchTerm.toLowerCase());
-                        return matchesSearch;
-                      })
-                      .map((inquiry, index) => (
-                        <TableRow key={inquiry.id} className="hover:bg-gray-50">
-                          <TableCell className="text-gray-500 font-medium">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-gray-400" />
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">{inquiry.name}</div>
-                                <div className="text-sm text-gray-500">{inquiry.email}</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {inquiry.business?.name || "N/A"}
-                          </TableCell>
-                          <TableCell className="text-gray-600 max-w-xs truncate">
-                            {inquiry.message}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-center">
-                              <StatusBadge
-                                status={inquiry.status}
-                                variant={inquiry.status === 'PENDING' ? 'warning' : inquiry.status === 'REPLIED' ? 'success' : 'neutral'}
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-end space-x-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                onClick={() => handleViewInquiry(inquiry)}
-                                title="View Details"
-                              >
-                                <Eye className="h-4 w-4 text-gray-500" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                                onClick={() => handleReplyInquiry(inquiry)}
-                                title="Reply"
-                              >
-                                <Mail className="h-4 w-4 text-gray-500" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
-                                onClick={() => handleDeleteInquiry(inquiry)}
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Empty State */}
-              {inquiries.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <MessageSquare className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No inquiries found
-                  </h3>
-                  <p className="text-gray-500">
-                    {searchTerm ? "Try adjusting your search" : "There are no customer inquiries yet"}
-                  </p>
-                </div>
-              )}
-
-              {/* Pagination */}
-              {inquiries.length > 0 && (
-                <div className="p-2 border-t">
-                  <Pagination
-                    currentPage={inquiryPagination?.page || 1}
-                    totalPages={inquiryPagination?.totalPages || 1}
-                    totalItems={inquiries.length}
-                    itemsPerPage={inquiryPagination?.limit || 10}
-                    onPageChange={(page) => {
-                      if (setInquiryQuery) {
-                        setInquiryQuery((prev: any) => ({ ...prev, page }));
-                      }
-                    }}
-                    onItemsPerPageChange={(limit) => {
-                      if (setInquiryQuery) {
-                        setInquiryQuery((prev: any) => ({ ...prev, limit, page: 1 }));
-                      }
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <InquiriesView
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            inquiries={inquiries}
+            selectedInquiries={selectedInquiries}
+            handleSelectAllInquiries={handleSelectAllInquiries}
+            handleDeselectAllInquiries={handleDeselectAllInquiries}
+            handleInquiryBulkActivate={handleInquiryBulkActivate}
+            handleInquiryBulkSuspend={handleInquiryBulkSuspend}
+            handleInquiryBulkDelete={handleInquiryBulkDelete}
+            handleViewInquiry={handleViewInquiry}
+            handleReplyInquiry={handleReplyInquiry}
+            handleDeleteInquiry={handleDeleteInquiry}
+            inquiryQuery={inquiryQuery}
+            setInquiryQuery={setInquiryQuery}
+            inquiryPagination={inquiryPagination}
+          />
         );
       case "registration-requests":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-                Registration Requests
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Review and approve business and professional registration requests
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-            
-
-              {/* Row 2: Search bar with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search registration requests..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Data Fetching Status */}
-            {dataFetchError && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <span className="text-red-600 font-medium">
-                      Data Fetching Error
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => fetchData()}
-                      className="rounded-xl"
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {registrationInquiries.length === 0 && !isLoading && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <UserCheck className="h-8 w-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Registration Requests
-                </h3>
-                <p className="text-gray-500">
-                  There are currently no business or professional registration requests to review.
-                </p>
-              </div>
-            )}
-
-            {/* Data Table */}
-            {registrationInquiries.length > 0 && (
-              <AdminTable title="Registration Requests">
-                <TableHeader className="bg-[#080322]">
-                  <TableRow>
-                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
-                    <TableHead className="text-white font-medium">Type</TableHead>
-                    <TableHead className="text-white font-medium">Name</TableHead>
-                    <TableHead className="text-white font-medium">Business Name</TableHead>
-                    <TableHead className="text-white font-medium">Contact</TableHead>
-                    <TableHead className="text-white    font-medium">Location</TableHead>
-                    <TableHead className="text-center text-white font-medium">Status</TableHead>
-                    <TableHead className="text-white font-medium">Date</TableHead>
-                    <TableHead className="text-center text-white font-medium ">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {registrationInquiries
-                    .filter((inquiry) => {
-                      const matchesSearch =
-                        inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
-                      return matchesSearch;
-                    })
-                    .map((inquiry, index) => (
-                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
-                        <TableCell className="text-gray-500 font-medium">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={inquiry.type === "BUSINESS" ? "default" : "secondary"}
-                            className="rounded-full"
-                          >
-                            {inquiry.type === "BUSINESS" ? "B" : "P"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-900 font-medium">
-                          {inquiry.name}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {inquiry.businessName || "N/A"}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          <div>
-                            <div className="text-sm">{inquiry.email}</div>
-                            {inquiry.phone && (
-                              <div className="text-sm text-gray-500">
-                                {inquiry.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600 w-auto max-w-[150px] truncate ">
-                          {inquiry.location || "Not specified"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-center">
-                            <StatusBadge
-                              status={inquiry.status}
-                              variant={inquiry.status === "PENDING" ? "warning" : inquiry.status === "COMPLETED" ? "success" : "error"}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end space-x-1">
-                            {inquiry.status === "PENDING" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-md hover:bg-green-50"
-                                  onClick={() => handleCreateAccountFromInquiryWithSidebar(inquiry)}
-                                  disabled={creatingAccount === inquiry.id}
-                                  title="Create Account"
-                                >
-                                  {creatingAccount === inquiry.id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
-                                  ) : (
-                                    <UserCheck className="h-4 w-4 text-green-600" />
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
-                                  onClick={() => handleRejectInquiry(inquiry)}
-                                  disabled={creatingAccount === inquiry.id}
-                                  title="Reject"
-                                >
-                                  {creatingAccount === inquiry.id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500" />
-                                  ) : (
-                                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                                  )}
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedRegistrationInquiry(inquiry);
-                                setShowRegistrationInquiryDialog(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4 text-gray-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </AdminTable>
-            )}
-          </div>
+          <RegistrationRequestsView
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            registrationInquiries={registrationInquiries}
+            isLoading={isLoading}
+            dataFetchError={dataFetchError}
+            fetchData={fetchData}
+            selectedRegistrationInquiry={selectedRegistrationInquiry}
+            setSelectedRegistrationInquiry={setSelectedRegistrationInquiry}
+            showRegistrationInquiryDialog={showRegistrationInquiryDialog}
+            setShowRegistrationInquiryDialog={setShowRegistrationInquiryDialog}
+            handleCreateAccountFromInquiryWithSidebar={handleCreateAccountFromInquiryWithSidebar}
+            handleRejectInquiry={handleRejectInquiry}
+            confirmRejectInquiry={confirmRejectInquiry}
+            creatingAccount={creatingAccount}
+            inquiryToReject={inquiryToReject}
+            rejectReason={rejectReason}
+            setRejectReason={setRejectReason}
+            setInquiryToReject={setInquiryToReject}
+            showRejectInquiryDialog={showRejectInquiryDialog}
+            setShowRejectInquiryDialog={setShowRejectInquiryDialog}
+            toast={toast}
+          />
         );
       case "business-listings":
         return (
-          <div className="space-y-6 pb-20 md:pb-0">
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-900">
-                Business Listing Inquiries
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Manage business listing requests and digital presence enhancement inquiries
-              </p>
-            </div>
-
-            {/* Toolbar */}
-            <div className="space-y-3">
-              {/* Row 1: Action buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => fetchData()}
-                  className="rounded-xl border-gray-200"
-                >
-                  <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
-              </div>
-
-              {/* Row 2: Search bar with inline filter */}
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search business listings..."
-                  className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedBusinessListings.size > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <BulkActionsToolbar
-                  selectedCount={selectedBusinessListings.size}
-                  totalCount={businessListingInquiries.length}
-                  onSelectAll={() => setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)))}
-                  onDeselectAll={() => setSelectedBusinessListings(new Set())}
-                  onBulkActivate={() => {
-                    toast({ title: 'Info', description: 'Bulk activate not implemented for listings' });
-                  }}
-                  onBulkDeactivate={() => {
-                    toast({ title: 'Info', description: 'Bulk deactivate not implemented for listings' });
-                  }}
-                  onBulkDelete={() => {
-                    toast({ title: 'Info', description: 'Bulk delete not implemented for listings' });
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Data Table */}
-            {businessListingInquiries.length > 0 ? (
-              <AdminTable title="Business Listings">
-                <TableHeader className="bg-[#080322]">
-                  <TableRow>
-                    <TableHead className="w-12 text-white font-medium">
-                      <Checkbox
-                        checked={businessListingInquiries.length > 0 && selectedBusinessListings.size === businessListingInquiries.length}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedBusinessListings(new Set(businessListingInquiries.map(i => i.id)));
-                          } else {
-                            setSelectedBusinessListings(new Set());
-                          }
-                        }}
-                        className="border-gray-400"
-                      />
-                    </TableHead>
-                    <TableHead className="w-14 text-white font-medium">SN.</TableHead>
-                    <TableHead className="text-white font-medium">Business</TableHead>
-                    <TableHead className="text-white font-medium">Contact</TableHead>
-                    <TableHead className="text-white font-medium">Requirements</TableHead>
-                    <TableHead className="text-white font-medium">Inquiry Type</TableHead>
-                    <TableHead className="text-center text-white font-medium">Status</TableHead>
-                    <TableHead className="text-white font-medium">Assigned To</TableHead>
-                    <TableHead className="text-white font-medium">Date</TableHead>
-                    <TableHead className="text-center text-white font-medium ">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {businessListingInquiries
-                    .filter((inquiry) => {
-                      const matchesSearch =
-                        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        inquiry.requirements?.toLowerCase().includes(searchTerm.toLowerCase());
-                      return matchesSearch;
-                    })
-                    .map((inquiry, index) => (
-                      <TableRow key={inquiry.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedBusinessListings.has(inquiry.id)}
-                            onCheckedChange={() => {
-                              setSelectedBusinessListings(prev => {
-                                const newSet = new Set(prev);
-                                if (newSet.has(inquiry.id)) {
-                                  newSet.delete(inquiry.id);
-                                } else {
-                                  newSet.add(inquiry.id);
-                                }
-                                return newSet;
-                              });
-                            }}
-                            className="border-gray-400"
-                          />
-                        </TableCell>
-                        <TableCell className="text-gray-500 font-medium">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {inquiry.businessName}
-                            </div>
-                            {inquiry.businessDescription && (
-                              <div className="text-sm text-gray-500 max-w-xs truncate">
-                                {inquiry.businessDescription}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {inquiry.contactName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {inquiry.email}
-                            </div>
-                            {inquiry.phone && (
-                              <div className="text-sm text-gray-500">
-                                {inquiry.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600 max-w-xs truncate">
-                          {inquiry.requirements}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {inquiry.inquiryType || "Not specified"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-center">
-                            <StatusBadge
-                              status={inquiry.status}
-                              variant={
-                                inquiry.status === "PENDING" ? "warning" :
-                                inquiry.status === "REVIEWING" || inquiry.status === "UNDER_REVIEW" ? "info" :
-                                inquiry.status === "APPROVED" ? "success" :
-                                inquiry.status === "REJECTED" ? "error" : "neutral"
-                              }
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {inquiry.assignedUser?.name || "Unassigned"}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {new Date(inquiry.createdAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedBusinessListingInquiry(inquiry);
-                                setShowBusinessListingInquiryDialog(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4 text-gray-500" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedBusinessListingInquiry(inquiry);
-                                setShowBusinessListingInquiryDialog(true);
-                              }}
-                              title="Edit"
-                            >
-                              <Edit className="h-4 w-4 text-gray-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </AdminTable>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
-                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <Building className="h-8 w-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Business Listings Found
-                </h3>
-                <p className="text-gray-500">
-                  There are currently no business listing inquiries to review.
-                </p>
-              </div>
-            )}
-          </div>
+          <BusinessListingsView
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            businessListingInquiries={businessListingInquiries}
+            selectedBusinessListings={selectedBusinessListings}
+            setSelectedBusinessListings={setSelectedBusinessListings}
+            fetchData={fetchData}
+            setSelectedBusinessListingInquiry={setSelectedBusinessListingInquiry}
+            setShowBusinessListingInquiryDialog={setShowBusinessListingInquiryDialog}
+            businessListingBulkToast={(description) => toast({ title: "Info", description })}
+          />
         );
       case "analytics":
         return (
@@ -5836,52 +2712,19 @@ const renderRightPanel = () => {
     return (
       <form id="inquiry-account-form" onSubmit={async (e) => { 
           e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          const manualPassword = formData.get("password") as string;
-          const password = manualPassword || generatedPassword || generatePassword();
-
-          const accountData = {
-            name: isBusiness ? (formData.get("businessName") as string) || (inquiry as any).businessName || inquiry.name : inquiry.name,
-            email: inquiry.email,
-            password: password,
-            adminName: (formData.get("adminName") as string) || inquiry.name,
-            phone: inquiry.phone,
-            ...(isBusiness && {
-              address: (inquiry as any).location,
-              description: (formData.get("description") as string),
-              categoryId: (formData.get("categoryId") as string),
-            }),
-          };
-
           try {
-            const response = await fetch(isBusiness ? "/api/admin/businesses" : "/api/admin/professionals", {
+            const response = await fetch(`/api/admin/registration-inquiries/${inquiry.id}/approve`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(accountData),
             });
 
             if (response.ok) {
-              try {
-                  await fetch("/api/notifications", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                          type: "accountCreation", name: inquiry.name, email: inquiry.email,
-                          password: password, accountType: isBusiness ? "business" : "professional",
-                          loginUrl: `${window.location.origin}/login`,
-                      }),
-                  });
-              } catch (err) { console.error(err); }
-
-              await fetch(`/api/registration-inquiries/${inquiry.id}`, {
-                method: "PUT", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "COMPLETED" }),
-              });
-
               setRegistrationInquiries((prev) => prev.map((regInquiry) => regInquiry.id === inquiry.id ? { ...regInquiry, status: "COMPLETED" } : regInquiry));
-              toast({ title: "Success", description: `Account created! Email sent to ${inquiry.email}` });
+              toast({ title: "Success", description: `Account created! Credentials sent to ${inquiry.email}` });
               closePanel();
               fetchData();
+            } else {
+              const error = await response.json().catch(() => ({}));
+              toast({ title: "Error", description: error.error || "Failed to create account.", variant: "destructive" });
             }
           } catch (error) {
               console.error(error);
@@ -6388,198 +3231,64 @@ const renderRightPanel = () => {
       </UnifiedModal>
 
       {/* Bulk Delete Confirmation Dialog */}
-      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
-        <DialogContent className="rounded-2xl max-w-sm p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              Confirm Bulk Delete
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Delete {selectedBusinessIds.size} businesses? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p className="text-xs text-red-700 font-medium">This will permanently delete:</p>
-            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-0.5">
-              <li>Selected business accounts</li>
-              <li>Associated admin users & data</li>
-            </ul>
-          </div>
-          <DialogFooter className="pt-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowBulkDeleteDialog(false)}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={confirmBulkDelete}
-              disabled={bulkActionLoading}
-              className="rounded-xl"
-            >
-              {bulkActionLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete ({selectedBusinessIds.size})
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        title="Confirm Bulk Delete"
+        description={`Delete ${selectedBusinessIds.size} businesses? This action cannot be undone.`}
+        items={["Selected business accounts", "Associated admin users & data"]}
+        onConfirm={businessBulkActions.confirmBulkDelete}
+        loading={bulkActionLoading}
+        confirmText="Delete"
+        itemCount={selectedBusinessIds.size}
+      />
+
+      <DeleteConfirmationDialog
+        open={showProfessionalBulkDeleteDialog}
+        onOpenChange={setShowProfessionalBulkDeleteDialog}
+        title="Confirm Bulk Delete"
+        description={`Delete ${selectedProfessionalIds.size} professionals? This action cannot be undone.`}
+        items={["Selected professional accounts", "Associated profile data"]}
+        onConfirm={professionalBulkActions.confirmBulkDelete}
+        loading={professionalBulkActionLoading}
+        confirmText="Delete"
+        itemCount={selectedProfessionalIds.size}
+      />
 
       {/* Delete Business Confirmation Dialog */}
-      <Dialog open={showDeleteBusinessDialog} onOpenChange={setShowDeleteBusinessDialog}>
-        <DialogContent className="rounded-2xl max-w-sm p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              Delete Business
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Delete "{deleteBusiness?.name}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p className="text-xs text-red-700 font-medium">This will permanently delete:</p>
-            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-0.5">
-              <li>Business account & listing</li>
-              <li>Associated admin user & data</li>
-            </ul>
-          </div>
-          <DialogFooter className="pt-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setShowDeleteBusinessDialog(false);
-                setDeleteBusiness(null);
-              }}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={confirmDeleteBusiness}
-              disabled={deletingBusiness}
-              className="rounded-xl"
-            >
-              {deletingBusiness ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteBusinessDialog}
+        onOpenChange={setShowDeleteBusinessDialog}
+        title="Delete Business"
+        description={`Delete "${deleteBusiness?.name}"? This action cannot be undone.`}
+        items={["Business account & listing", "Associated admin user & data"]}
+        onConfirm={confirmDeleteBusiness}
+        onCancel={() => setDeleteBusiness(null)}
+        loading={deletingBusiness}
+      />
 
       {/* Delete Professional Confirmation Dialog */}
-      <Dialog open={showDeleteProfessionalDialog} onOpenChange={setShowDeleteProfessionalDialog}>
-        <DialogContent className="rounded-2xl max-w-sm p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              Delete Professional
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Delete "{professionalToDelete?.name}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p className="text-xs text-red-700 font-medium">This will permanently delete:</p>
-            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-0.5">
-              <li>Professional profile & account</li>
-              <li>Skills, education & portfolio</li>
-            </ul>
-          </div>
-          <DialogFooter className="pt-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setShowDeleteProfessionalDialog(false);
-                setProfessionalToDelete(null);
-              }}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={confirmDeleteProfessional}
-              disabled={deletingProfessional}
-              className="rounded-xl"
-            >
-              {deletingProfessional ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteProfessionalDialog}
+        onOpenChange={setShowDeleteProfessionalDialog}
+        title="Delete Professional"
+        description={`Delete "${professionalToDelete?.name}"? This action cannot be undone.`}
+        items={["Professional profile & account", "Skills, education & portfolio"]}
+        onConfirm={confirmDeleteProfessional}
+        onCancel={() => setProfessionalToDelete(null)}
+        loading={deletingProfessional}
+      />
 
       {/* Delete Category Confirmation Dialog */}
-      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
-        <DialogContent className="rounded-2xl max-w-sm p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              Delete Category
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Delete "{categoryToDelete?.name}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p className="text-xs text-red-700 font-medium">This will permanently delete:</p>
-            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-0.5">
-              <li>Category & subcategories</li>
-              <li>Associated business references</li>
-            </ul>
-          </div>
-          <DialogFooter className="pt-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setShowDeleteCategoryDialog(false);
-                setCategoryToDelete(null);
-              }}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={confirmDeleteCategory}
-              className="rounded-xl"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteCategoryDialog}
+        onOpenChange={setShowDeleteCategoryDialog}
+        title="Delete Category"
+        description={`Delete "${categoryToDelete?.name}"? This action cannot be undone.`}
+        items={["Category & subcategories", "Associated business references"]}
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setCategoryToDelete(null)}
+      />
 
       {/* Reject Registration Request Dialog */}
       <Dialog open={showRejectInquiryDialog} onOpenChange={setShowRejectInquiryDialog}>
@@ -6763,7 +3472,6 @@ const renderRightPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Credentials Modal - Shows instead of toast for password display */}
       <CredentialsModal
         isOpen={showCredentialsModal}
         onClose={() => setShowCredentialsModal(false)}

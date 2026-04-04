@@ -5,6 +5,7 @@ import { Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import SharedSidebar from "../../components/SharedSidebar";
 import SharedDashboardHeader from "../../components/SharedDashboardHeader";
+import type { HeaderSearchResult } from "../../components/SharedDashboardHeader";
 
 type AdminLoadingLayoutProps = {
   isMobile: boolean;
@@ -23,6 +24,9 @@ type AdminDashboardLayoutProps = {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
+  searchResults?: HeaderSearchResult[];
+  recentSearches?: HeaderSearchResult[];
+  onSearchResultSelect?: (result: HeaderSearchResult) => void;
   middleContent: React.ReactNode;
   overlayContent?: React.ReactNode;
 };
@@ -119,6 +123,9 @@ export function AdminDashboardLayout({
   searchValue,
   onSearchChange,
   searchPlaceholder,
+  searchResults,
+  recentSearches,
+  onSearchResultSelect,
   middleContent,
   overlayContent,
 }: AdminDashboardLayoutProps) {
@@ -146,7 +153,10 @@ export function AdminDashboardLayout({
             searchValue={searchValue}
             onSearchChange={onSearchChange}
             searchPlaceholder={searchPlaceholder}
-            showSearch={false}
+            searchResults={searchResults}
+            recentSearches={recentSearches}
+            onSearchResultSelect={onSearchResultSelect}
+            showSearch={true}
             avatar={
               <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
                 <Shield className="h-4 w-4 sm:h-4 sm:w-4 text-white" />

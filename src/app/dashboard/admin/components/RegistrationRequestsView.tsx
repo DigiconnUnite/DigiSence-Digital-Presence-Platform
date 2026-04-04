@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Pagination } from "@/components/ui/pagination";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Activity, AlertTriangle, Building, Eye, FolderTree, User, UserCheck, XCircle } from "lucide-react";
 import AdminViewControls from "./AdminViewControls";
@@ -24,6 +25,10 @@ interface RegistrationRequestsViewProps {
   setSelectedRegistrationInquiry: React.Dispatch<React.SetStateAction<any>>;
   showRegistrationInquiryDialog: boolean;
   setShowRegistrationInquiryDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  registrationQuery: { page: number; limit: number };
+  setRegistrationQuery: React.Dispatch<React.SetStateAction<any>>;
+  registrationPagination: { page: number; limit: number; totalItems: number; totalPages: number } | null;
+  setRegistrationPagination: React.Dispatch<React.SetStateAction<any>>;
   handleCreateAccountFromInquiryWithSidebar: (inquiry: any) => void;
   handleRejectInquiry: (inquiry: any) => void;
   confirmRejectInquiry: () => Promise<void>;
@@ -48,6 +53,10 @@ export default function RegistrationRequestsView({
   setSelectedRegistrationInquiry,
   showRegistrationInquiryDialog,
   setShowRegistrationInquiryDialog,
+  registrationQuery,
+  setRegistrationQuery,
+  registrationPagination,
+  setRegistrationPagination,
   handleCreateAccountFromInquiryWithSidebar,
   handleRejectInquiry,
   confirmRejectInquiry,
@@ -59,6 +68,40 @@ export default function RegistrationRequestsView({
   showRejectInquiryDialog,
   setShowRejectInquiryDialog,
 }: RegistrationRequestsViewProps) {
+  const filteredRegistrationInquiries = useMemo(() => {
+    return registrationInquiries.filter((inquiry) => {
+      const matchesSearch =
+        inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  }, [registrationInquiries, searchTerm]);
+
+  useEffect(() => {
+    const totalItems = filteredRegistrationInquiries.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / registrationQuery.limit));
+    const safePage = Math.min(registrationQuery.page, totalPages);
+
+    setRegistrationPagination({
+      page: safePage,
+      limit: registrationQuery.limit,
+      totalItems,
+      totalPages,
+    });
+
+    if (safePage !== registrationQuery.page) {
+      setRegistrationQuery((prev: any) => ({ ...prev, page: safePage }));
+    }
+  }, [filteredRegistrationInquiries.length, registrationQuery.limit, registrationQuery.page, setRegistrationPagination, setRegistrationQuery]);
+
+  const paginatedRegistrationInquiries = useMemo(() => {
+    const start = (registrationQuery.page - 1) * registrationQuery.limit;
+    const end = start + registrationQuery.limit;
+    return filteredRegistrationInquiries.slice(start, end);
+  }, [filteredRegistrationInquiries, registrationQuery.limit, registrationQuery.page]);
+
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <AdminSectionHeader
@@ -88,7 +131,7 @@ export default function RegistrationRequestsView({
         <div className="bg-white rounded-md overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-[#080322]">
+              <TableHeader className="bg-slate-800">
                 <TableRow>
                   <TableHead className="w-14 text-white font-medium">SN.</TableHead>
                   <TableHead className="text-white font-medium">Type</TableHead>
@@ -102,16 +145,11 @@ export default function RegistrationRequestsView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {registrationInquiries.filter((inquiry) => {
-                  const matchesSearch =
-                    inquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    inquiry.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    inquiry.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    inquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
-                  return matchesSearch;
-                }).map((inquiry, index) => (
+                {paginatedRegistrationInquiries.map((inquiry, index) => (
                   <TableRow key={inquiry.id} className="hover:bg-gray-50">
-                    <TableCell className="text-gray-500 font-medium">{index + 1}</TableCell>
+                    <TableCell className="text-gray-500 font-medium">
+                      {(registrationQuery.page - 1) * registrationQuery.limit + index + 1}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={inquiry.type === "BUSINESS" ? "default" : "secondary"} className="rounded-full">
                         {inquiry.type === "BUSINESS" ? "B" : "P"}
@@ -194,6 +232,21 @@ export default function RegistrationRequestsView({
               </TableBody>
             </Table>
           </div>
+
+          {filteredRegistrationInquiries.length > 0 && (
+            <div className="p-2 border-t">
+              <Pagination
+                currentPage={registrationPagination?.page || registrationQuery.page || 1}
+                totalPages={registrationPagination?.totalPages || 1}
+                totalItems={registrationPagination?.totalItems || filteredRegistrationInquiries.length}
+                itemsPerPage={registrationPagination?.limit || registrationQuery.limit || 10}
+                onPageChange={(page) => setRegistrationQuery((prev: any) => ({ ...prev, page }))}
+                onItemsPerPageChange={(limit) =>
+                  setRegistrationQuery((prev: any) => ({ ...prev, limit, page: 1 }))
+                }
+              />
+            </div>
+          )}
         </div>
       )}
 

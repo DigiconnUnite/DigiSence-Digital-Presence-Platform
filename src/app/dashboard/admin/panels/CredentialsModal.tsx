@@ -136,7 +136,7 @@ export default function CredentialsModal({ isOpen, onClose, credentials }: Crede
           </div>
 
           {/* Copy Both Button */}
-          <Button onClick={copyBoth} className="w-full rounded-lg bg-slate-800 text-white hover:bg-slate-700">
+          <Button onClick={copyBoth} className="w-full rounded-lg bg-slate-800 text-white hover:bg-slate-800">
             <Copy className="h-4 w-4 mr-2" />
             Copy Both to Clipboard
           </Button>

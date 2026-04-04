@@ -91,7 +91,7 @@ export default function CategoriesView({
         <div className="overflow-x-auto">
           <Table>
             <Table>
-              <TableHeader className="bg-[#080322]">
+              <TableHeader className="bg-slate-800">
                 <TableRow>
                   <TableHead className="w-14 text-white font-medium">SN.</TableHead>
                   <TableHead className="text-white font-medium">Category Name</TableHead>

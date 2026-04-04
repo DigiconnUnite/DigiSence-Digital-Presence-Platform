@@ -132,7 +132,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
@@ -197,7 +197,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
@@ -265,7 +265,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
                     <TableHead><Skeleton className="h-4 w-32 bg-white/50" /></TableHead>
@@ -319,7 +319,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
                     <TableHead><Skeleton className="h-4 w-20 bg-white/50" /></TableHead>
@@ -377,7 +377,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>
                     <TableHead><Skeleton className="h-4 w-16 bg-white/50" /></TableHead>
@@ -439,7 +439,7 @@ export default function AdminSkeletonContent({ currentView }: AdminSkeletonConte
           <div className="bg-white rounded-md  overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[#080322]">
+                <TableHeader className="bg-slate-800">
                   <TableRow>
                     <TableHead className="w-12"><Skeleton className="h-4 w-4 bg-white/50" /></TableHead>
                     <TableHead className="w-14"><Skeleton className="h-4 w-8 bg-white/50" /></TableHead>

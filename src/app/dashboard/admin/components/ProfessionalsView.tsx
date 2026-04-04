@@ -197,7 +197,7 @@ export default function ProfessionalsView({
       <div className="bg-white rounded-md   overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-[#080322]">
+            <TableHeader className="bg-slate-800">
               <TableRow>
                 <TableHead className="w-12 text-white font-medium">
                   <Checkbox

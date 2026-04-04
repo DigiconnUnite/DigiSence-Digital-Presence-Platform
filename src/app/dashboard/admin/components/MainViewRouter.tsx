@@ -1,14 +1,14 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import DashboardOverview from "./DashboardOverview";
+import AnalyticsView from "./AnalyticsView";
 import BusinessesView from "./BusinessesView";
 import ProfessionalsView from "./ProfessionalsView";
 import CategoriesView from "./CategoriesView";
 import InquiriesView from "./InquiriesView";
 import RegistrationRequestsView from "./RegistrationRequestsView";
 import BusinessListingsView from "./BusinessListingsView";
+import SettingsView from "./SettingsView";
+import type { SettingsTabId } from "../config/searchIndex";
 
 interface MainViewRouterProps {
   currentView: string;
@@ -85,6 +85,10 @@ interface MainViewRouterProps {
   setSelectedRegistrationInquiry: React.Dispatch<React.SetStateAction<any>>;
   showRegistrationInquiryDialog: boolean;
   setShowRegistrationInquiryDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  registrationQuery: any;
+  setRegistrationQuery: React.Dispatch<React.SetStateAction<any>>;
+  registrationPagination: any;
+  setRegistrationPagination: React.Dispatch<React.SetStateAction<any>>;
   handleCreateAccountFromInquiryWithSidebar: (inquiry: any) => void;
   handleRejectInquiry: (inquiry: any) => void;
   confirmRejectInquiry: () => Promise<void>;
@@ -102,6 +106,10 @@ interface MainViewRouterProps {
   setShowBusinessListingInquiryDialog: React.Dispatch<React.SetStateAction<boolean>>;
   handleEditCategory: (category: any) => void;
   handleDeleteCategory: (category: any) => void;
+  settingsTab: SettingsTabId;
+  setSettingsTab: React.Dispatch<React.SetStateAction<SettingsTabId>>;
+  settingsSection: string | null;
+  clearSettingsSection: () => void;
   isLoading: boolean;
 }
 
@@ -120,6 +128,7 @@ export default function MainViewRouter(props: MainViewRouterProps) {
           businesses={props.businesses}
           professionals={props.professionals}
           registrationInquiries={props.registrationInquiries}
+          searchTerm={props.searchTerm}
           onAddBusiness={() => {
             props.setRightPanelContent("add-business");
             props.setShowRightPanel(true);
@@ -255,6 +264,10 @@ export default function MainViewRouter(props: MainViewRouterProps) {
           setSelectedRegistrationInquiry={props.setSelectedRegistrationInquiry}
           showRegistrationInquiryDialog={props.showRegistrationInquiryDialog}
           setShowRegistrationInquiryDialog={props.setShowRegistrationInquiryDialog}
+          registrationQuery={props.registrationQuery}
+          setRegistrationQuery={props.setRegistrationQuery}
+          registrationPagination={props.registrationPagination}
+          setRegistrationPagination={props.setRegistrationPagination}
           handleCreateAccountFromInquiryWithSidebar={props.handleCreateAccountFromInquiryWithSidebar}
           handleRejectInquiry={props.handleRejectInquiry}
           confirmRejectInquiry={props.confirmRejectInquiry}
@@ -284,34 +297,23 @@ export default function MainViewRouter(props: MainViewRouterProps) {
       );
     case "analytics":
       return (
-        <div className="space-y-6 pb-20 md:pb-0">
-          <div className="mb-8">
-            <h1 className="text-lg font-bold text-gray-900">Platform Analytics</h1>
-            <p className="text-md text-gray-600">Detailed analytics and insights</p>
-          </div>
-        </div>
+        <AnalyticsView
+          stats={props.stats}
+          businesses={props.businesses}
+          professionals={props.professionals}
+          registrationInquiries={props.registrationInquiries}
+          searchTerm={props.searchTerm}
+        />
       );
     case "settings":
       return (
-        <div className="space-y-6 pb-20 md:pb-0">
-          <div className="mb-8">
-            <h1 className="text-lg font-bold text-gray-900">System Settings</h1>
-            <p className="text-md text-gray-600">Configure system preferences</p>
-          </div>
-          <div className="p-4 bg-white rounded-3xl sm:p-6">
-            <div className="space-y-4">
-              <div>
-                <Label>Platform Name</Label>
-                <Input defaultValue="DigiSense" className="rounded-2xl" />
-              </div>
-              <div>
-                <Label>Admin Email</Label>
-                <Input defaultValue="admin@digisence.com" className="rounded-2xl" />
-              </div>
-              <Button className="rounded-2xl">Save Settings</Button>
-            </div>
-          </div>
-        </div>
+        <SettingsView
+          searchTerm={props.searchTerm}
+          activeTab={props.settingsTab}
+          targetSection={props.settingsSection}
+          onTabChange={props.setSettingsTab}
+          onSectionHandled={props.clearSettingsSection}
+        />
       );
     default:
       return <div>Select a menu item</div>;

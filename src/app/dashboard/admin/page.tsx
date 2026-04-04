@@ -9,6 +9,7 @@ import useDebounce from "@/hooks/useDebounce";
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { UnifiedModal } from "@/components/ui/UnifiedModal";
+import type { HeaderSearchResult } from "@/app/dashboard/components/SharedDashboardHeader";
 
 import {
   Building,
@@ -49,6 +50,55 @@ import { AdminDialogs, BusinessListingInquiryDialog } from "./components/AdminDi
 import { AdminDashboardLayout, AdminLoadingLayout } from "./components/AdminLayouts";
 import AdminSkeletonContent from "./components/AdminSkeletonContent";
 import type { AdminStats, Business, Category, Professional } from "./types";
+import { ADMIN_SEARCH_INDEX, type AdminView, type SettingsTabId } from "./config/searchIndex";
+
+const VALID_ADMIN_VIEWS: AdminView[] = [
+  "dashboard",
+  "businesses",
+  "professionals",
+  "categories",
+  "inquiries",
+  "registration-requests",
+  "business-listings",
+  "analytics",
+  "settings",
+];
+
+const VALID_SETTINGS_TABS: SettingsTabId[] = ["general", "security", "notifications"];
+const RECENT_SEARCHES_STORAGE_KEY = "digisence-admin-recent-searches";
+const MAX_RECENT_SEARCHES = 8;
+
+const isAdminView = (view: string): view is AdminView => {
+  return VALID_ADMIN_VIEWS.includes(view as AdminView);
+};
+
+const isSettingsTab = (tab: string): tab is SettingsTabId => {
+  return VALID_SETTINGS_TABS.includes(tab as SettingsTabId);
+};
+
+const levenshteinDistance = (a: string, b: string): number => {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  const matrix: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) matrix[i][0] = i;
+  for (let j = 0; j <= n; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[m][n];
+};
 
 export default function SuperAdminDashboard() {
   const { user, loading, logout } = useAuth();
@@ -92,9 +142,13 @@ export default function SuperAdminDashboard() {
     | null
   >(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [commandSearchTerm, setCommandSearchTerm] = useState("");
+  const [recentSearches, setRecentSearches] = useState<HeaderSearchResult[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentView, setCurrentView] = useState("dashboard");
+  const [currentView, setCurrentView] = useState<AdminView>("dashboard");
+  const [settingsTab, setSettingsTab] = useState<SettingsTabId>("general");
+  const [settingsSection, setSettingsSection] = useState<string | null>(null);
   const [deleteBusiness, setDeleteBusiness] = useState<Business | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showDeleteBusinessDialog, setShowDeleteBusinessDialog] = useState(false);
@@ -125,6 +179,8 @@ export default function SuperAdminDashboard() {
         return "Search registration requests...";
       case "business-listings":
         return "Search business listings...";
+      case "settings":
+        return "Search settings and sections...";
       default:
         return "Search dashboard data...";
     }
@@ -303,6 +359,75 @@ export default function SuperAdminDashboard() {
     }
   }, [user, loading, router]);
 
+  // Load recent command palette selections
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(RECENT_SEARCHES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as HeaderSearchResult[];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.slice(0, MAX_RECENT_SEARCHES));
+      }
+    } catch {
+      setRecentSearches([]);
+    }
+  }, []);
+
+  // Hydrate dashboard state from URL query params for deep linking.
+  // We read from window.location so local history.replaceState updates stay in sync.
+  useEffect(() => {
+    const applyUrlState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const tabParam = params.get("tab");
+      const sectionParam = params.get("section");
+
+      if (viewParam && isAdminView(viewParam)) {
+        setCurrentView(viewParam);
+      }
+
+      if (tabParam && isSettingsTab(tabParam)) {
+        setSettingsTab(tabParam);
+      }
+
+      setSettingsSection(sectionParam);
+    };
+
+    applyUrlState();
+    window.addEventListener("popstate", applyUrlState);
+    return () => {
+      window.removeEventListener("popstate", applyUrlState);
+    };
+  }, []);
+
+  // Keep URL synchronized with current internal view/tab/section state
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", currentView);
+
+    if (currentView === "settings") {
+      params.set("tab", settingsTab);
+      if (settingsSection) {
+        params.set("section", settingsSection);
+      } else {
+        params.delete("section");
+      }
+    } else {
+      params.delete("tab");
+      params.delete("section");
+    }
+
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery
+      ? `${window.location.pathname}?${nextQuery}`
+      : window.location.pathname;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
+  }, [currentView, settingsSection, settingsTab]);
+
   // Memoized filtered data (for backwards compatibility)
   const filteredBusinesses = useMemo(() => {
     return businesses.filter((business) => {
@@ -337,6 +462,104 @@ export default function SuperAdminDashboard() {
       inactive: filteredBusinesses.filter((b) => !b.isActive).length,
     };
   }, [filteredBusinesses]);
+
+  const headerSearchResults = useMemo<HeaderSearchResult[]>(() => {
+    const query = commandSearchTerm.trim().toLowerCase();
+    if (!query) return [];
+
+    const queryTokens = query.split(/\s+/).filter(Boolean);
+
+    return ADMIN_SEARCH_INDEX
+      .map((item) => {
+        let score = 0;
+        const label = item.label.toLowerCase();
+        const description = item.description.toLowerCase();
+        const keywordHaystack = item.keywords.join(" ").toLowerCase();
+
+        if (label.startsWith(query)) score += 120;
+        else if (label.includes(query)) score += 80;
+
+        if (description.includes(query)) score += 35;
+        if (keywordHaystack.includes(query)) score += 50;
+
+        const matchedKeywords = item.keywords.filter((keyword) =>
+          keyword.toLowerCase().includes(query)
+        ).length;
+        score += matchedKeywords * 20;
+
+        for (const token of queryTokens) {
+          if (label.includes(token)) score += 22;
+          if (description.includes(token)) score += 12;
+          if (keywordHaystack.includes(token)) score += 16;
+        }
+
+        const compactLabel = label.replace(/[^a-z0-9]/g, "");
+        const compactQuery = query.replace(/[^a-z0-9]/g, "");
+        if (compactQuery.length >= 3) {
+          const dist = levenshteinDistance(compactQuery, compactLabel.slice(0, Math.max(compactQuery.length, 1)));
+          if (dist <= 1) score += 32;
+          else if (dist <= 2) score += 20;
+          else if (dist <= 3) score += 8;
+        }
+
+        return {
+          score,
+          result: {
+            id: item.id,
+            label: item.label,
+            description: item.description,
+            routeLabel:
+              item.view === "settings"
+                ? `Settings${item.tab ? ` / ${item.tab}` : ""}${item.sectionId ? ` / ${item.sectionId}` : ""}`
+                : `Page / ${item.view}`,
+            view: item.view,
+            tab: item.tab,
+            sectionId: item.sectionId,
+          } as HeaderSearchResult,
+        };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map((item) => item.result);
+  }, [commandSearchTerm]);
+
+  const handleSearchResultSelect = useCallback((result: HeaderSearchResult) => {
+    if (!result.view || !isAdminView(result.view)) {
+      return;
+    }
+
+    setRecentSearches((prev) => {
+      const next = [result, ...prev.filter((item) => item.id !== result.id)].slice(0, MAX_RECENT_SEARCHES);
+      try {
+        window.localStorage.setItem(RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage failures (private mode, quota, etc.)
+      }
+      return next;
+    });
+
+    setCurrentView(result.view);
+
+    if (result.view === "settings") {
+      if (result.tab && isSettingsTab(result.tab)) {
+        setSettingsTab(result.tab);
+      }
+      setSettingsSection(result.sectionId ?? null);
+    } else {
+      setSettingsSection(null);
+    }
+
+    setCommandSearchTerm("");
+  }, []);
+
+  const handleViewChange = useCallback((view: string) => {
+    if (!isAdminView(view)) return;
+    setCurrentView(view);
+    if (view !== "settings") {
+      setSettingsSection(null);
+    }
+  }, []);
 
   // Get sort icon
   const getSortIcon = (column: string) => {
@@ -1287,6 +1510,10 @@ export default function SuperAdminDashboard() {
       setSelectedRegistrationInquiry={setSelectedRegistrationInquiry}
       showRegistrationInquiryDialog={showRegistrationInquiryDialog}
       setShowRegistrationInquiryDialog={setShowRegistrationInquiryDialog}
+      registrationQuery={registrationQuery}
+      setRegistrationQuery={setRegistrationQuery}
+      registrationPagination={registrationPagination}
+      setRegistrationPagination={setRegistrationPagination}
       handleCreateAccountFromInquiryWithSidebar={handleCreateAccountFromInquiryWithSidebar}
       handleRejectInquiry={handleRejectInquiry}
       confirmRejectInquiry={confirmRejectInquiry}
@@ -1304,6 +1531,10 @@ export default function SuperAdminDashboard() {
       setShowBusinessListingInquiryDialog={setShowBusinessListingInquiryDialog}
       handleEditCategory={handleEditCategory}
       handleDeleteCategory={handleDeleteCategory}
+      settingsTab={settingsTab}
+      setSettingsTab={setSettingsTab}
+      settingsSection={settingsSection}
+      clearSettingsSection={() => setSettingsSection(null)}
     />
   );
 
@@ -1426,7 +1657,7 @@ const renderRightPanel = () => {
       isMobile={isMobile}
       navLinks={menuItems}
       currentView={currentView}
-      onViewChange={setCurrentView}
+      onViewChange={handleViewChange}
       onLogout={async () => {
         await logout();
         router.push("/login");
@@ -1434,9 +1665,12 @@ const renderRightPanel = () => {
       onSettings={() => setCurrentView("settings")}
       userName={user?.name || "Super Admin"}
       userEmail={user?.email}
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
+      searchValue={commandSearchTerm}
+      onSearchChange={setCommandSearchTerm}
       searchPlaceholder={getAdminSearchPlaceholder()}
+      searchResults={headerSearchResults}
+      recentSearches={recentSearches}
+      onSearchResultSelect={handleSearchResultSelect}
       middleContent={renderMiddleContent()}
       overlayContent={
         <>
@@ -1469,7 +1703,7 @@ const renderRightPanel = () => {
             showBulkDeleteDialog={showBulkDeleteDialog}
             setShowBulkDeleteDialog={setShowBulkDeleteDialog}
             selectedBusinessIds={selectedBusinessIds}
-            businessBulkActions={businessBulkActions}
+            businessBulkActions={businessBulkActions} 
             bulkActionLoading={bulkActionLoading}
             showProfessionalBulkDeleteDialog={showProfessionalBulkDeleteDialog}
             setShowProfessionalBulkDeleteDialog={setShowProfessionalBulkDeleteDialog}

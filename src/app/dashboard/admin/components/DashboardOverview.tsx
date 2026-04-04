@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -8,7 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Activity, Building, FolderTree, User, UserCheck, Zap } from "lucide-react";
+import {
+  Building,
+  FolderTree,
+  User,
+  UserCheck,
+  Activity,
+  Zap,
+} from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { AdminStats, Business, Professional } from "../types";
 
@@ -17,6 +24,7 @@ interface DashboardOverviewProps {
   businesses: Business[];
   professionals: Professional[];
   registrationInquiries: any[];
+  searchTerm: string;
   onAddBusiness: () => void;
   onAddProfessional: () => void;
   onAddCategory: () => void;
@@ -27,10 +35,77 @@ export default function DashboardOverview({
   businesses,
   professionals,
   registrationInquiries,
+  searchTerm,
   onAddBusiness,
   onAddProfessional,
   onAddCategory,
 }: DashboardOverviewProps) {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const highlightText = (text?: string | null) => {
+    const value = text || "";
+    if (!normalizedSearch || !value) {
+      return value || "N/A";
+    }
+
+    const escapedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts = value.split(new RegExp(`(${escapedSearch})`, "ig"));
+
+    return parts.map((part, index) =>
+      part.toLowerCase() === normalizedSearch ? (
+        <mark key={`${part}-${index}`} className="rounded bg-amber-200 px-1 text-gray-900">
+          {part}
+        </mark>
+      ) : (
+        <span key={`${part}-${index}`}>{part}</span>
+      )
+    );
+  };
+
+  const filteredBusinesses = useMemo(() => {
+    if (!normalizedSearch) return businesses;
+    return businesses.filter((business) => {
+      return (
+        business.name.toLowerCase().includes(normalizedSearch) ||
+        business.admin.email.toLowerCase().includes(normalizedSearch) ||
+        business.category?.name.toLowerCase().includes(normalizedSearch) ||
+        business.description?.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [businesses, normalizedSearch]);
+
+  const filteredProfessionals = useMemo(() => {
+    if (!normalizedSearch) return professionals;
+    return professionals.filter((professional) => {
+      return (
+        professional.name.toLowerCase().includes(normalizedSearch) ||
+        professional.admin.email.toLowerCase().includes(normalizedSearch) ||
+        professional.professionalHeadline?.toLowerCase().includes(normalizedSearch) ||
+        professional.location?.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [normalizedSearch, professionals]);
+
+  const filteredRegistrationInquiries = useMemo(() => {
+    if (!normalizedSearch) return registrationInquiries;
+    return registrationInquiries.filter((inquiry) => {
+      return (
+        inquiry.name?.toLowerCase().includes(normalizedSearch) ||
+        inquiry.email?.toLowerCase().includes(normalizedSearch) ||
+        inquiry.businessName?.toLowerCase().includes(normalizedSearch) ||
+        inquiry.location?.toLowerCase().includes(normalizedSearch) ||
+        inquiry.message?.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [normalizedSearch, registrationInquiries]);
+
+  const activeBusinessRate = stats.totalBusinesses > 0
+    ? Math.round((stats.activeBusinesses / stats.totalBusinesses) * 100)
+    : 0;
+  const activeProfessionalRate = stats.totalProfessionals > 0
+    ? Math.round((stats.activeProfessionals / stats.totalProfessionals) * 100)
+    : 0;
+
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="mb-8">
@@ -92,18 +167,18 @@ export default function DashboardOverview({
           </CardHeader>
           <CardContent className="flex-1 px-0 bg-white flex flex-col">
             <div className="overflow-x-auto flex-1">
-              {businesses.length > 0 ? (
+              {filteredBusinesses.length > 0 ? (
                 <Table>
-                  <TableHeader className="">
+                  <TableHeader className="bg-slate-800">
                     <TableRow>
-                      <TableHead className="text-xs flex-1">Name</TableHead>
-                      <TableHead className="text-xs w-auto">Category</TableHead>
-                      <TableHead className="text-xs w-auto">Status</TableHead>
-                      <TableHead className="text-xs w-auto">Date</TableHead>
+                      <TableHead className="text-xs text-white flex-1">Name</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Category</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Status</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {businesses
+                    {filteredBusinesses
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .slice(0, 4)
                       .map((business) => (
@@ -121,10 +196,10 @@ export default function DashboardOverview({
                                   <Building className="h-4 w-4 text-gray-400" />
                                 </div>
                               )}
-                              <span className="truncate">{business.name}</span>
+                              <span className="truncate">{highlightText(business.name)}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs w-auto">{business.category?.name || "N/A"}</TableCell>
+                          <TableCell className="text-xs w-auto">{highlightText(business.category?.name)}</TableCell>
                           <TableCell className="w-auto">
                             <div
                               className={`flex items-center gap-1.5 px-1.5 w-fit py-0.5 rounded-full border text-xs font-medium ${
@@ -149,7 +224,7 @@ export default function DashboardOverview({
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10">
                   <Building className="h-8 w-8 mb-2 opacity-20" />
-                  <p className="text-xs font-medium">No Data</p>
+                  <p className="text-xs font-medium">{normalizedSearch ? "No matching results" : "No Data"}</p>
                 </div>
               )}
             </div>
@@ -163,18 +238,18 @@ export default function DashboardOverview({
           </CardHeader>
           <CardContent className="flex-1 px-0 bg-white flex flex-col">
             <div className="overflow-x-auto flex-1">
-              {professionals.length > 0 ? (
+              {filteredProfessionals.length > 0 ? (
                 <Table>
-                  <TableHeader className="">
+                  <TableHeader className="bg-slate-800">
                     <TableRow>
-                      <TableHead className="text-xs flex-1">Name</TableHead>
-                      <TableHead className="text-xs w-auto">Profession</TableHead>
-                      <TableHead className="text-xs w-auto">Status</TableHead>
-                      <TableHead className="text-xs w-auto">Date</TableHead>
+                      <TableHead className="text-xs text-white flex-1">Name</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Profession</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Status</TableHead>
+                      <TableHead className="text-xs text-white w-auto">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {professionals
+                    {filteredProfessionals
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .slice(0, 4)
                       .map((professional) => (
@@ -192,11 +267,11 @@ export default function DashboardOverview({
                                   <User className="h-4 w-4 text-gray-400" />
                                 </div>
                               )}
-                              <span className="truncate">{professional.name}</span>
+                              <span className="truncate">{highlightText(professional.name)}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-xs w-auto max-w-[150px] truncate">
-                            {professional.professionalHeadline || "N/A"}
+                            {highlightText(professional.professionalHeadline)}
                           </TableCell>
                           <TableCell className="w-auto">
                             <div
@@ -238,20 +313,20 @@ export default function DashboardOverview({
           </CardHeader>
           <CardContent className="flex-1 px-0 bg-white flex flex-col">
             <div className="overflow-x-auto flex-1">
-              {registrationInquiries.length > 0 ? (
+              {filteredRegistrationInquiries.length > 0 ? (
                 <Table>
-                  <TableHeader className="">
+                  <TableHeader className="bg-slate-800">
                     <TableRow>
-                      <TableHead className="text-xs">Type</TableHead>
-                      <TableHead className="text-xs">Name</TableHead>
-                      <TableHead className="text-xs">Business/Profession</TableHead>
-                      <TableHead className="text-xs">Email</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Date</TableHead>
+                      <TableHead className="text-xs text-white">Type</TableHead>
+                      <TableHead className="text-xs text-white">Name</TableHead>
+                      <TableHead className="text-xs text-white">Business/Profession</TableHead>
+                      <TableHead className="text-xs text-white">Email</TableHead>
+                      <TableHead className="text-xs text-white">Status</TableHead>
+                      <TableHead className="text-xs text-white">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {registrationInquiries
+                    {filteredRegistrationInquiries
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .slice(0, 5)
                       .map((inquiry) => (
@@ -272,9 +347,9 @@ export default function DashboardOverview({
                               {inquiry.type === "BUSINESS" ? "B" : "P"}
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs font-medium truncate">{inquiry.name}</TableCell>
-                          <TableCell className="text-xs truncate">{inquiry.businessName || "N/A"}</TableCell>
-                          <TableCell className="text-xs">{inquiry.email}</TableCell>
+                          <TableCell className="text-xs font-medium truncate">{highlightText(inquiry.name)}</TableCell>
+                          <TableCell className="text-xs truncate">{highlightText(inquiry.businessName)}</TableCell>
+                          <TableCell className="text-xs">{highlightText(inquiry.email)}</TableCell>
                           <TableCell>
                             <div className="flex justify-center">
                               <StatusBadge

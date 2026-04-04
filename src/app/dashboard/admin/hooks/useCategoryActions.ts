@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { invalidateCategories } from "@/lib/cacheInvalidation";
+import { requestAdminMutation } from "./adminMutation";
 import type { Category } from "../types";
 
 interface UseCategoryActionsOptions {
@@ -41,38 +42,34 @@ export function useCategoryActions({
         parentId: rawParentId === "none" ? null : rawParentId || undefined,
       };
 
-      try {
-        const response = await fetch("/api/admin/categories", {
+      const result = await requestAdminMutation<{ category?: Category }>(
+        "/api/admin/categories",
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(categoryData),
-        });
+        },
+        "Failed to create category"
+      );
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.category) {
-            setCategories((prev) => [...prev, result.category]);
-          }
-
-          invalidateCategories(queryClient);
-          await fetchData();
-
-          toast({ title: "Success", description: "Category created successfully!" });
-          setShowRightPanel(false);
-          setRightPanelContent(null);
-          e.currentTarget.reset();
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to create category: ${error.error || "Unknown error"}`,
-            variant: "destructive",
-          });
+      if (result.ok) {
+        const createdCategory = result.data?.category;
+        if (createdCategory) {
+          const safeCreatedCategory: Category = createdCategory;
+          setCategories((prev) => [...prev, safeCreatedCategory]);
         }
-      } catch (error) {
+
+        invalidateCategories(queryClient);
+        await fetchData();
+
+        toast({ title: "Success", description: "Category created successfully!" });
+        setShowRightPanel(false);
+        setRightPanelContent(null);
+        e.currentTarget.reset();
+      } else {
         toast({
           title: "Error",
-          description: "Failed to create category. Please try again.",
+          description: `Failed to create category: ${result.error || "Unknown error"}`,
           variant: "destructive",
         });
       }
@@ -102,39 +99,35 @@ export function useCategoryActions({
         parentId: rawParentId === "none" ? null : rawParentId || null,
       };
 
-      try {
-        const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+      const result = await requestAdminMutation<{ category?: Category }>(
+        `/api/admin/categories/${editingCategory.id}`,
+        {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updateData),
-        });
+        },
+        "Failed to update category"
+      );
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.category) {
-            setCategories((prev) =>
-              prev.map((c) => (c.id === editingCategory.id ? result.category : c))
-            );
-          }
-
-          invalidateCategories(queryClient);
-          await fetchData();
-
-          setShowRightPanel(false);
-          setRightPanelContent(null);
-          toast({ title: "Success", description: "Category updated successfully!" });
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to update category: ${error.error || "Unknown error"}`,
-            variant: "destructive",
-          });
+      if (result.ok) {
+        const updatedCategory = result.data?.category;
+        if (updatedCategory) {
+          const safeUpdatedCategory: Category = updatedCategory;
+          setCategories((prev) =>
+            prev.map((c) => (c.id === editingCategory.id ? safeUpdatedCategory : c))
+          );
         }
-      } catch (error) {
+
+        invalidateCategories(queryClient);
+        await fetchData();
+
+        setShowRightPanel(false);
+        setRightPanelContent(null);
+        toast({ title: "Success", description: "Category updated successfully!" });
+      } else {
         toast({
           title: "Error",
-          description: "Failed to update category. Please try again.",
+          description: `Failed to update category: ${result.error || "Unknown error"}`,
           variant: "destructive",
         });
       }
@@ -153,32 +146,27 @@ export function useCategoryActions({
   const confirmDeleteCategory = useCallback(async () => {
     if (!categoryToDelete) return;
 
-    try {
-      const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
+    const result = await requestAdminMutation(
+      `/api/admin/categories/${categoryToDelete.id}`,
+      {
         method: "DELETE",
-      });
+      },
+      "Failed to delete category"
+    );
 
-      if (response.ok) {
-        setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
-        setShowDeleteCategoryDialog(false);
-        setCategoryToDelete(null);
+    if (result.ok) {
+      setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
+      setShowDeleteCategoryDialog(false);
+      setCategoryToDelete(null);
 
-        invalidateCategories(queryClient);
-        await fetchData();
+      invalidateCategories(queryClient);
+      await fetchData();
 
-        toast({ title: "Success", description: "Category deleted successfully" });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Error",
-          description: `Failed to delete category: ${error.error || "Unknown error"}`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      toast({ title: "Success", description: "Category deleted successfully" });
+    } else {
       toast({
         title: "Error",
-        description: "Failed to delete category. Please try again.",
+        description: `Failed to delete category: ${result.error || "Unknown error"}`,
         variant: "destructive",
       });
     }

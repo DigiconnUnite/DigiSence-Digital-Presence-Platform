@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { requestAdminMutation } from "./adminMutation";
 
 interface UseBusinessListingActionsOptions {
   setBusinessListingInquiries: React.Dispatch<React.SetStateAction<any[]>>;
@@ -15,33 +16,27 @@ export function useBusinessListingActions({
 }: UseBusinessListingActionsOptions) {
   const handleUpdateBusinessListingInquiry = useCallback(
     async (inquiryId: string, updates: any) => {
-      try {
-        const response = await fetch(`/api/business-listing-inquiries/${inquiryId}`, {
+      const result = await requestAdminMutation<{ inquiry?: any }>(
+        `/api/business-listing-inquiries/${inquiryId}`,
+        {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
-        });
+        },
+        "Failed to update inquiry"
+      );
 
-        if (response.ok) {
-          const data = await response.json();
-          setBusinessListingInquiries((prev) =>
-            prev.map((inquiry) => (inquiry.id === inquiryId ? data.inquiry : inquiry))
-          );
-          toast({ title: "Success", description: "Inquiry updated successfully!" });
-          setShowBusinessListingInquiryDialog(false);
-          setSelectedBusinessListingInquiry(null);
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Error",
-            description: `Failed to update inquiry: ${error.error || "Unknown error"}`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
+      if (result.ok) {
+        setBusinessListingInquiries((prev) =>
+          prev.map((inquiry) => (inquiry.id === inquiryId ? result.data?.inquiry ?? inquiry : inquiry))
+        );
+        toast({ title: "Success", description: "Inquiry updated successfully!" });
+        setShowBusinessListingInquiryDialog(false);
+        setSelectedBusinessListingInquiry(null);
+      } else {
         toast({
           title: "Error",
-          description: "Failed to update inquiry. Please try again.",
+          description: `Failed to update inquiry: ${result.error || "Unknown error"}`,
           variant: "destructive",
         });
       }

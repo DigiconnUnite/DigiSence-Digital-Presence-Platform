@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { requestAdminMutation } from "./adminMutation";
 
 interface InquiryActionsOptions {
   inquiries: any[];
@@ -76,11 +77,15 @@ export function useInquiryActions({
     try {
       await Promise.all(
         ids.map(async (id) => {
-          await fetch(`/api/inquiries/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "REPLIED" }),
-          });
+          await requestAdminMutation(
+            `/api/inquiries/${id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "REPLIED" }),
+            },
+            "Failed to update inquiry status"
+          );
         })
       );
       setInquiries((prev) =>
@@ -102,11 +107,15 @@ export function useInquiryActions({
     try {
       await Promise.all(
         ids.map(async (id) => {
-          await fetch(`/api/inquiries/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "PENDING" }),
-          });
+          await requestAdminMutation(
+            `/api/inquiries/${id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "PENDING" }),
+            },
+            "Failed to update inquiry status"
+          );
         })
       );
       setInquiries((prev) =>

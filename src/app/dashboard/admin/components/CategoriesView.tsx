@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,7 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BulkActionsToolbar } from "@/components/ui/pagination";
-import { Edit, FolderTree, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Edit, FolderTree, Plus, Trash2 } from "lucide-react";
+import AdminViewControls from "./AdminViewControls";
+import AdminSectionHeader from "./AdminSectionHeader";
+import AdminActionIconButton from "./AdminActionIconButton";
 import type { Category } from "../types";
 
 interface CategoriesViewProps {
@@ -41,13 +43,13 @@ export default function CategoriesView({
 }: CategoriesViewProps) {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Manage Categories</h1>
-        <p className="text-sm text-gray-600 mt-1">Add, view, edit, and manage all business categories</p>
-      </div>
+      <AdminSectionHeader
+        title="Manage Categories"
+        description="Add, view, edit, and manage all business categories"
+      />
 
-      <div className="space-y-3">
-        <div className="flex gap-2">
+      <AdminViewControls
+        actions={
           <Button
             onClick={onOpenAddCategory}
             className="rounded-xl bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white hover:opacity-90 transition-opacity"
@@ -56,25 +58,11 @@ export default function CategoriesView({
             <span className="hidden sm:inline">Add Category</span>
             <span className="sm:hidden">Add</span>
           </Button>
-        </div>
-
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-          <Input
-            placeholder="Search categories..."
-            className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-          >
-            <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-          </Button>
-        </div>
-      </div>
+        }
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search categories..."
+      />
 
       {selectedCategories.size > 0 && (
         <div className="pt-2 border-t border-gray-100">
@@ -174,24 +162,21 @@ export default function CategoriesView({
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                            <AdminActionIconButton
                               onClick={() => handleEditCategory(category)}
                               title="Edit Category"
+                              rounded="md"
                             >
                               <Edit className="h-4 w-4 text-gray-500" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-md hover:bg-red-50"
+                            </AdminActionIconButton>
+                            <AdminActionIconButton
                               onClick={() => handleDeleteCategory(category)}
                               title="Delete Category"
+                              tone="danger"
+                              rounded="md"
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            </AdminActionIconButton>
                           </div>
                         </TableCell>
                       </TableRow>

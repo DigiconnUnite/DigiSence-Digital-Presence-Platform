@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { exportAdminCsv, fetchAdminList } from "./adminQuery";
+import { useTableState } from "./useTableState";
 import type { BusinessQueryParams, ProfessionalApiResponse } from "../types";
 
 interface UseProfessionalTableOptions {
@@ -8,7 +10,18 @@ interface UseProfessionalTableOptions {
 }
 
 export function useProfessionalTable({ debouncedSearch, currentView, toast }: UseProfessionalTableOptions) {
-  const [professionalQuery, setProfessionalQuery] = useState<BusinessQueryParams>({
+  const {
+    query: professionalQuery,
+    setQuery: setProfessionalQuery,
+    selectedIds: selectedProfessionalIds,
+    setSelectedIds: setSelectedProfessionalIds,
+    handleSort,
+    handlePageChange: handleProfessionalPageChange,
+    handleLimitChange: handleProfessionalLimitChange,
+    handleSelectOne: handleSelectProfessional,
+    handleSelectAllFrom,
+    handleDeselectAll: handleDeselectAllProfessionals,
+  } = useTableState<BusinessQueryParams>({
     page: 1,
     limit: 10,
     search: "",
@@ -18,10 +31,7 @@ export function useProfessionalTable({ debouncedSearch, currentView, toast }: Us
   });
   const [professionalData, setProfessionalData] = useState<ProfessionalApiResponse | null>(null);
   const [professionalLoading, setProfessionalLoading] = useState(false);
-  const [selectedProfessionalIds, setSelectedProfessionalIds] = useState<Set<string>>(new Set());
   const [professionalExportLoading, setProfessionalExportLoading] = useState(false);
-  const [professionalSortBy, setProfessionalSortBy] = useState("createdAt");
-  const [professionalSortOrder, setProfessionalSortOrder] = useState<"asc" | "desc">("desc");
 
   const fetchControllerRef = useRef<AbortController | null>(null);
   const fetchRequestRef = useRef(0);
@@ -39,19 +49,17 @@ export function useProfessionalTable({ debouncedSearch, currentView, toast }: Us
         limit: professionalQuery.limit.toString(),
         search: professionalQuery.search,
         status: professionalQuery.status,
-        sortBy: professionalSortBy,
-        sortOrder: professionalSortOrder,
+        sortBy: professionalQuery.sortBy,
+        sortOrder: professionalQuery.sortOrder,
       });
 
-      const response = await fetch(`/api/admin/professionals?${params}`, {
-        signal: controller.signal,
-      });
+      const data = await fetchAdminList<ProfessionalApiResponse>(
+        `/api/admin/professionals?${params}`,
+        controller.signal
+      );
 
-      if (response.ok) {
-        const data: ProfessionalApiResponse = await response.json();
-        if (fetchRequestRef.current === requestId) {
-          setProfessionalData(data);
-        }
+      if (data && fetchRequestRef.current === requestId) {
+        setProfessionalData(data);
       }
     } catch (error) {
       if ((error as Error).name === "AbortError") {
@@ -69,7 +77,7 @@ export function useProfessionalTable({ debouncedSearch, currentView, toast }: Us
         fetchControllerRef.current = null;
       }
     }
-  }, [professionalQuery, professionalSortBy, professionalSortOrder, toast]);
+  }, [professionalQuery, toast]);
 
   useEffect(() => {
     if (currentView === "professionals") {
@@ -88,71 +96,25 @@ export function useProfessionalTable({ debouncedSearch, currentView, toast }: Us
   }, []);
 
   const handleProfessionalSort = useCallback((column: string) => {
-    if (professionalSortBy === column) {
-      setProfessionalSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setProfessionalSortBy(column);
-      setProfessionalSortOrder("desc");
-    }
-    setProfessionalQuery((prev) => ({ ...prev, page: 1 }));
-  }, [professionalSortBy]);
-
-  const handleProfessionalPageChange = useCallback((page: number) => {
-    setProfessionalQuery((prev) => ({ ...prev, page }));
-  }, []);
-
-  const handleProfessionalLimitChange = useCallback((limit: number) => {
-    setProfessionalQuery((prev) => ({ ...prev, limit, page: 1 }));
-  }, []);
-
-  const handleSelectProfessional = useCallback((professionalId: string) => {
-    setSelectedProfessionalIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(professionalId)) {
-        newSet.delete(professionalId);
-      } else {
-        newSet.add(professionalId);
-      }
-      return newSet;
-    });
-  }, []);
+    handleSort(column);
+  }, [handleSort]);
 
   const handleSelectAllProfessionals = useCallback(() => {
     if (professionalData?.professionals) {
       const allIds = professionalData.professionals.map((p) => p.id);
-      setSelectedProfessionalIds(new Set(allIds));
+      handleSelectAllFrom(allIds);
     }
-  }, [professionalData]);
-
-  const handleDeselectAllProfessionals = useCallback(() => {
-    setSelectedProfessionalIds(new Set());
-  }, []);
+  }, [professionalData, handleSelectAllFrom]);
 
   const handleProfessionalExport = useCallback(async () => {
     setProfessionalExportLoading(true);
-    try {
-      const response = await fetch("/api/admin/professionals/export?format=csv");
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `professionals-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast({ title: "Success", description: "Professionals exported successfully" });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export professionals",
-        variant: "destructive",
-      });
-    } finally {
-      setProfessionalExportLoading(false);
-    }
+    await exportAdminCsv(
+      "/api/admin/professionals/export?format=csv",
+      "professionals",
+      (description) => toast({ title: "Success", description }),
+      (description) => toast({ title: "Error", description, variant: "destructive" })
+    );
+    setProfessionalExportLoading(false);
   }, [toast]);
 
   return {
@@ -164,8 +126,8 @@ export function useProfessionalTable({ debouncedSearch, currentView, toast }: Us
     selectedProfessionalIds,
     setSelectedProfessionalIds,
     professionalExportLoading,
-    professionalSortBy,
-    professionalSortOrder,
+    professionalSortBy: professionalQuery.sortBy,
+    professionalSortOrder: professionalQuery.sortOrder,
     fetchProfessionals,
     handleProfessionalSort,
     handleProfessionalPageChange,

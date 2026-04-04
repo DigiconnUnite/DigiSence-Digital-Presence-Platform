@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,7 +19,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BulkActionsToolbar, Pagination } from "@/components/ui/pagination";
 import {
-  AlertTriangle,
   Building,
   Download,
   Edit,
@@ -28,10 +26,13 @@ import {
   Filter,
   Plus,
   Power,
-  Search,
-  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
+import AdminViewControls from "./AdminViewControls";
+import AdminSectionHeader from "./AdminSectionHeader";
+import AdminActionIconButton from "./AdminActionIconButton";
+import AdminErrorAlert from "./AdminErrorAlert";
+import AdminEmptyState from "./AdminEmptyState";
 import type { Business, BusinessApiResponse, BusinessQueryParams } from "../types";
 
 interface BusinessesViewProps {
@@ -96,39 +97,23 @@ export default function BusinessesView({
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       {dataFetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <span className="text-red-600 font-medium">Data Fetching Error</span>
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  fetchData();
-                  fetchBusinesses();
-                }}
-                className="rounded-xl"
-              >
-                Retry
-              </Button>
-            </div>
-          </div>
-          <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
-        </div>
+        <AdminErrorAlert
+          message={dataFetchError}
+          onRetry={() => {
+            fetchData();
+            fetchBusinesses();
+          }}
+        />
       )}
 
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Manage Businesses</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Add, view, edit, and manage all registered businesses
-        </p>
-      </div>
+      <AdminSectionHeader
+        title="Manage Businesses"
+        description="Add, view, edit, and manage all registered businesses"
+      />
 
-      <div className="space-y-3">
-        <div className="flex gap-2">
+      <AdminViewControls
+        actions={
+          <>
           <Select
             value={businessQuery.status}
             onValueChange={(value) => {
@@ -179,25 +164,12 @@ export default function BusinessesView({
             <span className="hidden sm:inline">{addBusinessLoading ? "Opening..." : "Add Business"}</span>
             <span className="sm:hidden">{addBusinessLoading ? "..." : "Add"}</span>
           </Button>
-        </div>
-
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-          <Input
-            placeholder="Search businesses..."
-            className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3"
-          >
-            <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search businesses..."
+      />
 
       {selectedBusinessIds.size > 0 && (
         <div className="pt-2 border-t border-gray-100">
@@ -361,33 +333,25 @@ export default function BusinessesView({
                               />
                             )}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                          <AdminActionIconButton
                             onClick={() => window.open(`/catalog/${business.slug}`, "_blank")}
                             title="View Business"
                           >
                             <Eye className="h-4 w-4 text-gray-500" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                          </AdminActionIconButton>
+                          <AdminActionIconButton
                             onClick={() => handleEditBusiness(business)}
                             title="Edit Business"
                           >
                             <Edit className="h-4 w-4 text-gray-500" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                          </AdminActionIconButton>
+                          <AdminActionIconButton
                             onClick={() => handleDeleteBusiness(business)}
                             title="Delete Business"
+                            tone="danger"
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                          </AdminActionIconButton>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -397,26 +361,26 @@ export default function BusinessesView({
         </div>
 
         {!businessLoading && (!businessData?.businesses || businessData.businesses.length === 0) && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Building className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No businesses found</h3>
-            <p className="text-gray-500 mb-4">
-              {searchTerm || businessQuery.status !== "all"
+          <AdminEmptyState
+            icon={<Building className="h-8 w-8 text-gray-400" />}
+            title="No businesses found"
+            description={
+              searchTerm || businessQuery.status !== "all"
                 ? "Try adjusting your search or filters"
-                : "Get started by adding your first business"}
-            </p>
-            {!searchTerm && businessQuery.status === "all" && (
-              <Button
-                onClick={onOpenAddBusiness}
-                className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Business
-              </Button>
-            )}
-          </div>
+                : "Get started by adding your first business"
+            }
+            action={
+              !searchTerm && businessQuery.status === "all" ? (
+                <Button
+                  onClick={onOpenAddBusiness}
+                  className="bg-linear-90 from-[#5757FF] to-[#A89CFE] text-white rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Business
+                </Button>
+              ) : undefined
+            }
+          />
         )}
 
         {businessData && businessData.businesses.length > 0 && (

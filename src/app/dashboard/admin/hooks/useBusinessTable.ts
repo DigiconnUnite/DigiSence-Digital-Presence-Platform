@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { exportAdminCsv, fetchAdminList } from "./adminQuery";
+import { useTableState } from "./useTableState";
 import type { BusinessApiResponse, BusinessQueryParams } from "../types";
 
 interface UseBusinessTableOptions {
@@ -7,7 +9,18 @@ interface UseBusinessTableOptions {
 }
 
 export function useBusinessTable({ debouncedSearch, toast }: UseBusinessTableOptions) {
-  const [businessQuery, setBusinessQuery] = useState<BusinessQueryParams>({
+  const {
+    query: businessQuery,
+    setQuery: setBusinessQuery,
+    selectedIds: selectedBusinessIds,
+    setSelectedIds: setSelectedBusinessIds,
+    handleSort,
+    handlePageChange,
+    handleLimitChange,
+    handleSelectOne: handleSelectBusiness,
+    handleSelectAllFrom,
+    handleDeselectAll,
+  } = useTableState<BusinessQueryParams>({
     page: 1,
     limit: 10,
     search: "",
@@ -17,7 +30,6 @@ export function useBusinessTable({ debouncedSearch, toast }: UseBusinessTableOpt
   });
   const [businessData, setBusinessData] = useState<BusinessApiResponse | null>(null);
   const [businessLoading, setBusinessLoading] = useState(false);
-  const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(new Set());
   const [exportLoading, setExportLoading] = useState(false);
 
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -40,15 +52,13 @@ export function useBusinessTable({ debouncedSearch, toast }: UseBusinessTableOpt
         sortOrder: businessQuery.sortOrder,
       });
 
-      const response = await fetch(`/api/admin/businesses?${params}`, {
-        signal: controller.signal,
-      });
+      const data = await fetchAdminList<BusinessApiResponse>(
+        `/api/admin/businesses?${params}`,
+        controller.signal
+      );
 
-      if (response.ok) {
-        const data: BusinessApiResponse = await response.json();
-        if (fetchRequestRef.current === requestId) {
-          setBusinessData(data);
-        }
+      if (data && fetchRequestRef.current === requestId) {
+        setBusinessData(data);
       }
     } catch (error) {
       if ((error as Error).name === "AbortError") {
@@ -82,71 +92,22 @@ export function useBusinessTable({ debouncedSearch, toast }: UseBusinessTableOpt
     };
   }, []);
 
-  const handleSort = useCallback((column: string) => {
-    setBusinessQuery((prev) => ({
-      ...prev,
-      sortBy: column,
-      sortOrder: prev.sortBy === column && prev.sortOrder === "desc" ? "asc" : "desc",
-      page: 1,
-    }));
-  }, []);
-
-  const handlePageChange = useCallback((page: number) => {
-    setBusinessQuery((prev) => ({ ...prev, page }));
-  }, []);
-
-  const handleLimitChange = useCallback((limit: number) => {
-    setBusinessQuery((prev) => ({ ...prev, limit, page: 1 }));
-  }, []);
-
-  const handleSelectBusiness = useCallback((businessId: string) => {
-    setSelectedBusinessIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(businessId)) {
-        newSet.delete(businessId);
-      } else {
-        newSet.add(businessId);
-      }
-      return newSet;
-    });
-  }, []);
-
   const handleSelectAll = useCallback(() => {
     if (businessData?.businesses) {
       const allIds = businessData.businesses.map((b) => b.id);
-      setSelectedBusinessIds(new Set(allIds));
+      handleSelectAllFrom(allIds);
     }
-  }, [businessData]);
-
-  const handleDeselectAll = useCallback(() => {
-    setSelectedBusinessIds(new Set());
-  }, []);
+  }, [businessData, handleSelectAllFrom]);
 
   const handleExport = useCallback(async () => {
     setExportLoading(true);
-    try {
-      const response = await fetch("/api/admin/businesses/export?format=csv");
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `businesses-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast({ title: "Success", description: "Businesses exported successfully" });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export businesses",
-        variant: "destructive",
-      });
-    } finally {
-      setExportLoading(false);
-    }
+    await exportAdminCsv(
+      "/api/admin/businesses/export?format=csv",
+      "businesses",
+      (description) => toast({ title: "Success", description }),
+      (description) => toast({ title: "Error", description, variant: "destructive" })
+    );
+    setExportLoading(false);
   }, [toast]);
 
   return {

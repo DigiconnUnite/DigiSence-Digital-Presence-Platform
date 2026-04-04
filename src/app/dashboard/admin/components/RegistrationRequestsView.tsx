@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Activity, AlertTriangle, Building, Eye, FolderTree, Search, SlidersHorizontal, User, UserCheck, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, Building, Eye, FolderTree, User, UserCheck, XCircle } from "lucide-react";
+import AdminViewControls from "./AdminViewControls";
+import AdminSectionHeader from "./AdminSectionHeader";
+import AdminErrorAlert from "./AdminErrorAlert";
+import AdminEmptyState from "./AdminEmptyState";
 
 interface RegistrationRequestsViewProps {
   searchTerm: string;
@@ -58,49 +61,27 @@ export default function RegistrationRequestsView({
 }: RegistrationRequestsViewProps) {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Registration Requests</h1>
-        <p className="text-sm text-gray-600 mt-1">Review and approve business and professional registration requests</p>
-      </div>
+      <AdminSectionHeader
+        title="Registration Requests"
+        description="Review and approve business and professional registration requests"
+      />
 
-      <div className="space-y-3">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-          <Input
-            placeholder="Search registration requests..."
-            className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button type="button" variant="ghost" className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3">
-            <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-          </Button>
-        </div>
-      </div>
+      <AdminViewControls
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search registration requests..."
+      />
 
       {dataFetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <span className="text-red-600 font-medium">Data Fetching Error</span>
-            </div>
-            <div className="flex space-x-2">
-              <Button size="sm" variant="outline" onClick={() => fetchData()} className="rounded-xl">Retry</Button>
-            </div>
-          </div>
-          <p className="text-red-600 text-sm mt-1">{dataFetchError}</p>
-        </div>
+        <AdminErrorAlert message={dataFetchError} onRetry={() => fetchData()} />
       )}
 
       {registrationInquiries.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <UserCheck className="h-8 w-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Registration Requests</h3>
-          <p className="text-gray-500">There are currently no business or professional registration requests to review.</p>
-        </div>
+        <AdminEmptyState
+          icon={<UserCheck className="h-8 w-8 text-gray-400" />}
+          title="No Registration Requests"
+          description="There are currently no business or professional registration requests to review."
+        />
       )}
 
       {registrationInquiries.length > 0 && (

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { requestAdminMutation } from "./adminMutation";
 
 interface UseRegistrationActionsOptions {
   setCreatingAccount: React.Dispatch<React.SetStateAction<string | null>>;
@@ -40,13 +41,16 @@ export function useRegistrationActions({
       setCreatingAccount(inquiry.id);
 
       try {
-        const response = await fetch(`/api/admin/registration-inquiries/${inquiry.id}/approve`, {
-          method: "POST",
-        });
+        const result = await requestAdminMutation(
+          `/api/admin/registration-inquiries/${inquiry.id}/approve`,
+          {
+            method: "POST",
+          },
+          "Failed to approve registration inquiry"
+        );
 
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({}));
-          throw new Error(error.error || error.message || "Failed to approve registration inquiry");
+        if (!result.ok) {
+          throw new Error(result.error || "Failed to approve registration inquiry");
         }
 
         setRegistrationInquiries((prev) =>
@@ -100,13 +104,17 @@ export function useRegistrationActions({
     setShowRejectInquiryDialog(false);
 
     try {
-      const response = await fetch(`/api/admin/registration-inquiries/${inquiryToReject.id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: rejectReason || "No reason provided" }),
-      });
+      const result = await requestAdminMutation(
+        `/api/admin/registration-inquiries/${inquiryToReject.id}/reject`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: rejectReason || "No reason provided" }),
+        },
+        "Failed to reject inquiry"
+      );
 
-      if (response.ok) {
+      if (result.ok) {
         setRegistrationInquiries((prev) =>
           prev.map((regInquiry) =>
             regInquiry.id === inquiryToReject.id
@@ -118,10 +126,9 @@ export function useRegistrationActions({
         toast({ title: "Success", description: "Registration request rejected." });
         await fetchData();
       } else {
-        const error = await response.json();
         toast({
           title: "Error",
-          description: `Failed to reject inquiry: ${error.error || error.message || "Unknown error"}`,
+          description: `Failed to reject inquiry: ${result.error || "Unknown error"}`,
           variant: "destructive",
         });
       }

@@ -1,11 +1,14 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BulkActionsToolbar } from "@/components/ui/pagination";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Activity, Building, Edit, Eye, RefreshCw, Search, SlidersHorizontal, User } from "lucide-react";
+import { Activity, Building, Edit, Eye, RefreshCw, User } from "lucide-react";
+import AdminViewControls from "./AdminViewControls";
+import AdminSectionHeader from "./AdminSectionHeader";
+import AdminActionIconButton from "./AdminActionIconButton";
+import AdminEmptyState from "./AdminEmptyState";
 
 interface BusinessListingsViewProps {
   searchTerm: string;
@@ -32,32 +35,22 @@ export default function BusinessListingsView({
 }: BusinessListingsViewProps) {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Business Listing Inquiries</h1>
-        <p className="text-sm text-gray-600 mt-1">Manage business listing requests and digital presence enhancement inquiries</p>
-      </div>
+      <AdminSectionHeader
+        title="Business Listing Inquiries"
+        description="Manage business listing requests and digital presence enhancement inquiries"
+      />
 
-      <div className="space-y-3">
-        <div className="flex gap-2">
+      <AdminViewControls
+        actions={
           <Button variant="outline" onClick={() => fetchData()} className="rounded-xl border-gray-200">
             <RefreshCw className="h-4 w-4 text-gray-500 mr-2" />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
-        </div>
-
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-          <Input
-            placeholder="Search business listings..."
-            className="pl-10 pr-12 w-full rounded-xl rounded-r-none border-gray-200 bg-white focus-visible:ring-gray-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button type="button" variant="ghost" className="rounded-none rounded-r-xl border-l-0 border-gray-200 bg-transparent hover:bg-gray-100 h-[42px] px-3">
-            <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-          </Button>
-        </div>
-      </div>
+        }
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search business listings..."
+      />
 
       {selectedBusinessListings.size > 0 && (
         <div className="pt-2 border-t border-gray-100">
@@ -175,30 +168,26 @@ export default function BusinessListingsView({
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end space-x-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                          <AdminActionIconButton
                             onClick={() => {
                               setSelectedBusinessListingInquiry(inquiry);
                               setShowBusinessListingInquiryDialog(true);
                             }}
                             title="View Details"
+                            rounded="md"
                           >
                             <Eye className="h-4 w-4 text-gray-500" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 rounded-md hover:bg-gray-100"
+                          </AdminActionIconButton>
+                          <AdminActionIconButton
                             onClick={() => {
                               setSelectedBusinessListingInquiry(inquiry);
                               setShowBusinessListingInquiryDialog(true);
                             }}
                             title="Edit"
+                            rounded="md"
                           >
                             <Edit className="h-4 w-4 text-gray-500" />
-                          </Button>
+                          </AdminActionIconButton>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -208,13 +197,12 @@ export default function BusinessListingsView({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
-          <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <Building className="h-8 w-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Business Listings Found</h3>
-          <p className="text-gray-500">There are currently no business listing inquiries to review.</p>
-        </div>
+        <AdminEmptyState
+          icon={<Building className="h-8 w-8 text-gray-400" />}
+          title="No Business Listings Found"
+          description="There are currently no business listing inquiries to review."
+          className="bg-white rounded-2xl"
+        />
       )}
     </div>
   );
